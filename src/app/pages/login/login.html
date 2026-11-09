@@ -1,0 +1,231 @@
+
+<div class="login-page">
+
+  <div class="login-card">
+
+    <img
+      src="/images/ceylongo-logo.png"
+      alt="CeylonGo Logo"
+      class="logo"
+    />
+
+    <h1>Welcome Back</h1>
+
+    <p class="subtitle">
+      Log in to continue your journey with CeylonGo.
+    </p>
+
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onLogin()"
+      novalidate
+    >
+
+      <!-- Email -->
+      <div class="input-group">
+
+        <label for="email">Email address</label>
+
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email address"
+          autocomplete="email"
+          maxlength="254"
+          [attr.aria-invalid]="
+            loginForm.get('email')?.touched &&
+            loginForm.get('email')?.invalid
+          "
+        />
+
+        @if (
+          loginForm.get('email')?.touched &&
+          loginForm.get('email')?.hasError('required')
+        ) {
+          <small class="error-message">
+            Email address is required.
+          </small>
+        }
+
+        @if (
+          loginForm.get('email')?.touched &&
+          loginForm.get('email')?.hasError('email')
+        ) {
+          <small class="error-message">
+            Please enter a valid email address.
+          </small>
+        }
+
+        @if (
+          loginForm.get('email')?.touched &&
+          loginForm.get('email')?.hasError('maxlength')
+        ) {
+          <small class="error-message">
+            Email must not exceed 254 characters.
+          </small>
+        }
+
+      </div>
+
+      <!-- Password -->
+      <div class="input-group">
+
+        <label for="password">Password</label>
+
+        <div class="password-wrapper">
+
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            maxlength="128"
+            [attr.aria-invalid]="
+              loginForm.get('password')?.touched &&
+              loginForm.get('password')?.invalid
+            "
+          />
+
+          <button
+            type="button"
+            class="eye-button"
+            (click)="togglePassword()"
+            [attr.aria-label]="
+              showPassword ? 'Hide password' : 'Show password'
+            "
+            [attr.aria-pressed]="showPassword"
+          >
+
+            @if (showPassword) {
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 3l18 18"/>
+                <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5.5 0 9.5 7 9.5 7a15 15 0 0 1-4 4.3"/>
+                <path d="M6.2 6.2C3.8 7.7 2.5 10 2.5 12c0 0 4 7 9.5 7a9.6 9.6 0 0 0 3.2-.6"/>
+                <path d="M10 10a3 3 0 0 0 4 4"/>
+              </svg>
+
+            } @else {
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+
+            }
+
+          </button>
+
+        </div>
+
+        @if (
+          loginForm.get('password')?.touched &&
+          loginForm.get('password')?.hasError('required')
+        ) {
+          <small class="error-message">
+            Password is required.
+          </small>
+        }
+
+        @if (
+          loginForm.get('password')?.touched &&
+          loginForm.get('password')?.hasError('minlength')
+        ) {
+          <small class="error-message">
+            Password must contain at least 8 characters.
+          </small>
+        }
+
+        @if (
+          loginForm.get('password')?.touched &&
+          loginForm.get('password')?.hasError('maxlength')
+        ) {
+          <small class="error-message">
+            Password must not exceed 128 characters.
+          </small>
+        }
+
+      </div>
+
+      <!-- Forgot Password -->
+      <div class="form-options">
+
+        <div class="forgot-password">
+
+          <button
+            type="button"
+            class="forgot-link"
+            (click)="forgotPassword()"
+          >
+            Forgot password?
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Login Button -->
+      <button
+        type="submit"
+        class="login-btn"
+        [disabled]="isLoading"
+      >
+        @if (isLoading) {
+          Logging in...
+        } @else {
+          Log In →
+        }
+      </button>
+
+      <!-- Frontend Demo Message -->
+      @if (successMessage) {
+        <p class="success-message" role="status">
+          {{ successMessage }}
+        </p>
+      }
+
+    </form>
+
+    <!-- Sign Up -->
+    <div class="signup">
+      Don't have an account?
+      <a href="/register">Sign Up →</a>
+    </div>
+
+  </div>
+
+  <!-- Tourism Image -->
+  <div class="image-section">
+
+    <img
+      src="/images/ceylongo-login-side.png"
+      alt="Explore Sri Lanka"
+    />
+
+  </div>
+
+</div>
