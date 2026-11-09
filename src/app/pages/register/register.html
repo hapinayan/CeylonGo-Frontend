@@ -1,4 +1,3 @@
-
 <div class="register-page">
 
   <div class="register-card">
@@ -221,6 +220,19 @@
           Create Account →
         }
       </button>
+
+      <!-- Feedback Messages -->
+      @if (errorMessage) {
+        <p class="server-error" role="alert">
+          {{ errorMessage }}
+        </p>
+      }
+
+      @if (successMessage) {
+        <p class="success-message" role="status">
+          {{ successMessage }}
+        </p>
+      }
 
     </form>
 

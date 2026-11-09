@@ -247,3 +247,28 @@
   width: 22px;
   height: 22px;
 }
+
+.success-message {
+  margin-top: 18px;
+  padding: 12px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.server-error {
+  margin-top: 18px;
+  padding: 12px;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+
