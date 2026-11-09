@@ -201,7 +201,13 @@
         }
       </button>
 
-      <!-- Frontend Demo Message -->
+      <!-- Feedback Messages -->
+      @if (errorMessage) {
+        <p class="server-error" role="alert">
+          {{ errorMessage }}
+        </p>
+      }
+
       @if (successMessage) {
         <p class="success-message" role="status">
           {{ successMessage }}
