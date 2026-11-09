@@ -1,0 +1,321 @@
+
+/* ===================================
+   CeylonGo Login Page
+   =================================== */
+
+:host {
+  display: block;
+}
+
+/* Main Layout */
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  background: #eef7ff;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Left Side */
+.login-card {
+  width: 55%;
+  min-height: 100vh;
+  padding: 35px 7%;
+  background: #ffffff;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Logo */
+.logo {
+  width: 260px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  align-self: center;
+  margin-bottom: 30px;
+}
+
+/* Heading */
+.login-card h1 {
+  color: #082b5c;
+  font-size: 42px;
+  font-weight: 800;
+  text-align: center;
+  margin: 10px 0 18px;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 18px;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 45px;
+}
+
+/* Form Fields */
+.input-group {
+  margin-bottom: 25px;
+}
+
+.input-group label {
+  display: block;
+  color: #082b5c;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.input-group input {
+  width: 100%;
+  height: 62px;
+  padding: 0 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 17px;
+  color: #082b5c;
+  background: #ffffff;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+  border-color: #ff9f1c;
+  box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.12);
+}
+
+/* Password Show / Hide */
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 85px;
+}
+
+.eye-button {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  min-width: 50px;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+
+  color: #082b5c;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Validation */
+.error-message {
+  display: block;
+  color: #e53935;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.input-group input.ng-invalid.ng-touched {
+  border-color: #e53935;
+}
+
+.input-group input.ng-valid.ng-touched {
+  border-color: #28a745;
+}
+
+/* Forgot Password */
+.form-options {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0 0 28px;
+}
+
+.forgot-password {
+  margin: 0;
+}
+
+.forgot-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #0878c8;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Login Button */
+.login-btn {
+  width: 100%;
+  min-height: 62px;
+  padding: 12px;
+  border: none;
+  border-radius: 35px;
+
+  background: #ff9f1c;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+
+  transition: background 0.2s;
+}
+
+.login-btn:hover:not(:disabled) {
+  background: #e98a08;
+}
+
+.login-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Sign Up Link */
+.signup {
+  margin-top: 38px;
+  text-align: center;
+  color: #718096;
+  font-size: 17px;
+}
+
+.signup a {
+  color: #ff9f1c;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 6px;
+}
+
+.signup a:hover {
+  text-decoration: underline;
+}
+
+/* Right Side Tourism Image */
+.image-section {
+  width: 45%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.image-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .login-card {
+    width: 60%;
+    padding: 30px 5%;
+  }
+
+  .image-section {
+    width: 40%;
+  }
+
+  .login-card h1 {
+    font-size: 34px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 650px) {
+  .login-page {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .login-card {
+    width: 100%;
+    min-height: 100vh;
+    padding: 35px 24px;
+    box-sizing: border-box;
+  }
+
+  .image-section {
+    display: none;
+  }
+
+  .logo {
+    width: 220px;
+    margin-bottom: 24px;
+  }
+
+  .login-card h1 {
+    font-size: 30px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    margin-bottom: 35px;
+  }
+
+  .input-group label {
+    font-size: 15px;
+  }
+
+  .input-group input {
+    height: 55px;
+    font-size: 15px;
+  }
+
+  .login-btn {
+    min-height: 55px;
+    font-size: 18px;
+  }
+
+  .signup {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .forgot-link {
+    font-size: 14px;
+  }
+}
+
+
+/* Eye Icon Button */
+.eye-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  color: #082b5c;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.eye-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+
+.success-message {
+  margin-top: 18px;
+  padding: 12px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.5;
+}
