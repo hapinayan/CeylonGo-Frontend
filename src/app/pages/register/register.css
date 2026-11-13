@@ -1,148 +1,323 @@
 
-/* Register Page Layout */
-.register-page {
-  display: flex;
-  min-height: 100vh;
-  background: #f4f8fc;
+:host {
+  display: block;
   font-family: Arial, sans-serif;
 }
 
-/* Left Register Section */
-.register-card {
-  width: 55%;
-  padding: 30px 7%;
-  background: #ffffff;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+/* BACKGROUND */
+
+.register-page {
+  min-height: 100dvh;
+  padding: 20px;
+
   display: flex;
-  flex-direction: column;
   justify-content: center;
+  align-items: center;
+
+  background:
+    linear-gradient(
+      rgba(3, 22, 47, 0.72),
+      rgba(3, 22, 47, 0.72)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
 }
 
-/* CeylonGo Logo */
-.logo {
-  width: 260px;
-  max-width: 100%;
+/* MAIN POPUP */
+
+.register-modal {
+  display: grid;
+  grid-template-columns: 41% 59%;
+
+  width: min(1000px, 100%);
   height: auto;
-  object-fit: contain;
-  align-self: center;
-  margin-bottom: 25px;
-}
+  min-height: 0;
+  max-height: calc(100dvh - 40px);
 
-/* Headings */
-.register-card h1 {
-  color: #082b5c;
-  font-size: 38px;
-  font-weight: 800;
-  text-align: center;
-  margin: 10px 0;
-}
-
-.subtitle {
-  color: #718096;
-  font-size: 17px;
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-/* Form Fields */
-.input-group {
-  margin-bottom: 20px;
-}
-
-.input-group label {
-  display: block;
-  color: #082b5c;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 9px;
-}
-
-.input-group input {
-  width: 100%;
-  height: 54px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 0 16px;
-  font-size: 16px;
-  box-sizing: border-box;
-  outline: none;
   background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+
+  box-shadow: 0 18px 65px rgba(0, 0, 0, 0.22);
 }
 
-.input-group input:focus {
-  border-color: #ff9f1c;
-  box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.12);
-}
+/* LEFT IMAGE PANEL */
 
-/* Password Show / Hide */
-.password-wrapper {
+.register-left {
   position: relative;
+  min-width: 0;
+  min-height: 0;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 35%,
+      rgba(0, 20, 28, 0.8)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+
+  overflow: hidden;
 }
 
-.password-wrapper input {
-  padding-right: 75px;
-}
+/* LEFT TEXT */
 
-.eye-button {
+.left-content {
   position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  color: #082b5c;
-  font-size: 14px;
-  cursor: pointer;
+  bottom: 55px;
+  left: 30px;
+  right: 25px;
+
+  color: #ffffff;
+  z-index: 2;
 }
 
-/* Terms Checkbox */
-.terms-group {
-  margin: 10px 0 25px;
+.left-content h2 {
+  font-size: clamp(26px, 3vw, 37px);
+  font-weight: 800;
+  line-height: 1.12;
+  margin: 0 0 12px;
 }
 
-.terms-group label {
+.left-content h2 span {
+  color: #ff9700;
+}
+
+.left-line {
+  width: 100px;
+  height: 5px;
+  margin-bottom: 14px;
+
+  background: #ff9700;
+  border-radius: 50%;
+}
+
+.left-content p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ORANGE WAVE */
+
+.orange-wave {
+  position: absolute;
+  bottom: -20px;
+  left: -8%;
+
+  width: 120%;
+  height: 48px;
+
+  background: #ff9700;
+  border-radius: 50% 50% 0 0;
+}
+
+/* RIGHT FORM PANEL */
+
+.register-right {
+  position: relative;
+  min-width: 0;
+
+  padding: 58px 30px 24px;
+
+  background: #ffffff;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* BACK AND CLOSE BUTTONS */
+
+.back-btn,
+.close-btn {
+  position: absolute;
+  top: 12px;
+
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #475569;
-  font-size: 15px;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  color: #071b43;
   cursor: pointer;
 }
 
-.terms-group input {
-  width: 18px;
-  height: 18px;
-  accent-color: #ff9f1c;
+.back-btn {
+  left: 20px;
+  font-size: 23px;
 }
 
-/* Error Messages */
-.error-message {
-  display: block;
-  color: #e53935;
-  font-size: 13px;
-  margin-top: 7px;
+.close-btn {
+  right: 20px;
+  font-size: 30px;
 }
 
-.input-group input.ng-invalid.ng-touched {
-  border-color: #e53935;
+.back-btn:hover,
+.close-btn:hover {
+  color: #ff7900;
 }
 
-/* Register Button */
+/* HEADING */
+
+.register-right h1 {
+  margin: 0;
+
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #071b43;
+}
+
+.heading-line {
+  width: 85px;
+  height: 5px;
+
+  margin: 10px 0 20px;
+
+  background: #ff7900;
+  border-radius: 20px;
+}
+
+/* FORM FIELDS */
+
+.field {
+  margin-bottom: 13px;
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  height: 52px;
+
+  border: 1.5px solid #d7dbe5;
+  border-radius: 12px;
+
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.input-box:focus-within {
+  border-color: #ff7900;
+  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.1);
+}
+
+.readonly-box {
+  background: #f5f5f9;
+}
+
+/* FIELD ICON */
+
+.field-icon {
+  flex: 0 0 50px;
+
+  text-align: center;
+  color: #071b43;
+  font-size: 22px;
+}
+
+/* INPUT */
+
+.input-box input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+
+  padding: 0 10px 0 0;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+  color: #101b35;
+
+  font-size: 15px;
+}
+
+.input-box input::placeholder {
+  color: #697184;
+}
+
+/* PHONE COUNTRY CODE */
+
+.country-code {
+  padding: 0 10px;
+
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+
+  border-right: 1px solid #d7dbe5;
+}
+
+.phone-box input {
+  padding-left: 12px;
+}
+
+/* PASSWORD EYE BUTTON */
+
+.eye-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+
+  padding: 0;
+  border: none;
+
+  background: transparent;
+  color: #071b43;
+
+  cursor: pointer;
+}
+
+.eye-btn svg {
+  width: 21px;
+  height: 21px;
+  pointer-events: none;
+}
+
+.eye-btn:hover {
+  color: #ff7900;
+}
+
+/* REGISTER BUTTON */
+
 .register-btn {
   width: 100%;
-  min-height: 56px;
-  background: #ff9f1c;
-  color: #ffffff;
+  min-height: 50px;
+
+  margin-top: 5px;
+  padding: 10px 16px;
+
   border: none;
-  border-radius: 30px;
-  font-size: 18px;
-  font-weight: 700;
+  border-radius: 12px;
+
+  background: #ff7900;
+  color: #ffffff;
+
+  font-size: 17px;
+  font-weight: 800;
+
   cursor: pointer;
-  transition: background 0.2s;
 }
 
 .register-btn:hover:not(:disabled) {
-  background: #e98a08;
+  background: #ec6e00;
 }
 
 .register-btn:disabled {
@@ -150,125 +325,198 @@
   cursor: not-allowed;
 }
 
-/* Login Link */
-.login-link {
+/* TERMS AND PRIVACY */
+
+.terms-text {
+  margin: 14px 0 0;
+
   text-align: center;
-  color: #718096;
-  margin-top: 30px;
-  font-size: 16px;
+  color: #626a7a;
+
+  font-size: 12px;
+  line-height: 1.5;
 }
 
+.terms-text a,
 .login-link a {
-  color: #ff9f1c;
-  text-decoration: none;
-  font-weight: 700;
-}
-
-.login-link a:hover {
+  color: #ff7900;
   text-decoration: underline;
-}
-
-/* Right Tourism Image */
-.image-section {
-  width: 45%;
-  min-height: 100vh;
-  overflow: hidden;
-}
-
-.image-section img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-  .register-card {
-    width: 60%;
-    padding: 30px 5%;
-  }
-
-  .image-section {
-    width: 40%;
-  }
-
-  .register-card h1 {
-    font-size: 32px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 650px) {
-  .register-page {
-    display: block;
-  }
-
-  .register-card {
-    width: 100%;
-    min-height: 100vh;
-    padding: 30px 22px;
-  }
-
-  .image-section {
-    display: none;
-  }
-
-  .logo {
-    width: 220px;
-  }
-
-  .register-card h1 {
-    font-size: 30px;
-  }
-
-  .subtitle {
-    font-size: 15px;
-  }
-}
-
-
-/* Password Eye Icon */
-.eye-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  padding: 0;
-  color: #082b5c;
-  background: transparent;
-  border: none;
   cursor: pointer;
 }
 
-.eye-button svg {
-  width: 22px;
-  height: 22px;
+.terms-text a:hover,
+.login-link a:hover {
+  color: #d65f00;
 }
 
-.success-message {
-  margin-top: 18px;
-  padding: 12px;
-  color: #166534;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  border-radius: 10px;
-  font-size: 14px;
+/* SIGN IN LINK */
+
+.login-link {
+  margin: 12px 0 0;
+
   text-align: center;
-  line-height: 1.5;
+  color: #626a7a;
+  font-size: 13px;
+}
+
+/* VALIDATION ERRORS */
+
+.error {
+  display: block;
+  margin: 5px 0 0 8px;
+
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .server-error {
-  margin-top: 18px;
-  padding: 12px;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: 10px;
-  font-size: 14px;
+  margin: 10px 0 0;
+
+  color: #b91c1c;
   text-align: center;
-  line-height: 1.5;
+  font-size: 13px;
 }
 
+/* SHORT LAPTOP SCREENS */
+
+@media (min-width: 651px) and (max-height: 800px) {
+  .register-page {
+    padding: 12px;
+  }
+
+  .register-modal {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .register-right {
+    padding: 50px 26px 18px;
+  }
+
+  .heading-line {
+    margin-bottom: 14px;
+  }
+
+  .field {
+    margin-bottom: 10px;
+  }
+
+  .input-box {
+    height: 46px;
+  }
+
+  .register-btn {
+    min-height: 46px;
+  }
+
+  .terms-text {
+    margin-top: 10px;
+  }
+
+  .login-link {
+    margin-top: 9px;
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 651px) and (max-width: 850px) {
+  .register-modal {
+    grid-template-columns: 36% 64%;
+  }
+
+  .register-right {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .left-content {
+    left: 22px;
+    right: 18px;
+  }
+
+  .left-content h2 {
+    font-size: 26px;
+  }
+
+  .left-content p {
+    font-size: 13px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+  .register-page {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .register-modal {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    height: auto;
+    max-height: none;
+
+    border-radius: 18px;
+  }
+
+  .register-left {
+    flex: 0 0 auto;
+    min-height: 230px;
+    background-position: center 32%;
+  }
+
+  .left-content {
+    bottom: 30px;
+    left: 25px;
+    right: 20px;
+  }
+
+  .left-content h2 {
+    font-size: 27px;
+  }
+
+  .left-content p {
+    font-size: 13px;
+  }
+
+  .orange-wave {
+    height: 25px;
+    bottom: -12px;
+  }
+
+  .register-right {
+    padding: 58px 22px 26px;
+    overflow: visible;
+  }
+
+  .register-right h1 {
+    font-size: 27px;
+  }
+
+  .input-box {
+    height: 50px;
+  }
+
+  .field-icon {
+    flex-basis: 45px;
+    font-size: 20px;
+  }
+
+  .input-box input {
+    font-size: 14px;
+  }
+
+  .country-code {
+    font-size: 12px;
+    padding: 0 7px;
+  }
+
+  .register-btn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+}

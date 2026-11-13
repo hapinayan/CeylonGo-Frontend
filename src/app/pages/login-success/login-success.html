@@ -1,0 +1,76 @@
+
+<div class="success-page">
+
+  <div class="success-card">
+
+    <!-- BRAND -->
+    <div class="brand">
+      Ceylon<span>Go</span>
+    </div>
+
+    <!-- ANIMATED SUCCESS TICK -->
+    <div class="success-icon">
+      <svg viewBox="0 0 52 52"
+           role="img"
+           aria-label="Success">
+
+        <circle
+          class="check-circle"
+          cx="26"
+          cy="26"
+          r="24"
+          fill="none"
+        />
+
+        <path
+          class="check-mark"
+          d="M14 27 L22 35 L39 18"
+          fill="none"
+        />
+
+      </svg>
+    </div>
+
+    <h1>Login Successful!</h1>
+
+    <h2>Welcome Back to CeylonGo!</h2>
+
+    <p class="description">
+      Your demo login has been completed successfully.
+    </p>
+
+    @if (email) {
+      <div class="email-box">
+        <span class="email-label">Signed in as</span>
+        <strong>{{ email }}</strong>
+      </div>
+    }
+
+    <p class="journey-text">
+      Discover beautiful destinations, unique
+      homestays and unforgettable local
+      experiences across Sri Lanka.
+    </p>
+
+    <button
+      type="button"
+      class="continue-btn"
+      (click)="continueExploring()">
+      Continue Exploring →
+    </button>
+
+    <button
+      type="button"
+      class="back-btn"
+      (click)="backToLogin()">
+      Back to Login
+    </button>
+
+    <p class="demo-note">
+      Frontend testing mode only.
+      Backend authentication is not connected.
+    </p>
+
+  </div>
+
+</div>

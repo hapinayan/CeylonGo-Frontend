@@ -1,0 +1,271 @@
+
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.success-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background:
+    linear-gradient(
+      rgba(4, 25, 54, 0.75),
+      rgba(4, 25, 54, 0.85)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+
+  font-family: Arial, sans-serif;
+}
+
+.success-card {
+  width: 100%;
+  max-width: 540px;
+  padding: 38px 40px;
+  background: #ffffff;
+  border-radius: 24px;
+  text-align: center;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.25);
+
+  animation: cardAppear 0.6s ease;
+}
+
+.brand-name {
+  font-size: 32px;
+  font-weight: 800;
+  color: #082b5c;
+  margin-bottom: 20px;
+}
+
+.brand-name span {
+  color: #ff7900;
+}
+
+/* Success Tick */
+
+.success-icon {
+  width: 105px;
+  height: 105px;
+  margin: 0 auto 20px;
+}
+
+.success-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.check-circle {
+  stroke: #16a34a;
+  stroke-width: 3;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+
+  animation: drawCircle 0.8s ease forwards;
+}
+
+.check-mark {
+  stroke: #16a34a;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+
+  animation: drawCheck 0.5s ease 0.8s forwards;
+}
+
+/* Text */
+
+h1 {
+  color: #082b5c;
+  font-size: 29px;
+  margin-bottom: 12px;
+}
+
+h2 {
+  color: #ff7900;
+  font-size: 21px;
+  margin-bottom: 12px;
+}
+
+.welcome-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #082b5c;
+}
+
+.description {
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.email-box {
+  padding: 14px;
+  margin: 20px 0;
+  background: #f1f5f9;
+  border-radius: 12px;
+  color: #082b5c;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.journey-text {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 20px 0;
+}
+
+/* Buttons */
+
+.login-btn {
+  width: 100%;
+  min-height: 55px;
+  border: none;
+  border-radius: 12px;
+
+  background: #ff7900;
+  color: white;
+
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+
+  transition: background 0.2s;
+}
+
+.login-btn:hover {
+  background: #e66d00;
+}
+
+.home-btn {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+
+  border: none;
+  background: transparent;
+
+  color: #082b5c;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.home-btn:hover {
+  text-decoration: underline;
+}
+
+.demo-note {
+  margin-top: 18px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* Animations */
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawCircle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes drawCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .success-page {
+    padding: 15px;
+  }
+
+  .success-card {
+    padding: 30px 22px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 19px;
+  }
+
+  .success-icon {
+    width: 85px;
+    height: 85px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-card,
+  .check-circle,
+  .check-mark {
+    animation: none;
+  }
+
+  .check-circle,
+  .check-mark {
+    stroke-dashoffset: 0;
+  }
+}
+
+
+/* COMPACT POPUP HEIGHT */
+
+:host {
+  display: block;
+}
+
+@media (min-width: 651px) {
+  .success-card,
+  .success-modal,
+  .check-email-card,
+  .check-email-modal,
+  .reset-card,
+  .reset-modal,
+  .reset-password-card,
+  .reset-password-modal {
+    height: auto;
+    min-height: 0;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    padding: 24px 30px;
+  }
+
+  h1 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  p {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+}

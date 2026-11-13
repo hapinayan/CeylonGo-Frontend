@@ -1,0 +1,751 @@
+
+/* =========================================
+   CEYLONGO - AUTH ENTRY UI
+   Navy Blue + Orange + White
+   ========================================= */
+
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* MAIN PAGE */
+
+.auth-page {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100dvh;
+  padding: 20px;
+
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+
+  background: #082b4e;
+}
+
+/* BACKGROUND IMAGE */
+
+.background-page {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+
+  background:
+    linear-gradient(
+      rgba(5, 20, 44, 0.65),
+      rgba(5, 20, 44, 0.78)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+}
+
+/* BACKGROUND BLUR */
+
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background: rgba(5, 16, 37, 0.15);
+  backdrop-filter: blur(5px);
+}
+
+/* AUTH MODAL */
+
+.auth-modal {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+  grid-template-columns: 41% 59%;
+
+  width: min(1180px, 100%);
+  max-height: calc(100dvh - 40px);
+  min-height: 0;
+
+  overflow: hidden;
+
+  background: #ffffff;
+  border-radius: 24px;
+
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+/* LEFT TOURISM PANEL */
+
+.auth-left,
+.tourism-panel {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 32px 44px 68px;
+
+  overflow: hidden;
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 40, 80, 0.08) 0%,
+      rgba(0, 30, 50, 0.08) 42%,
+      rgba(0, 20, 30, 0.78) 100%
+    ),
+    url('/images/s2.jpeg') center / 100% 100% no-repeat;
+}
+
+/* LOGO - IMAGE ALREADY IN BACKGROUND */
+
+.brand-logo {
+  display: none;
+}
+
+.brand {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+/* LEFT PANEL TEXT */
+
+.tourism-content {
+  position: relative;
+  z-index: 2;
+}
+
+.tourism-content h2 {
+  margin: 0 0 14px;
+
+  color: #ffffff;
+  font-size: clamp(30px, 3vw, 43px);
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.tourism-content p {
+  margin: 0;
+
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* ORANGE WAVE */
+
+.orange-wave {
+  position: absolute;
+  bottom: -33px;
+  left: -10%;
+
+  width: 120%;
+  height: 65px;
+
+  background: #ff9900;
+  border-radius: 50% 50% 0 0;
+}
+
+/* RIGHT CONTENT */
+
+.auth-right,
+.auth-content {
+  position: relative;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 54px 48px 34px;
+
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+
+  background: #ffffff;
+}
+
+/* CLOSE BUTTON */
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 22px;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+  color: #071c44;
+
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #fff3e8;
+  color: #ff7900;
+}
+
+/* HEADING */
+
+.auth-right h1,
+.auth-content h1 {
+  margin: 0 0 14px;
+
+  color: #071c44;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.heading-line {
+  width: 100px;
+  height: 6px;
+
+  margin-bottom: 30px;
+
+  background: #ff8800;
+  border-radius: 10px;
+}
+
+/* EMAIL INPUT */
+
+.email-input-wrapper,
+.email-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  width: 100%;
+  height: 62px;
+
+  padding: 0 20px;
+
+  border: 1px solid #d4d7df;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.email-input-wrapper:focus-within,
+.email-field:focus-within {
+  border-color: #ff8800;
+  box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
+}
+
+.email-input-wrapper svg,
+.email-icon {
+  width: 25px;
+  height: 25px;
+
+  flex-shrink: 0;
+  color: #071c44;
+}
+
+.email-input-wrapper input,
+.email-field input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+
+  padding: 0;
+
+  border: 0;
+  outline: none;
+
+  background: transparent;
+  color: #071c44;
+
+  font-size: 17px;
+}
+
+.email-input-wrapper input::placeholder,
+.email-field input::placeholder {
+  color: #6b7280;
+}
+
+/* ERROR MESSAGE */
+
+.error,
+.error-message {
+  display: block;
+
+  margin: 8px 0 0;
+
+  color: #dc2626;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* CONTINUE BUTTON */
+
+.continue-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 62px;
+
+  margin-top: 20px;
+  padding: 12px 18px;
+
+  border: 0;
+  border-radius: 14px;
+
+  background: #ff7900;
+  color: #ffffff;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.continue-btn:hover {
+  background: #e86d00;
+  box-shadow: 0 6px 18px rgba(255, 121, 0, 0.2);
+}
+
+/* OR DIVIDER */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin: 22px 0;
+
+  color: #555b69;
+  font-size: 17px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+
+  flex: 1;
+  height: 1px;
+
+  background: #d5d7dc;
+}
+
+.divider p {
+  margin: 0;
+}
+
+/* SOCIAL BUTTONS */
+
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+
+  width: 100%;
+  min-height: 56px;
+
+  padding: 10px 16px;
+
+  border: 1px solid #d5d7df;
+  border-radius: 13px;
+
+  background: #ffffff;
+  color: #101010;
+
+  font-size: 17px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.social-btn:not(:disabled):hover {
+  background: #fff7ed;
+  border-color: #ff8800;
+}
+
+.social-btn:disabled {
+  cursor: not-allowed;
+}
+
+.social-icon {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+}
+
+.apple-icon {
+  color: #000000;
+}
+
+.whatsapp-icon {
+  color: #10c653;
+}
+
+/* DEMO FEEDBACK */
+
+.social-demo-message {
+  margin: 12px 0;
+  padding: 10px 14px;
+
+  background: #fff7ed;
+  color: #9a3412;
+
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* TERMS AND PRIVACY */
+
+.terms,
+.terms-text {
+  margin: 22px 0 0;
+
+  color: #555b69;
+
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.terms span,
+.terms-text a {
+  color: #e87500;
+  text-decoration: underline;
+}
+
+/* LOGIN AND REGISTER LINKS */
+
+.account-options,
+.auth-links {
+  margin: 12px 0 0;
+
+  color: #555b69;
+
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.account-options a,
+.auth-links a {
+  color: #ff7900;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.account-options a:hover,
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+.separator {
+  margin: 0 8px;
+  color: #cbd5e1;
+}
+
+/* TABLET */
+
+@media (max-width: 850px) {
+  .auth-page {
+    padding: 14px;
+  }
+
+  .auth-modal {
+    grid-template-columns: 38% 62%;
+    max-height: calc(100dvh - 28px);
+  }
+
+  .auth-left,
+  .tourism-panel {
+    padding: 26px 22px 52px;
+  }
+
+  .tourism-content h2 {
+    font-size: 29px;
+  }
+
+  .tourism-content p {
+    font-size: 15px;
+  }
+
+  .auth-right,
+  .auth-content {
+    padding: 54px 26px 26px;
+  }
+
+  .social-btn {
+    font-size: 15px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+  .auth-page {
+    align-items: flex-start;
+    min-height: 100dvh;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .auth-modal {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    max-height: none;
+
+    overflow: hidden;
+    border-radius: 18px;
+  }
+
+  .auth-left,
+  .tourism-panel {
+    min-height: 230px;
+    padding: 20px 24px 36px;
+
+    background-size: cover;
+    background-position: center;
+  }
+
+  .tourism-content h2 {
+    font-size: 26px;
+  }
+
+  .tourism-content p {
+    font-size: 14px;
+  }
+
+  .orange-wave {
+    height: 48px;
+    bottom: -25px;
+  }
+
+  .auth-right,
+  .auth-content {
+    padding: 54px 22px 28px;
+    overflow: visible;
+  }
+
+  .auth-right h1,
+  .auth-content h1 {
+    font-size: 28px;
+  }
+
+  .heading-line {
+    margin-bottom: 24px;
+  }
+
+  .email-input-wrapper,
+  .email-field {
+    height: 56px;
+    padding: 0 14px;
+  }
+
+  .email-input-wrapper input,
+  .email-field input {
+    font-size: 15px;
+  }
+
+  .continue-btn {
+    min-height: 56px;
+    font-size: 17px;
+  }
+
+  .social-btn {
+    min-height: 52px;
+    font-size: 14px;
+    gap: 12px;
+  }
+
+  .terms,
+  .terms-text,
+  .account-options,
+  .auth-links {
+    font-size: 12px;
+  }
+}
+
+/* SHORT DESKTOP SCREENS */
+
+@media (max-height: 740px) and (min-width: 651px) {
+  .auth-page {
+    padding: 12px;
+  }
+
+  .auth-modal {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .auth-right,
+  .auth-content {
+    padding-top: 45px;
+    padding-bottom: 20px;
+  }
+
+  .heading-line {
+    margin-bottom: 20px;
+  }
+
+  .divider {
+    margin: 14px 0;
+  }
+
+  .terms,
+  .terms-text {
+    margin-top: 15px;
+  }
+}
+
+/* REDUCED MOTION */
+
+@media (prefers-reduced-motion: reduce) {
+  .continue-btn,
+  .social-btn,
+  .close-btn,
+  .email-input-wrapper,
+  .email-field {
+    transition: none;
+  }
+}
+
+
+/* CEYLONGO - COMPACT AUTH MODAL */
+
+@media (min-width: 851px) {
+  .auth-modal {
+    width: min(1120px, 100%);
+  }
+
+  .auth-right,
+  .auth-content {
+    padding: 38px 42px 24px;
+  }
+
+  .heading-line {
+    margin-bottom: 22px;
+  }
+
+  .email-input-wrapper,
+  .email-field {
+    height: 56px;
+  }
+
+  .continue-btn {
+    min-height: 54px;
+    margin-top: 16px;
+  }
+
+  .divider {
+    margin: 15px 0;
+  }
+
+  .social-buttons {
+    gap: 8px;
+  }
+
+  .social-btn {
+    min-height: 49px;
+  }
+
+  .terms,
+  .terms-text {
+    margin-top: 15px;
+  }
+
+  .account-options,
+  .auth-links {
+    margin-top: 9px;
+  }
+}
+
+
+/* Smaller orange horizontal line */
+
+.heading-line {
+  width: 55px;
+  height: 4px;
+  border-radius: 10px;
+}
+
+
+/* Equal width for image and sign-in details */
+
+@media (min-width: 851px) {
+  .auth-modal {
+    width: min(950px, 94vw);
+    grid-template-columns: 50% 50%;
+  }
+
+  .auth-left,
+  .tourism-panel {
+    min-width: 0;
+  }
+
+  .auth-right,
+  .auth-content {
+    min-width: 0;
+    padding: 38px 28px 24px;
+  }
+
+  .auth-right h1,
+  .auth-content h1 {
+    font-size: 29px;
+  }
+
+  .social-btn {
+    font-size: 15px;
+  }
+
+  .terms-text,
+  .auth-links {
+    font-size: 12px;
+  }
+}

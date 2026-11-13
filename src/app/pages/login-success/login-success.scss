@@ -1,0 +1,284 @@
+
+:host {
+  display: block;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* PAGE BACKGROUND */
+
+.success-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+
+  font-family: Arial, sans-serif;
+
+  background:
+    linear-gradient(
+      rgba(5, 25, 55, 0.75),
+      rgba(5, 25, 55, 0.85)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+}
+
+/* COMPACT LOGIN SUCCESS POPUP */
+
+.success-card {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  max-height: calc(100dvh - 40px);
+
+  padding: 24px 30px;
+
+  background: #ffffff;
+  border-radius: 20px;
+  text-align: center;
+  overflow-y: auto;
+
+  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.25);
+
+  animation: cardAppear 0.5s ease;
+}
+
+/* CEYLONGO LOGO */
+
+.brand {
+  font-size: 30px;
+  font-weight: 800;
+  color: #082b5c;
+  margin-bottom: 14px;
+}
+
+.brand span {
+  color: #ff7900;
+}
+
+/* SUCCESS TICK */
+
+.success-icon {
+  width: 75px;
+  height: 75px;
+  margin: 0 auto 14px;
+}
+
+.success-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.check-circle {
+  stroke: #16a34a;
+  stroke-width: 3;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+
+  animation: drawCircle 0.8s ease forwards;
+}
+
+.check-mark {
+  stroke: #16a34a;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+
+  animation: drawCheck 0.5s ease 0.8s forwards;
+}
+
+/* HEADINGS */
+
+h1 {
+  color: #082b5c;
+  font-size: 25px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+h2 {
+  color: #ff7900;
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+
+/* DESCRIPTION */
+
+.description {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 8px 0;
+}
+
+/* EMAIL DETAILS */
+
+.email-box {
+  margin: 14px 0;
+  padding: 12px;
+
+  background: #f1f5f9;
+  border-radius: 10px;
+
+  color: #082b5c;
+  overflow-wrap: anywhere;
+}
+
+.email-label {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.email-box strong {
+  font-size: 14px;
+}
+
+/* JOURNEY DESCRIPTION */
+
+.journey-text {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 12px 0;
+}
+
+/* CONTINUE BUTTON */
+
+.continue-btn {
+  width: 100%;
+  min-height: 48px;
+
+  padding: 10px 16px;
+
+  background: #ff7900;
+  color: #ffffff;
+
+  border: none;
+  border-radius: 11px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.continue-btn:hover {
+  background: #e66d00;
+}
+
+/* BACK BUTTON */
+
+.back-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+
+  border: none;
+  background: transparent;
+
+  color: #082b5c;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+}
+
+/* DEMO NOTE */
+
+.demo-note {
+  margin-top: 12px;
+  margin-bottom: 0;
+
+  font-size: 11px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+/* ANIMATIONS */
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawCircle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes drawCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .success-page {
+    padding: 12px;
+  }
+
+  .success-card {
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 22px 18px;
+  }
+
+  .brand {
+    font-size: 27px;
+  }
+
+  .success-icon {
+    width: 70px;
+    height: 70px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  h2 {
+    font-size: 17px;
+  }
+
+  .journey-text {
+    font-size: 13px;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .success-card,
+  .check-circle,
+  .check-mark {
+    animation: none;
+  }
+
+  .check-circle,
+  .check-mark {
+    stroke-dashoffset: 0;
+  }
+}
