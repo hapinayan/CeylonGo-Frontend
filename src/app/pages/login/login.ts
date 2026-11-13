@@ -1,103 +1,58 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+
+import { Component, inject, signal, OnInit } from '@angular/core';
+
 import {
   FormBuilder,
-  FormGroup,
   ReactiveFormsModule,
-  Validators,
+  Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize, of, switchMap } from 'rxjs';
 
-import { User } from '../../core/models/auth.models';
-import { AuthService } from '../../core/services/auth.service';
+import {
+  ActivatedRoute,
+  Router,
+  RouterLink
+} from '@angular/router';
+
+import { DemoAuth } from '../../services/demo-auth';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrl: './login.css'
 })
 export class Login implements OnInit {
+
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly demoAuth = inject(DemoAuth);
 
   showPassword = false;
 
-  // Reactive signals backing state for reliable Angular zoneless change detection
-  private readonly _isLoading = signal(false);
-  private readonly _errorMessage = signal('');
-  private readonly _successMessage = signal('');
-  private readonly _currentUser = signal<User | null>(null);
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
 
-  get isLoading(): boolean {
-    return this._isLoading();
-  }
-  set isLoading(value: boolean) {
-    this._isLoading.set(value);
-  }
-
-  get errorMessage(): string {
-    return this._errorMessage();
-  }
-  set errorMessage(value: string) {
-    this._errorMessage.set(value);
-  }
-
-  get successMessage(): string {
-    return this._successMessage();
-  }
-  set successMessage(value: string) {
-    this._successMessage.set(value);
-  }
-
-  get currentUser(): User | null {
-    return this._currentUser();
-  }
-  set currentUser(value: User | null) {
-    this._currentUser.set(value);
-  }
-
-  loginForm: FormGroup;
-
-  constructor() {
-    this.loginForm = this.fb.group({
-      email: [
-        '',
-        [
-          Validators.required,
-          Validators.email,
-          Validators.maxLength(254),
-        ],
-      ],
-
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(8),
-          Validators.maxLength(128),
-        ],
-      ],
-    });
-  }
+  loginForm = this.fb.group({
+    email: ['', [
+      Validators.required,
+      Validators.email,
+      Validators.maxLength(254)
+    ]],
+    password: ['', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.maxLength(128)
+    ]]
+  });
 
   ngOnInit(): void {
-    const isRegistered =
-      this.route.snapshot.queryParamMap.get('registered') === 'true';
-    if (isRegistered) {
-      this.successMessage =
-        'Account registered successfully! Please enter your credentials to log in.';
+    const email = this.route.snapshot.queryParamMap.get('email');
+
+    if (email) {
+      this.loginForm.patchValue({ email });
     }
   }
 
@@ -106,64 +61,53 @@ export class Login implements OnInit {
   }
 
   forgotPassword(): void {
-    alert('Password reset is coming soon.');
+    const email = this.loginForm.value.email || '';
+
+    this.router.navigate(['/forgot-password'], {
+      queryParams: { email }
+    });
   }
 
   onLogin(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.errorMessage.set('');
+    this.successMessage.set('');
 
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    this.isLoading = true;
-    this.cdr.markForCheck();
+    const email = (
+      this.loginForm.value.email || ''
+    ).trim().toLowerCase();
 
-    const credentials = {
-      email: this.loginForm.value.email.trim().toLowerCase(),
-      password: this.loginForm.value.password,
-    };
+    const password = this.loginForm.value.password || '';
 
-    this.authService
-      .login(credentials)
-      .pipe(
-        switchMap((response) => {
-          this.currentUser = response.user;
-          this.successMessage = `Welcome back, ${response.user.full_name}! Login successful.`;
+    const valid = this.demoAuth.login(email, password);
 
-          // Request profile via /auth/me with Bearer token
-          return this.authService.getCurrentUser().pipe(
-            catchError(() => of(response.user))
-          );
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: (profile) => {
-          this.currentUser = profile;
-          this.cdr.markForCheck();
-        },
-        error: (err: HttpErrorResponse) => {
-          if (err.status === 401) {
-            this.errorMessage = 'Invalid email or password.';
-          } else if (err.status === 403) {
-            this.errorMessage =
-              err.error?.detail ||
-              'Account is inactive. Please contact support.';
-          } else if (err.status === 0) {
-            this.errorMessage =
-              'Cannot connect to backend server. Please verify it is running on http://localhost:8000.';
-          } else {
-            this.errorMessage =
-              err.error?.detail || 'Login failed. Please try again.';
-          }
-          this.cdr.markForCheck();
-        },
-      });
+    if (!valid) {
+      this.errorMessage.set(
+        'Invalid email or password. If you refreshed the page, register a new demo account to test login again.'
+      );
+      return;
+    }
+
+    this.successMessage.set('Demo login successful!');
+
+    this.router.navigate(['/login-success'], {
+      state: { email }
+    });
+  }
+
+  closeModal(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  goToRegister(): void {
+    this.router.navigate(['/register']);
+  }
+
+  goBack(): void {
+    this.router.navigate(['/auth']);
   }
 }

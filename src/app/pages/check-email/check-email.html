@@ -1,0 +1,48 @@
+
+<div class="status-page">
+  <div class="status-card">
+    <div class="brand">Ceylon<span>Go</span></div>
+
+    <div class="status-icon">
+      <svg viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.6"
+           stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="2"/>
+        <path d="m3 7 9 6 9-6"/>
+      </svg>
+    </div>
+
+    <h1>Check Your Email</h1>
+
+    <p class="subtitle">
+      You've reached the password reset demo.
+    </p>
+
+    @if (email) {
+      <div class="email-box">
+        <span>Email address</span>
+        <strong>{{ email }}</strong>
+      </div>
+    }
+
+    <p class="description">
+      In the real application, password reset instructions
+      will be sent to your email. For now, you can
+      continue directly to the demo reset form.
+    </p>
+
+    <button type="button" class="primary-btn"
+            (click)="continueToReset()">
+      Continue to Reset Password →
+    </button>
+
+    <button type="button" class="secondary-btn"
+            (click)="backToLogin()">
+      ← Back to Login
+    </button>
+
+    <p class="demo-note">
+      Demo only — no reset email has been sent.
+    </p>
+  </div>
+</div>

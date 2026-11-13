@@ -1,255 +1,331 @@
+
 <div class="register-page">
+  <div class="register-modal">
 
-  <div class="register-card">
+    <!-- LEFT IMAGE -->
+    <div class="register-left">
+      <div class="left-content">
+        <h2>
+          Start Your<br>
+          <span>Sri Lanka Journey</span>
+        </h2>
 
-    <!-- CeylonGo Logo -->
-    <img
-      src="/images/ceylongo-logo.png"
-      alt="CeylonGo Logo"
-      class="logo"
-    />
+        <div class="left-line"></div>
 
-    <h1>Create Account</h1>
-
-    <p class="subtitle">
-      Join CeylonGo and start exploring Sri Lanka.
-    </p>
-
-    <form
-      [formGroup]="registerForm"
-      (ngSubmit)="onRegister()"
-      novalidate
-    >
-
-      <!-- Full Name -->
-      <div class="input-group">
-        <label for="fullName">Full Name</label>
-
-        <input
-          id="fullName"
-          type="text"
-          formControlName="fullName"
-          placeholder="Enter your full name"
-          autocomplete="name"
-          maxlength="100"
-        />
-
-        @if (
-          registerForm.get('fullName')?.touched &&
-          registerForm.get('fullName')?.invalid
-        ) {
-          <small class="error-message">
-            Full name must contain 2 to 100 characters.
-          </small>
-        }
-      </div>
-
-      <!-- Email -->
-      <div class="input-group">
-        <label for="email">Email Address</label>
-
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          placeholder="Enter your email address"
-          autocomplete="email"
-          maxlength="254"
-        />
-
-        @if (
-          registerForm.get('email')?.touched &&
-          registerForm.get('email')?.invalid
-        ) {
-          <small class="error-message">
-            Please enter a valid email address (max 254 characters).
-          </small>
-        }
-      </div>
-
-      <!-- Password -->
-      <div class="input-group">
-        <label for="password">Password</label>
-
-        <div class="password-wrapper">
-
-          <input
-            id="password"
-            [type]="showPassword ? 'text' : 'password'"
-            formControlName="password"
-            placeholder="Create a password"
-            autocomplete="new-password"
-          />
-
-          <button
-            type="button"
-            class="eye-button"
-            (click)="togglePassword()"
-            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-            [attr.aria-pressed]="showPassword"
-          >
-            @if (showPassword) {
-              <svg xmlns="http://www.w3.org/2000/svg"
-                width="22" height="22" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 3l18 18"/>
-                <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5.5 0 9.5 7 9.5 7a15 15 0 0 1-4 4.3"/>
-                <path d="M6.2 6.2C3.8 7.7 2.5 10 2.5 12c0 0 4 7 9.5 7a9.6 9.6 0 0 0 3.2-.6"/>
-                <path d="M10 10a3 3 0 0 0 4 4"/>
-              </svg>
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg"
-                width="22" height="22" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" aria-hidden="true">
-                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            }
-          </button>
-
-        </div>
-
-        @if (
-          registerForm.get('password')?.touched &&
-          registerForm.get('password')?.invalid
-        ) {
-          <small class="error-message">
-            Use 8–128 characters with uppercase, lowercase and a number.
-          </small>
-        }
-      </div>
-
-      <!-- Confirm Password -->
-      <div class="input-group">
-        <label for="confirmPassword">Confirm Password</label>
-
-        <div class="password-wrapper">
-
-          <input
-            id="confirmPassword"
-            [type]="showConfirmPassword ? 'text' : 'password'"
-            formControlName="confirmPassword"
-            placeholder="Confirm your password"
-            autocomplete="new-password"
-          />
-
-          <button
-            type="button"
-            class="eye-button"
-            (click)="toggleConfirmPassword()"
-            [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
-            [attr.aria-pressed]="showConfirmPassword"
-          >
-            @if (showConfirmPassword) {
-              <svg xmlns="http://www.w3.org/2000/svg"
-                width="22" height="22" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 3l18 18"/>
-                <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5.5 0 9.5 7 9.5 7a15 15 0 0 1-4 4.3"/>
-                <path d="M6.2 6.2C3.8 7.7 2.5 10 2.5 12c0 0 4 7 9.5 7a9.6 9.6 0 0 0 3.2-.6"/>
-                <path d="M10 10a3 3 0 0 0 4 4"/>
-              </svg>
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg"
-                width="22" height="22" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" aria-hidden="true">
-                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            }
-          </button>
-
-        </div>
-
-        @if (
-          registerForm.get('confirmPassword')?.touched &&
-          registerForm.get('confirmPassword')?.hasError('required')
-        ) {
-          <small class="error-message">
-            Please confirm your password.
-          </small>
-        }
-
-        @if (
-          registerForm.get('confirmPassword')?.touched &&
-          registerForm.hasError('passwordMismatch')
-        ) {
-          <small class="error-message">
-            Passwords do not match.
-          </small>
-        }
-      </div>
-
-      <!-- Terms -->
-      <div class="terms-group">
-        <label>
-          <input
-            type="checkbox"
-            formControlName="acceptTerms"
-          />
-          <span>I agree to the Terms & Conditions</span>
-        </label>
-
-        @if (
-          registerForm.get('acceptTerms')?.touched &&
-          registerForm.get('acceptTerms')?.invalid
-        ) {
-          <small class="error-message">
-            You must accept the terms to continue.
-          </small>
-        }
-      </div>
-
-      <!-- Register Button -->
-      <button
-        type="submit"
-        class="register-btn"
-        [disabled]="isLoading"
-      >
-        @if (isLoading) {
-          Creating Account...
-        } @else {
-          Create Account →
-        }
-      </button>
-
-      <!-- Feedback Messages -->
-      @if (errorMessage) {
-        <p class="server-error" role="alert">
-          {{ errorMessage }}
+        <p>
+          Create an account to explore homestays,
+          local experiences, and hidden gems
+          across Sri Lanka.
         </p>
-      }
+      </div>
 
-      @if (successMessage) {
-        <p class="success-message" role="status">
-          {{ successMessage }}
-        </p>
-      }
-
-    </form>
-
-    <!-- Login Navigation -->
-    <div class="login-link">
-      Already have an account?
-      <a href="/login">Log In →</a>
+      <div class="orange-wave"></div>
     </div>
 
-  </div>
+    <!-- RIGHT FORM -->
+    <div class="register-right">
 
-  <!-- Tourism Image -->
-  <div class="image-section">
-    <img
-      src="/images/ceylongo-login-side.png"
-      alt="Explore Sri Lanka"
-    />
-  </div>
+      <!-- BACK BUTTON -->
+      <button
+        type="button"
+        class="back-btn"
+        (click)="goBack()"
+        aria-label="Go back">
+        &#10094;
+      </button>
 
+      <!-- CLOSE BUTTON -->
+      <button
+        type="button"
+        class="close-btn"
+        (click)="closeModal()"
+        aria-label="Close">
+        &times;
+      </button>
+
+      <h1>Create an Account</h1>
+      <div class="heading-line"></div>
+
+      <form
+        [formGroup]="registerForm"
+        (ngSubmit)="onRegister()"
+        novalidate>
+
+        <!-- EMAIL -->
+        <div class="field">
+          <div class="input-box readonly-box">
+            <span class="field-icon" aria-hidden="true">
+              &#9993;
+            </span>
+
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="Email Address"
+              aria-label="Email Address"
+              autocomplete="email">
+          </div>
+
+          @if (
+            registerForm.get('email')?.touched &&
+            registerForm.get('email')?.invalid
+          ) {
+            <small class="error">
+              Enter a valid email address.
+            </small>
+          }
+        </div>
+
+        <!-- FULL NAME -->
+        <div class="field">
+          <div class="input-box">
+            <span class="field-icon" aria-hidden="true">
+              &#9817;
+            </span>
+
+            <input
+              type="text"
+              formControlName="fullName"
+              placeholder="Full Name"
+              aria-label="Full Name"
+              autocomplete="name"
+              maxlength="100">
+          </div>
+
+          @if (
+            registerForm.get('fullName')?.touched &&
+            registerForm.get('fullName')?.invalid
+          ) {
+            <small class="error">
+              Enter your full name (2–100 characters).
+            </small>
+          }
+        </div>
+
+        <!-- PHONE NUMBER -->
+        <div class="field">
+          <div class="input-box phone-box">
+            <span class="field-icon" aria-hidden="true">
+              &#9742;
+            </span>
+
+            <span class="country-code">
+              🇱🇰 +94
+            </span>
+
+            <input
+              type="tel"
+              formControlName="phone"
+              placeholder="Phone Number"
+              aria-label="Phone Number"
+              maxlength="9"
+              inputmode="numeric"
+              autocomplete="tel-national">
+          </div>
+
+          @if (
+            registerForm.get('phone')?.touched &&
+            registerForm.get('phone')?.invalid
+          ) {
+            <small class="error">
+              Enter 9 digits without the leading 0.
+            </small>
+          }
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="field">
+          <div class="input-box">
+
+            <span class="field-icon" aria-hidden="true">
+              &#9919;
+            </span>
+
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Create a Password"
+              aria-label="Create a Password"
+              autocomplete="new-password">
+
+            <!-- PASSWORD EYE -->
+            <button
+              type="button"
+              class="eye-btn"
+              (click)="togglePassword()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword">
+
+              @if (showPassword) {
+                <!-- EYE OFF -->
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 5.1A10 10 0 0 1 12 5c7 0 10 7 10 7a14 14 0 0 1-4 4.5"/>
+                  <path d="M6.5 6.5C3.5 8.5 2 12 2 12s3 7 10 7c1.5 0 2.8-.3 4-.8"/>
+                  <path d="M10 10a3 3 0 0 0 4 4"/>
+                </svg>
+              } @else {
+                <!-- EYE -->
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              }
+            </button>
+
+          </div>
+
+          @if (
+            registerForm.get('password')?.touched &&
+            registerForm.get('password')?.invalid
+          ) {
+            <small class="error">
+              Use 8–128 characters with uppercase,
+              lowercase and a number.
+            </small>
+          }
+        </div>
+
+        <!-- CONFIRM PASSWORD -->
+        <div class="field">
+          <div class="input-box">
+
+            <span class="field-icon" aria-hidden="true">
+              &#9919;
+            </span>
+
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="Confirm Password"
+              aria-label="Confirm Password"
+              autocomplete="new-password">
+
+            <!-- CONFIRM PASSWORD EYE -->
+            <button
+              type="button"
+              class="eye-btn"
+              (click)="toggleConfirmPassword()"
+              [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showConfirmPassword">
+
+              @if (showConfirmPassword) {
+                <!-- EYE OFF -->
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 5.1A10 10 0 0 1 12 5c7 0 10 7 10 7a14 14 0 0 1-4 4.5"/>
+                  <path d="M6.5 6.5C3.5 8.5 2 12 2 12s3 7 10 7c1.5 0 2.8-.3 4-.8"/>
+                  <path d="M10 10a3 3 0 0 0 4 4"/>
+                </svg>
+              } @else {
+                <!-- EYE -->
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              }
+            </button>
+
+          </div>
+
+          @if (
+            registerForm.get('confirmPassword')?.touched &&
+            registerForm.get('confirmPassword')?.hasError('required')
+          ) {
+            <small class="error">
+              Confirm your password.
+            </small>
+          }
+
+          @if (
+            registerForm.get('confirmPassword')?.touched &&
+            registerForm.hasError('passwordMismatch')
+          ) {
+            <small class="error">
+              Passwords do not match.
+            </small>
+          }
+        </div>
+
+        <!-- REGISTER BUTTON -->
+        <button
+          type="submit"
+          class="register-btn"
+          [disabled]="isLoading">
+
+          {{ isLoading ? 'Please wait...' : 'Register and Sign In' }}
+
+        </button>
+
+        <!-- ERROR MESSAGE -->
+        @if (errorMessage) {
+          <p class="server-error" role="alert">
+            {{ errorMessage }}
+          </p>
+        }
+
+        <!-- TERMS AND PRIVACY -->
+        <p class="terms-text">
+          By signing in or registering, you are deemed
+          to have agreed to the CeylonGo
+
+          <a routerLink="/terms">
+            Terms and Conditions
+          </a>
+
+          and
+
+          <a routerLink="/privacy">
+            Privacy Notice
+          </a>.
+        </p>
+
+        <!-- SIGN IN -->
+        <p class="login-link">
+          Already registered?
+
+          <a routerLink="/login">
+            Sign In
+          </a>
+        </p>
+
+      </form>
+    </div>
+  </div>
 </div>

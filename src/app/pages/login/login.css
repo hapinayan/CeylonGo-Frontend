@@ -1,153 +1,313 @@
 
-/* ===================================
-   CeylonGo Login Page
-   =================================== */
+/* ========================================
+   CEYLONGO LOGIN - COMPACT POPUP DESIGN
+   ======================================== */
 
 :host {
   display: block;
 }
 
-/* Main Layout */
-.login-page {
-  display: flex;
-  min-height: 100vh;
-  background: #eef7ff;
-  font-family: Arial, sans-serif;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-/* Left Side */
-.login-card {
-  width: 55%;
-  min-height: 100vh;
-  padding: 35px 7%;
+/* PAGE BACKGROUND */
+
+.login-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  background:
+    linear-gradient(
+      rgba(4, 18, 40, 0.68),
+      rgba(4, 18, 40, 0.75)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+}
+
+/* COMPACT POPUP */
+
+.login-modal {
+  display: grid;
+  grid-template-columns: 40% 60%;
+
+  width: min(880px, 100%);
+  height: auto;
+  max-height: calc(100dvh - 36px);
+
+  overflow: hidden;
+
   background: #ffffff;
-  box-sizing: border-box;
+  border-radius: 20px;
+
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.25);
+}
+
+/* LEFT IMAGE PANEL */
+
+.login-left {
+  position: relative;
 
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 24px 26px 42px;
+  overflow: hidden;
+
+  color: #ffffff;
+
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent 40%,
+      rgba(0, 22, 33, 0.8) 100%
+    ),
+    url('/images/s2.jpeg');
+
+  background-size: 100% 100%, 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* Logo */
-.logo {
-  width: 260px;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  align-self: center;
-  margin-bottom: 30px;
+/* LOGO SPACE */
+
+.brand-area {
+  width: 100%;
+  height: 105px;
 }
 
-/* Heading */
-.login-card h1 {
-  color: #082b5c;
-  font-size: 42px;
+/* LEFT CONTENT */
+
+.tourism-content {
+  position: relative;
+  z-index: 2;
+}
+
+.tourism-content h2 {
+  margin: 0 0 10px;
+
+  color: #ffffff;
+  font-size: 28px;
   font-weight: 800;
-  text-align: center;
-  margin: 10px 0 18px;
+  line-height: 1.2;
+}
+
+.tourism-content p {
+  margin: 0;
+
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ORANGE WAVE */
+
+.orange-wave {
+  position: absolute;
+  bottom: -30px;
+  left: -10%;
+
+  width: 120%;
+  height: 56px;
+
+  background: #ff9900;
+  border-radius: 50% 50% 0 0;
+}
+
+/* RIGHT PANEL */
+
+.login-right {
+  position: relative;
+
+  min-width: 0;
+  min-height: 0;
+
+  padding: 36px 32px 22px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+
+  background: #ffffff;
+}
+
+/* CLOSE BUTTON */
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #071c44;
+
+  font-size: 30px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #fff3e8;
+  color: #ff7900;
+}
+
+/* HEADING */
+
+.login-right h1 {
+  margin: 0 0 10px;
+
+  color: #071c44;
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.heading-line {
+  width: 80px;
+  height: 5px;
+
+  margin-bottom: 14px;
+
+  border-radius: 10px;
+  background: #ff8800;
 }
 
 .subtitle {
-  color: #718096;
-  font-size: 18px;
-  text-align: center;
-  line-height: 1.6;
-  margin: 0 0 45px;
+  margin: 0 0 18px;
+
+  color: #697184;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* Form Fields */
+/* INPUT GROUPS */
+
 .input-group {
-  margin-bottom: 25px;
+  margin-bottom: 14px;
 }
 
 .input-group label {
   display: block;
-  color: #082b5c;
-  font-size: 17px;
-  font-weight: 600;
-  margin-bottom: 12px;
+
+  margin-bottom: 7px;
+
+  color: #071c44;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .input-group input {
+  display: block;
+
   width: 100%;
-  height: 62px;
-  padding: 0 20px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  font-size: 17px;
-  color: #082b5c;
-  background: #ffffff;
-  box-sizing: border-box;
+  height: 48px;
+
+  padding: 0 15px;
+
+  border: 1px solid #d4d7df;
+  border-radius: 11px;
+
   outline: none;
-  transition: border-color 0.2s;
+
+  background: #ffffff;
+  color: #071c44;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input-group input:focus {
-  border-color: #ff9f1c;
-  box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.12);
+  border-color: #ff8800;
+  box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
 }
 
-/* Password Show / Hide */
+.input-group input::placeholder {
+  color: #737b8a;
+}
+
+/* PASSWORD EYE BUTTON */
+
 .password-wrapper {
   position: relative;
 }
 
 .password-wrapper input {
-  padding-right: 85px;
+  padding-right: 48px;
 }
 
 .eye-button {
   position: absolute;
-  right: 15px;
   top: 50%;
+  right: 10px;
+
   transform: translateY(-50%);
 
-  min-width: 50px;
-  padding: 8px 4px;
-  border: none;
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  color: #082b5c;
-  font-size: 15px;
-  font-weight: 600;
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #071c44;
+
   cursor: pointer;
 }
 
-/* Validation */
-.error-message {
-  display: block;
-  color: #e53935;
-  font-size: 14px;
-  margin-top: 8px;
+.eye-button svg {
+  width: 20px;
+  height: 20px;
 }
 
-.input-group input.ng-invalid.ng-touched {
-  border-color: #e53935;
-}
+/* FORGOT PASSWORD */
 
-.input-group input.ng-valid.ng-touched {
-  border-color: #28a745;
-}
-
-/* Forgot Password */
 .form-options {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  margin: 0 0 28px;
-}
 
-.forgot-password {
-  margin: 0;
+  margin: 0 0 14px;
 }
 
 .forgot-link {
-  padding: 0;
+  padding: 4px 0;
+
   border: none;
   background: transparent;
-  color: #0878c8;
-  font-size: 16px;
+
+  color: #0075db;
+  font-size: 13px;
+
   cursor: pointer;
 }
 
@@ -155,180 +315,267 @@
   text-decoration: underline;
 }
 
-/* Login Button */
+/* LOGIN BUTTON */
+
 .login-btn {
   width: 100%;
-  min-height: 62px;
-  padding: 12px;
-  border: none;
-  border-radius: 35px;
+  min-height: 48px;
 
-  background: #ff9f1c;
+  padding: 10px 16px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: #ff7900;
   color: #ffffff;
-  font-size: 20px;
+
+  font-size: 17px;
   font-weight: 700;
+
   cursor: pointer;
 
-  transition: background 0.2s;
+  transition: background-color 0.2s ease;
 }
 
-.login-btn:hover:not(:disabled) {
-  background: #e98a08;
+.login-btn:hover {
+  background: #e86d00;
 }
 
-.login-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+/* ERROR & SUCCESS MESSAGES */
+
+.error-message {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-/* Sign Up Link */
-.signup {
-  margin-top: 38px;
+.server-error {
+  margin: 10px 0 0;
+
+  color: #dc2626;
   text-align: center;
-  color: #718096;
-  font-size: 17px;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.success-message {
+  margin: 10px 0 0;
+
+  color: #15803d;
+  text-align: center;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* SIGN UP */
+
+.signup {
+  margin-top: 16px;
+
+  color: #697184;
+  text-align: center;
+
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .signup a {
-  color: #ff9f1c;
+  margin-left: 5px;
+
+  color: #ff7900;
   font-weight: 700;
   text-decoration: none;
-  margin-left: 6px;
 }
 
 .signup a:hover {
   text-decoration: underline;
 }
 
-/* Right Side Tourism Image */
-.image-section {
-  width: 45%;
-  min-height: 100vh;
-  overflow: hidden;
+/* BACK LINK */
+
+.back-link {
+  margin-top: 11px;
+  text-align: center;
 }
 
-.image-section img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.back-link a {
+  color: #697184;
+  font-size: 12px;
+  text-decoration: none;
 }
 
-/* Tablet */
-@media (max-width: 900px) {
-  .login-card {
-    width: 60%;
-    padding: 30px 5%;
+.back-link a:hover {
+  color: #ff7900;
+}
+
+/* TABLET */
+
+@media (max-width: 850px) {
+  .login-modal {
+    grid-template-columns: 38% 62%;
   }
 
-  .image-section {
-    width: 40%;
+  .login-left {
+    padding: 22px 18px 38px;
   }
 
-  .login-card h1 {
-    font-size: 34px;
+  .brand-area {
+    height: 90px;
+  }
+
+  .tourism-content h2 {
+    font-size: 25px;
+  }
+
+  .tourism-content p {
+    font-size: 13px;
+  }
+
+  .login-right {
+    padding: 38px 24px 22px;
+  }
+
+  .login-right h1 {
+    font-size: 27px;
   }
 }
 
-/* Mobile */
+/* MOBILE */
+
 @media (max-width: 650px) {
   .login-page {
-    display: block;
-    min-height: 100vh;
+    align-items: flex-start;
+    padding: 12px;
   }
 
-  .login-card {
+  .login-modal {
+    display: flex;
+    flex-direction: column;
+
     width: 100%;
-    min-height: 100vh;
-    padding: 35px 24px;
-    box-sizing: border-box;
+    height: auto;
+    max-height: none;
+
+    border-radius: 17px;
   }
 
-  .image-section {
-    display: none;
+  .login-left {
+    min-height: 190px;
+    padding: 18px 20px 30px;
+
+    background-size: cover;
   }
 
-  .logo {
-    width: 220px;
-    margin-bottom: 24px;
+  .brand-area {
+    height: 60px;
   }
 
-  .login-card h1 {
-    font-size: 30px;
+  .tourism-content h2 {
+    font-size: 23px;
+  }
+
+  .tourism-content p {
+    font-size: 13px;
+  }
+
+  .orange-wave {
+    height: 42px;
+    bottom: -24px;
+  }
+
+  .login-right {
+    padding: 42px 20px 24px;
+    overflow: visible;
+  }
+
+  .login-right h1 {
+    font-size: 27px;
   }
 
   .subtitle {
-    font-size: 15px;
-    margin-bottom: 35px;
-  }
-
-  .input-group label {
-    font-size: 15px;
+    font-size: 13px;
   }
 
   .input-group input {
-    height: 55px;
-    font-size: 15px;
+    height: 47px;
   }
 
   .login-btn {
-    min-height: 55px;
-    font-size: 18px;
+    min-height: 48px;
+  }
+}
+
+/* SHORT SCREEN SUPPORT */
+
+@media (max-height: 650px) and (min-width: 651px) {
+  .login-page {
+    padding: 12px;
+  }
+
+  .login-modal {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .login-right {
+    padding-top: 28px;
+    padding-bottom: 16px;
+  }
+
+  .subtitle {
+    margin-bottom: 12px;
+  }
+
+  .input-group {
+    margin-bottom: 10px;
   }
 
   .signup {
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .forgot-link {
-    font-size: 14px;
+    margin-top: 12px;
   }
 }
 
+/* ACCESSIBILITY */
 
-/* Eye Icon Button */
-.eye-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  padding: 0;
-  color: #082b5c;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.eye-button svg {
-  width: 22px;
-  height: 22px;
+@media (prefers-reduced-motion: reduce) {
+  .login-btn,
+  .input-group input {
+    transition: none;
+  }
 }
 
 
-.success-message {
-  margin-top: 18px;
-  padding: 12px;
-  color: #166534;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  border-radius: 10px;
-  font-size: 14px;
-  text-align: center;
-  line-height: 1.5;
-}
+/* LOGIN POPUP - 50% WIDTH */
 
-.server-error {
-  margin-top: 18px;
-  padding: 12px;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: 10px;
-  font-size: 14px;
-  text-align: center;
-  line-height: 1.5;
-}
+@media (min-width: 851px) {
+  .login-modal {
+    width: 50vw;
+    max-width: 950px;
+    grid-template-columns: 40% 60%;
+  }
 
+  .login-left {
+    padding: 22px 20px 40px;
+  }
+
+  .login-right {
+    padding: 35px 25px 22px;
+  }
+
+  .login-right h1 {
+    font-size: 27px;
+  }
+
+  .tourism-content h2 {
+    font-size: 25px;
+  }
+
+  .tourism-content p {
+    font-size: 13px;
+  }
+}

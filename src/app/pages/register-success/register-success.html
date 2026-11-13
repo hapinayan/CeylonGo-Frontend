@@ -1,0 +1,78 @@
+
+<div class="success-page">
+
+  <div class="success-card">
+
+    <div class="brand-name">
+      Ceylon<span>Go</span>
+    </div>
+
+    <div class="success-icon">
+      <svg viewBox="0 0 52 52">
+        <circle
+          class="check-circle"
+          cx="26"
+          cy="26"
+          r="24"
+          fill="none"
+        />
+
+        <path
+          class="check-mark"
+          fill="none"
+          d="M14 27 L22 35 L39 18"
+        />
+      </svg>
+    </div>
+
+    <h1>Registration Successful!</h1>
+
+    <h2>
+      Welcome to CeylonGo!
+    </h2>
+
+    @if (fullName) {
+      <p class="welcome-name">
+        Hello, {{ fullName }}!
+      </p>
+    }
+
+    <p class="description">
+      Your demo registration has been completed
+      successfully.
+    </p>
+
+    @if (email) {
+      <div class="email-box">
+        {{ email }}
+      </div>
+    }
+
+    <p class="journey-text">
+      Your Sri Lankan journey starts here.
+      Discover amazing destinations and
+      unforgettable experiences.
+    </p>
+
+    <button
+      type="button"
+      class="login-btn"
+      (click)="goToLogin()">
+      Continue to Login →
+    </button>
+
+    <button
+      type="button"
+      class="home-btn"
+      (click)="goToHome()">
+      Back to Sign In / Register
+    </button>
+
+    <p class="demo-note">
+      Frontend testing mode — backend authentication
+      is not connected yet.
+    </p>
+
+  </div>
+
+</div>

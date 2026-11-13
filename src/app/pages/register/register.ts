@@ -1,186 +1,183 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectorRef,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
+
+import { Component, inject, OnInit } from '@angular/core';
+
 import {
   AbstractControl,
   FormBuilder,
-  FormGroup,
   ReactiveFormsModule,
   ValidationErrors,
-  Validators,
+  Validators
 } from '@angular/forms';
-import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
 
-import { RegisterRequest } from '../../core/models/auth.models';
-import { AuthService } from '../../core/services/auth.service';
+import {
+  ActivatedRoute,
+  Router,
+  RouterLink
+} from '@angular/router';
+
+import { DemoAuth } from '../../services/demo-auth';
 
 function passwordMatchValidator(
   control: AbstractControl
 ): ValidationErrors | null {
   const password = control.get('password')?.value;
-  const confirmPassword = control.get('confirmPassword')?.value;
+  const confirm = control.get('confirmPassword')?.value;
 
-  return password === confirmPassword ? null : { passwordMismatch: true };
+  if (!password || !confirm) {
+    return null;
+  }
+
+  return password === confirm
+    ? null
+    : { passwordMismatch: true };
 }
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
-  styleUrl: './register.css',
+  styleUrl: './register.css'
 })
-export class Register {
+export class Register implements OnInit {
+
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly demoAuth = inject(DemoAuth);
 
   showPassword = false;
   showConfirmPassword = false;
 
-  private readonly _isLoading = signal(false);
-  private readonly _errorMessage = signal('');
-  private readonly _successMessage = signal('');
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
-  get isLoading(): boolean {
-    return this._isLoading();
-  }
-  set isLoading(value: boolean) {
-    this._isLoading.set(value);
-  }
+  registerForm = this.fb.group({
+    email: ['', [
+      Validators.required,
+      Validators.email,
+      Validators.maxLength(254)
+    ]],
 
-  get errorMessage(): string {
-    return this._errorMessage();
-  }
-  set errorMessage(value: string) {
-    this._errorMessage.set(value);
-  }
+    fullName: ['', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.maxLength(100)
+    ]],
 
-  get successMessage(): string {
-    return this._successMessage();
-  }
-  set successMessage(value: string) {
-    this._successMessage.set(value);
-  }
+    phone: ['', [
+      Validators.required,
+      Validators.pattern(/^[0-9]{9}$/)
+    ]],
 
-  registerForm: FormGroup;
+    password: ['', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.maxLength(128),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
+    ]],
 
-  constructor() {
-    this.registerForm = this.fb.group(
-      {
-        fullName: [
-          '',
-          [
-            Validators.required,
-            Validators.minLength(2),
-            Validators.maxLength(100),
-          ],
-        ],
+    confirmPassword: ['', Validators.required]
+  }, {
+    validators: passwordMatchValidator
+  });
 
-        email: [
-          '',
-          [
-            Validators.required,
-            Validators.email,
-            Validators.maxLength(254),
-          ],
-        ],
+  ngOnInit(): void {
+    const email = this.route.snapshot.queryParamMap.get('email');
 
-        password: [
-          '',
-          [
-            Validators.required,
-            Validators.minLength(8),
-            Validators.maxLength(128),
-            Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/),
-          ],
-        ],
-
-        confirmPassword: ['', Validators.required],
-
-        acceptTerms: [false, Validators.requiredTrue],
-      },
-      { validators: passwordMatchValidator }
-    );
+    if (email) {
+      this.registerForm.patchValue({
+        email: email.trim().toLowerCase()
+      });
+    }
   }
 
-  togglePassword() {
+  togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
 
-  toggleConfirmPassword() {
+  toggleConfirmPassword(): void {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  onRegister() {
+  goBack(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  closeModal(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/login']);
+  }
+
+  onRegister(): void {
     this.errorMessage = '';
     this.successMessage = '';
+
+    if (this.isLoading) {
+      return;
+    }
 
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
+    const data = this.registerForm.getRawValue();
+
+    const email = (data.email || '').trim().toLowerCase();
+    const fullName = (data.fullName || '').trim();
+    const phone = data.phone || '';
+    const password = data.password || '';
+
+    if (this.demoAuth.isRegistered(email)) {
+      this.errorMessage =
+        'This email is already registered. Please sign in.';
+      return;
+    }
+
     this.isLoading = true;
-    this.cdr.markForCheck();
 
-    // Send only full_name, email, and password to backend
-    const payload: RegisterRequest = {
-      full_name: this.registerForm.value.fullName.trim(),
-      email: this.registerForm.value.email.trim().toLowerCase(),
-      password: this.registerForm.value.password,
-    };
+    try {
+      const registered = this.demoAuth.register(
+        { email, fullName, phone },
+        password
+      );
 
-    this.authService
-      .register(payload)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.successMessage =
-            'Account registered successfully! Redirecting to login...';
-          this.cdr.markForCheck();
-          setTimeout(() => {
-            this.router.navigate(['/login'], {
-              queryParams: { registered: 'true' },
-            });
-          }, 1200);
-        },
-        error: (err: HttpErrorResponse) => {
-          if (err.status === 409) {
-            this.errorMessage =
-              err.error?.detail ||
-              'An account with this email already exists.';
-          } else if (err.status === 422) {
-            const detail = err.error?.detail;
-            if (Array.isArray(detail) && detail.length > 0) {
-              this.errorMessage =
-                detail[0].msg || 'Invalid registration details provided.';
-            } else if (typeof detail === 'string') {
-              this.errorMessage = detail;
-            } else {
-              this.errorMessage = 'Please verify your form inputs.';
-            }
-          } else if (err.status === 0) {
-            this.errorMessage =
-              'Cannot connect to backend server. Please verify it is running on http://localhost:8000.';
-          } else {
-            this.errorMessage =
-              err.error?.detail ||
-              'Registration failed. Please try again.';
-          }
-          this.cdr.markForCheck();
-        },
+      if (!registered) {
+        this.errorMessage =
+          'This email is already registered.';
+        return;
+      }
+
+      // Keep existing Auth Entry email list synchronized.
+      const emails = this.demoAuth.getUsers()
+        .map(user => user.email);
+
+      try {
+        localStorage.setItem(
+          'ceylongo_demo_emails',
+          JSON.stringify(emails)
+        );
+      } catch {
+        // Profile registration was already saved.
+      }
+
+      this.successMessage =
+        'Demo registration completed successfully!';
+
+      this.router.navigate(['/register-success'], {
+        state: { fullName, email }
       });
+
+    } catch {
+      this.errorMessage =
+        'Unable to complete demo registration.';
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

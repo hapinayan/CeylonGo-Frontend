@@ -1,0 +1,49 @@
+
+<div class="success-page">
+  <div class="success-card">
+
+    <div class="brand">Ceylon<span>Go</span></div>
+
+    <div class="success-icon">
+      <svg viewBox="0 0 52 52" role="img"
+           aria-label="Demo completed">
+        <circle class="check-circle"
+                cx="26" cy="26" r="24" fill="none"/>
+        <path class="check-mark"
+              d="M14 27 L22 35 L39 18" fill="none"/>
+      </svg>
+    </div>
+
+    <h1>Reset Demo Completed!</h1>
+    <h2>Password Reset Flow Tested</h2>
+
+    <p class="description">
+      You've successfully completed the frontend
+      password reset demonstration.
+    </p>
+
+    @if (email) {
+      <div class="email-box">
+        <span>Account email</span>
+        <strong>{{ email }}</strong>
+      </div>
+    }
+
+    <p class="notice">
+      Your password has not actually changed.
+      The backend will handle secure password
+      resets when connected.
+    </p>
+
+    <button type="button"
+            class="login-btn"
+            (click)="goToLogin()">
+      Continue to Login →
+    </button>
+
+    <p class="demo-note">
+      CeylonGo • Frontend Testing Mode
+    </p>
+
+  </div>
+</div>

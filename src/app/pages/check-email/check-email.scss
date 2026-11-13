@@ -1,0 +1,242 @@
+
+:host {
+  display: block;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* PAGE BACKGROUND */
+
+.status-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+
+  font-family: Arial, sans-serif;
+
+  background:
+    linear-gradient(
+      rgba(5, 25, 55, 0.75),
+      rgba(5, 25, 55, 0.85)
+    ),
+    url('/images/s2.jpeg') center / cover no-repeat;
+}
+
+/* COMPACT CHECK EMAIL POPUP */
+
+.status-card {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 40px);
+
+  padding: 24px 30px;
+
+  text-align: center;
+  border-radius: 20px;
+  background: #ffffff;
+
+  overflow-y: auto;
+
+  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.25);
+
+  animation: appear 0.5s ease;
+}
+
+/* CEYLONGO LOGO */
+
+.brand {
+  color: #082b5c;
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.brand span {
+  color: #ff7900;
+}
+
+/* EMAIL ICON */
+
+.status-icon {
+  width: 72px;
+  height: 72px;
+
+  padding: 18px;
+  margin: 0 auto 14px;
+
+  border-radius: 50%;
+  color: #ff7900;
+  background: #fff1e5;
+}
+
+.status-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* HEADING */
+
+h1 {
+  color: #082b5c;
+  font-size: 25px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+/* DESCRIPTION */
+
+.subtitle,
+.description {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 8px 0;
+}
+
+/* EMAIL BOX */
+
+.email-box {
+  margin: 14px 0;
+  padding: 12px;
+
+  border-radius: 10px;
+  background: #f1f5f9;
+
+  overflow-wrap: anywhere;
+}
+
+.email-box span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.email-box strong {
+  color: #082b5c;
+  font-size: 14px;
+}
+
+/* PRIMARY BUTTON */
+
+.primary-btn {
+  width: 100%;
+  min-height: 48px;
+
+  margin-top: 14px;
+  padding: 10px 16px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: #ff7900;
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #e66d00;
+}
+
+/* SECONDARY BUTTON */
+
+.secondary-btn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 8px;
+
+  border: none;
+  background: transparent;
+
+  color: #082b5c;
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  text-decoration: underline;
+}
+
+/* DEMO NOTE */
+
+.demo-note {
+  margin: 12px 0 0;
+
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* POPUP ANIMATION */
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+  .status-page {
+    padding: 12px;
+  }
+
+  .status-card {
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 22px 18px;
+    border-radius: 17px;
+  }
+
+  .brand {
+    font-size: 27px;
+  }
+
+  .status-icon {
+    width: 68px;
+    height: 68px;
+    padding: 17px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .subtitle,
+  .description {
+    font-size: 13px;
+  }
+
+  .primary-btn {
+    min-height: 46px;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .status-card {
+    animation: none;
+  }
+}
