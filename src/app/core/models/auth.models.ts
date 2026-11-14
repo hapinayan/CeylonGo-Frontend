@@ -7,6 +7,15 @@ export interface User {
   created_at: string;
 }
 
+export interface CheckEmailRequest {
+  email: string;
+}
+
+export interface CheckEmailResponse {
+  email: string;
+  is_registered: boolean;
+}
+
 export interface RegisterRequest {
   full_name: string;
   email: string;
@@ -29,7 +38,33 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface GoogleAuthRequest {
+  id_token: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface VerifyResetTokenResponse {
+  valid: boolean;
+  email: string;
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  new_password: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 export interface ApiErrorResponse {
   detail?: string | Array<{ loc?: (string | number)[]; msg?: string; type?: string }>;
 }
-

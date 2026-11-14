@@ -1,34 +1,26 @@
-
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
-
 import {
   AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
-  Validators
+  Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
-import { DemoAuth } from '../../services/demo-auth';
-
-// Password Match Validator
-function passwordsMatch(
-  control: AbstractControl
-): ValidationErrors | null {
-
+function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
-  const confirmPassword =
-    control.get('confirmPassword')?.value;
+  const confirmPassword = control.get('confirmPassword')?.value;
 
   if (!password || !confirmPassword) {
     return null;
   }
 
-  return password === confirmPassword
-    ? null
-    : { passwordMismatch: true };
+  return password === confirmPassword ? null : { passwordMismatch: true };
 }
 
 @Component({
@@ -36,15 +28,17 @@ function passwordsMatch(
   standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './reset-password.html',
-  styleUrl: './reset-password.scss'
+  styleUrl: './reset-password.scss',
 })
 export class ResetPassword implements OnInit {
-
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
-  private readonly demoAuth = inject(DemoAuth);
+  private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
 
   email = '';
+  token = '';
+  isTokenValid = false;
 
   showPassword = false;
   showConfirmPassword = false;
@@ -52,7 +46,6 @@ export class ResetPassword implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  // Reset Password Form
   resetForm = this.fb.group(
     {
       password: [
@@ -61,45 +54,76 @@ export class ResetPassword implements OnInit {
           Validators.required,
           Validators.minLength(8),
           Validators.maxLength(128),
-          Validators.pattern(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/
-          )
-        ]
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/),
+        ],
       ],
-
-      confirmPassword: [
-        '',
-        Validators.required
-      ]
+      confirmPassword: ['', Validators.required],
     },
     {
-      validators: passwordsMatch
+      validators: passwordsMatch,
     }
   );
 
-  // Get Email from Previous Page
   ngOnInit(): void {
-    const state = history.state;
+    const queryToken = this.route.snapshot.queryParamMap.get('token');
+    const stateToken = history.state?.token;
+    const initialToken = (queryToken || stateToken || '').trim();
 
-    this.email = (state?.email || '')
-      .trim()
-      .toLowerCase();
+    this.email = (history.state?.email || '').trim().toLowerCase();
+
+    if (initialToken) {
+      this.verifyToken(initialToken);
+    } else {
+      this.isTokenValid = false;
+      this.errorMessage =
+        'This password reset link is invalid or has expired. Please request a new link.';
+    }
   }
 
-  // Show / Hide Password
+  private verifyToken(token: string): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService
+      .verifyResetToken(token)
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.token = token;
+          this.isTokenValid = true;
+          this.email = res.email;
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isTokenValid = false;
+          this.token = '';
+          if (err.status === 400) {
+            this.errorMessage =
+              err.error?.detail ||
+              'This password reset link is invalid or has expired. Please request a new link.';
+          } else if (err.status === 0) {
+            this.errorMessage =
+              'Cannot connect to backend server. Please verify it is running on http://127.0.0.1:8000.';
+          } else {
+            this.errorMessage =
+              'This password reset link is invalid or has expired. Please request a new link.';
+          }
+        },
+      });
+  }
+
   togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
 
-  // Show / Hide Confirm Password
   toggleConfirmPassword(): void {
-    this.showConfirmPassword =
-      !this.showConfirmPassword;
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  // Reset Password - Frontend Demo
   resetPassword(): void {
-
     this.errorMessage = '';
 
     if (this.isLoading) {
@@ -111,53 +135,65 @@ export class ResetPassword implements OnInit {
       return;
     }
 
-    if (!this.email) {
+    if (!this.token || !this.isTokenValid) {
       this.errorMessage =
-        'Email not found. Please restart the reset process.';
+        'This password reset link is invalid or has expired. Please request a new link.';
       return;
     }
 
-    const newPassword =
-      this.resetForm.value.password || '';
+    const newPassword = this.resetForm.value.password || '';
 
     this.isLoading = true;
 
-    try {
-
-      // Update temporary demo password
-      const updated = this.demoAuth.resetPassword(
-        this.email,
-        newPassword
-      );
-
-      if (!updated) {
-        this.errorMessage =
-          'Demo account not found. Please register first.';
-        return;
-      }
-
-      // Navigate to Reset Success Page
-      this.router.navigate(['/reset-success'], {
-        state: {
-          email: this.email
-        }
+    this.authService
+      .resetPassword({ token: this.token, new_password: newPassword })
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/reset-success'], {
+            state: { email: this.email },
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 400) {
+            this.errorMessage =
+              err.error?.detail ||
+              'This reset token is invalid, expired, or has already been used.';
+          } else if (err.status === 0) {
+            this.errorMessage =
+              'Cannot connect to backend server. Please verify it is running on http://127.0.0.1:8000.';
+          } else {
+            this.errorMessage =
+              err.error?.detail ||
+              'Unable to reset password. Please try again.';
+          }
+        },
       });
-
-    } catch {
-      this.errorMessage =
-        'Unable to reset demo password. Please try again.';
-
-    } finally {
-      this.isLoading = false;
-    }
   }
 
-  // Back to Login
+  requestNewResetLink(): void {
+    this.router.navigate(['/forgot-password'], {
+      queryParams: this.email ? { email: this.email } : undefined,
+    });
+  }
+
   backToLogin(): void {
     this.router.navigate(['/login'], {
-      queryParams: {
-        email: this.email
-      }
+      queryParams: this.email ? { email: this.email } : undefined,
     });
+  }
+
+  closeModal(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList.contains('reset-page')) {
+      this.closeModal();
+    }
   }
 }

@@ -1,233 +1,230 @@
+<div class="login-page" (click)="onBackdropClick($event)">
+  <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
 
-<div class="login-page">
+    <!-- CLOSE BUTTON -->
+    <button
+      type="button"
+      class="close-btn"
+      aria-label="Close modal"
+      (click)="closeModal()"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
 
-  <div class="login-modal">
-
-    <!-- LEFT SIDE -->
-    <div class="login-left">
-
-      <div class="brand-area">
-        <!-- CeylonGo logo is included in s2.jpeg -->
-      </div>
-
-      <div class="tourism-content">
-
-        <h2>Join CeylonGo</h2>
-
-        <p>
-          Create an account and start
-          exploring homestays, local
-          experiences, and hidden gems
-          across Sri Lanka.
-        </p>
-
-      </div>
-
-      <div class="orange-wave"></div>
-
+    <!-- CEYLONGO LOGO -->
+    <div class="modal-logo-wrapper">
+      <img
+        src="/images/ceylongo-brand-logo.png"
+        alt="CeylonGo - Discover Local. Feel at Home."
+        class="modal-logo"
+      />
     </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="login-right">
+    <!-- HEADING & SUPPORTING TEXT -->
+    <div class="modal-header">
+      <h1 id="login-modal-title">Welcome Back</h1>
+      <p class="subtitle">Sign in to continue your CeylonGo journey.</p>
+    </div>
 
-      <!-- CLOSE BUTTON -->
-      <button
-        type="button"
-        class="close-btn"
-        aria-label="Close"
-        (click)="closeModal()"
-      >
-        &times;
-      </button>
+    <!-- FEEDBACK / SUCCESS MESSAGE -->
+    @if (successMessage()) {
+      <div class="alert-box success-box" role="status">
+        <p>{{ successMessage() }}</p>
+      </div>
+    }
 
-      <!-- HEADING -->
-      <h1>Welcome Back</h1>
+    <!-- SERVER ERROR MESSAGE -->
+    @if (errorMessage()) {
+      <div class="alert-box error-box" role="alert">
+        <p>{{ errorMessage() }}</p>
+      </div>
+    }
 
-      <div class="heading-line"></div>
-
-      <p class="subtitle">
-        Log in to continue your journey with CeylonGo.
-      </p>
-
-      <!-- LOGIN FORM -->
-      <form
-        [formGroup]="loginForm"
-        (ngSubmit)="onLogin()"
-        novalidate
-      >
-
-        <!-- EMAIL -->
-        <div class="input-group">
-
-          <label for="email">
-            Email address
-          </label>
+    <!-- LOGIN FORM -->
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onLogin()"
+      novalidate
+      class="login-form"
+    >
+      <!-- EMAIL INPUT -->
+      <div class="form-group">
+        <div
+          class="input-wrapper"
+          [class.input-error]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+        >
+          <!-- EMAIL ICON -->
+          <svg
+            class="field-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m2 6 10 7 10-7" />
+          </svg>
 
           <input
-            id="email"
+            id="login-email"
             type="email"
             formControlName="email"
             placeholder="Enter your email address"
+            aria-label="Email address"
             autocomplete="email"
             maxlength="254"
           />
-
-          @if (
-            loginForm.get('email')?.touched &&
-            loginForm.get('email')?.invalid
-          ) {
-            <small class="error-message">
-              Please enter a valid email address.
-            </small>
-          }
-
         </div>
 
-        <!-- PASSWORD -->
-        <div class="input-group">
+        @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
+          <small class="error-text">
+            Please enter a valid email address.
+          </small>
+        }
+      </div>
 
-          <label for="password">
-            Password
-          </label>
+      <!-- PASSWORD INPUT -->
+      <div class="form-group">
+        <div
+          class="input-wrapper"
+          [class.input-error]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+        >
+          <!-- LOCK ICON -->
+          <svg
+            class="field-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
 
-          <div class="password-wrapper">
+          <input
+            id="login-password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Enter your password"
+            aria-label="Password"
+            autocomplete="current-password"
+            maxlength="128"
+          />
 
-            <input
-              id="password"
-              [type]="showPassword ? 'text' : 'password'"
-              formControlName="password"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              maxlength="128"
-            />
-
-            <!-- SHOW / HIDE PASSWORD -->
-            <button
-              type="button"
-              class="eye-button"
-              (click)="togglePassword()"
-              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
-              [attr.aria-pressed]="showPassword"
-            >
-
-              @if (showPassword) {
-
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 5.1A11 11 0 0 1 12 5c6 0 10 7 10 7a15 15 0 0 1-4 4.3"/>
-                  <path d="M6.2 6.2C3.8 7.7 2 12 2 12s4 7 10 7c1.1 0 2.2-.2 3.2-.6"/>
-                </svg>
-
-              } @else {
-
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-
-              }
-
-            </button>
-
-          </div>
-
-          @if (
-            loginForm.get('password')?.touched &&
-            loginForm.get('password')?.invalid
-          ) {
-            <small class="error-message">
-              Password must contain 8–128 characters.
-            </small>
-          }
-
-        </div>
-
-        <!-- FORGOT PASSWORD -->
-        <div class="form-options">
-
+          <!-- EYE TOGGLE BUTTON -->
           <button
             type="button"
-            class="forgot-link"
-            (click)="forgotPassword()"
+            class="eye-btn"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword"
           >
-            Forgot password?
+            @if (showPassword) {
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 3l18 18" />
+                <path d="M10.6 5.1A11 11 0 0 1 12 5c6 0 10 7 10 7a15 15 0 0 1-4 4.3" />
+                <path d="M6.2 6.2C3.8 7.7 2 12 2 12s4 7 10 7c1.1 0 2.2-.2 3.2-.6" />
+              </svg>
+            } @else {
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            }
           </button>
-
         </div>
 
-        <!-- LOGIN BUTTON -->
+        @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
+          <small class="error-text">
+            Password must contain 8–128 characters.
+          </small>
+        }
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="forgot-wrapper">
         <button
-          type="submit"
-          class="login-btn"
-          [disabled]="isLoading()"
+          type="button"
+          class="forgot-link"
+          (click)="forgotPassword()"
         >
-          @if (isLoading()) {
-            Logging in...
-          } @else {
-            Log In →
-          }
+          Forgot password?
         </button>
+      </div>
 
-        <!-- ERROR MESSAGE -->
-        @if (errorMessage()) {
-          <p
-            class="server-error"
-            role="alert"
-          >
-            {{ errorMessage() }}
-          </p>
+      <!-- LOGIN BUTTON -->
+      <button
+        type="submit"
+        class="login-btn"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span>Logging in...</span>
+        } @else {
+          <span>Log In &rarr;</span>
         }
+      </button>
+    </form>
 
-        <!-- SUCCESS MESSAGE -->
-        @if (successMessage()) {
-          <p
-            class="success-message"
-            role="status"
-          >
-            {{ successMessage() }}
-          </p>
-        }
-
-      </form>
-
-      <!-- SIGN UP -->
-      <div class="signup">
-
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+      <p class="signup-prompt">
         Don't have an account?
+        <a routerLink="/register" class="signup-link">Sign Up</a>
+      </p>
 
-        <a routerLink="/register">
-          Sign Up →
+      <div class="back-wrapper">
+        <a routerLink="/auth" class="back-link">
+          &larr; Back to Sign In / Register
         </a>
-
       </div>
-
-      <!-- BACK -->
-      <div class="back-link">
-
-        <a routerLink="/auth">
-          ← Back to Sign in / Register
-        </a>
-
-      </div>
-
     </div>
 
   </div>
-
 </div>

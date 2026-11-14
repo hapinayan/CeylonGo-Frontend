@@ -65,5 +65,56 @@ describe('authInterceptor', () => {
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
+
+  it('should not attach Authorization header when URL does not contain /api/v1/', () => {
+    (authService as any).setSession('test-token-xyz', {
+      id: 1,
+      full_name: 'Test',
+      email: 't@test.com',
+      role: 'traveler',
+      is_active: true,
+      created_at: '',
+    });
+
+    http.get('https://example.com/other-api').subscribe();
+
+    const req = httpMock.expectOne('https://example.com/other-api');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('should call authService.logout() on 401 Unauthorized for protected endpoints', () => {
+    let logoutCalled = false;
+    authService.logout = () => {
+      logoutCalled = true;
+    };
+
+    http.get('/api/v1/auth/me').subscribe({
+      next: () => {},
+      error: () => {},
+    });
+
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(logoutCalled).toBe(true);
+  });
+
+  it('should NOT call authService.logout() on 401 Unauthorized for /auth/login or /auth/google', () => {
+    let logoutCalled = false;
+    authService.logout = () => {
+      logoutCalled = true;
+    };
+
+    http.post('/api/v1/auth/login', {}).subscribe({
+      next: () => {},
+      error: () => {},
+    });
+
+    const req = httpMock.expectOne('/api/v1/auth/login');
+    req.flush({ detail: 'Invalid credentials' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(logoutCalled).toBe(false);
+  });
 });
 

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -21,7 +21,21 @@ describe('Register Component', () => {
     await TestBed.configureTestingModule({
       imports: [Register],
       providers: [
-        provideRouter([]),
+        provideRouter([
+          { path: 'register-success', component: class {} },
+          { path: 'login', component: class {} },
+          { path: 'auth', component: class {} },
+        ]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: (key: string) => (key === 'email' ? 'traveler@ceylongo.com' : null),
+              },
+            },
+          },
+        },
         { provide: AuthService, useValue: authServiceMock },
       ],
     }).compileComponents();
@@ -32,7 +46,8 @@ describe('Register Component', () => {
     fixture.detectChanges();
   });
 
-  it('should initialize with an invalid form', () => {
+  it('should initialize and prefill email from route query param', () => {
+    expect(component.registerForm.get('email')?.value).toBe('traveler@ceylongo.com');
     expect(component.registerForm.valid).toBe(false);
   });
 
@@ -42,7 +57,6 @@ describe('Register Component', () => {
       email: 'user@example.com',
       password: 'Password123!',
       confirmPassword: 'MismatchPassword123!',
-      acceptTerms: true,
     });
     expect(component.registerForm.hasError('passwordMismatch')).toBe(true);
 
@@ -54,24 +68,31 @@ describe('Register Component', () => {
   });
 
   it('should mark form fields as touched when submitting invalid form', () => {
+    component.registerForm.setValue({
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    });
     component.onRegister();
     expect(component.registerForm.touched).toBe(true);
     expect(authServiceMock.register).not.toHaveBeenCalled();
   });
 
-  it('should send only full_name, email, and password to backend on valid submission', () => {
+  it('should send full_name, email, and password to backend on valid submission', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
     component.registerForm.setValue({
       fullName: '  Test Traveler  ',
       email: 'traveler@example.com',
       password: 'Password123!',
       confirmPassword: 'Password123!',
-      acceptTerms: true,
     });
 
     authServiceMock.register.mockReturnValue(
       of({
         message: 'Account registered successfully',
-        user: { id: 1, full_name: 'Test Traveler', email: 'traveler@example.com' },
+        user: { id: 1, full_name: 'Test Traveler', email: 'traveler@example.com', role: 'traveler', is_active: true, created_at: '' },
       })
     );
 
@@ -82,7 +103,58 @@ describe('Register Component', () => {
       email: 'traveler@example.com',
       password: 'Password123!',
     });
-    expect(component.successMessage).toContain('Account registered successfully');
+    expect(component.successMessage).toContain('Registration completed successfully');
+    expect(navigateSpy).toHaveBeenCalledWith(['/register-success'], {
+      state: { fullName: 'Test Traveler', email: 'traveler@example.com' },
+    });
+  });
+
+  it('should toggle password and confirm password visibility', () => {
+    expect(component.showPassword).toBe(false);
+    component.togglePassword();
+    expect(component.showPassword).toBe(true);
+    component.togglePassword();
+    expect(component.showPassword).toBe(false);
+
+    expect(component.showConfirmPassword).toBe(false);
+    component.toggleConfirmPassword();
+    expect(component.showConfirmPassword).toBe(true);
+    component.toggleConfirmPassword();
+    expect(component.showConfirmPassword).toBe(false);
+  });
+
+  it('should navigate to /auth on closeModal and goBack', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    component.closeModal();
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth']);
+
+    component.goBack();
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth']);
+  });
+
+  it('should navigate to /auth on backdrop click', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    const backdropEl = document.createElement('div');
+    backdropEl.className = 'register-page';
+
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'target', { value: backdropEl, enumerable: true });
+
+    component.onBackdropClick(event);
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth']);
+  });
+
+  it('should not dismiss modal when clicking modal content', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    const modalEl = document.createElement('div');
+    modalEl.className = 'register-modal';
+
+    const event = new MouseEvent('click');
+    Object.defineProperty(event, 'target', { value: modalEl, enumerable: true });
+
+    component.onBackdropClick(event);
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 
   it('should handle duplicate email 409 conflict error', () => {
@@ -91,7 +163,6 @@ describe('Register Component', () => {
       email: 'existing@example.com',
       password: 'Password123!',
       confirmPassword: 'Password123!',
-      acceptTerms: true,
     });
 
     authServiceMock.register.mockReturnValue(
@@ -107,6 +178,53 @@ describe('Register Component', () => {
     component.onRegister();
 
     expect(component.isLoading).toBe(false);
-    expect(component.errorMessage).toBe('An account with this email already exists');
+    expect(component.errorMessage).toBe('This email is already registered. Please sign in.');
+  });
+
+  it('should handle 422 validation error', () => {
+    component.registerForm.setValue({
+      fullName: 'Invalid Details',
+      email: 'invalid@example.com',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
+    });
+
+    authServiceMock.register.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { detail: 'Invalid password format' },
+          })
+      )
+    );
+
+    component.onRegister();
+
+    expect(component.isLoading).toBe(false);
+    expect(component.errorMessage).toContain('Please verify your registration details');
+  });
+
+  it('should handle 0 network error', () => {
+    component.registerForm.setValue({
+      fullName: 'Network Fail',
+      email: 'network@example.com',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
+    });
+
+    authServiceMock.register.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 0,
+          })
+      )
+    );
+
+    component.onRegister();
+
+    expect(component.isLoading).toBe(false);
+    expect(component.errorMessage).toContain('Cannot connect to backend server');
   });
 });

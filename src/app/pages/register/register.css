@@ -1,7 +1,11 @@
+/* ==========================================================================
+   CeylonGo — Register / Create Account Compact Modal
+   Colors: Navy (#082B5C), Orange (#FF9F1C), White (#FFFFFF)
+   Typography: Inter
+   ========================================================================== */
 
 :host {
   display: block;
-  font-family: Arial, sans-serif;
 }
 
 *,
@@ -10,513 +14,414 @@
   box-sizing: border-box;
 }
 
-/* BACKGROUND */
-
+/* --------------------------------------------------------------------------
+   Background Overlay: CeylonGo Navy + subtle blur
+   -------------------------------------------------------------------------- */
 .register-page {
-  min-height: 100dvh;
-  padding: 20px;
-
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
-  justify-content: center;
   align-items: center;
-
-  background:
-    linear-gradient(
-      rgba(3, 22, 47, 0.72),
-      rgba(3, 22, 47, 0.72)
-    ),
-    url('/images/s2.jpeg') center / cover no-repeat;
-}
-
-/* MAIN POPUP */
-
-.register-modal {
-  display: grid;
-  grid-template-columns: 41% 59%;
-
-  width: min(1000px, 100%);
-  height: auto;
-  min-height: 0;
-  max-height: calc(100dvh - 40px);
-
-  background: #ffffff;
-  border-radius: 24px;
-  overflow: hidden;
-
-  box-shadow: 0 18px 65px rgba(0, 0, 0, 0.22);
-}
-
-/* LEFT IMAGE PANEL */
-
-.register-left {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-
-  background:
-    linear-gradient(
-      to bottom,
-      transparent 35%,
-      rgba(0, 20, 28, 0.8)
-    ),
-    url('/images/s2.jpeg') center / cover no-repeat;
-
-  overflow: hidden;
-}
-
-/* LEFT TEXT */
-
-.left-content {
-  position: absolute;
-  bottom: 55px;
-  left: 30px;
-  right: 25px;
-
-  color: #ffffff;
-  z-index: 2;
-}
-
-.left-content h2 {
-  font-size: clamp(26px, 3vw, 37px);
-  font-weight: 800;
-  line-height: 1.12;
-  margin: 0 0 12px;
-}
-
-.left-content h2 span {
-  color: #ff9700;
-}
-
-.left-line {
-  width: 100px;
-  height: 5px;
-  margin-bottom: 14px;
-
-  background: #ff9700;
-  border-radius: 50%;
-}
-
-.left-content p {
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ORANGE WAVE */
-
-.orange-wave {
-  position: absolute;
-  bottom: -20px;
-  left: -8%;
-
-  width: 120%;
-  height: 48px;
-
-  background: #ff9700;
-  border-radius: 50% 50% 0 0;
-}
-
-/* RIGHT FORM PANEL */
-
-.register-right {
-  position: relative;
-  min-width: 0;
-
-  padding: 58px 30px 24px;
-
-  background: #ffffff;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 43, 92, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   overflow-y: auto;
-  scrollbar-width: thin;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* BACK AND CLOSE BUTTONS */
+/* --------------------------------------------------------------------------
+   Modal Card: Compact, Centered White Card (450–480px)
+   -------------------------------------------------------------------------- */
+.register-modal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow:
+    0 24px 56px -12px rgba(8, 43, 92, 0.28),
+    0 6px 18px -4px rgba(0, 0, 0, 0.08);
+  padding: 34px 32px 28px;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  text-align: center;
+}
 
-.back-btn,
+/* --------------------------------------------------------------------------
+   Close (X) Button in Top-Right Corner
+   -------------------------------------------------------------------------- */
 .close-btn {
   position: absolute;
-  top: 12px;
-
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 36px;
-  height: 36px;
-
-  padding: 0;
+  background: #f1f5f9;
   border: none;
-  background: transparent;
-
-  color: #071b43;
+  border-radius: 50%;
+  color: #64748b;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
-.back-btn {
-  left: 20px;
-  font-size: 23px;
-}
-
-.close-btn {
-  right: 20px;
-  font-size: 30px;
-}
-
-.back-btn:hover,
 .close-btn:hover {
-  color: #ff7900;
+  background: #e2e8f0;
+  color: #082b5c;
+  transform: scale(1.05);
 }
 
-/* HEADING */
+.close-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+}
 
-.register-right h1 {
+/* --------------------------------------------------------------------------
+   CeylonGo Logo (Top Center, 150–170px width)
+   -------------------------------------------------------------------------- */
+.modal-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.modal-logo {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* --------------------------------------------------------------------------
+   Heading & Supporting Subtitle
+   -------------------------------------------------------------------------- */
+.modal-header {
+  margin-bottom: 20px;
+}
+
+.modal-header h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #082b5c;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.modal-header .subtitle {
   margin: 0;
-
-  font-size: 29px;
-  font-weight: 800;
-  line-height: 1.2;
-  color: #071b43;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.45;
 }
 
-.heading-line {
-  width: 85px;
-  height: 5px;
-
-  margin: 10px 0 20px;
-
-  background: #ff7900;
-  border-radius: 20px;
+/* --------------------------------------------------------------------------
+   Alert Notification Boxes
+   -------------------------------------------------------------------------- */
+.alert-box {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.4;
 }
 
-/* FORM FIELDS */
+.alert-box p {
+  margin: 0;
+}
 
-.field {
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.success-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+/* --------------------------------------------------------------------------
+   Register Form & Inputs
+   -------------------------------------------------------------------------- */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+}
+
+.form-group {
   margin-bottom: 13px;
 }
 
-.input-box {
+.input-wrapper {
   display: flex;
   align-items: center;
-
   width: 100%;
-  height: 52px;
-
-  border: 1.5px solid #d7dbe5;
-  border-radius: 12px;
-
+  height: 46px;
+  padding: 0 14px;
   background: #ffffff;
-  overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.input-box:focus-within {
-  border-color: #ff7900;
-  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.1);
+.input-wrapper:hover {
+  border-color: #cbd5e1;
 }
 
-.readonly-box {
-  background: #f5f5f9;
+.input-wrapper:focus-within {
+  border-color: #082b5c;
+  box-shadow: 0 0 0 3.5px rgba(8, 43, 92, 0.12);
 }
 
-/* FIELD ICON */
+.input-wrapper.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.12);
+}
 
 .field-icon {
-  flex: 0 0 50px;
-
-  text-align: center;
-  color: #071b43;
-  font-size: 22px;
+  flex-shrink: 0;
+  color: #64748b;
+  margin-right: 10px;
 }
 
-/* INPUT */
-
-.input-box input {
+.input-wrapper input {
   flex: 1;
-  min-width: 0;
   width: 100%;
-  height: 100%;
-
-  padding: 0 10px 0 0;
-
   border: none;
   outline: none;
-
   background: transparent;
-  color: #101b35;
-
-  font-size: 15px;
-}
-
-.input-box input::placeholder {
-  color: #697184;
-}
-
-/* PHONE COUNTRY CODE */
-
-.country-code {
-  padding: 0 10px;
-
-  white-space: nowrap;
+  color: #082b5c;
   font-size: 14px;
-  font-weight: 600;
-
-  border-right: 1px solid #d7dbe5;
+  font-family: inherit;
+  padding: 0;
 }
 
-.phone-box input {
-  padding-left: 12px;
+.input-wrapper input::placeholder {
+  color: #94a3b8;
 }
-
-/* PASSWORD EYE BUTTON */
 
 .eye-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-
-  padding: 0;
+  background: none;
   border: none;
-
-  background: transparent;
-  color: #071b43;
-
+  color: #64748b;
   cursor: pointer;
-}
-
-.eye-btn svg {
-  width: 21px;
-  height: 21px;
-  pointer-events: none;
+  padding: 0;
+  margin-left: 8px;
+  transition: color 0.15s ease;
 }
 
 .eye-btn:hover {
-  color: #ff7900;
+  color: #082b5c;
 }
 
-/* REGISTER BUTTON */
+.eye-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
-.register-btn {
-  width: 100%;
-  min-height: 50px;
-
+.error-text {
+  display: block;
   margin-top: 5px;
-  padding: 10px 16px;
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.35;
+}
 
-  border: none;
-  border-radius: 12px;
-
-  background: #ff7900;
+/* --------------------------------------------------------------------------
+   Create Account Button
+   -------------------------------------------------------------------------- */
+.register-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  margin-top: 10px;
+  padding: 0 16px;
+  background: #ff9f1c;
   color: #ffffff;
-
-  font-size: 17px;
-  font-weight: 800;
-
+  border: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .register-btn:hover:not(:disabled) {
-  background: #ec6e00;
+  background: #f39209;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 159, 28, 0.35);
+}
+
+.register-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .register-btn:disabled {
-  opacity: 0.65;
+  opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* TERMS AND PRIVACY */
+.register-btn:focus-visible {
+  outline: 3px solid rgba(255, 159, 28, 0.5);
+  outline-offset: 2px;
+}
 
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Terms & Conditions Notice
+   -------------------------------------------------------------------------- */
 .terms-text {
   margin: 14px 0 0;
-
-  text-align: center;
-  color: #626a7a;
-
   font-size: 12px;
+  color: #64748b;
+  text-align: center;
   line-height: 1.5;
 }
 
-.terms-text a,
-.login-link a {
-  color: #ff7900;
+.terms-link {
+  color: #ff9f1c;
   text-decoration: underline;
-  cursor: pointer;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
-.terms-text a:hover,
-.login-link a:hover {
-  color: #d65f00;
+.terms-link:hover {
+  color: #e0850b;
 }
 
-/* SIGN IN LINK */
+.terms-link:focus-visible {
+  outline: 2px solid #ff9f1c;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
-.login-link {
-  margin: 12px 0 0;
-
+/* --------------------------------------------------------------------------
+   Bottom Navigation
+   -------------------------------------------------------------------------- */
+.bottom-nav {
+  margin-top: 18px;
   text-align: center;
-  color: #626a7a;
-  font-size: 13px;
 }
 
-/* VALIDATION ERRORS */
-
-.error {
-  display: block;
-  margin: 5px 0 0 8px;
-
-  color: #dc2626;
-  font-size: 12px;
+.signin-prompt {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: #64748b;
   line-height: 1.4;
 }
 
-.server-error {
-  margin: 10px 0 0;
+.signin-link {
+  color: #ff9f1c;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
 
-  color: #b91c1c;
-  text-align: center;
+.signin-link:hover {
+  color: #e0850b;
+}
+
+.signin-link:focus-visible {
+  outline: 2px solid #ff9f1c;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.back-wrapper {
+  margin-top: 6px;
+}
+
+.back-link {
+  display: inline-block;
   font-size: 13px;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
-/* SHORT LAPTOP SCREENS */
+.back-link:hover {
+  color: #082b5c;
+}
 
-@media (min-width: 651px) and (max-height: 800px) {
+.back-link:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
   .register-page {
     padding: 12px;
   }
 
   .register-modal {
-    max-height: calc(100dvh - 24px);
+    max-width: calc(100vw - 24px);
+    padding: 26px 18px 20px;
+    border-radius: 16px;
   }
 
-  .register-right {
-    padding: 50px 26px 18px;
+  .modal-logo {
+    width: 140px;
   }
 
-  .heading-line {
-    margin-bottom: 14px;
+  .modal-header h1 {
+    font-size: 22px;
   }
 
-  .field {
-    margin-bottom: 10px;
-  }
-
-  .input-box {
-    height: 46px;
-  }
-
-  .register-btn {
-    min-height: 46px;
-  }
-
-  .terms-text {
-    margin-top: 10px;
-  }
-
-  .login-link {
-    margin-top: 9px;
-  }
-}
-
-/* TABLET */
-
-@media (min-width: 651px) and (max-width: 850px) {
-  .register-modal {
-    grid-template-columns: 36% 64%;
-  }
-
-  .register-right {
-    padding-left: 22px;
-    padding-right: 22px;
-  }
-
-  .left-content {
-    left: 22px;
-    right: 18px;
-  }
-
-  .left-content h2 {
-    font-size: 26px;
-  }
-
-  .left-content p {
-    font-size: 13px;
-  }
-}
-
-/* MOBILE */
-
-@media (max-width: 650px) {
-  .register-page {
-    align-items: flex-start;
-    padding: 12px;
-  }
-
-  .register-modal {
-    display: flex;
-    flex-direction: column;
-
-    width: 100%;
-    height: auto;
-    max-height: none;
-
-    border-radius: 18px;
-  }
-
-  .register-left {
-    flex: 0 0 auto;
-    min-height: 230px;
-    background-position: center 32%;
-  }
-
-  .left-content {
-    bottom: 30px;
-    left: 25px;
-    right: 20px;
-  }
-
-  .left-content h2 {
-    font-size: 27px;
-  }
-
-  .left-content p {
+  .modal-header .subtitle {
     font-size: 13px;
   }
 
-  .orange-wave {
-    height: 25px;
-    bottom: -12px;
-  }
-
-  .register-right {
-    padding: 58px 22px 26px;
-    overflow: visible;
-  }
-
-  .register-right h1 {
-    font-size: 27px;
-  }
-
-  .input-box {
-    height: 50px;
-  }
-
-  .field-icon {
-    flex-basis: 45px;
-    font-size: 20px;
-  }
-
-  .input-box input {
-    font-size: 14px;
-  }
-
-  .country-code {
-    font-size: 12px;
-    padding: 0 7px;
-  }
-
-  .register-btn {
-    min-height: 48px;
-    font-size: 16px;
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
   }
 }

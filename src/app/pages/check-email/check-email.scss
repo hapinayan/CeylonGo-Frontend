@@ -1,3 +1,8 @@
+/* ==========================================================================
+   CeylonGo — Check Your Email Compact Modal
+   Colors: Navy (#082B5C), Orange (#FF9F1C), White (#FFFFFF)
+   Typography: Inter
+   ========================================================================== */
 
 :host {
   display: block;
@@ -9,234 +14,272 @@
   box-sizing: border-box;
 }
 
-/* PAGE BACKGROUND */
-
+/* --------------------------------------------------------------------------
+   Background Overlay: CeylonGo Navy + subtle blur
+   -------------------------------------------------------------------------- */
 .status-page {
-  min-height: 100dvh;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-
-  font-family: Arial, sans-serif;
-
-  background:
-    linear-gradient(
-      rgba(5, 25, 55, 0.75),
-      rgba(5, 25, 55, 0.85)
-    ),
-    url('/images/s2.jpeg') center / cover no-repeat;
-}
-
-/* COMPACT CHECK EMAIL POPUP */
-
-.status-card {
-  width: 100%;
-  max-width: 480px;
-  height: auto;
-  min-height: 0;
-  max-height: calc(100dvh - 40px);
-
-  padding: 24px 30px;
-
-  text-align: center;
-  border-radius: 20px;
-  background: #ffffff;
-
+  padding: 16px;
+  background: rgba(8, 43, 92, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   overflow-y: auto;
-
-  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.25);
-
-  animation: appear 0.5s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* CEYLONGO LOGO */
+/* --------------------------------------------------------------------------
+   Modal Card: Compact, Centered White Card (450–480px)
+   -------------------------------------------------------------------------- */
+.status-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow:
+    0 24px 56px -12px rgba(8, 43, 92, 0.28),
+    0 6px 18px -4px rgba(0, 0, 0, 0.08);
+  padding: 36px 32px 30px;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  text-align: center;
+}
 
-.brand {
+/* --------------------------------------------------------------------------
+   Close (X) Button in Top-Right Corner
+   -------------------------------------------------------------------------- */
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.close-btn:hover {
+  background: #e2e8f0;
   color: #082b5c;
-  font-size: 30px;
-  font-weight: 800;
-  margin-bottom: 14px;
+  transform: scale(1.05);
 }
 
-.brand span {
-  color: #ff7900;
+.close-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
 }
 
-/* EMAIL ICON */
+/* --------------------------------------------------------------------------
+   CeylonGo Logo (Top Center, 150–170px width)
+   -------------------------------------------------------------------------- */
+.modal-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-logo {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* --------------------------------------------------------------------------
+   Email Icon in Light Orange Circle
+   -------------------------------------------------------------------------- */
+.status-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
 
 .status-icon {
-  width: 72px;
-  height: 72px;
-
-  padding: 18px;
-  margin: 0 auto 14px;
-
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  color: #ff7900;
-  background: #fff1e5;
+  background: rgba(255, 159, 28, 0.12);
+  color: #ff9f1c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.status-icon svg {
+/* --------------------------------------------------------------------------
+   Heading & Subtitle
+   -------------------------------------------------------------------------- */
+.modal-header {
+  margin-bottom: 16px;
+}
+
+.modal-header h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #082b5c;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.modal-header .subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Email Display Container (Light Gray Rounded Box)
+   -------------------------------------------------------------------------- */
+.email-display-box {
+  margin: 14px 0 16px;
+  padding: 11px 14px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  word-break: break-all;
+}
+
+.email-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #082b5c;
+}
+
+/* --------------------------------------------------------------------------
+   Additional Instructions
+   -------------------------------------------------------------------------- */
+.instruction-text {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Action Buttons
+   -------------------------------------------------------------------------- */
+.actions-group {
   width: 100%;
-  height: 100%;
 }
-
-/* HEADING */
-
-h1 {
-  color: #082b5c;
-  font-size: 25px;
-  font-weight: 800;
-  margin: 0 0 10px;
-}
-
-/* DESCRIPTION */
-
-.subtitle,
-.description {
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.45;
-  margin: 8px 0;
-}
-
-/* EMAIL BOX */
-
-.email-box {
-  margin: 14px 0;
-  padding: 12px;
-
-  border-radius: 10px;
-  background: #f1f5f9;
-
-  overflow-wrap: anywhere;
-}
-
-.email-box span {
-  display: block;
-  color: #64748b;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.email-box strong {
-  color: #082b5c;
-  font-size: 14px;
-}
-
-/* PRIMARY BUTTON */
 
 .primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  min-height: 48px;
-
-  margin-top: 14px;
-  padding: 10px 16px;
-
-  border: none;
-  border-radius: 11px;
-
-  background: #ff7900;
+  height: 46px;
+  padding: 0 16px;
+  background: #ff9f1c;
   color: #ffffff;
-
-  font-size: 16px;
-  font-weight: 700;
-
+  text-decoration: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .primary-btn:hover {
-  background: #e66d00;
+  background: #f39209;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 159, 28, 0.35);
 }
 
-/* SECONDARY BUTTON */
+.primary-btn:active {
+  transform: translateY(0);
+}
 
-.secondary-btn {
-  display: block;
-  margin: 12px auto 0;
-  padding: 8px;
+.primary-btn:focus-visible {
+  outline: 3px solid rgba(255, 159, 28, 0.5);
+  outline-offset: 2px;
+}
 
+/* --------------------------------------------------------------------------
+   Bottom Navigation
+   -------------------------------------------------------------------------- */
+.bottom-nav {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.back-link {
+  display: inline-block;
+  background: none;
   border: none;
-  background: transparent;
-
-  color: #082b5c;
-  font-size: 14px;
-
+  padding: 4px 8px;
+  font-size: 13.5px;
+  color: #64748b;
+  font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-.secondary-btn:hover {
-  text-decoration: underline;
+.back-link:hover {
+  color: #082b5c;
 }
 
-/* DEMO NOTE */
-
-.demo-note {
-  margin: 12px 0 0;
-
-  color: #94a3b8;
-  font-size: 11px;
-  line-height: 1.4;
+.back-link:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* POPUP ANIMATION */
-
-@keyframes appear {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* MOBILE RESPONSIVE */
-
-@media (max-width: 600px) {
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
   .status-page {
     padding: 12px;
   }
 
   .status-card {
-    max-width: 100%;
-    max-height: calc(100dvh - 24px);
-    padding: 22px 18px;
-    border-radius: 17px;
+    max-width: calc(100vw - 24px);
+    padding: 26px 20px 22px;
+    border-radius: 16px;
   }
 
-  .brand {
-    font-size: 27px;
+  .modal-logo {
+    width: 140px;
   }
 
   .status-icon {
-    width: 68px;
-    height: 68px;
-    padding: 17px;
+    width: 52px;
+    height: 52px;
   }
 
-  h1 {
+  .modal-header h1 {
     font-size: 22px;
   }
 
-  .subtitle,
-  .description {
+  .modal-header .subtitle {
     font-size: 13px;
   }
 
-  .primary-btn {
-    min-height: 46px;
-  }
-}
-
-/* ACCESSIBILITY */
-
-@media (prefers-reduced-motion: reduce) {
-  .status-card {
-    animation: none;
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
   }
 }

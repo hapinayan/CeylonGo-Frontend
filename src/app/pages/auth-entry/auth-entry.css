@@ -1,12 +1,11 @@
-
-/* =========================================
-   CEYLONGO - AUTH ENTRY UI
-   Navy Blue + Orange + White
-   ========================================= */
+/* ==========================================================================
+   CeylonGo — Sign In / Create Account Minimal Modal
+   Colors: Navy (#082B5C), Orange (#FF9F1C), White (#FFFFFF)
+   Typography: Inter
+   ========================================================================== */
 
 :host {
   display: block;
-  min-height: 100dvh;
 }
 
 *,
@@ -15,737 +14,402 @@
   box-sizing: border-box;
 }
 
-/* MAIN PAGE */
-
+/* --------------------------------------------------------------------------
+   Background Overlay: CeylonGo Navy + subtle blur
+   -------------------------------------------------------------------------- */
 .auth-page {
-  position: relative;
-  isolation: isolate;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 100%;
-  min-height: 100dvh;
-  padding: 20px;
-
-  overflow: hidden;
-  font-family: Arial, Helvetica, sans-serif;
-
-  background: #082b4e;
+  padding: 16px;
+  background: rgba(8, 43, 92, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* BACKGROUND IMAGE */
-
-.background-page {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-
-  background:
-    linear-gradient(
-      rgba(5, 20, 44, 0.65),
-      rgba(5, 20, 44, 0.78)
-    ),
-    url('/images/s2.jpeg') center / cover no-repeat;
-}
-
-/* BACKGROUND BLUR */
-
-.background-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-
-  background: rgba(5, 16, 37, 0.15);
-  backdrop-filter: blur(5px);
-}
-
-/* AUTH MODAL */
-
+/* --------------------------------------------------------------------------
+   Modal Card: Compact, Centered White Card (450–480px)
+   -------------------------------------------------------------------------- */
 .auth-modal {
   position: relative;
-  z-index: 1;
-
-  display: grid;
-  grid-template-columns: 41% 59%;
-
-  width: min(1180px, 100%);
-  max-height: calc(100dvh - 40px);
-  min-height: 0;
-
-  overflow: hidden;
-
-  background: #ffffff;
-  border-radius: 24px;
-
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
-}
-
-/* LEFT TOURISM PANEL */
-
-.auth-left,
-.tourism-panel {
-  position: relative;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-
-  min-width: 0;
-  min-height: 0;
-
-  padding: 32px 44px 68px;
-
-  overflow: hidden;
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(0, 40, 80, 0.08) 0%,
-      rgba(0, 30, 50, 0.08) 42%,
-      rgba(0, 20, 30, 0.78) 100%
-    ),
-    url('/images/s2.jpeg') center / 100% 100% no-repeat;
-}
-
-/* LOGO - IMAGE ALREADY IN BACKGROUND */
-
-.brand-logo {
-  display: none;
-}
-
-.brand {
-  position: relative;
-  z-index: 2;
   width: 100%;
-}
-
-/* LEFT PANEL TEXT */
-
-.tourism-content {
-  position: relative;
-  z-index: 2;
-}
-
-.tourism-content h2 {
-  margin: 0 0 14px;
-
-  color: #ffffff;
-  font-size: clamp(30px, 3vw, 43px);
-  font-weight: 800;
-  line-height: 1.18;
-}
-
-.tourism-content p {
-  margin: 0;
-
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 1.6;
-}
-
-/* ORANGE WAVE */
-
-.orange-wave {
-  position: absolute;
-  bottom: -33px;
-  left: -10%;
-
-  width: 120%;
-  height: 65px;
-
-  background: #ff9900;
-  border-radius: 50% 50% 0 0;
-}
-
-/* RIGHT CONTENT */
-
-.auth-right,
-.auth-content {
-  position: relative;
-
-  min-width: 0;
-  min-height: 0;
-
-  padding: 54px 48px 34px;
-
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
-
+  max-width: 460px;
   background: #ffffff;
+  border-radius: 18px;
+  box-shadow:
+    0 24px 56px -12px rgba(8, 43, 92, 0.28),
+    0 6px 18px -4px rgba(0, 0, 0, 0.08);
+  padding: 36px 32px 30px;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  text-align: center;
 }
 
-/* CLOSE BUTTON */
-
+/* --------------------------------------------------------------------------
+   Close (X) Button in Top-Right Corner
+   -------------------------------------------------------------------------- */
 .close-btn {
   position: absolute;
-  top: 15px;
-  right: 22px;
-  z-index: 5;
-
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 40px;
-  height: 40px;
-
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-
-  background: transparent;
-  color: #071c44;
-
-  font-size: 32px;
-  line-height: 1;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .close-btn:hover {
-  background: #fff3e8;
-  color: #ff7900;
+  background: #e2e8f0;
+  color: #082b5c;
+  transform: scale(1.05);
 }
 
-/* HEADING */
-
-.auth-right h1,
-.auth-content h1 {
-  margin: 0 0 14px;
-
-  color: #071c44;
-  font-size: clamp(28px, 3vw, 36px);
-  font-weight: 800;
-  line-height: 1.2;
+.close-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
 }
 
-.heading-line {
-  width: 100px;
-  height: 6px;
-
-  margin-bottom: 30px;
-
-  background: #ff8800;
-  border-radius: 10px;
+/* --------------------------------------------------------------------------
+   CeylonGo Logo (Top Center, 150–170px width)
+   -------------------------------------------------------------------------- */
+.modal-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
-/* EMAIL INPUT */
+.modal-logo {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
 
-.email-input-wrapper,
-.email-field {
+/* --------------------------------------------------------------------------
+   Heading & Supporting Subtitle
+   -------------------------------------------------------------------------- */
+.modal-header {
+  margin-bottom: 22px;
+}
+
+.modal-header h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #082b5c;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.modal-header .subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Auth Form & Email Input
+   -------------------------------------------------------------------------- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+}
+
+.email-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 16px;
-
   width: 100%;
-  height: 62px;
-
-  padding: 0 20px;
-
-  border: 1px solid #d4d7df;
-  border-radius: 14px;
-
+  height: 46px;
+  padding: 0 14px;
   background: #ffffff;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.email-input-wrapper:focus-within,
-.email-field:focus-within {
-  border-color: #ff8800;
-  box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
+.email-input-wrapper:hover {
+  border-color: #cbd5e1;
 }
 
-.email-input-wrapper svg,
-.email-icon {
-  width: 25px;
-  height: 25px;
+.email-input-wrapper:focus-within {
+  border-color: #082b5c;
+  box-shadow: 0 0 0 3.5px rgba(8, 43, 92, 0.12);
+}
 
+.email-input-wrapper.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3.5px rgba(239, 68, 68, 0.12);
+}
+
+.field-icon {
   flex-shrink: 0;
-  color: #071c44;
+  color: #64748b;
+  margin-right: 10px;
 }
 
-.email-input-wrapper input,
-.email-field input {
+.email-input-wrapper input {
+  flex: 1;
   width: 100%;
-  min-width: 0;
-  height: 100%;
-
-  padding: 0;
-
-  border: 0;
+  border: none;
   outline: none;
-
   background: transparent;
-  color: #071c44;
-
-  font-size: 17px;
+  color: #082b5c;
+  font-size: 14.5px;
+  font-family: inherit;
+  padding: 0;
 }
 
-.email-input-wrapper input::placeholder,
-.email-field input::placeholder {
-  color: #6b7280;
+.email-input-wrapper input::placeholder {
+  color: #94a3b8;
 }
 
-/* ERROR MESSAGE */
-
-.error,
 .error-message {
   display: block;
-
-  margin: 8px 0 0;
-
+  margin-top: 6px;
   color: #dc2626;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
-/* CONTINUE BUTTON */
-
+/* --------------------------------------------------------------------------
+   Continue with Email Button
+   -------------------------------------------------------------------------- */
 .continue-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-
+  gap: 8px;
   width: 100%;
-  min-height: 62px;
-
-  margin-top: 20px;
-  padding: 12px 18px;
-
-  border: 0;
-  border-radius: 14px;
-
-  background: #ff7900;
+  height: 46px;
+  margin-top: 14px;
+  padding: 0 16px;
+  background: #ff9f1c;
   color: #ffffff;
-
-  font-size: 20px;
-  font-weight: 700;
-
+  border: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.continue-btn:hover {
-  background: #e86d00;
-  box-shadow: 0 6px 18px rgba(255, 121, 0, 0.2);
+.continue-btn:hover:not(:disabled) {
+  background: #f39209;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 159, 28, 0.35);
 }
 
-/* OR DIVIDER */
+.continue-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
 
+.continue-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.continue-btn:focus-visible {
+  outline: 3px solid rgba(255, 159, 28, 0.5);
+  outline-offset: 2px;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Divider with 'or'
+   -------------------------------------------------------------------------- */
 .divider {
   display: flex;
   align-items: center;
-  gap: 16px;
-
-  margin: 22px 0;
-
-  color: #555b69;
-  font-size: 17px;
+  gap: 12px;
+  margin: 18px 0;
+  width: 100%;
 }
 
-.divider::before,
-.divider::after {
-  content: "";
-
+.divider-line {
   flex: 1;
   height: 1px;
-
-  background: #d5d7dc;
+  background: #e2e8f0;
 }
 
-.divider p {
-  margin: 0;
+.divider-text {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: lowercase;
 }
 
-/* SOCIAL BUTTONS */
-
+/* --------------------------------------------------------------------------
+   Social Authentication Buttons (Google & WhatsApp)
+   -------------------------------------------------------------------------- */
 .social-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
 }
 
 .social-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-
+  gap: 10px;
   width: 100%;
-  min-height: 56px;
-
-  padding: 10px 16px;
-
-  border: 1px solid #d5d7df;
-  border-radius: 13px;
-
+  height: 45px;
+  padding: 0 16px;
   background: #ffffff;
-  color: #101010;
-
-  font-size: 17px;
-  font-weight: 700;
-
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  color: #082b5c;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.social-btn:not(:disabled):hover {
-  background: #fff7ed;
-  border-color: #ff8800;
-}
-
-.social-btn:disabled {
-  cursor: not-allowed;
-}
-
-.social-icon {
-  width: 27px;
-  height: 27px;
+.social-btn svg {
   flex-shrink: 0;
 }
 
-.apple-icon {
-  color: #000000;
+.social-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(8, 43, 92, 0.06);
 }
 
-.whatsapp-icon {
-  color: #10c653;
+.social-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
-/* DEMO FEEDBACK */
+.social-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 
-.social-demo-message {
-  margin: 12px 0;
+.social-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Feedback / Status Alert Box
+   -------------------------------------------------------------------------- */
+.feedback-box {
+  margin-top: 14px;
   padding: 10px 14px;
-
-  background: #fff7ed;
-  color: #9a3412;
-
-  border: 1px solid #fed7aa;
-  border-radius: 10px;
-
-  font-size: 13px;
-  line-height: 1.5;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
   text-align: center;
 }
 
-/* TERMS AND PRIVACY */
+.feedback-box p {
+  margin: 0;
+  color: #082b5c;
+  font-size: 13px;
+  line-height: 1.4;
+}
 
-.terms,
+/* --------------------------------------------------------------------------
+   Terms and Privacy Text
+   -------------------------------------------------------------------------- */
 .terms-text {
   margin: 22px 0 0;
-
-  color: #555b69;
-
-  font-size: 13px;
+  font-size: 11.5px;
+  color: #64748b;
   line-height: 1.55;
   text-align: center;
 }
 
-.terms span,
 .terms-text a {
-  color: #e87500;
+  color: #ff9f1c;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
-/* LOGIN AND REGISTER LINKS */
-
-.account-options,
-.auth-links {
-  margin: 12px 0 0;
-
-  color: #555b69;
-
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: center;
+.terms-text a:hover {
+  color: #e0850b;
 }
 
-.account-options a,
-.auth-links a {
-  color: #ff7900;
-  font-weight: 700;
-  text-decoration: none;
+.terms-text a:focus-visible {
+  outline: 2px solid #ff9f1c;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-.account-options a:hover,
-.auth-links a:hover {
-  text-decoration: underline;
-}
-
-.separator {
-  margin: 0 8px;
-  color: #cbd5e1;
-}
-
-/* TABLET */
-
-@media (max-width: 850px) {
-  .auth-page {
-    padding: 14px;
-  }
-
-  .auth-modal {
-    grid-template-columns: 38% 62%;
-    max-height: calc(100dvh - 28px);
-  }
-
-  .auth-left,
-  .tourism-panel {
-    padding: 26px 22px 52px;
-  }
-
-  .tourism-content h2 {
-    font-size: 29px;
-  }
-
-  .tourism-content p {
-    font-size: 15px;
-  }
-
-  .auth-right,
-  .auth-content {
-    padding: 54px 26px 26px;
-  }
-
-  .social-btn {
-    font-size: 15px;
-  }
-}
-
-/* MOBILE */
-
-@media (max-width: 650px) {
-  .auth-page {
-    align-items: flex-start;
-    min-height: 100dvh;
-    padding: 12px;
-    overflow: visible;
-  }
-
-  .auth-modal {
-    display: flex;
-    flex-direction: column;
-
-    width: 100%;
-    max-height: none;
-
-    overflow: hidden;
-    border-radius: 18px;
-  }
-
-  .auth-left,
-  .tourism-panel {
-    min-height: 230px;
-    padding: 20px 24px 36px;
-
-    background-size: cover;
-    background-position: center;
-  }
-
-  .tourism-content h2 {
-    font-size: 26px;
-  }
-
-  .tourism-content p {
-    font-size: 14px;
-  }
-
-  .orange-wave {
-    height: 48px;
-    bottom: -25px;
-  }
-
-  .auth-right,
-  .auth-content {
-    padding: 54px 22px 28px;
-    overflow: visible;
-  }
-
-  .auth-right h1,
-  .auth-content h1 {
-    font-size: 28px;
-  }
-
-  .heading-line {
-    margin-bottom: 24px;
-  }
-
-  .email-input-wrapper,
-  .email-field {
-    height: 56px;
-    padding: 0 14px;
-  }
-
-  .email-input-wrapper input,
-  .email-field input {
-    font-size: 15px;
-  }
-
-  .continue-btn {
-    min-height: 56px;
-    font-size: 17px;
-  }
-
-  .social-btn {
-    min-height: 52px;
-    font-size: 14px;
-    gap: 12px;
-  }
-
-  .terms,
-  .terms-text,
-  .account-options,
-  .auth-links {
-    font-size: 12px;
-  }
-}
-
-/* SHORT DESKTOP SCREENS */
-
-@media (max-height: 740px) and (min-width: 651px) {
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
   .auth-page {
     padding: 12px;
   }
 
   .auth-modal {
-    max-height: calc(100dvh - 24px);
+    max-width: calc(100vw - 24px);
+    padding: 26px 20px 22px;
+    border-radius: 16px;
   }
 
-  .auth-right,
-  .auth-content {
-    padding-top: 45px;
-    padding-bottom: 20px;
+  .modal-logo {
+    width: 140px;
   }
 
-  .heading-line {
-    margin-bottom: 20px;
+  .modal-header h1 {
+    font-size: 22px;
   }
 
-  .divider {
-    margin: 14px 0;
+  .modal-header .subtitle {
+    font-size: 13px;
   }
 
-  .terms,
-  .terms-text {
-    margin-top: 15px;
-  }
-}
-
-/* REDUCED MOTION */
-
-@media (prefers-reduced-motion: reduce) {
-  .continue-btn,
-  .social-btn,
-  .close-btn,
-  .email-input-wrapper,
-  .email-field {
-    transition: none;
-  }
-}
-
-
-/* CEYLONGO - COMPACT AUTH MODAL */
-
-@media (min-width: 851px) {
-  .auth-modal {
-    width: min(1120px, 100%);
-  }
-
-  .auth-right,
-  .auth-content {
-    padding: 38px 42px 24px;
-  }
-
-  .heading-line {
-    margin-bottom: 22px;
-  }
-
-  .email-input-wrapper,
-  .email-field {
-    height: 56px;
-  }
-
-  .continue-btn {
-    min-height: 54px;
-    margin-top: 16px;
-  }
-
-  .divider {
-    margin: 15px 0;
-  }
-
-  .social-buttons {
-    gap: 8px;
-  }
-
-  .social-btn {
-    min-height: 49px;
-  }
-
-  .terms,
-  .terms-text {
-    margin-top: 15px;
-  }
-
-  .account-options,
-  .auth-links {
-    margin-top: 9px;
-  }
-}
-
-
-/* Smaller orange horizontal line */
-
-.heading-line {
-  width: 55px;
-  height: 4px;
-  border-radius: 10px;
-}
-
-
-/* Equal width for image and sign-in details */
-
-@media (min-width: 851px) {
-  .auth-modal {
-    width: min(950px, 94vw);
-    grid-template-columns: 50% 50%;
-  }
-
-  .auth-left,
-  .tourism-panel {
-    min-width: 0;
-  }
-
-  .auth-right,
-  .auth-content {
-    min-width: 0;
-    padding: 38px 28px 24px;
-  }
-
-  .auth-right h1,
-  .auth-content h1 {
-    font-size: 29px;
-  }
-
-  .social-btn {
-    font-size: 15px;
-  }
-
-  .terms-text,
-  .auth-links {
-    font-size: 12px;
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
   }
 }
