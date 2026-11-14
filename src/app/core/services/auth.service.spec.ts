@@ -1,6 +1,5 @@
 import {
   provideHttpClient,
-  withInterceptors,
 } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -11,11 +10,16 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { environment } from '../../../environments/environment';
 import {
+  CheckEmailResponse,
+  ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   User,
+  VerifyResetTokenResponse,
 } from '../models/auth.models';
 import { AuthService } from './auth.service';
 
@@ -40,6 +44,23 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     service.logout();
+  });
+
+  it('should check email registration status via /auth/check-email', () => {
+    const mockRes: CheckEmailResponse = {
+      email: 'traveler@ceylongo.lk',
+      is_registered: true,
+    };
+
+    service.checkEmail('Traveler@CeylonGo.LK').subscribe((res) => {
+      expect(res.email).toBe('traveler@ceylongo.lk');
+      expect(res.is_registered).toBe(true);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/check-email`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'traveler@ceylongo.lk' });
+    req.flush(mockRes);
   });
 
   it('should register a new traveler', () => {
@@ -103,6 +124,87 @@ describe('AuthService', () => {
     req.flush(mockResponse);
   });
 
+  it('should authenticate with Google ID token and store session', () => {
+    const mockResponse: LoginResponse = {
+      access_token: 'fake-google-jwt-token',
+      token_type: 'bearer',
+      user: {
+        id: 2,
+        full_name: 'Google Traveler',
+        email: 'google@ceylongo.lk',
+        role: 'traveler',
+        is_active: true,
+        created_at: '2026-11-10T00:00:00',
+      },
+    };
+
+    service.loginWithGoogle('mock_google_id_token_xyz').subscribe((res) => {
+      expect(res.access_token).toBe('fake-google-jwt-token');
+      expect(service.getToken()).toBe('fake-google-jwt-token');
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.currentUser()?.email).toBe('google@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/google`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ id_token: 'mock_google_id_token_xyz' });
+    req.flush(mockResponse);
+  });
+
+  it('should request forgot password email via /auth/forgot-password', () => {
+    const mockRes: ForgotPasswordResponse = {
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    };
+
+    service.forgotPassword('Reset@CeylonGo.LK').subscribe((res) => {
+      expect(res.message).toContain('password reset link has been sent');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/forgot-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'reset@ceylongo.lk' });
+    req.flush(mockRes);
+  });
+
+  it('should verify password reset token via /auth/verify-reset-token', () => {
+    const mockRes: VerifyResetTokenResponse = {
+      valid: true,
+      email: 'traveler@ceylongo.lk',
+      message: 'Password reset token is valid.',
+    };
+
+    service.verifyResetToken('valid_token_123').subscribe((res) => {
+      expect(res.valid).toBe(true);
+      expect(res.email).toBe('traveler@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(
+      `${environment.apiBaseUrl}/auth/verify-reset-token?token=valid_token_123`
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockRes);
+  });
+
+  it('should reset password via /auth/reset-password', () => {
+    const payload: ResetPasswordRequest = {
+      token: 'valid_token_123',
+      new_password: 'NewStrongPassword123!',
+    };
+
+    const mockRes: ResetPasswordResponse = {
+      message: 'Password has been reset successfully.',
+    };
+
+    service.resetPassword(payload).subscribe((res) => {
+      expect(res.message).toBe('Password has been reset successfully.');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/reset-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush(mockRes);
+  });
+
   it('should fetch current user via /auth/me', () => {
     const mockUser: User = {
       id: 1,
@@ -131,4 +233,3 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(false);
   });
 });
-

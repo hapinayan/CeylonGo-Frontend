@@ -1,4 +1,3 @@
-
 import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -7,7 +6,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [],
   templateUrl: './check-email.html',
-  styleUrl: './check-email.scss'
+  styleUrl: './check-email.scss',
 })
 export class CheckEmail implements OnInit {
   private readonly router = inject(Router);
@@ -15,18 +14,32 @@ export class CheckEmail implements OnInit {
   email = '';
 
   ngOnInit(): void {
-    this.email = history.state?.email || '';
+    this.email = (history.state?.email || '').trim().toLowerCase();
   }
 
-  continueToReset(): void {
-    this.router.navigate(['/reset-password'], {
-      state: { email: this.email }
-    });
+  openEmailApp(): void {
+    if (typeof window !== 'undefined') {
+      window.location.href = 'mailto:';
+    }
   }
 
   backToLogin(): void {
-    this.router.navigate(['/login'], {
-      queryParams: { email: this.email }
-    });
+    if (this.email) {
+      this.router.navigate(['/login'], {
+        queryParams: { email: this.email },
+      });
+    } else {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  closeModal(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement)?.classList.contains('status-page')) {
+      this.closeModal();
+    }
   }
 }

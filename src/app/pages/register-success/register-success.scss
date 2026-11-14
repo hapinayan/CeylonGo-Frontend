@@ -1,271 +1,293 @@
+/* ==========================================================================
+   CeylonGo — Registration Success Compact Modal
+   Colors: Navy (#082B5C), Orange (#FF9F1C), Green (#16A34A), White (#FFFFFF)
+   Typography: Inter
+   ========================================================================== */
 
 :host {
   display: block;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+/* --------------------------------------------------------------------------
+   Background Overlay: CeylonGo Navy + subtle blur
+   -------------------------------------------------------------------------- */
 .success-page {
-  min-height: 100dvh;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-
-  background:
-    linear-gradient(
-      rgba(4, 25, 54, 0.75),
-      rgba(4, 25, 54, 0.85)
-    ),
-    url('/images/s2.jpeg') center / cover no-repeat;
-
-  font-family: Arial, sans-serif;
+  padding: 16px;
+  background: rgba(8, 43, 92, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* --------------------------------------------------------------------------
+   Modal Card: Compact, Centered White Card (450–480px)
+   -------------------------------------------------------------------------- */
 .success-card {
+  position: relative;
   width: 100%;
-  max-width: 540px;
-  padding: 38px 40px;
+  max-width: 460px;
   background: #ffffff;
-  border-radius: 24px;
-  text-align: center;
-
+  border-radius: 18px;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.25);
-
-  animation: cardAppear 0.6s ease;
+    0 24px 56px -12px rgba(8, 43, 92, 0.28),
+    0 6px 18px -4px rgba(0, 0, 0, 0.08);
+  padding: 34px 32px 28px;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  text-align: center;
 }
 
-.brand-name {
-  font-size: 32px;
-  font-weight: 800;
+/* --------------------------------------------------------------------------
+   Close (X) Button in Top-Right Corner
+   -------------------------------------------------------------------------- */
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.close-btn:hover {
+  background: #e2e8f0;
   color: #082b5c;
-  margin-bottom: 20px;
+  transform: scale(1.05);
 }
 
-.brand-name span {
-  color: #ff7900;
+.close-btn:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
 }
 
-/* Success Tick */
+/* --------------------------------------------------------------------------
+   CeylonGo Logo (Top Center, 150–170px width)
+   -------------------------------------------------------------------------- */
+.modal-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.modal-logo {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* --------------------------------------------------------------------------
+   Success Icon (Subtle Green Circular Badge, 48px)
+   -------------------------------------------------------------------------- */
+.success-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
 
 .success-icon {
-  width: 105px;
-  height: 105px;
-  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
 }
 
-.success-icon svg {
-  width: 100%;
-  height: 100%;
+/* --------------------------------------------------------------------------
+   Heading & Supporting Text
+   -------------------------------------------------------------------------- */
+.modal-header {
+  margin-bottom: 14px;
 }
 
-.check-circle {
-  stroke: #16a34a;
-  stroke-width: 3;
-  stroke-dasharray: 151;
-  stroke-dashoffset: 151;
-
-  animation: drawCircle 0.8s ease forwards;
-}
-
-.check-mark {
-  stroke: #16a34a;
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-
-  stroke-dasharray: 40;
-  stroke-dashoffset: 40;
-
-  animation: drawCheck 0.5s ease 0.8s forwards;
-}
-
-/* Text */
-
-h1 {
-  color: #082b5c;
-  font-size: 29px;
-  margin-bottom: 12px;
-}
-
-h2 {
-  color: #ff7900;
-  font-size: 21px;
-  margin-bottom: 12px;
-}
-
-.welcome-name {
-  font-size: 18px;
+.modal-header h1 {
+  margin: 0 0 6px;
+  font-size: 23px;
   font-weight: 700;
   color: #082b5c;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
-.description {
+.modal-header .subtitle {
+  margin: 0;
+  font-size: 13.5px;
   color: #64748b;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Personalized Greeting
+   -------------------------------------------------------------------------- */
+.personalized-greeting {
+  margin: 0 0 10px;
   font-size: 15px;
-  line-height: 1.6;
-}
-
-.email-box {
-  padding: 14px;
-  margin: 20px 0;
-  background: #f1f5f9;
-  border-radius: 12px;
-  color: #082b5c;
   font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.journey-text {
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.7;
-  margin: 20px 0;
-}
-
-/* Buttons */
-
-.login-btn {
-  width: 100%;
-  min-height: 55px;
-  border: none;
-  border-radius: 12px;
-
-  background: #ff7900;
-  color: white;
-
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-
-  transition: background 0.2s;
-}
-
-.login-btn:hover {
-  background: #e66d00;
-}
-
-.home-btn {
-  width: 100%;
-  margin-top: 15px;
-  padding: 12px;
-
-  border: none;
-  background: transparent;
-
   color: #082b5c;
-  font-size: 14px;
-  cursor: pointer;
 }
 
-.home-btn:hover {
+/* --------------------------------------------------------------------------
+   Registered Email Display Container
+   -------------------------------------------------------------------------- */
+.email-display-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  word-break: break-all;
+}
+
+.email-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #082b5c;
+}
+
+/* --------------------------------------------------------------------------
+   Additional Message
+   -------------------------------------------------------------------------- */
+.journey-text {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Primary Button: Continue to Login
+   -------------------------------------------------------------------------- */
+.actions-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  background: #ff9f1c;
+  color: #ffffff;
+  border: none;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.primary-btn:hover {
+  background: #f39209;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 159, 28, 0.35);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+.primary-btn:focus-visible {
+  outline: 3px solid rgba(255, 159, 28, 0.5);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Secondary Navigation
+   -------------------------------------------------------------------------- */
+.bottom-nav {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.back-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: #082b5c;
   text-decoration: underline;
 }
 
-.demo-note {
-  margin-top: 18px;
-  color: #94a3b8;
-  font-size: 12px;
+.back-link:focus-visible {
+  outline: 2px solid #082b5c;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-/* Animations */
-
-@keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: translateY(25px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes drawCircle {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes drawCheck {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-/* Mobile */
-
-@media (max-width: 600px) {
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
   .success-page {
-    padding: 15px;
+    padding: 12px;
   }
 
   .success-card {
-    padding: 30px 22px;
+    max-width: calc(100vw - 24px);
+    padding: 26px 18px 20px;
+    border-radius: 16px;
   }
 
-  h1 {
-    font-size: 24px;
+  .modal-logo {
+    width: 140px;
   }
 
-  h2 {
-    font-size: 19px;
+  .modal-header h1 {
+    font-size: 21px;
   }
 
-  .success-icon {
-    width: 85px;
-    height: 85px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .success-card,
-  .check-circle,
-  .check-mark {
-    animation: none;
+  .modal-header .subtitle {
+    font-size: 13px;
   }
 
-  .check-circle,
-  .check-mark {
-    stroke-dashoffset: 0;
-  }
-}
-
-
-/* COMPACT POPUP HEIGHT */
-
-:host {
-  display: block;
-}
-
-@media (min-width: 651px) {
-  .success-card,
-  .success-modal,
-  .check-email-card,
-  .check-email-modal,
-  .reset-card,
-  .reset-modal,
-  .reset-password-card,
-  .reset-password-modal {
-    height: auto;
-    min-height: 0;
-    max-height: calc(100dvh - 48px);
-    overflow-y: auto;
-    padding: 24px 30px;
-  }
-
-  h1 {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-
-  p {
-    margin-top: 8px;
-    margin-bottom: 12px;
-    line-height: 1.4;
+  .close-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
   }
 }

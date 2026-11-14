@@ -13,19 +13,26 @@ describe('Login Component', () => {
   let authServiceMock: {
     login: ReturnType<typeof vi.fn>;
     getCurrentUser: ReturnType<typeof vi.fn>;
+    currentUser: ReturnType<typeof vi.fn>;
   };
   let router: Router;
 
   beforeEach(async () => {
+    let mockUser: any = null;
     authServiceMock = {
       login: vi.fn(),
       getCurrentUser: vi.fn(),
+      currentUser: vi.fn(() => mockUser),
     };
 
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [
-        provideRouter([]),
+        provideRouter([
+          { path: 'login-success', component: class {} },
+          { path: 'register', component: class {} },
+          { path: 'auth', component: class {} },
+        ]),
         { provide: AuthService, useValue: authServiceMock },
         {
           provide: ActivatedRoute,
@@ -47,7 +54,7 @@ describe('Login Component', () => {
   });
 
   it('should initialize and show registration success query message', () => {
-    expect(component.successMessage).toContain('Account registered successfully');
+    expect(component.successMessage()).toContain('Account registered successfully');
     expect(component.loginForm.valid).toBe(false);
   });
 
@@ -78,6 +85,7 @@ describe('Login Component', () => {
 
     authServiceMock.login.mockReturnValue(of(mockLoginRes));
     authServiceMock.getCurrentUser.mockReturnValue(of(mockLoginRes.user));
+    authServiceMock.currentUser.mockReturnValue(mockLoginRes.user);
 
     component.onLogin();
 
@@ -86,9 +94,9 @@ describe('Login Component', () => {
       password: 'Password123!',
     });
     expect(authServiceMock.getCurrentUser).toHaveBeenCalled();
-    expect(component.successMessage).toContain('Welcome back, Test Traveler!');
+    expect(component.successMessage()).toContain('Welcome back, Test Traveler!');
     expect(component.currentUser?.full_name).toBe('Test Traveler');
-    expect(component.isLoading).toBe(false);
+    expect(component.isLoading()).toBe(false);
   });
 
   it('should reset isLoading to false on 401 invalid credentials error', () => {
@@ -109,8 +117,8 @@ describe('Login Component', () => {
 
     component.onLogin();
 
-    expect(component.isLoading).toBe(false);
-    expect(component.errorMessage).toBe('Invalid email or password.');
+    expect(component.isLoading()).toBe(false);
+    expect(component.errorMessage()).toBe('Invalid email or password.');
   });
 
   it('should reset isLoading to false on 403 inactive account error', () => {
@@ -131,8 +139,8 @@ describe('Login Component', () => {
 
     component.onLogin();
 
-    expect(component.isLoading).toBe(false);
-    expect(component.errorMessage).toBe(
+    expect(component.isLoading()).toBe(false);
+    expect(component.errorMessage()).toBe(
       'Account is inactive. Please contact support.'
     );
   });
@@ -160,13 +168,64 @@ describe('Login Component', () => {
     authServiceMock.getCurrentUser.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 500 }))
     );
+    authServiceMock.currentUser.mockReturnValue(mockLoginRes.user);
 
     component.onLogin();
 
     expect(authServiceMock.login).toHaveBeenCalled();
     expect(authServiceMock.getCurrentUser).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
+    expect(component.isLoading()).toBe(false);
     expect(component.currentUser?.full_name).toBe('Test Traveler');
-    expect(component.successMessage).toContain('Welcome back, Test Traveler!');
+    expect(component.successMessage()).toContain('Welcome back, Test Traveler!');
+  });
+
+  it('should toggle password visibility', () => {
+    expect(component.showPassword).toBe(false);
+    component.togglePassword();
+    expect(component.showPassword).toBe(true);
+    component.togglePassword();
+    expect(component.showPassword).toBe(false);
+  });
+
+  it('should navigate to /forgot-password with email queryParam', () => {
+    const navSpy = vi.spyOn(router, 'navigate');
+    component.loginForm.patchValue({ email: 'traveler@ceylongo.lk' });
+    component.forgotPassword();
+    expect(navSpy).toHaveBeenCalledWith(['/forgot-password'], {
+      queryParams: { email: 'traveler@ceylongo.lk' },
+    });
+  });
+
+  it('should navigate to /auth on closeModal and goBack', () => {
+    const navSpy = vi.spyOn(router, 'navigate');
+    component.closeModal();
+    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+
+    component.goBack();
+    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+  });
+
+  it('should navigate to /register on goToRegister', () => {
+    const navSpy = vi.spyOn(router, 'navigate');
+    component.goToRegister();
+    expect(navSpy).toHaveBeenCalledWith(['/register']);
+  });
+
+  it('should handle backdrop clicks appropriately', () => {
+    const navSpy = vi.spyOn(router, 'navigate');
+    const backdropEvent = {
+      target: { classList: { contains: (c: string) => c === 'login-page' } },
+    } as unknown as MouseEvent;
+
+    component.onBackdropClick(backdropEvent);
+    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+
+    navSpy.mockClear();
+    const modalEvent = {
+      target: { classList: { contains: () => false } },
+    } as unknown as MouseEvent;
+
+    component.onBackdropClick(modalEvent);
+    expect(navSpy).not.toHaveBeenCalled();
   });
 });
