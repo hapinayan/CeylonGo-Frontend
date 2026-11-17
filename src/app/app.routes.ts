@@ -96,6 +96,35 @@ export const routes: Routes = [
         .then(m => m.ResetSuccess)
   },
 
+  // SERVICE PROVIDER PORTAL WELCOME PAGE
+  {
+    path: 'provider',
+    loadComponent: () =>
+      import('./pages/provider-welcome/provider-welcome')
+        .then(m => m.ProviderWelcome)
+  },
+  {
+    path: 'provider/welcome',
+    redirectTo: 'provider',
+    pathMatch: 'full'
+  },
+
+  // SERVICE PROVIDER REGISTRATION
+  {
+    path: 'provider/register',
+    loadComponent: () =>
+      import('./provider/registration/provider-registration')
+        .then(m => m.ProviderRegistration)
+  },
+
+  // PROVIDER LOGIN (PLACEHOLDER ROUTE)
+  {
+    path: 'provider/login',
+    loadComponent: () =>
+      import('./pages/provider-login-placeholder/provider-login-placeholder')
+        .then(m => m.ProviderLoginPlaceholder)
+  },
+
   // UNKNOWN URL - GO TO FIRST PAGE
   {
     path: '**',

@@ -1,0 +1,1919 @@
+<div class="provider-registration-page">
+  <!-- 1. TOP NAVBAR -->
+  <header class="reg-navbar">
+    <div class="navbar-inner">
+      <!-- Left: Logo & Portal Title -->
+      <div class="brand-group">
+        <a routerLink="/provider" class="logo-link" aria-label="CeylonGo Provider Portal Home">
+          <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="brand-logo" />
+        </a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <span class="portal-title">Provider Portal</span>
+      </div>
+
+      <!-- Right: Help & Back to Home -->
+      <div class="nav-actions">
+        <a routerLink="/provider" fragment="help" class="nav-link help-link">
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Help</span>
+        </a>
+
+        <span class="nav-divider" aria-hidden="true"></span>
+
+        <a routerLink="/provider" class="nav-link home-link">
+          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Back to Home</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. MAIN REGISTRATION CONTENT -->
+  <main class="page-body">
+    <!-- PAGE HEADER -->
+    <section class="heading-section">
+      <span class="pre-heading">SERVICE PROVIDER REGISTRATION</span>
+      <h1 class="main-heading">Create Your Provider Account</h1>
+      <p class="sub-heading">List your homestay, service or business and reach more travelers across Sri Lanka.</p>
+      <div class="heading-accent-pill" aria-hidden="true"></div>
+    </section>
+
+    <!-- 3. PROGRESS STEPPER -->
+    <nav class="stepper-wrapper" aria-label="Registration Progress">
+      <ol class="stepper-list">
+        @for (step of stateService.steps(); track step.id; let i = $index) {
+          <li
+            class="step-item"
+            [class.active]="step.active"
+            [class.completed]="step.completed"
+            [class.disabled]="step.disabled"
+          >
+            <div class="step-indicator">
+              <span class="step-circle">
+                @if (step.completed) {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                } @else {
+                  {{ step.stepNumber }}
+                }
+              </span>
+              <span class="step-label">{{ step.title }}</span>
+            </div>
+
+            @if (step.active) {
+              <div class="active-step-bar" aria-hidden="true"></div>
+            }
+
+            @if (i < stateService.steps().length - 1) {
+              <div class="step-connector" aria-hidden="true"></div>
+            }
+          </li>
+        }
+      </ol>
+    </nav>
+
+    <!-- 4. MAIN TWO-COLUMN REGISTRATION CARD -->
+    <div class="card-container">
+      <div class="registration-card">
+        <!-- LEFT COLUMN: ILLUSTRATION & VALUE PROPOSITION -->
+        <aside class="card-left-col">
+          @if (stateService.currentStepId() === 'business_details') {
+            <!-- STOREFRONT ILLUSTRATION FOR STEP 3 -->
+            <div class="illustration-wrapper" aria-hidden="true">
+              <svg class="business-illustration storefront-illustration" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Soft blue circular backdrop -->
+                <circle cx="120" cy="90" r="68" fill="#EBF4FD" />
+
+                <!-- Store Base Pavement -->
+                <rect x="52" y="132" width="136" height="8" rx="4" fill="#082B5C" />
+
+                <!-- Building Body -->
+                <rect x="64" y="68" width="112" height="64" rx="3" fill="#F8FAFC" stroke="#082B5C" stroke-width="2.5" />
+
+                <!-- Store Door on Left -->
+                <rect x="74" y="86" width="28" height="46" rx="2" fill="#082B5C" />
+                <circle cx="96" cy="110" r="2.5" fill="#FFFFFF" />
+
+                <!-- Store Window on Right with light blue glass -->
+                <rect x="112" y="86" width="54" height="34" rx="3" fill="#CDE4FA" stroke="#082B5C" stroke-width="2" />
+                <line x1="139" y1="86" x2="139" y2="120" stroke="#FFFFFF" stroke-width="2" />
+                <line x1="112" y1="103" x2="166" y2="103" stroke="#FFFFFF" stroke-width="2" />
+
+                <!-- Striped Orange and White Awning Canopy -->
+                <path d="M58 54H182L176 72H64L58 54Z" fill="#FF9F1C" />
+                <path d="M78 54H92L88 72H74L78 54Z" fill="#FFFFFF" />
+                <path d="M106 54H120L116 72H102L106 54Z" fill="#FFFFFF" />
+                <path d="M134 54H148L144 72H130L134 54Z" fill="#FFFFFF" />
+                <path d="M162 54H176L172 72H158L162 54Z" fill="#FFFFFF" />
+
+                <!-- Orange Location Pin on Bottom-Right -->
+                <g>
+                  <path d="M174 100C165.7 100 159 106.7 159 115C159 126.2 174 139 174 139C174 139 189 126.2 189 115C189 106.7 182.3 100 174 100Z" fill="#FF9F1C" />
+                  <circle cx="174" cy="114" r="5" fill="#FFFFFF" />
+                </g>
+              </svg>
+            </div>
+
+            <h2 class="card-side-title">
+              Set Up Your Business <br />on CeylonGo
+            </h2>
+
+            <ul class="benefits-list">
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Showcase your service or property</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Get more customer bookings</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Grow your local business</span>
+              </li>
+            </ul>
+          } @else if (stateService.currentStepId() === 'identity_verification' || stateService.currentStepId() === 'review_submit') {
+            <!-- ID CARD & SECURITY SHIELD ILLUSTRATION FOR STEP 4 -->
+            <div class="illustration-wrapper" aria-hidden="true">
+              <svg class="business-illustration identity-illustration" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Soft blue circular backdrop -->
+                <circle cx="120" cy="90" r="68" fill="#EBF4FD" />
+
+                <!-- Identity Card Body -->
+                <rect x="54" y="52" width="132" height="84" rx="10" fill="#FFFFFF" stroke="#082B5C" stroke-width="2.5" />
+
+                <!-- Photo Placeholder on Left -->
+                <rect x="66" y="64" width="34" height="42" rx="4" fill="#EDF5FD" stroke="#1255B5" stroke-width="1.5" />
+                <!-- Avatar Head & Shoulders -->
+                <circle cx="83" cy="77" r="7" fill="#1255B5" />
+                <path d="M72 102C72 94.5 76.5 91 83 91C89.5 91 94 94.5 94 102" fill="#1255B5" />
+
+                <!-- Document text lines on Right -->
+                <rect x="110" y="66" width="62" height="6" rx="3" fill="#082B5C" />
+                <rect x="110" y="78" width="46" height="5" rx="2.5" fill="#94A3B8" />
+                <rect x="110" y="89" width="54" height="5" rx="2.5" fill="#CBD5E1" />
+                <rect x="110" y="100" width="38" height="5" rx="2.5" fill="#E2E8F0" />
+
+                <!-- Orange Security Shield on Bottom Right -->
+                <g>
+                  <path d="M172 96C172 96 186 100 186 112C186 128 172 138 172 138C172 138 158 128 158 112C158 100 172 96 172 96Z" fill="#FF9F1C" stroke="#FFFFFF" stroke-width="2" />
+                  <!-- White Checkmark inside shield -->
+                  <path d="M166 114L170 118L178 110" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+              </svg>
+            </div>
+
+            <h2 class="card-side-title">
+              Verify Your <br />Identity
+            </h2>
+
+            <ul class="benefits-list">
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Upload your valid ID</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Take a clear selfie</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Verify your identity</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Keep your account safe &amp; trusted</span>
+              </li>
+            </ul>
+          } @else {
+            <!-- LAPTOP ILLUSTRATION FOR STEP 1 & 2 -->
+            <div class="illustration-wrapper" aria-hidden="true">
+              <svg class="business-illustration" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Decorative background leaves in soft blue -->
+                <path d="M35 110C25 80 45 40 75 45C65 75 50 105 35 110Z" fill="#E2EFFC" opacity="0.9" />
+                <path d="M50 125C30 115 35 75 60 70C60 95 55 118 50 125Z" fill="#CDE4FA" opacity="0.8" />
+                <path d="M195 110C205 80 185 40 155 45C165 75 180 105 195 110Z" fill="#E2EFFC" opacity="0.9" />
+                <path d="M180 125C200 115 195 75 170 70C170 95 175 118 180 125Z" fill="#CDE4FA" opacity="0.8" />
+
+                <!-- Laptop Base & Stand -->
+                <rect x="52" y="132" width="136" height="8" rx="4" fill="#082B5C" />
+                <path d="M106 136H134V140H106V136Z" fill="#1255B5" />
+
+                <!-- Laptop Screen Shell -->
+                <rect x="62" y="44" width="116" height="88" rx="6" fill="#1E40AF" />
+                <!-- Screen Display Inner -->
+                <rect x="66" y="48" width="108" height="80" rx="3" fill="#FFFFFF" />
+
+                <!-- Shop Awning Canopy (Blue and White Stripes) -->
+                <path d="M72 54H168V68C168 70 166 72 164 72H76C74 72 72 70 72 68V54Z" fill="#082B5C" />
+                <path d="M84 54H96V72H84V54Z" fill="#FFFFFF" />
+                <path d="M108 54H120V72H108V54Z" fill="#FFFFFF" />
+                <path d="M132 54H144V72H132V54Z" fill="#FFFFFF" />
+                <path d="M156 54H168V72H156V54Z" fill="#FFFFFF" />
+
+                <!-- Homestay Bed Icon on Screen -->
+                <rect x="76" y="82" width="38" height="34" rx="4" fill="#E2EFFC" />
+                <path d="M82 92H88V98H82V92Z" fill="#1255B5" />
+                <path d="M82 100H108V106H82V100Z" fill="#1255B5" />
+                <circle cx="85" cy="94" r="2" fill="#082B5C" />
+                <line x1="82" y1="90" x2="82" y2="108" stroke="#082B5C" stroke-width="2" stroke-linecap="round" />
+                <line x1="108" y1="96" x2="108" y2="108" stroke="#082B5C" stroke-width="2" stroke-linecap="round" />
+                <line x1="88" y1="98" x2="108" y2="98" stroke="#082B5C" stroke-width="2" />
+
+                <!-- Document lines next to bed -->
+                <rect x="122" y="86" width="42" height="4" rx="2" fill="#94A3B8" />
+                <rect x="122" y="94" width="34" height="4" rx="2" fill="#CBD5E1" />
+                <rect x="122" y="102" width="26" height="4" rx="2" fill="#CBD5E1" />
+
+                <!-- Orange Circular Checkmark Badge on Laptop Bottom-Right -->
+                <circle cx="174" cy="126" r="14" fill="#FF9F1C" />
+                <path d="M168 126L172 130L180 121" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+
+            <h2 class="card-side-title">
+              Join CeylonGo <br />as a Service Provider
+            </h2>
+
+            <ul class="benefits-list">
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">List your business or service</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Get more bookings</span>
+              </li>
+              <li class="benefit-item">
+                <span class="check-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+                <span class="benefit-text">Reach travelers worldwide</span>
+              </li>
+            </ul>
+          }
+        </aside>
+
+        <!-- VERTICAL DIVIDER -->
+        <div class="card-divider" aria-hidden="true"></div>
+
+        <!-- RIGHT COLUMN: INTERACTIVE FORM CONTAINER -->
+        <section class="card-right-col">
+          <!-- ERROR ALERT BANNER -->
+          @if (errorMessage()) {
+            <div class="alert-banner alert-error" role="alert">
+              <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <div class="alert-content">
+                <p class="alert-message">{{ errorMessage() }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- SUCCESS ALERT BANNER -->
+          @if (successMessage()) {
+            <div class="alert-banner alert-success" role="status">
+              <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div class="alert-content">
+                <p class="alert-message">{{ successMessage() }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- STATE 1: EMAIL ENTRY FORM -->
+          @if (flowState === 'email_entry') {
+            <div class="state-container">
+              <div class="form-header">
+                <h2 class="form-title">Verify Your Email</h2>
+                <p class="form-description">We'll send a 6-digit verification code to your email address.</p>
+              </div>
+
+              <form [formGroup]="emailForm" (ngSubmit)="onSendVerificationCode()" novalidate class="reg-form">
+                <div class="form-field">
+                  <label for="provider-email" class="field-label">
+                    Email Address <span class="required-star">*</span>
+                  </label>
+
+                  <div class="input-wrapper" [class.has-error]="emailForm.controls.email.invalid && emailForm.controls.email.touched">
+                    <span class="input-icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                    </span>
+
+                    <input
+                      id="provider-email"
+                      type="email"
+                      formControlName="email"
+                      placeholder="provider@business.com"
+                      class="form-input"
+                      autocomplete="email"
+                      [attr.aria-invalid]="emailForm.controls.email.invalid && emailForm.controls.email.touched"
+                      aria-describedby="email-error-msg"
+                    />
+                  </div>
+
+                  @if (emailErrorMessage) {
+                    <p id="email-error-msg" class="field-error-msg" role="alert">
+                      {{ emailErrorMessage }}
+                    </p>
+                  }
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn-primary-action"
+                  [disabled]="isSubmitting()"
+                  aria-label="Send 6-digit verification code"
+                >
+                  @if (!isSubmitting()) {
+                    <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                    <span>Send Verification Code</span>
+                  } @else {
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                    <span>Sending Code...</span>
+                  }
+                </button>
+              </form>
+
+              <div class="form-footer">
+                <span class="footer-prompt">Already have a provider account?</span>
+                <a routerLink="/provider/login" class="footer-link">Sign In</a>
+              </div>
+            </div>
+          }
+
+          <!-- STATE 2: OTP VERIFICATION STATE -->
+          @if (flowState === 'otp_entry') {
+            <div class="state-container">
+              <div class="form-header">
+                <h2 class="form-title">Enter Verification Code</h2>
+                <p class="form-description">We've sent a 6-digit verification code to your email address.</p>
+              </div>
+
+              <!-- Email badge with Change option -->
+              <div class="verified-target-pill">
+                <div class="pill-left">
+                  <svg class="pill-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  <span class="target-email" title="{{ activeEmail }}">{{ activeEmail }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn-change-target"
+                  (click)="onChangeEmail()"
+                  aria-label="Change email address"
+                >
+                  Change
+                </button>
+              </div>
+
+              <!-- 6 INDIVIDUAL OTP INPUT BOXES -->
+              <div class="otp-section" (paste)="onPaste($event)">
+                <label class="field-label" id="otp-group-label">6-Digit Verification Code</label>
+
+                <div class="otp-boxes-wrapper" role="group" aria-labelledby="otp-group-label">
+                  @for (control of digitsArray.controls; track $index; let i = $index) {
+                    <input
+                      #otpInput
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      maxlength="1"
+                      class="otp-digit-box"
+                      [formControl]="control"
+                      (input)="onDigitInput($event, i)"
+                      (keydown)="onKeyDown($event, i)"
+                      [attr.aria-label]="'Verification code digit ' + (i + 1)"
+                      autocomplete="off"
+                    />
+                  }
+                </div>
+              </div>
+
+              <!-- ACTION: VERIFY & CONTINUE BUTTON -->
+              <button
+                type="button"
+                class="btn-primary-action"
+                (click)="onVerifyOtp()"
+                [disabled]="!isOtpComplete() || isSubmitting()"
+                aria-label="Verify entered code and continue"
+              >
+                @if (!isSubmitting()) {
+                  <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Verify &amp; Continue</span>
+                } @else {
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                  <span>Verifying...</span>
+                }
+              </button>
+
+              <!-- RESEND OTP SECTION WITH COOLDOWN COUNTDOWN -->
+              <div class="resend-container">
+                <span class="resend-text">Didn't receive the code?</span>
+                @if (resendCooldown > 0) {
+                  <span class="cooldown-badge" aria-live="polite">
+                    Resend Code in {{ resendCooldown }}s
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn-resend-link"
+                    (click)="onResendOtp()"
+                    [disabled]="isSubmitting()"
+                  >
+                    Resend Code
+                  </button>
+                }
+              </div>
+
+              <!-- CHANGE EMAIL BUTTON -->
+              <div class="form-footer">
+                <button type="button" class="btn-back-link" (click)="onChangeEmail()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Use a different email address</span>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- STATE 3: VERIFIED ACCOUNT STATE HANDLING -->
+          @if (flowState === 'verified_action') {
+            <div class="state-container verified-feedback">
+              <!-- A. CONTINUE REGISTRATION (NEW PROVIDER ONBOARDING) -->
+              @if (currentAction() === 'continue_registration') {
+                <div class="feedback-card success-flow">
+                  <div class="feedback-badge-circle" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                  </div>
+                  <h3 class="feedback-title">Email Verified Successfully!</h3>
+                  <p class="feedback-description">
+                    Your email <strong>{{ activeEmail }}</strong> is verified. Continue to enter your personal details.
+                  </p>
+                  <button type="button" class="btn-primary-action" (click)="onContinueNextStep()">
+                    <span>Continue to Personal Details</span>
+                    <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              }
+
+              <!-- B. RESUBMIT APPLICATION -->
+              @if (currentAction() === 'resubmit_application') {
+                <div class="feedback-card warning-flow">
+                  <div class="feedback-badge-circle warning-circle" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                  </div>
+                  <h3 class="feedback-title">Application Revision Required</h3>
+                  <p class="feedback-description">
+                    Your previous provider registration has been reviewed and requires updates. You are authorized to revise and resubmit your application.
+                  </p>
+                  <button type="button" class="btn-primary-action" (click)="onContinueNextStep()">
+                    <span>Revise Application</span>
+                    <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              }
+
+              <!-- C. CREATE PASSWORD (APPROVED PROVIDER WITHOUT PASSWORD) -->
+              @if (currentAction() === 'create_password') {
+                <div class="feedback-card success-flow">
+                  <div class="feedback-badge-circle" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </div>
+                  <h3 class="feedback-title">Application Approved!</h3>
+                  <p class="feedback-description">
+                    Your provider application has been approved by the CeylonGo administrator team. Please set up your password to activate your account.
+                  </p>
+                  <button type="button" class="btn-primary-action" (click)="onContinueNextStep()">
+                    <span>Set Up Password</span>
+                    <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              }
+
+              <!-- D. APPLICATION UNDER REVIEW -->
+              @if (currentAction() === 'application_pending') {
+                <div class="feedback-card info-flow">
+                  <div class="feedback-badge-circle info-circle" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </div>
+                  <h3 class="feedback-title">Application Under Review</h3>
+                  <p class="feedback-description">
+                    Your service provider registration has already been submitted and is currently being evaluated by our onboarding team. You will receive an email once approved.
+                  </p>
+                  <a routerLink="/provider" class="btn-secondary-action">
+                    <span>Back to Provider Portal</span>
+                  </a>
+                </div>
+              }
+
+              <!-- E. ACCOUNT ALREADY ACTIVE (LOGIN REQUIRED) -->
+              @if (currentAction() === 'login_required') {
+                <div class="feedback-card info-flow">
+                  <div class="feedback-badge-circle info-circle" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                      <polyline points="10 17 15 12 10 7"></polyline>
+                      <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                  </div>
+                  <h3 class="feedback-title">Account Already Active</h3>
+                  <p class="feedback-description">
+                    An active service provider account already exists for <strong>{{ activeEmail }}</strong>. Please sign in to manage your listings.
+                  </p>
+                  <a routerLink="/provider/login" class="btn-primary-action">
+                    <span>Sign In to Provider Portal</span>
+                  </a>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- STATE 4: PERSONAL DETAILS FORM (STEP 2) -->
+          @if (flowState === 'personal_details') {
+            <div class="state-container personal-details-container">
+              <div class="form-header">
+                <div class="title-with-icon">
+                  <span class="header-icon-orange" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9F1C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </span>
+                  <h2 class="form-title">Personal Details</h2>
+                </div>
+                <p class="form-description">Provide your personal information as the primary contact for your business.</p>
+              </div>
+
+              <form [formGroup]="personalDetailsForm" (ngSubmit)="onContinueToBusinessDetails()" novalidate class="personal-form">
+                <!-- ROW 1: 2 COLUMNS (Full Name, Email Address) -->
+                <div class="form-row row-2-cols">
+                  <!-- Full Name -->
+                  <div class="form-field">
+                    <label for="full-name" class="field-label">
+                      Full Name <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('fullName')">
+                      <input
+                        id="full-name"
+                        type="text"
+                        formControlName="fullName"
+                        placeholder="Enter your full name"
+                        class="form-input"
+                        autocomplete="name"
+                        [attr.aria-invalid]="isFieldInvalid('fullName')"
+                        aria-describedby="fullname-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('fullName')) {
+                      <p id="fullname-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('fullName') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Email Address (Read-only + Verified Badge) -->
+                  <div class="form-field">
+                    <div class="field-label-group">
+                      <label for="verified-email" class="field-label">Email Address</label>
+                      <span class="badge-verified" title="Email verified via OTP">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Verified</span>
+                      </span>
+                    </div>
+                    <div class="input-wrapper readonly-wrapper">
+                      <input
+                        id="verified-email"
+                        type="email"
+                        [value]="activeEmail"
+                        readonly
+                        tabindex="-1"
+                        class="form-input readonly-input"
+                        aria-readonly="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ROW 2: 3 COLUMNS (Phone Number, Date of Birth, Gender) -->
+                <div class="form-row row-3-cols">
+                  <!-- Phone Number -->
+                  <div class="form-field">
+                    <label for="phone-number" class="field-label">
+                      Phone Number <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('phone')">
+                      <input
+                        id="phone-number"
+                        type="tel"
+                        formControlName="phone"
+                        placeholder="Enter your phone number"
+                        class="form-input"
+                        autocomplete="tel"
+                        [attr.aria-invalid]="isFieldInvalid('phone')"
+                        aria-describedby="phone-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('phone')) {
+                      <p id="phone-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('phone') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Date of Birth -->
+                  <div class="form-field">
+                    <label for="date-of-birth" class="field-label">
+                      Date of Birth <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('dateOfBirth')">
+                      <input
+                        id="date-of-birth"
+                        type="date"
+                        formControlName="dateOfBirth"
+                        [max]="maxBirthDate"
+                        placeholder="Select your date of birth"
+                        class="form-input date-input"
+                        [attr.aria-invalid]="isFieldInvalid('dateOfBirth')"
+                        aria-describedby="dob-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('dateOfBirth')) {
+                      <p id="dob-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('dateOfBirth') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Gender -->
+                  <div class="form-field">
+                    <label for="gender" class="field-label">
+                      Gender <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isFieldInvalid('gender')">
+                      <select
+                        id="gender"
+                        formControlName="gender"
+                        class="form-select"
+                        [attr.aria-invalid]="isFieldInvalid('gender')"
+                        aria-describedby="gender-error-msg"
+                      >
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getFieldError('gender')) {
+                      <p id="gender-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('gender') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 3: 3 COLUMNS (Nationality, Identity Document Type, Identity Number) -->
+                <div class="form-row row-3-cols">
+                  <!-- Nationality -->
+                  <div class="form-field">
+                    <label for="nationality" class="field-label">
+                      Nationality <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isFieldInvalid('nationality')">
+                      <select
+                        id="nationality"
+                        formControlName="nationality"
+                        class="form-select"
+                        [attr.aria-invalid]="isFieldInvalid('nationality')"
+                        aria-describedby="nationality-error-msg"
+                      >
+                        <option value="" disabled>Select nationality</option>
+                        <option value="Sri Lankan">Sri Lankan</option>
+                        <option value="Indian">Indian</option>
+                        <option value="British">British</option>
+                        <option value="Australian">Australian</option>
+                        <option value="American">American</option>
+                        <option value="Canadian">Canadian</option>
+                        <option value="German">German</option>
+                        <option value="French">French</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getFieldError('nationality')) {
+                      <p id="nationality-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('nationality') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Identity Document Type -->
+                  <div class="form-field">
+                    <label for="identity-doc-type" class="field-label">
+                      Identity Document <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isFieldInvalid('identityDocumentType')">
+                      <select
+                        id="identity-doc-type"
+                        formControlName="identityDocumentType"
+                        (change)="onIdentityDocumentTypeChange()"
+                        class="form-select"
+                        [attr.aria-invalid]="isFieldInvalid('identityDocumentType')"
+                        aria-describedby="doctype-error-msg"
+                      >
+                        <option value="nic">National Identity Card (NIC)</option>
+                        <option value="passport">Passport</option>
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getFieldError('identityDocumentType')) {
+                      <p id="doctype-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('identityDocumentType') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Identity Number (NIC or Passport) -->
+                  <div class="form-field">
+                    <label for="nic-passport" class="field-label">
+                      {{ personalDetailsForm.controls.identityDocumentType.value === 'passport' ? 'Passport Number' : 'NIC Number' }} <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('nicNumber')">
+                      <input
+                        id="nic-passport"
+                        type="text"
+                        formControlName="nicNumber"
+                        [placeholder]="personalDetailsForm.controls.identityDocumentType.value === 'passport' ? 'e.g. N1234567' : 'e.g. 199012345678 or 123456789V'"
+                        class="form-input"
+                        [attr.aria-invalid]="isFieldInvalid('nicNumber')"
+                        aria-describedby="nic-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('nicNumber')) {
+                      <p id="nic-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('nicNumber') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 4: 2 COLUMNS (Province, District) -->
+                <div class="form-row row-2-cols">
+                  <!-- Province -->
+                  <div class="form-field">
+                    <label for="province" class="field-label">
+                      Province <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isFieldInvalid('province')">
+                      <select
+                        id="province"
+                        formControlName="province"
+                        (change)="onProvinceChange()"
+                        class="form-select"
+                        [attr.aria-invalid]="isFieldInvalid('province')"
+                        aria-describedby="province-error-msg"
+                      >
+                        <option value="" disabled selected>Select province</option>
+                        @for (prov of provinces; track $index) {
+                          <option [value]="prov">{{ prov }}</option>
+                        }
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getFieldError('province')) {
+                      <p id="province-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('province') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- District (Dependent on Province) -->
+                  <div class="form-field">
+                    <label for="district" class="field-label">
+                      District <span class="required-star">*</span>
+                    </label>
+                    <div
+                      class="input-wrapper select-wrapper"
+                      [class.has-error]="isFieldInvalid('district')"
+                      [class.disabled-wrapper]="!personalDetailsForm.controls.province.value"
+                    >
+                      <select
+                        id="district"
+                        formControlName="district"
+                        class="form-select"
+                        [attr.aria-invalid]="isFieldInvalid('district')"
+                        aria-describedby="district-error-msg"
+                      >
+                        <option value="" disabled selected>
+                          {{ personalDetailsForm.controls.province.value ? 'Select district' : 'Select province first' }}
+                        </option>
+                        @for (dist of availableDistricts(); track $index) {
+                          <option [value]="dist">{{ dist }}</option>
+                        }
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getFieldError('district')) {
+                      <p id="district-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('district') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 5: 2 COLUMNS (City / Town, Postal Code) -->
+                <div class="form-row row-2-cols">
+                  <!-- City / Town -->
+                  <div class="form-field">
+                    <label for="city" class="field-label">
+                      City / Town <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('city')">
+                      <input
+                        id="city"
+                        type="text"
+                        formControlName="city"
+                        placeholder="Enter city or town"
+                        class="form-input"
+                        autocomplete="address-level2"
+                        [attr.aria-invalid]="isFieldInvalid('city')"
+                        aria-describedby="city-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('city')) {
+                      <p id="city-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('city') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Postal Code -->
+                  <div class="form-field">
+                    <label for="postal-code" class="field-label">
+                      Postal Code <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isFieldInvalid('postalCode')">
+                      <input
+                        id="postal-code"
+                        type="text"
+                        formControlName="postalCode"
+                        placeholder="e.g. 20000"
+                        class="form-input"
+                        autocomplete="postal-code"
+                        [attr.aria-invalid]="isFieldInvalid('postalCode')"
+                        aria-describedby="postal-error-msg"
+                      />
+                    </div>
+                    @if (getFieldError('postalCode')) {
+                      <p id="postal-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('postalCode') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 6: FULL WIDTH (Residential Street Address - Final Field) -->
+                <div class="form-row row-full-width">
+                  <div class="form-field">
+                    <label for="residential-address" class="field-label">
+                      Residential Street Address <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper textarea-wrapper" [class.has-error]="isFieldInvalid('residentialAddress')">
+                      <textarea
+                        id="residential-address"
+                        formControlName="residentialAddress"
+                        rows="3"
+                        placeholder="Enter your street address (e.g. No. 45, Temple Road)"
+                        class="form-textarea"
+                        autocomplete="street-address"
+                        [attr.aria-invalid]="isFieldInvalid('residentialAddress')"
+                        aria-describedby="address-error-msg"
+                      ></textarea>
+                    </div>
+                    @if (getFieldError('residentialAddress')) {
+                      <p id="address-error-msg" class="field-error-msg" role="alert">
+                        {{ getFieldError('residentialAddress') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- NAVIGATION BUTTONS ROW -->
+                <div class="form-actions-row">
+                  <button
+                    type="button"
+                    class="btn-back-action"
+                    (click)="onBackToEmail()"
+                    [disabled]="isSubmitting()"
+                    aria-label="Back to Email Verification step"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Back to Email Verification</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    class="btn-primary-action btn-continue-action"
+                    [disabled]="isSubmitting()"
+                    aria-label="Continue to Business Details step"
+                  >
+                    @if (!isSubmitting()) {
+                      <span>Continue to Business Details</span>
+                      <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    } @else {
+                      <span class="btn-spinner" aria-hidden="true"></span>
+                      <span>Saving Details...</span>
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- STATE 5: BUSINESS DETAILS FORM (STEP 3) -->
+          @if (flowState === 'business_details') {
+            <div class="state-container business-details-container">
+              <div class="form-header">
+                <div class="title-with-icon">
+                  <span class="header-icon-orange" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l1-5h16l1 5"></path>
+                      <path d="M4 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                      <path d="M8 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                      <path d="M12 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                      <path d="M16 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                      <path d="M5 21v-7"></path>
+                      <path d="M19 21v-7"></path>
+                      <path d="M9 21h6v-5H9v5z"></path>
+                    </svg>
+                  </span>
+                  <h2 class="form-title">Business Details</h2>
+                </div>
+                <p class="form-description">Provide information about your business or service.</p>
+              </div>
+
+              <form [formGroup]="businessDetailsForm" (ngSubmit)="onContinueToIdentityVerification()" novalidate class="business-form">
+                <!-- ROW 1: 2 COLUMNS (Business Name, Business Category) -->
+                <div class="form-row row-2-cols">
+                  <!-- Business Name -->
+                  <div class="form-field">
+                    <label for="business-name" class="field-label">
+                      Business Name <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('businessName')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 9l1-5h16l1 5"></path>
+                          <path d="M4 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                          <path d="M8 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                          <path d="M12 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                          <path d="M16 9a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2"></path>
+                          <path d="M5 21v-7"></path>
+                          <path d="M19 21v-7"></path>
+                          <path d="M9 21h6v-5H9v5z"></path>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-name"
+                        type="text"
+                        formControlName="businessName"
+                        placeholder="Enter your business name"
+                        class="form-input"
+                        autocomplete="organization"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessName')"
+                        aria-describedby="bname-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('businessName')) {
+                      <p id="bname-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessName') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Business Category -->
+                  <div class="form-field">
+                    <label for="business-category" class="field-label">
+                      Business Category <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isBusinessFieldInvalid('category')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                      </span>
+                      <select
+                        id="business-category"
+                        formControlName="category"
+                        class="form-select select-with-icon"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('category')"
+                        aria-describedby="bcat-error-msg"
+                      >
+                        <option value="" disabled selected>Select business category</option>
+                        @for (cat of businessCategories; track cat.id) {
+                          <option [value]="cat.id">{{ cat.label }}</option>
+                        }
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getBusinessFieldError('category')) {
+                      <p id="bcat-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('category') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 2: 2 COLUMNS (Contact Number, Business Registration Number) -->
+                <div class="form-row row-2-cols">
+                  <!-- Contact Number -->
+                  <div class="form-field">
+                    <label for="business-contact" class="field-label">
+                      Contact Number <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('contactNumber')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-contact"
+                        type="tel"
+                        formControlName="contactNumber"
+                        placeholder="+94 76 582 1987"
+                        class="form-input"
+                        autocomplete="tel"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('contactNumber')"
+                        aria-describedby="bcontact-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('contactNumber')) {
+                      <p id="bcontact-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('contactNumber') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Business Registration Number (Optional) -->
+                  <div class="form-field">
+                    <label for="business-reg-no" class="field-label">
+                      Business Registration Number <span class="optional-tag">(Optional)</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('registrationNumber')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                          <circle cx="8" cy="10" r="2"></circle>
+                          <line x1="13" y1="9" x2="18" y2="9"></line>
+                          <line x1="13" y1="13" x2="18" y2="13"></line>
+                          <line x1="6" y1="16" x2="18" y2="16"></line>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-reg-no"
+                        type="text"
+                        formControlName="registrationNumber"
+                        placeholder="e.g. PV12345678"
+                        class="form-input"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('registrationNumber')"
+                        aria-describedby="breg-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('registrationNumber')) {
+                      <p id="breg-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('registrationNumber') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 3: 2 COLUMNS (Business Province, Business District) -->
+                <div class="form-row row-2-cols">
+                  <!-- Business Province -->
+                  <div class="form-field">
+                    <label for="business-province" class="field-label">
+                      Business Province <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper select-wrapper" [class.has-error]="isBusinessFieldInvalid('businessProvince')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                      </span>
+                      <select
+                        id="business-province"
+                        formControlName="businessProvince"
+                        (change)="onBusinessProvinceChange()"
+                        class="form-select select-with-icon"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessProvince')"
+                        aria-describedby="bprov-error-msg"
+                      >
+                        <option value="" disabled selected>Select province</option>
+                        @for (prov of provinces; track $index) {
+                          <option [value]="prov">{{ prov }}</option>
+                        }
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getBusinessFieldError('businessProvince')) {
+                      <p id="bprov-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessProvince') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Business District (Dependent on Province) -->
+                  <div class="form-field">
+                    <label for="business-district" class="field-label">
+                      Business District <span class="required-star">*</span>
+                    </label>
+                    <div
+                      class="input-wrapper select-wrapper"
+                      [class.has-error]="isBusinessFieldInvalid('businessDistrict')"
+                      [class.disabled-wrapper]="!businessDetailsForm.controls.businessProvince.value"
+                    >
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                      </span>
+                      <select
+                        id="business-district"
+                        formControlName="businessDistrict"
+                        class="form-select select-with-icon"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessDistrict')"
+                        aria-describedby="bdist-error-msg"
+                      >
+                        <option value="" disabled selected>
+                          {{ businessDetailsForm.controls.businessProvince.value ? 'Select district' : 'Select province first' }}
+                        </option>
+                        @for (dist of availableBusinessDistricts(); track $index) {
+                          <option [value]="dist">{{ dist }}</option>
+                        }
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </div>
+                    @if (getBusinessFieldError('businessDistrict')) {
+                      <p id="bdist-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessDistrict') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 4: 2 COLUMNS (Business City / Town, Business Postal Code) -->
+                <div class="form-row row-2-cols">
+                  <!-- Business City / Town -->
+                  <div class="form-field">
+                    <label for="business-city" class="field-label">
+                      Business City / Town <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('businessCity')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 21h18"></path>
+                          <path d="M5 21V7l8-4v18"></path>
+                          <path d="M19 21V11l-6-4"></path>
+                          <path d="M9 9v1"></path>
+                          <path d="M9 13v1"></path>
+                          <path d="M9 17v1"></path>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-city"
+                        type="text"
+                        formControlName="businessCity"
+                        placeholder="Enter city or town"
+                        class="form-input"
+                        autocomplete="address-level2"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessCity')"
+                        aria-describedby="bcity-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('businessCity')) {
+                      <p id="bcity-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessCity') }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Business Postal Code -->
+                  <div class="form-field">
+                    <label for="business-postal" class="field-label">
+                      Business Postal Code <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('businessPostalCode')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-postal"
+                        type="text"
+                        formControlName="businessPostalCode"
+                        placeholder="Enter postal code"
+                        class="form-input"
+                        autocomplete="postal-code"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessPostalCode')"
+                        aria-describedby="bpostal-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('businessPostalCode')) {
+                      <p id="bpostal-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessPostalCode') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 5: FULL WIDTH (Business Street Address) -->
+                <div class="form-row row-full-width">
+                  <div class="form-field">
+                    <label for="business-street-address" class="field-label">
+                      Business Street Address <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper" [class.has-error]="isBusinessFieldInvalid('businessStreetAddress')">
+                      <span class="input-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                      </span>
+                      <input
+                        id="business-street-address"
+                        type="text"
+                        formControlName="businessStreetAddress"
+                        placeholder="No., Street, Area, Landmark"
+                        class="form-input"
+                        autocomplete="street-address"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('businessStreetAddress')"
+                        aria-describedby="baddr-error-msg"
+                      />
+                    </div>
+                    @if (getBusinessFieldError('businessStreetAddress')) {
+                      <p id="baddr-error-msg" class="field-error-msg" role="alert">
+                        {{ getBusinessFieldError('businessStreetAddress') }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- ROW 4: FULL WIDTH (Business Description) -->
+                <div class="form-row row-full-width">
+                  <div class="form-field">
+                    <label for="business-description" class="field-label">
+                      Business Description <span class="required-star">*</span>
+                    </label>
+                    <div class="input-wrapper textarea-wrapper" [class.has-error]="isBusinessFieldInvalid('description')">
+                      <textarea
+                        id="business-description"
+                        formControlName="description"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Describe your business or service"
+                        class="form-textarea"
+                        [attr.aria-invalid]="isBusinessFieldInvalid('description')"
+                        aria-describedby="bdesc-error-msg bdesc-counter"
+                      ></textarea>
+                    </div>
+                    <div class="field-footer">
+                      <div class="error-container">
+                        @if (getBusinessFieldError('description')) {
+                          <p id="bdesc-error-msg" class="field-error-msg" role="alert">
+                            {{ getBusinessFieldError('description') }}
+                          </p>
+                        }
+                      </div>
+                      <span id="bdesc-counter" class="char-counter" aria-live="polite">
+                        {{ descriptionCharCount }} / 500
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- NAVIGATION BUTTONS ROW -->
+                <div class="form-actions-row">
+                  <button
+                    type="button"
+                    class="btn-back-action"
+                    (click)="onBackToPersonalDetails()"
+                    [disabled]="isSubmitting()"
+                    aria-label="Back to Personal Details step"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Back to Personal Details</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    class="btn-primary-action btn-continue-action"
+                    [disabled]="isSubmitting()"
+                    aria-label="Continue to Identity Verification step"
+                  >
+                    @if (!isSubmitting()) {
+                      <span>Continue to Identity Verification</span>
+                      <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    } @else {
+                      <span class="btn-spinner" aria-hidden="true"></span>
+                      <span>Saving Details...</span>
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- STATE 6: IDENTITY VERIFICATION FORM (STEP 4) -->
+          @if (flowState === 'identity_verification') {
+            <div class="state-container identity-verification-container">
+              <div class="form-header">
+                <div class="title-with-icon">
+                  <span class="header-icon-orange" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                      <circle cx="9" cy="10" r="2"></circle>
+                      <line x1="15" y1="8" x2="17" y2="8"></line>
+                      <line x1="15" y1="12" x2="17" y2="12"></line>
+                      <line x1="7" y1="16" x2="17" y2="16"></line>
+                    </svg>
+                  </span>
+                  <h2 class="form-title">Identity Verification</h2>
+                </div>
+                <p class="form-description">
+                  Verify your identity by uploading valid government-issued documents and a recent selfie.
+                </p>
+              </div>
+
+              <!-- ID DOCUMENT TYPE DISPLAY (READ-ONLY AS SELECTED IN STEP 2) -->
+              <div class="form-field id-type-section">
+                <label class="field-label">
+                  ID Document Type <span class="required-star">*</span>
+                </label>
+                <div class="id-type-selector-row" role="radiogroup" aria-label="Identity Document Type">
+                  <div
+                    class="id-type-option"
+                    [class.selected]="identityDocType() === 'nic'"
+                    [attr.aria-checked]="identityDocType() === 'nic'"
+                    role="radio"
+                  >
+                    <span class="id-type-radio" aria-hidden="true">
+                      @if (identityDocType() === 'nic') {
+                        <span class="id-type-radio-dot"></span>
+                      }
+                    </span>
+                    <span class="id-type-text">National Identity Card (NIC)</span>
+                  </div>
+
+                  <div
+                    class="id-type-option"
+                    [class.selected]="identityDocType() === 'passport'"
+                    [attr.aria-checked]="identityDocType() === 'passport'"
+                    role="radio"
+                  >
+                    <span class="id-type-radio" aria-hidden="true">
+                      @if (identityDocType() === 'passport') {
+                        <span class="id-type-radio-dot"></span>
+                      }
+                    </span>
+                    <span class="id-type-text">Passport</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SECTION: UPLOAD IMAGES HEADER -->
+              <div class="upload-section-header">
+                <h3 class="upload-section-title">
+                  @if (identityDocType() === 'passport') {
+                    Upload Passport Images <span class="required-star">*</span>
+                  } @else {
+                    Upload NIC / Passport Images <span class="required-star">*</span>
+                  }
+                </h3>
+              </div>
+
+              <!-- UPLOAD CARDS GRID: 3 CARDS FOR NIC, 2 CARDS FOR PASSPORT -->
+              <div
+                class="upload-cards-grid"
+                [class.grid-3-cards]="identityDocType() === 'nic'"
+                [class.grid-2-cards]="identityDocType() === 'passport'"
+              >
+                <!-- CARD 1: FRONT SIDE / PASSPORT INFORMATION PAGE -->
+                <div
+                  class="upload-card"
+                  [class.is-uploaded]="nicFrontState().isUploaded"
+                  [class.has-error]="nicFrontState().errorMessage"
+                >
+                  <div class="upload-card-header">
+                    <span class="upload-icon-wrapper" aria-hidden="true">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <circle cx="8" cy="11" r="2.5"></circle>
+                        <line x1="13" y1="9" x2="18" y2="9"></line>
+                        <line x1="13" y1="13" x2="18" y2="13"></line>
+                      </svg>
+                    </span>
+                    <h4 class="upload-card-title">
+                      {{ identityDocType() === 'passport' ? 'Passport Information Page' : 'Front Side' }}
+                    </h4>
+                    <p class="upload-card-desc">
+                      {{
+                        identityDocType() === 'passport'
+                          ? 'Upload a clear photo of your passport information page'
+                          : 'Upload a clear photo of the front side of your NIC'
+                      }}
+                    </p>
+                  </div>
+
+                  <div class="upload-card-body">
+                    <input
+                      #frontFileInput
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      (change)="onFileSelected($event, 'nic_front')"
+                      class="sr-only"
+                      [attr.aria-label]="
+                        identityDocType() === 'passport'
+                          ? 'Choose passport information page image'
+                          : 'Choose NIC front side image'
+                      "
+                    />
+
+                    @if (nicFrontState().isUploading) {
+                      <div class="upload-status-box uploading">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <span>Uploading...</span>
+                      </div>
+                    } @else if (nicFrontState().isUploaded) {
+                      <div class="upload-status-box uploaded">
+                        <div class="uploaded-badge">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          <span class="filename" [title]="nicFrontState().fileName || 'Uploaded'">
+                            {{ nicFrontState().fileName || 'Uploaded' }}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          class="btn-replace"
+                          (click)="triggerFileInput(frontFileInput)"
+                          [disabled]="isAnyUploading()"
+                        >
+                          Replace file
+                        </button>
+                      </div>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-choose-file"
+                        (click)="triggerFileInput(frontFileInput)"
+                        [disabled]="isAnyUploading()"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Choose File</span>
+                      </button>
+                    }
+
+                    <p class="upload-format-hint">JPG, PNG (Max 5 MB)</p>
+                    @if (nicFrontState().errorMessage) {
+                      <p class="upload-error-msg" role="alert">{{ nicFrontState().errorMessage }}</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- CARD 2: BACK SIDE (FOR NIC ONLY) -->
+                @if (identityDocType() === 'nic') {
+                  <div
+                    class="upload-card"
+                    [class.is-uploaded]="nicBackState().isUploaded"
+                    [class.has-error]="nicBackState().errorMessage"
+                  >
+                    <div class="upload-card-header">
+                      <span class="upload-icon-wrapper" aria-hidden="true">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                          <line x1="2" y1="9" x2="22" y2="9"></line>
+                          <line x1="6" y1="14" x2="12" y2="14"></line>
+                          <line x1="15" y1="14" x2="18" y2="14"></line>
+                        </svg>
+                      </span>
+                      <h4 class="upload-card-title">Back Side</h4>
+                      <p class="upload-card-desc">Upload a clear photo of the back side of your NIC</p>
+                    </div>
+
+                    <div class="upload-card-body">
+                      <input
+                        #backFileInput
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        (change)="onFileSelected($event, 'nic_back')"
+                        class="sr-only"
+                        aria-label="Choose NIC back side image"
+                      />
+
+                      @if (nicBackState().isUploading) {
+                        <div class="upload-status-box uploading">
+                          <span class="btn-spinner" aria-hidden="true"></span>
+                          <span>Uploading...</span>
+                        </div>
+                      } @else if (nicBackState().isUploaded) {
+                        <div class="upload-status-box uploaded">
+                          <div class="uploaded-badge">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="filename" [title]="nicBackState().fileName || 'Uploaded'">
+                              {{ nicBackState().fileName || 'Uploaded' }}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            class="btn-replace"
+                            (click)="triggerFileInput(backFileInput)"
+                            [disabled]="isAnyUploading()"
+                          >
+                            Replace file
+                          </button>
+                        </div>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn-choose-file"
+                          (click)="triggerFileInput(backFileInput)"
+                          [disabled]="isAnyUploading()"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <span>Choose File</span>
+                        </button>
+                      }
+
+                      <p class="upload-format-hint">JPG, PNG (Max 5 MB)</p>
+                      @if (nicBackState().errorMessage) {
+                        <p class="upload-error-msg" role="alert">{{ nicBackState().errorMessage }}</p>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- CARD 3: SELFIE (WITH NIC / PASSPORT) -->
+                <div
+                  class="upload-card"
+                  [class.is-uploaded]="selfieState().isUploaded"
+                  [class.has-error]="selfieState().errorMessage"
+                >
+                  <div class="upload-card-header">
+                    <span class="upload-icon-wrapper" aria-hidden="true">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <rect x="15" y="11" width="7" height="6" rx="1"></rect>
+                        <line x1="17" y1="13" x2="20" y2="13"></line>
+                      </svg>
+                    </span>
+                    <h4 class="upload-card-title">
+                      Selfie (with {{ identityDocType() === 'passport' ? 'Passport' : 'NIC' }}) <span class="required-star">*</span>
+                    </h4>
+                    <p class="upload-card-desc">
+                      Take a clear selfie holding your {{ identityDocType() === 'passport' ? 'Passport' : 'NIC' }} next to your face
+                    </p>
+                  </div>
+
+                  <div class="upload-card-body">
+                    <input
+                      #selfieFileInput
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      (change)="onFileSelected($event, 'selfie')"
+                      class="sr-only"
+                      [attr.aria-label]="
+                        identityDocType() === 'passport'
+                          ? 'Choose selfie holding passport image'
+                          : 'Choose selfie holding NIC image'
+                      "
+                    />
+
+                    @if (selfieState().isUploading) {
+                      <div class="upload-status-box uploading">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <span>Uploading...</span>
+                      </div>
+                    } @else if (selfieState().isUploaded) {
+                      <div class="upload-status-box uploaded">
+                        <div class="uploaded-badge">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          <span class="filename" [title]="selfieState().fileName || 'Uploaded'">
+                            {{ selfieState().fileName || 'Uploaded' }}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          class="btn-replace"
+                          (click)="triggerFileInput(selfieFileInput)"
+                          [disabled]="isAnyUploading()"
+                        >
+                          Replace file
+                        </button>
+                      </div>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-choose-file"
+                        (click)="triggerFileInput(selfieFileInput)"
+                        [disabled]="isAnyUploading()"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Choose File</span>
+                      </button>
+                    }
+
+                    <p class="upload-format-hint">JPG or PNG (Max 5 MB)</p>
+                    @if (selfieState().errorMessage) {
+                      <p class="upload-error-msg" role="alert">{{ selfieState().errorMessage }}</p>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- INFO BANNER -->
+              <div class="upload-info-banner">
+                <span class="info-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </span>
+                <p class="info-text">
+                  Please upload clear and valid documents and a recent selfie. Your information will be used only for verification and kept secure.
+                </p>
+              </div>
+
+              <!-- FORM ACTIONS ROW -->
+              <div class="form-actions-row">
+                <button
+                  type="button"
+                  class="btn-back-action"
+                  (click)="onBackToBusinessDetails()"
+                  [disabled]="isSubmitting() || isAnyUploading()"
+                  aria-label="Back to Business Details step"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Back to Business Details</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-primary-action btn-continue-action"
+                  (click)="onContinueToReviewSubmit()"
+                  [disabled]="!isIdentityComplete() || isSubmitting() || isAnyUploading()"
+                  aria-label="Continue to Review & Submit step"
+                >
+                  <span>Continue to Review &amp; Submit</span>
+                  <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- STATE 7: REVIEW & SUBMIT PLACEHOLDER (STEP 5) -->
+          @if (flowState === 'review_submit') {
+            <div class="state-container verified-feedback">
+              <div class="feedback-card success-flow">
+                <div class="feedback-badge-circle" aria-hidden="true">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <h3 class="feedback-title">Identity Verification Saved!</h3>
+                <p class="feedback-description">
+                  Step 4 — Identity Verification has been completed and saved to your registration draft. Step 5 — Review &amp; Submit will be configured in the next phase.
+                </p>
+                <div class="placeholder-actions">
+                  <button type="button" class="btn-back-link" (click)="onBackToIdentityVerification()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Edit Identity Documents</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 5. SUBTLE BOTTOM SCENIC WAVES & PALM SILHOUETTES -->
+  <footer class="scenic-footer" aria-hidden="true">
+    <svg class="scenic-waves" viewBox="0 0 1440 220" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Back wave -->
+      <path d="M0 120C240 70 480 140 720 100C960 60 1200 130 1440 90V220H0V120Z" fill="#EDF5FD" />
+      <!-- Mid wave -->
+      <path d="M0 140C220 90 460 160 700 130C940 100 1180 150 1440 120V220H0V140Z" fill="#DFEEFD" />
+      <!-- Front wave -->
+      <path d="M0 170C260 130 520 180 780 150C1040 120 1260 175 1440 160V220H0V170Z" fill="#CFE4FA" />
+
+      <!-- Left palm tree cluster silhouettes in soft light blue -->
+      <g opacity="0.65" fill="#88B8E8">
+        <path d="M72 170Q76 130 84 90Q86 130 88 170Z" />
+        <!-- Palm fronds left 1 -->
+        <path d="M84 90Q58 75 42 85Q64 96 84 90Z" />
+        <path d="M84 90Q62 60 48 62Q68 76 84 90Z" />
+        <path d="M84 90Q82 50 84 46Q92 68 84 90Z" />
+        <path d="M84 90Q102 60 118 64Q100 78 84 90Z" />
+        <path d="M84 90Q108 76 122 88Q102 96 84 90Z" />
+
+        <!-- Palm fronds left 2 (smaller) -->
+        <path d="M128 170Q130 140 136 112Q138 140 140 170Z" />
+        <path d="M136 112Q118 100 106 108Q122 116 136 112Z" />
+        <path d="M136 112Q120 88 112 90Q126 102 136 112Z" />
+        <path d="M136 112Q134 80 136 78Q142 96 136 112Z" />
+        <path d="M136 112Q150 88 162 92Q148 102 136 112Z" />
+        <path d="M136 112Q154 102 166 110Q150 118 136 112Z" />
+      </g>
+
+      <!-- Right palm tree cluster silhouettes in soft light blue -->
+      <g opacity="0.65" fill="#88B8E8">
+        <path d="M1368 170Q1364 130 1356 90Q1354 130 1352 170Z" />
+        <path d="M1356 90Q1382 75 1398 85Q1376 96 1356 90Z" />
+        <path d="M1356 90Q1378 60 1392 62Q1372 76 1356 90Z" />
+        <path d="M1356 90Q1358 50 1356 46Q1348 68 1356 90Z" />
+        <path d="M1356 90Q1338 60 1322 64Q1340 78 1356 90Z" />
+        <path d="M1356 90Q1332 76 1318 88Q1338 96 1356 90Z" />
+
+        <!-- Palm fronds right 2 (smaller) -->
+        <path d="M1312 170Q1310 140 1304 112Q1302 140 1300 170Z" />
+        <path d="M1304 112Q1322 100 1334 108Q1318 116 1304 112Z" />
+        <path d="M1304 112Q1320 88 1328 90Q1314 102 1304 112Z" />
+        <path d="M1304 112Q1306 80 1304 78Q1298 96 1304 112Z" />
+        <path d="M1304 112Q1290 88 1278 92Q1292 102 1304 112Z" />
+        <path d="M1304 112Q1286 102 1274 110Q1290 118 1304 112Z" />
+      </g>
+    </svg>
+  </footer>
+</div>
