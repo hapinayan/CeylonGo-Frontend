@@ -56,6 +56,26 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
+  it('preserves explicit onboarding authorization and the unrelated login session on 401', () => {
+    (authService as any).setSession('test-login-token', {
+      id: 1,
+      full_name: 'Test',
+      email: 't@example.test',
+      role: 'traveler',
+      is_active: true,
+      created_at: '',
+    });
+
+    const url = '/api/v1/providers/registration/submit';
+    http.post(url, null, { headers: { Authorization: 'Bearer onboarding-token' } })
+      .subscribe({ error: () => {} });
+
+    const req = httpMock.expectOne(url);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer onboarding-token');
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(authService.getToken()).toBe('test-login-token');
+  });
+
   it('should not attach Authorization header when token is not present', () => {
     authService.logout();
 

@@ -112,7 +112,6 @@ describe('ProviderRegistrationStateService', () => {
       dateOfBirth: '1990-01-01',
       gender: 'Male',
       nationality: 'Sri Lankan',
-      identityDocumentType: 'nic' as const,
       nicNumber: '199012345678',
       province: 'Western',
       district: 'Colombo',
@@ -213,15 +212,12 @@ describe('ProviderRegistrationStateService', () => {
     expect(service.selfieUploaded()).toBe(false);
     expect(service.nicFrontUploaded()).toBe(false);
     expect(service.nicBackUploaded()).toBe(false);
-    expect(service.identityDocumentType()).toBe('nic');
 
     // Update document flags and type
     service.setIdentityDocumentsStatus(true, true, false);
-    service.setIdentityDocumentType('passport');
     expect(service.selfieUploaded()).toBe(true);
     expect(service.nicFrontUploaded()).toBe(true);
     expect(service.nicBackUploaded()).toBe(false);
-    expect(service.identityDocumentType()).toBe('passport');
 
     // Back to business details
     service.backToBusinessDetails();

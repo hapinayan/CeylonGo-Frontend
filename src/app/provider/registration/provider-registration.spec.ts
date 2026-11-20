@@ -1,11 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProviderOtpService } from './services/provider-otp.service';
 import { ProviderRegistrationStateService } from './services/provider-registration-state.service';
+import { DraftResponse, RegistrationSubmitResponse } from './models/provider-otp.model';
 import { ProviderRegistration } from './provider-registration';
 
 describe('ProviderRegistration Component', () => {
@@ -18,6 +19,7 @@ describe('ProviderRegistration Component', () => {
     saveBusinessDetails: ReturnType<typeof vi.fn>;
     uploadIdentityDocuments: ReturnType<typeof vi.fn>;
     getRegistrationDraft: ReturnType<typeof vi.fn>;
+    submitRegistration: ReturnType<typeof vi.fn>;
   };
   let stateService: ProviderRegistrationStateService;
 
@@ -28,7 +30,8 @@ describe('ProviderRegistration Component', () => {
       savePersonalDetails: vi.fn(),
       saveBusinessDetails: vi.fn(),
       uploadIdentityDocuments: vi.fn(),
-      getRegistrationDraft: vi.fn(),
+      getRegistrationDraft: vi.fn().mockReturnValue(of({ email: 'review@example.test' })),
+      submitRegistration: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -378,9 +381,10 @@ describe('ProviderRegistration Component', () => {
       expect(dobCtrl.valid).toBe(true);
     });
 
-    it('should validate NIC number format when identity document type is nic', () => {
-      component.personalDetailsForm.controls.identityDocumentType.setValue('nic');
-      component.onIdentityDocumentTypeChange();
+    it('validates the required NIC field without a document type selector', () => {
+      const page = fixture.nativeElement as HTMLElement;
+      expect(page.querySelector('#identity-doc-type')).toBeNull();
+      expect(page.querySelector('label[for="nic-number"]')?.textContent).toContain('NIC Number');
       const nicCtrl = component.personalDetailsForm.controls.nicNumber;
 
       nicCtrl.setValue('invalid-nic');
@@ -400,47 +404,9 @@ describe('ProviderRegistration Component', () => {
       nicCtrl.setValue('200012345678');
       expect(nicCtrl.valid).toBe(true);
 
-      // Rejects passport when document type is NIC
+      // Rejects non-NIC numbers
       nicCtrl.setValue('N1234567');
       expect(nicCtrl.invalid).toBe(true);
-    });
-
-    it('should adapt label, placeholder, and validator when identity document type changes to passport', () => {
-      const docTypeCtrl = component.personalDetailsForm.controls.identityDocumentType;
-      const nicCtrl = component.personalDetailsForm.controls.nicNumber;
-
-      // Switch to passport
-      docTypeCtrl.setValue('passport');
-      component.onIdentityDocumentTypeChange();
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement as HTMLElement;
-      const label = compiled.querySelector('label[for="nic-passport"]');
-      expect(label?.textContent).toContain('Passport Number');
-
-      const input = compiled.querySelector('#nic-passport') as HTMLInputElement;
-      expect(input.placeholder).toContain('N1234567');
-
-      // Valid Passport (6-12 alphanumeric characters)
-      nicCtrl.setValue('N1234567');
-      expect(nicCtrl.valid).toBe(true);
-
-      nicCtrl.setValue('PA9876543');
-      expect(nicCtrl.valid).toBe(true);
-
-      // Invalid Passport (too short or special characters)
-      nicCtrl.setValue('A12');
-      nicCtrl.markAsTouched();
-      fixture.detectChanges();
-      expect(nicCtrl.invalid).toBe(true);
-      expect(component.getFieldError('nicNumber')).toContain('valid passport number');
-
-      // Switch back to NIC
-      docTypeCtrl.setValue('nic');
-      component.onIdentityDocumentTypeChange();
-      fixture.detectChanges();
-
-      expect(compiled.querySelector('label[for="nic-passport"]')?.textContent).toContain('NIC Number');
     });
 
     it('should validate required city, postal code, and residential street address fields', () => {
@@ -511,7 +477,6 @@ describe('ProviderRegistration Component', () => {
         dateOfBirth: '1992-04-10',
         gender: 'Male',
         nationality: 'Sri Lankan',
-        identityDocumentType: 'nic',
         nicNumber: '199212345678',
         province: 'Western',
         district: 'Colombo',
@@ -549,7 +514,6 @@ describe('ProviderRegistration Component', () => {
         dateOfBirth: '1992-04-10',
         gender: 'Male',
         nationality: 'Sri Lankan',
-        identityDocumentType: 'nic',
         nicNumber: '199212345678',
         province: 'Western',
         district: 'Colombo',
@@ -557,6 +521,15 @@ describe('ProviderRegistration Component', () => {
         postalCode: '00100',
         residentialAddress: '123 Galle Road, Colombo 03',
       });
+
+      component.syncDocumentsFromDraft({
+        email: 'verified-provider@business.com',
+        identity_document_type: 'nic',
+        nic_front_uploaded: true,
+        nic_back_uploaded: true,
+        selfie_uploaded: true,
+      });
+      expect(component.isIdentityComplete()).toBe(true);
 
       otpServiceMock.savePersonalDetails.mockReturnValue(
         of({
@@ -598,6 +571,7 @@ describe('ProviderRegistration Component', () => {
         'mock-valid-auth-token-12345'
       );
 
+      expect(component.isIdentityComplete()).toBe(false);
       expect(component.flowState).toBe('business_details');
       expect(stateService.currentStepId()).toBe('business_details');
 
@@ -616,7 +590,6 @@ describe('ProviderRegistration Component', () => {
         dateOfBirth: '1992-04-10',
         gender: 'Male',
         nationality: 'Sri Lankan',
-        identityDocumentType: 'nic',
         nicNumber: '199212345678',
         province: 'Western',
         district: 'Colombo',
@@ -662,7 +635,6 @@ describe('ProviderRegistration Component', () => {
         dateOfBirth: '1992-04-10',
         gender: 'Male',
         nationality: 'Sri Lankan',
-        identityDocumentType: 'nic',
         nicNumber: '199212345678',
         province: 'Western',
         district: 'Colombo',
@@ -990,7 +962,6 @@ describe('ProviderRegistration Component', () => {
         dateOfBirth: '1990-05-15',
         gender: 'Male',
         nationality: 'Sri Lankan',
-        identityDocumentType: 'nic',
         nicNumber: '199012345678',
         province: 'Western',
         district: 'Colombo',
@@ -1015,39 +986,31 @@ describe('ProviderRegistration Component', () => {
       fixture.detectChanges();
     });
 
-    it('should render Step 4 UI with read-only ID document type, 3 upload cards, and info banner for NIC', () => {
+    it('should render exactly three NIC upload cards without a document type selector', () => {
       const compiled = fixture.nativeElement as HTMLElement;
       expect(component.flowState).toBe('identity_verification');
-      expect(component.identityDocType()).toBe('nic');
 
       // Left column verification
       expect(compiled.querySelector('.card-side-title')?.textContent).toContain('Verify Your');
       expect(compiled.querySelector('.card-side-title')?.textContent).toContain('Identity');
       const benefits = compiled.querySelectorAll('.benefits-list .benefit-text');
       expect(benefits.length).toBe(4);
-      expect(benefits[0].textContent).toContain('Upload your valid ID');
+      expect(benefits[0].textContent).toContain('Upload your NIC');
       expect(benefits[1].textContent).toContain('Take a clear selfie');
 
       // Main form header
       expect(compiled.querySelector('.form-title')?.textContent).toContain('Identity Verification');
       expect(compiled.querySelector('.form-description')?.textContent).toContain(
-        'valid government-issued documents and a recent selfie'
+        'Upload both sides of your NIC and a selfie holding it.'
       );
 
-      // Read-only document type options
-      const idOptions = compiled.querySelectorAll('.id-type-option');
-      expect(idOptions.length).toBe(2);
-      expect(idOptions[0].classList.contains('selected')).toBe(true);
-      expect(idOptions[0].textContent).toContain('National Identity Card (NIC)');
-      expect(idOptions[1].classList.contains('selected')).toBe(false);
-      expect(idOptions[1].textContent).toContain('Passport');
+      expect(compiled.querySelector('.id-type-option')).toBeNull();
 
-      // 3 Upload cards for NIC
       const uploadCards = compiled.querySelectorAll('.upload-card');
       expect(uploadCards.length).toBe(3);
       expect(uploadCards[0].textContent).toContain('Front Side');
       expect(uploadCards[1].textContent).toContain('Back Side');
-      expect(uploadCards[2].textContent).toContain('Selfie (with NIC)');
+      expect(uploadCards[2].textContent).toContain('Selfie with NIC');
 
       // Info banner
       expect(compiled.querySelector('.upload-info-banner')?.textContent).toContain(
@@ -1057,25 +1020,6 @@ describe('ProviderRegistration Component', () => {
       // Continue button disabled initially
       const continueBtn = compiled.querySelector('.btn-continue-action') as HTMLButtonElement;
       expect(continueBtn.disabled).toBe(true);
-    });
-
-    it('should render 2 upload cards without Back Side when Passport document type is selected', () => {
-      component.personalDetailsForm.controls.identityDocumentType.setValue('passport');
-      stateService.setIdentityDocumentType('passport');
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement as HTMLElement;
-      expect(component.identityDocType()).toBe('passport');
-
-      const idOptions = compiled.querySelectorAll('.id-type-option');
-      expect(idOptions[0].classList.contains('selected')).toBe(false);
-      expect(idOptions[1].classList.contains('selected')).toBe(true);
-
-      // Only 2 cards for passport
-      const uploadCards = compiled.querySelectorAll('.upload-card');
-      expect(uploadCards.length).toBe(2);
-      expect(uploadCards[0].textContent).toContain('Passport Information Page');
-      expect(uploadCards[1].textContent).toContain('Selfie (with Passport)');
     });
 
     it('should reject unsupported file formats (e.g. PDF or TXT) with error message', () => {
@@ -1191,13 +1135,11 @@ describe('ProviderRegistration Component', () => {
       expect(continueBtn.disabled).toBe(false);
     });
 
-    it('should allow Passport applicant to complete identity verification with 2 documents (front & selfie)', () => {
-      component.personalDetailsForm.controls.identityDocumentType.setValue('passport');
-      stateService.setIdentityDocumentType('passport');
+    it('requires the NIC back side even when the front and selfie are uploaded', () => {
 
       component.nicFrontState.set({
         file: null,
-        fileName: 'passport_page.jpg',
+        fileName: 'front.jpg',
         isUploaded: true,
         isUploading: false,
         errorMessage: null,
@@ -1211,14 +1153,14 @@ describe('ProviderRegistration Component', () => {
       });
       fixture.detectChanges();
 
-      expect(component.isIdentityComplete()).toBe(true);
+      expect(component.isIdentityComplete()).toBe(false);
 
       const compiled = fixture.nativeElement as HTMLElement;
       const continueBtn = compiled.querySelector('.btn-continue-action') as HTMLButtonElement;
-      expect(continueBtn.disabled).toBe(false);
+      expect(continueBtn.disabled).toBe(true);
     });
 
-    it('should navigate to Step 5 placeholder when Continue to Review & Submit is clicked', () => {
+    it('should navigate to Step 5 review when Continue to Review & Submit is clicked', () => {
       // Mock all required files uploaded
       component.nicFrontState.set({
         file: null,
@@ -1250,8 +1192,8 @@ describe('ProviderRegistration Component', () => {
       expect(stateService.currentStepId()).toBe('review_submit');
 
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.querySelector('.feedback-title')?.textContent).toContain(
-        'Identity Verification Saved!'
+      expect(compiled.querySelector('.review-heading')?.textContent).toContain(
+        'Review Your Information'
       );
 
       // Verify Stepper: Step 1, 2, 3, 4 completed, Step 5 active
@@ -1274,4 +1216,172 @@ describe('ProviderRegistration Component', () => {
       );
     });
   });
+  describe('Step 5: Review & Submit', () => {
+    const draft: DraftResponse = {
+      email: 'review@example.test',
+      full_name: 'Sample Applicant',
+      business_name: 'Sample Business',
+      phone: '+94770000000',
+      date_of_birth: '1990-03-05',
+      provider_type: 'homestay',
+      permanent_city: 'Kandy',
+      business_postal_code: '20000',
+      identity_document_type: 'nic',
+      personal_completed: true,
+      business_completed: true,
+      nic_front_uploaded: true,
+      nic_back_uploaded: true,
+      selfie_uploaded: true,
+      current_step: 'review',
+    };
+    const result: RegistrationSubmitResponse = {
+      submitted: true,
+      approval_status: 'pending',
+      next_action: 'await_admin_review',
+      message: 'Application received.',
+    };
+
+    beforeEach(() => {
+      stateService.setEmail(draft.email);
+      stateService.setOtpVerified({
+        verified: true,
+        next_action: 'continue_registration',
+        authorization_token: 'review-token',
+      });
+      otpServiceMock.getRegistrationDraft.mockReturnValue(of(draft));
+    });
+
+    function openReview(overrides: Partial<DraftResponse> = {}): HTMLElement {
+      otpServiceMock.getRegistrationDraft.mockReturnValue(of({ ...draft, ...overrides }));
+      component.onContinueNextStep();
+      fixture.detectChanges();
+      return fixture.nativeElement;
+    }
+
+    it('restores a saved NIC draft with its real details and uploaded documents', () => {
+      const page = openReview();
+      expect(page.querySelector('.review-card-grid')?.textContent)
+        .toContain('Sample Applicant');
+      expect(page.querySelector('.review-card-grid')?.textContent)
+        .toContain('Homestay / Accommodation');
+      expect(page.querySelector('.review-card-grid')?.textContent)
+        .toContain('5 Mar 1990');
+      expect(page.querySelector('.review-card-grid')?.textContent)
+        .toContain('review@example.test');
+      expect(page.querySelector('.review-documents')?.textContent).toContain('NIC Back Side');
+      expect(page.querySelectorAll('.review-document-status.uploaded')).toHaveLength(3);
+    });
+
+    it('lists all three NIC documents and blocks submission if one is missing', () => {
+      const page = openReview({ nic_back_uploaded: false });
+      const documents = page.querySelector('.review-documents');
+      expect(documents?.querySelectorAll('.review-document-status')).toHaveLength(3);
+      expect(documents?.textContent).toContain('NIC Front Side');
+      expect(documents?.textContent).toContain('NIC Back Side');
+      expect(documents?.textContent).toContain('Selfie with NIC');
+      expect(documents?.textContent).toContain('Upload required');
+      component.reviewConfirmed.set(true);
+      fixture.detectChanges();
+      expect(page.querySelector<HTMLButtonElement>('.review-actions .btn-primary-action')?.disabled)
+        .toBe(true);
+      component.submitForApproval();
+      expect(otpServiceMock.submitRegistration).not.toHaveBeenCalled();
+    });
+
+    it('routes a historical passport draft to NIC entry without reusing its number or uploads', () => {
+      const page = openReview({ identity_document_type: 'passport', nic_number: 'P1234567' });
+      expect(component.flowState).toBe('personal_details');
+      expect(page.querySelector('label[for="nic-number"]')?.textContent).toContain('NIC Number');
+      expect(component.personalDetailsForm.controls.nicNumber.value).toBe('');
+      expect(component.isIdentityComplete()).toBe(false);
+      expect(otpServiceMock.savePersonalDetails).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['Personal Details', 'personal_details'],
+      ['Business Details', 'business_details'],
+      ['Identity Verification', 'identity_verification'],
+    ])('returns to %s with the saved draft', (label, step) => {
+      const page = openReview();
+      page.querySelector<HTMLButtonElement>('[aria-label="Edit ' + label + '"]')?.click();
+      expect(component.flowState).toBe(step);
+      expect(stateService.personalDetails()?.fullName).toBe(draft.full_name);
+      expect(stateService.businessDetails()?.businessName).toBe(draft.business_name);
+    });
+
+    it('reloads saved changes when returning to review after a business edit', () => {
+      const page = openReview({
+        secondary_phone: '+94770000001',
+        business_province: 'Central',
+        business_district: 'Kandy',
+        business_city: 'Kandy',
+        business_landmark: 'Test Street',
+        description: 'A sample accommodation near central Kandy.',
+      });
+      page.querySelector<HTMLButtonElement>('[aria-label="Edit Business Details"]')?.click();
+
+      const edited = { ...draft, business_name: 'Updated Sample Business' };
+      component.businessDetailsForm.controls.businessName.setValue(edited.business_name);
+      otpServiceMock.saveBusinessDetails.mockReturnValue(of(edited));
+      component.onContinueToIdentityVerification();
+      expect(component.flowState).toBe('identity_verification');
+      expect(otpServiceMock.saveBusinessDetails).toHaveBeenCalledWith(
+        expect.objectContaining({ business_name: edited.business_name }),
+        'review-token',
+      );
+
+      otpServiceMock.getRegistrationDraft.mockReturnValue(of(edited));
+      component.onContinueToReviewSubmit();
+      fixture.detectChanges();
+      expect(page.querySelector('.review-card-grid')?.textContent).toContain(edited.business_name);
+      expect(component.reviewConfirmed()).toBe(false);
+    });
+
+    it('requires confirmation, permits only one in-flight submit and renders success', () => {
+      const page = openReview();
+      const submit = page.querySelector<HTMLButtonElement>('.review-actions .btn-primary-action')!;
+      const confirmation = page.querySelector<HTMLInputElement>('#review-confirmation')!;
+      const response = new Subject<RegistrationSubmitResponse>();
+      otpServiceMock.submitRegistration.mockReturnValue(response);
+
+      expect(confirmation.checked).toBe(false);
+      expect(submit.disabled).toBe(true);
+      component.submitForApproval();
+      expect(otpServiceMock.submitRegistration).not.toHaveBeenCalled();
+      confirmation.click();
+      fixture.detectChanges();
+      submit.click();
+      component.submitForApproval();
+      fixture.detectChanges();
+
+      expect(otpServiceMock.submitRegistration).toHaveBeenCalledExactlyOnceWith('review-token');
+      expect(submit.disabled).toBe(true);
+      expect(submit.textContent).toContain('Submitting');
+      response.next(result);
+      response.complete();
+      fixture.detectChanges();
+      expect(page.querySelector('.review-success')?.textContent)
+        .toContain('Application Submitted Successfully');
+      expect(page.querySelector('.review-success')?.textContent).toContain('Pending Admin Approval');
+      expect(stateService.getAuthorizationToken()).toBeNull();
+    });
+
+    it.each([
+      [400, 'Incomplete personal details.'],
+      [409, 'A provider registration already exists.'],
+      [0, 'Unable to reach CeylonGo servers.'],
+      [401, 'Your registration authorization is no longer valid.'],
+    ])('preserves the review when submission fails with status %s', (status, message) => {
+      const page = openReview();
+      otpServiceMock.submitRegistration.mockReturnValue(throwError(() => ({ status, message })));
+      component.reviewConfirmed.set(true);
+      component.submitForApproval();
+      fixture.detectChanges();
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain(message);
+      expect(page.querySelector('.review-card-grid')?.textContent).toContain('Sample Applicant');
+      expect(component.isSubmitting()).toBe(false);
+      expect(component.reviewNeedsVerification()).toBe(status === 401);
+    });
+  });
+
 });
