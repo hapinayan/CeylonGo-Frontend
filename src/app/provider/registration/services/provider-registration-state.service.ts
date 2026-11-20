@@ -1,7 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import {
   BusinessDetailsFormModel,
-  IdentityDocumentType,
   PersonalDetailsFormModel,
   ProviderNextAction,
   RegistrationFlowState,
@@ -35,7 +34,6 @@ export class ProviderRegistrationStateService {
   private readonly selfieUploadedSignal = signal<boolean>(false);
   private readonly nicFrontUploadedSignal = signal<boolean>(false);
   private readonly nicBackUploadedSignal = signal<boolean>(false);
-  private readonly identityDocumentTypeSignal = signal<IdentityDocumentType>('nic');
 
   // Public readonly signals
   readonly email = this.emailSignal.asReadonly();
@@ -49,7 +47,6 @@ export class ProviderRegistrationStateService {
   readonly selfieUploaded = this.selfieUploadedSignal.asReadonly();
   readonly nicFrontUploaded = this.nicFrontUploadedSignal.asReadonly();
   readonly nicBackUploaded = this.nicBackUploadedSignal.asReadonly();
-  readonly identityDocumentType = this.identityDocumentTypeSignal.asReadonly();
 
   /**
    * Computed list of 5 registration steps with dynamic active/completed statuses.
@@ -178,7 +175,7 @@ export class ProviderRegistrationStateService {
    * Safely retrieve the current authorization token if still unexpired.
    */
   getAuthorizationToken(): string | null {
-    if (!this.hasValidAuthorizationToken()) {
+    if (Date.now() >= (this.tokenExpiresAtSignal() ?? 0)) {
       return null;
     }
     return this.authorizationTokenSignal();
@@ -304,13 +301,6 @@ export class ProviderRegistrationStateService {
   }
 
   /**
-   * Set document type for registration.
-   */
-  setIdentityDocumentType(type: IdentityDocumentType): void {
-    this.identityDocumentTypeSignal.set(type);
-  }
-
-  /**
    * Set active step explicitly.
    */
   setCurrentStepId(stepId: RegistrationStepId): void {
@@ -347,6 +337,11 @@ export class ProviderRegistrationStateService {
     this.actionMessageSignal.set(null);
   }
 
+  clearAuthorization(): void {
+    this.authorizationTokenSignal.set(null);
+    this.tokenExpiresAtSignal.set(null);
+  }
+
   /**
    * Full reset clearing all state, documents, and tokens.
    */
@@ -364,6 +359,5 @@ export class ProviderRegistrationStateService {
     this.selfieUploadedSignal.set(false);
     this.nicFrontUploadedSignal.set(false);
     this.nicBackUploadedSignal.set(false);
-    this.identityDocumentTypeSignal.set('nic');
   }
 }

@@ -36,6 +36,24 @@ describe('ProviderOtpService', () => {
     httpMock.verify();
   });
 
+  it('submits the saved registration with authorization and no request body', () => {
+    const result = {
+      submitted: true,
+      approval_status: 'pending',
+      next_action: 'await_admin_review',
+      message: 'Application received.',
+    };
+    service.submitRegistration('review-token').subscribe((response) => {
+      expect(response).toEqual(result);
+    });
+
+    const request = httpMock.expectOne(environment.apiBaseUrl + '/providers/registration/submit');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer review-token');
+    expect(request.request.body).toBeNull();
+    request.flush(result);
+  });
+
   it('should dispatch OTP request to /send endpoint', () => {
     const mockRes: SendOtpResponse = {
       message: 'Verification code sent successfully.',

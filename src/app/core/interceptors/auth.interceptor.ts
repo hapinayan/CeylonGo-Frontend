@@ -12,6 +12,9 @@ import { AuthService } from '../services/auth.service';
  * clearing stale session state via authService.logout().
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Requests with their own credentials (such as provider onboarding) manage their own session.
+  if (req.headers.has('Authorization')) return next(req);
+
   const authService = inject(AuthService);
   const token = authService.getToken();
 
