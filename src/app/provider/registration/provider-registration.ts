@@ -746,7 +746,7 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       next: (_res) => {
         this.isSubmitting.set(false);
         this.stateService.completeBusinessDetails(formVal);
-        this.successMessage.set('Business details saved successfully!');
+        this.successMessage.set(null);
       },
       error: (err: ProviderApiError) => {
         this.isSubmitting.set(false);
