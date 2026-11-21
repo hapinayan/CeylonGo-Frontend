@@ -11,6 +11,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { AuthService } from '../services/auth.service';
+import { ProviderAuthService } from '../services/provider-auth.service';
 import { authInterceptor } from './auth.interceptor';
 
 describe('authInterceptor', () => {
@@ -22,6 +23,7 @@ describe('authInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthService,
+        ProviderAuthService,
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
       ],
