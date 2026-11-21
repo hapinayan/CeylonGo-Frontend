@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 import { AuthEntry } from './pages/auth-entry/auth-entry';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
+import { providerAuthGuard } from './core/guards/provider-auth.guard';
 
 export const routes: Routes = [
 
@@ -117,12 +118,21 @@ export const routes: Routes = [
         .then(m => m.ProviderRegistration)
   },
 
-  // PROVIDER LOGIN (PLACEHOLDER ROUTE)
+  // PROVIDER LOGIN
   {
     path: 'provider/login',
     loadComponent: () =>
       import('./pages/provider-login-placeholder/provider-login-placeholder')
         .then(m => m.ProviderLoginPlaceholder)
+  },
+
+  // PROVIDER DASHBOARD (AUTHENTICATED PLACEHOLDER)
+  {
+    path: 'provider/dashboard',
+    canActivate: [providerAuthGuard],
+    loadComponent: () =>
+      import('./pages/provider-dashboard/provider-dashboard')
+        .then(m => m.ProviderDashboard)
   },
 
   // UNKNOWN URL - GO TO FIRST PAGE

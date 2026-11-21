@@ -1,36 +1,164 @@
 @if (!isPasswordSetup()) {
-  <!-- NORMAL PROVIDER LOGIN PLACEHOLDER -->
-  <div class="placeholder-container">
-    <div class="placeholder-card">
-      <div class="logo-wrapper">
-        <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="logo" />
-      </div>
-
+  <!-- SERVICE PROVIDER LOGIN -->
+  <div class="login-page-container">
+    <div class="login-card">
       <div class="badge">Provider Portal</div>
 
-      <div class="icon-bubble">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-          <polyline points="10 17 15 12 10 7"></polyline>
-          <line x1="15" y1="12" x2="3" y2="12"></line>
+      <div class="icon-bubble" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
         </svg>
       </div>
 
-      <h1 class="title">Service Provider Login</h1>
+      <h1 class="title">Welcome Back!</h1>
       <p class="subtitle">
-        Sign in to manage your CeylonGo homestay listings, local tour bookings, and account earnings.
+        Sign in to your CeylonGo provider account to manage your business, listings, and bookings.
       </p>
 
-      <div class="info-box">
-        <div class="info-row">
-          <span class="status-dot"></span>
-          <span class="info-text">Dedicated Provider Authentication API (/api/v1/provider/auth/login) is fully active.</span>
+      @if (loginErrorMessage()) {
+        <div class="alert-error" role="alert">
+          <svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span class="alert-text">{{ loginErrorMessage() }}</span>
         </div>
+      }
+
+      <form
+        method="POST"
+        action="javascript:void(0);"
+        (submit)="$event.preventDefault()"
+        (ngSubmit)="onSubmitLogin($event)"
+        (input)="syncAutofillValues()"
+        (change)="syncAutofillValues()"
+        (focusin)="syncAutofillValues()"
+        class="login-form"
+        novalidate
+      >
+        <!-- 1. Email Address -->
+        <div class="form-field">
+          <label for="provider-login-email" class="field-label">Email Address</label>
+          <div class="input-wrapper" [class.has-error]="loginEmail() && !isEmailFormatValid()">
+            <span class="input-icon-left" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </span>
+            <input
+              #emailInput
+              id="provider-login-email"
+              name="email"
+              type="email"
+              [value]="loginEmail()"
+              (input)="onLoginEmailInput($event)"
+              (change)="onLoginEmailInput($event)"
+              (blur)="onLoginEmailInput($event)"
+              (focus)="onLoginEmailInput($event)"
+              (keyup)="onLoginEmailInput($event)"
+              (animationstart)="onAutofillDetected($event)"
+              placeholder="Enter your email address"
+              class="form-input"
+              autocomplete="email"
+              required
+            />
+          </div>
+          @if (loginEmail() && !isEmailFormatValid()) {
+            <p class="field-error-msg" role="alert">Please enter a valid email address.</p>
+          }
+        </div>
+
+        <!-- 2. Password -->
+        <div class="form-field">
+          <div class="field-label-row">
+            <label for="provider-login-password" class="field-label">Password</label>
+            <a
+              routerLink="/forgot-password"
+              [queryParams]="loginEmail() ? { email: loginEmail() } : {}"
+              class="forgot-link"
+            >
+              Forgot Password?
+            </a>
+          </div>
+          <div class="input-wrapper">
+            <span class="input-icon-left" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+            <input
+              #passwordInput
+              id="provider-login-password"
+              name="password"
+              [type]="showLoginPassword() ? 'text' : 'password'"
+              [value]="loginPassword()"
+              (input)="onLoginPasswordInput($event)"
+              (change)="onLoginPasswordInput($event)"
+              (blur)="onLoginPasswordInput($event)"
+              (focus)="onLoginPasswordInput($event)"
+              (keyup)="onLoginPasswordInput($event)"
+              (animationstart)="onAutofillDetected($event)"
+              placeholder="Enter your password"
+              class="form-input"
+              autocomplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              class="btn-toggle-eye"
+              (click)="showLoginPassword.set(!showLoginPassword())"
+              [attr.aria-label]="showLoginPassword() ? 'Hide password' : 'Show password'"
+            >
+              @if (showLoginPassword()) {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                  <line x1="2" x2="22" y1="2" y2="22" />
+                </svg>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign In Button -->
+        <button
+          type="submit"
+          [disabled]="!isLoginFormValid() || isLoginSubmitting()"
+          (mouseenter)="syncAutofillValues()"
+          (pointerdown)="syncAutofillValues()"
+          class="btn-primary-action btn-signin"
+        >
+          @if (isLoginSubmitting()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Signing In...</span>
+          } @else {
+            <span>Sign In &rarr;</span>
+          }
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="divider">
+        <span class="divider-line"></span>
+        <span class="divider-text">New to CeylonGo?</span>
+        <span class="divider-line"></span>
       </div>
 
-      <div class="actions">
-        <a routerLink="/provider" class="btn-primary">Return to Welcome Page</a>
-        <a routerLink="/provider/register" class="btn-secondary">Register New Business</a>
+      <!-- Register New Business Outlined Button -->
+      <div class="register-action">
+        <a routerLink="/provider/register" class="btn-secondary-outline">
+          Register New Business
+        </a>
       </div>
     </div>
   </div>
@@ -99,7 +227,14 @@
             </a>
           </div>
         } @else {
-          <form (ngSubmit)="onSubmitPasswordSetup()" class="setup-form" novalidate>
+          <form
+            method="POST"
+            action="javascript:void(0);"
+            (submit)="$event.preventDefault()"
+            (ngSubmit)="onSubmitPasswordSetup($event)"
+            class="setup-form"
+            novalidate
+          >
             <!-- 1. Email Address (read-only) -->
             <div class="form-field">
               <label for="provider-email" class="field-label">Email Address</label>
