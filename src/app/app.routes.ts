@@ -126,6 +126,22 @@ export const routes: Routes = [
         .then(m => m.ProviderLoginPlaceholder)
   },
 
+  // PROVIDER FORGOT PASSWORD
+  {
+    path: 'provider/forgot-password',
+    loadComponent: () =>
+      import('./pages/provider-forgot-password/provider-forgot-password')
+        .then(m => m.ProviderForgotPassword)
+  },
+
+  // PROVIDER RESET PASSWORD
+  {
+    path: 'provider/reset-password',
+    loadComponent: () =>
+      import('./pages/provider-reset-password/provider-reset-password')
+        .then(m => m.ProviderResetPassword)
+  },
+
   // PROVIDER DASHBOARD (AUTHENTICATED PLACEHOLDER)
   {
     path: 'provider/dashboard',
