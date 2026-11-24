@@ -31,7 +31,10 @@ import { loadState } from '../../services/workflow-state';
             <article class="workflow-card">
               <h2>{{ row.reference }}</h2>
               <p>{{ row.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) · {{ row.participants }} travelers</p>
-              <p>{{ row.status }} · Payment: {{ row.payment_status.replaceAll('_', ' ') }}</p>
+              <div class="workflow-statuses">
+                <span class="workflow-pill" [attr.data-status]="row.status">Reservation: {{ row.status }}</span>
+                <span class="workflow-pill" [attr.data-status]="row.payment_status">Payment: {{ row.payment_status.replaceAll('_', ' ') }}</span>
+              </div>
               <p>{{ row.currency }} {{ row.total | number:'1.2-2' }}</p>
               <a [routerLink]="['/experiences/bookings', row.id]">View reservation {{ row.reference }}</a>
             </article>

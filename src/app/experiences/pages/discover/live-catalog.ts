@@ -1,4 +1,5 @@
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { afterRenderEffect, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
@@ -23,14 +24,14 @@ type Results =
       <label><app-experience-icon name="pin" /><span>Where to?
         <input type="search" [formControl]="searchInput" maxlength="100" placeholder="Search by city, meeting point or keyword">
       </span></label>
-      <label><app-experience-icon name="calendar" /><span>Date<input type="date" disabled></span></label>
-      <label><app-experience-icon name="user" /><span>Travelers<input type="number" disabled></span></label>
+      <label><app-experience-icon name="calendar" /><span>Date<span class="search-field-hint">Availability in Details</span><input type="date" aria-label="Date search unavailable" disabled hidden></span></label>
+      <label><app-experience-icon name="user" /><span>Travelers<span class="search-field-hint">Group size in Details</span><input type="number" aria-label="Traveler search unavailable" disabled hidden></span></label>
       <button class="search-submit"><app-experience-icon name="search" />Search</button>
     </form>
-    <app-experience-categories [selected]="category()" [live]="true" (select)="category.set($event)" />
+    <app-experience-categories [selected]="category()" [live]="true" (select)="selectCategory($event)" />
     <section aria-labelledby="live-experience-results">
       <div class="results-bar">
-        <h2 id="live-experience-results" aria-live="polite">
+        <h2 #resultsHeading id="live-experience-results" tabindex="-1" aria-live="polite">
           @if (results(); as state) {
             @if (state.status === 'ready') { {{ state.total }} {{ state.total === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka }
             @else { Experiences in Sri Lanka }
@@ -80,7 +81,7 @@ type Results =
                 <app-experience-card [experience]="experience" [favorite]="false" [detailLink]="true" [liveFavorite]="true" />
               }
             </div>
-            <app-experience-pagination [page]="page()" [totalPages]="state.pages" (change)="page.set($event)" />
+            <app-experience-pagination [page]="page()" [totalPages]="state.pages" (change)="changePage($event, resultsHeading)" />
           } @else {
             <div class="empty-results"><h3>No experiences match your search</h3>
               <button type="button" class="outline-control" (click)="reset()">Reset filters</button>
@@ -92,6 +93,8 @@ type Results =
   `,
 })
 export class LiveCatalog {
+  private readonly view = inject(DiscoverViewState);
+  private readonly viewport = inject(ViewportScroller);
   private readonly api = inject(EcoApi);
   readonly wishlist = inject(WishlistState);
   readonly searchInput = new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) });
@@ -130,7 +133,8 @@ export class LiveCatalog {
   ), { initialValue: { status: 'loading' } as Results });
 
   constructor() {
-    const view = inject(DiscoverViewState);
+    const view = this.view;
+    const lastScroll = view.captureScroll();
     const saved = view.live;
     if (saved) {
       this.searchInput.setValue(saved.search);
@@ -142,11 +146,31 @@ export class LiveCatalog {
       this.filtersOpen.set(saved.filtersOpen);
       this.rangeForm.setValue(saved.ranges);
       this.ranges.set(saved.ranges);
+      let restore = saved.scroll[1] > 0;
+      afterRenderEffect(() => {
+        const status = this.results().status;
+        if (restore && status === 'ready') {
+          restore = false;
+          this.viewport.scrollToPosition(saved.scroll, {behavior: 'instant'});
+        }
+      });
     }
     inject(DestroyRef).onDestroy(() => view.live = {
-      search: this.search(), category: this.category(), ecoCategory: this.ecoCategory(), badgeOnly: this.badgeOnly(),
+      scroll: lastScroll(), search: this.search(), category: this.category(), ecoCategory: this.ecoCategory(), badgeOnly: this.badgeOnly(),
       page: this.page(), filtersOpen: this.filtersOpen(), ranges: this.ranges(),
     });
+  }
+
+  selectCategory(category: Category): void {
+    if (this.category() === category) return;
+    this.category.set(category);
+    this.setCategory('');
+  }
+
+  changePage(page: number, heading: HTMLElement): void {
+    if (page === this.page()) return;
+    this.page.set(page);
+    this.view.revealResults(heading);
   }
 
   submit(): void {
@@ -155,7 +179,11 @@ export class LiveCatalog {
     this.page.set(1);
   }
 
-  setCategory(value: string): void { this.ecoCategory.set(value); this.page.set(1); }
+  setCategory(value: string): void {
+    this.ecoCategory.set(value);
+    if (value) this.category.set('eco');
+    this.page.set(1);
+  }
   setBadge(value: boolean): void { this.badgeOnly.set(value); this.page.set(1); }
   retry(): void { this.refresh.update(value => value + 1); }
 

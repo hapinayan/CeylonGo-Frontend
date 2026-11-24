@@ -12,14 +12,14 @@ import { positiveId } from '../services/workflow-state';
   template: `
     @if (catalog.preview) {
       <button type="button" class="outline-control" [attr.aria-pressed]="wishlist.previewIds().has(id())"
-        [attr.aria-label]="'Preview favorite: ' + title()" (click)="wishlist.togglePreview(id())"><app-experience-icon name="heart" /></button>
+        [attr.aria-label]="'Preview favorite: ' + title()" (click)="wishlist.togglePreview(id())"><app-experience-icon name="heart" />@if (showLabel()) { <span>{{ wishlist.previewIds().has(id()) ? "Saved" : "Save" }}</span> }</button>
     } @else if (!session.account()) {
-      <a class="outline-control" routerLink="/auth" [attr.aria-label]="'Sign in to save ' + title()"><app-experience-icon name="heart" /></a>
+      <a class="outline-control" routerLink="/auth" [attr.aria-label]="'Sign in to save ' + title()"><app-experience-icon name="heart" />@if (showLabel()) { <span>Save</span> }</a>
     } @else if (key(id()); as number) {
       @if (wishlist.ready()) {
         <button type="button" class="outline-control" [attr.aria-label]="'Favorite: ' + title()"
           [attr.aria-pressed]="wishlist.saved().has(number)" [disabled]="wishlist.busy(number)"
-          (click)="wishlist.toggle(number)"><app-experience-icon name="heart" /></button>
+          (click)="wishlist.toggle(number)"><app-experience-icon name="heart" />@if (showLabel()) { <span>{{ wishlist.saved().has(number) ? "Saved" : "Save" }}</span> }</button>
       } @else if (wishlist.error()) {
         <button type="button" class="outline-control" (click)="wishlist.ensure()">Retry saved status</button>
       } @else {
@@ -31,6 +31,7 @@ import { positiveId } from '../services/workflow-state';
 export class SaveControl {
   readonly id = input.required<string>();
   readonly title = input.required<string>();
+  readonly showLabel = input(false);
   readonly catalog = inject(EXPERIENCE_CATALOG);
   readonly wishlist = inject(WishlistState);
   readonly session = inject(TravelSession);

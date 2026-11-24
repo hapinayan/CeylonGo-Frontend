@@ -1,4 +1,5 @@
-import { Component, computed, DestroyRef, inject, signal, ViewEncapsulation } from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { afterNextRender, Component, computed, DestroyRef, inject, signal, ViewEncapsulation } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Category, Sort } from '../../models/catalog';
 import { EXPERIENCE_CATALOG } from '../../services/catalog';
@@ -23,6 +24,8 @@ export class Discover {
   readonly location = signal('');
   readonly sort = signal<Sort>('popular');
   readonly minimumRating = signal(0);
+  private readonly view = inject(DiscoverViewState);
+  private readonly viewport = inject(ViewportScroller);
   private readonly wishlist = inject(WishlistState);
   readonly favoriteIds = this.wishlist.previewIds;
   readonly page = signal(1);
@@ -64,7 +67,8 @@ export class Discover {
 
   constructor() {
     if (!this.catalog.preview) return;
-    const view = inject(DiscoverViewState);
+    const view = this.view;
+    const lastScroll = view.captureScroll();
     const saved = view.preview;
     if (saved) {
       this.category.set(saved.category);
@@ -75,11 +79,18 @@ export class Discover {
       this.filtersOpen.set(saved.filtersOpen);
       this.searched.set(saved.searched);
       this.searchForm.setValue(saved.form);
+      if (saved.scroll[1]) afterNextRender(() => this.viewport.scrollToPosition(saved.scroll, {behavior: 'instant'}));
     }
     inject(DestroyRef).onDestroy(() => view.preview = {
-      category: this.category(), location: this.location(), sort: this.sort(), rating: this.minimumRating(),
+      scroll: lastScroll(), category: this.category(), location: this.location(), sort: this.sort(), rating: this.minimumRating(),
       page: this.page(), filtersOpen: this.filtersOpen(), searched: this.searched(), form: this.searchForm.getRawValue(),
     });
+  }
+
+  changePage(page: number, heading: HTMLElement): void {
+    if (page === this.page()) return;
+    this.page.set(page);
+    this.view.revealResults(heading);
   }
 
   search(): void {

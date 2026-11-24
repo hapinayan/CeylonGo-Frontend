@@ -3,9 +3,9 @@
   <main class="discover">
     <div class="discover-intro">
       <h1>Experiences in Sri Lanka</h1>
-      <p>Discover local culture, adventure, nature and eco-friendly experiences<br class="desktop-break"> with verified local hosts.</p>
+      <p>Discover local culture, adventure, nature and eco-friendly experiences with verified local hosts.</p>
       @if (catalog.preview) {
-        <p class="preview-note" id="preview-note">Development preview · Sample listings and prices. Date and traveler choices are for preview only.</p>
+        <p class="preview-note" id="preview-note">Development preview · Sample listings and prices. Images are illustrative. Date and traveler choices are for preview only.</p>
       }
     </div>
     @if (catalog.preview) {
@@ -16,13 +16,17 @@
         </label>
         <label>
           <app-experience-icon name="calendar" />
-          <span>Date<input type="date" formControlName="date"></span>
+          <span>Date<span class="search-field-value"><input type="date" formControlName="date">
+            @if (!searchForm.controls.date.value) { <span class="search-field-hint" aria-hidden="true">Select date</span> }
+          </span></span>
         </label>
         <label>
           <app-experience-icon name="user" />
-          <span>Travelers<input type="number" min="1" max="20" step="1" required formControlName="travelers"
+          <span>Travelers<span class="search-field-value"><input type="number" min="1" max="20" step="1" required formControlName="travelers"
             [attr.aria-invalid]="searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid"
-            [attr.aria-describedby]="searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid ? 'traveler-error' : null"></span>
+            [attr.aria-describedby]="searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid ? 'traveler-error' : null">
+            @if (searchForm.controls.travelers.value === 1) { <span class="search-field-hint" aria-hidden="true">1 Traveler</span> }
+          </span></span>
         </label>
         <button type="submit" class="search-submit"><app-experience-icon name="search" />Search</button>
       </form>
@@ -32,7 +36,7 @@
       <app-experience-categories [selected]="category()" (select)="selectCategory($event)" />
       <section aria-labelledby="experience-results">
         <div class="results-bar">
-          <h2 id="experience-results" aria-live="polite">{{ results().length }} {{ results().length === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka</h2>
+          <h2 #resultsHeading id="experience-results" tabindex="-1" aria-live="polite">{{ results().length }} {{ results().length === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka</h2>
           <div class="results-controls">
             <label class="sort-control">Sort by:
               <select #sortSelect [value]="sort()" (change)="changeSort(sortSelect.value)">
@@ -67,7 +71,7 @@
                 (toggleFavorite)="toggleFavorite(experience.id)" />
             }
           </div>
-          <app-experience-pagination [page]="page()" [totalPages]="totalPages()" (change)="page.set($event)" />
+          <app-experience-pagination [page]="page()" [totalPages]="totalPages()" (change)="changePage($event, resultsHeading)" />
         } @else {
           <div class="empty-results">
             <h3>No experiences match your search</h3>

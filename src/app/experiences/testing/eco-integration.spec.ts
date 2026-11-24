@@ -95,6 +95,21 @@ describe('Public Eco API and UI', () => {
     expect(element.querySelectorAll('.eco-range-filters')).toHaveLength(1);
   });
 
+  it('resets paging and clears the Eco taxonomy when returning to All Experiences', () => {
+    const fixture = TestBed.createComponent(LiveCatalog);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    http.expectOne(url + '/categories').flush([item.eco_category]);
+    http.expectOne(req => req.url === url).flush(page);
+    component.setCategory(item.eco_category);
+    component.page.set(2);
+    fixture.detectChanges();
+    http.expectOne(req => req.params.get('category') === item.eco_category && req.params.get('page') === '2').flush(page);
+    component.selectCategory('all');
+    fixture.detectChanges();
+    http.expectOne(req => req.url === url && !req.params.has('category') && req.params.get('page') === '1').flush(page);
+  });
+
   it('opens numeric detail routes, renders Eco data, and handles unpublished or missing results', async () => {
     const harness = await RouterTestingHarness.create('/experiences/42');
     expect(harness.routeNativeElement?.textContent).toContain('Loading experience');

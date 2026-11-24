@@ -24,7 +24,7 @@ import { loadState } from '../../services/workflow-state';
         @if (catalog.preview) {
           <p role="status">Development preview · Favorites are temporary.</p>
           @if (samples().length) {
-            <p>{{ samples().length }} saved</p>
+            <p class="workflow-pill">{{ samples().length }} saved</p>
             <div class="experience-grid">
               @for (card of samples(); track card.id) {
                 <app-experience-card [experience]="card" [favorite]="true" [preview]="true" [detailLink]="true"
@@ -46,7 +46,7 @@ import { loadState } from '../../services/workflow-state';
               <div role="alert"><p>Could not load saved experiences.</p><button class="outline-control" (click)="retry()">Retry</button></div>
             }
             @if (result.status === 'ready' && result.owner === session.account()) {
-              <p aria-live="polite">{{ result.data.total }} saved</p>
+              <p class="workflow-pill" aria-live="polite">{{ result.data.total }} saved</p>
               @if (!result.data.items.length) { <p>No saved experiences on this page.</p> }
               <div class="experience-grid">
                 @for (item of result.data.items; track item.id) {

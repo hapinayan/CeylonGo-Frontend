@@ -5,9 +5,22 @@ import { BookingSlot, Reservation } from '../models/travel';
 import { TravelSource } from '../services/travel-api';
 import { demoExperiences } from './demo-experiences';
 
+const descriptions: Readonly<Record<string, string>> = {
+  safari: 'Explore the scrubland by safari jeep and look for elephants with a guide.',
+  tea: 'Walk through highland tea rows and learn how tea leaves are picked and processed.',
+  village: 'Learn about Sri Lankan village traditions and watch a Kandyan dance performance.',
+  snorkel: 'Explore shallow coral habitat and look for reef life on a guided swim.',
+  rafting: 'Practice the guide’s paddle signals and navigate a forest-lined stretch of the Kelani River.',
+  hike: 'Follow hillside trails above Ella to viewpoints overlooking the surrounding ridges.',
+  cooking: 'Prepare Sri Lankan dishes in an open-air kitchen and learn how spices are combined.',
+  mangrove: 'Explore waterways by boat and learn about the mangrove habitat.',
+  sigiriya: 'Walk through the gardens and learn about the history of the rock fortress.',
+  birdwalk: 'Walk along wetland paths and look for waterbirds among the reeds.',
+};
+
 const listings = new Map(demoExperiences.map((item, index): [string, EcoDetail] => [item.id, {
   id: index + 1, title: item.title, eco_category: item.category, city: item.location, district: item.location,
-  duration_hours: 2, base_price: item.price, currency: 'LKR', pricing_type: 'per_person',
+  description: descriptions[item.id], duration_hours: 2, base_price: item.price, currency: 'LKR', pricing_type: 'per_person',
   min_participants: 1, max_group_size: 5, min_age: 10, meeting_point: item.location,
   has_verified_eco_badge: false, environmental_guidelines: '', wildlife_safety_summary: '',
   safety_rules: [{id: 1, title: 'Preview safety rule', description: 'Follow the guide’s instructions.', is_mandatory: true}],

@@ -8,7 +8,7 @@ import { ExperienceIcon } from './icon';
   imports: [RouterLink, RouterLinkActive, ExperienceIcon],
   template: `
     <header class="traveler-header">
-      <span class="traveler-brand"><img src="images/ceylongo-logo.png" alt="">CeylonGo</span>
+      <a class="traveler-brand" routerLink="/experiences" aria-label="CeylonGo Experiences">CeylonGo</a>
       <nav aria-label="Traveler navigation">
         <button type="button" disabled>Stays</button>
         <a routerLink="/experiences" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">Experiences</a>
@@ -22,11 +22,11 @@ import { ExperienceIcon } from './icon';
         <a routerLink="/experiences/bookings" routerLinkActive="active" ariaCurrentWhenActive="page" aria-label="My Experience Bookings"><app-experience-icon name="calendar" /></a>
         <button type="button" aria-label="Notifications unavailable" disabled><app-experience-icon name="bell" /></button>
         @if (user(); as traveler) {
-          <button type="button" disabled [attr.aria-label]="traveler.full_name + ', profile unavailable'">
+          <button class="traveler-profile" type="button" disabled [attr.aria-label]="traveler.full_name + ', profile unavailable'">
             <app-experience-icon name="user" /><span>{{ traveler.full_name }}</span>
           </button>
         } @else {
-          <a routerLink="/auth" aria-label="Traveler sign-in"><app-experience-icon name="user" /><span>Traveler</span></a>
+          <a class="traveler-profile" routerLink="/auth" aria-label="Traveler sign-in"><app-experience-icon name="user" /><span>Traveler</span></a>
         }
       </div>
     </header>

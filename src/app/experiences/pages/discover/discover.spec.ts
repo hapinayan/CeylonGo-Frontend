@@ -104,6 +104,19 @@ describe('Experiences Discover preview', () => {
     expect(cardTitles()).toHaveLength(8);
   });
 
+  it('links every sample by catalog ID and supports both numbered pages and boundary arrows', () => {
+    const links = () => [...page.querySelectorAll('.experience-card--linked h3 a')].map(a => a.getAttribute('href'));
+    expect(links()).toEqual(demoExperiences.slice(0, 8).map(item => '/experiences/' + item.id));
+    expect(page.querySelector<HTMLButtonElement>('[aria-label="Previous page"]')?.disabled).toBe(true);
+    click('Page 2');
+    expect(document.activeElement?.id).toBe('experience-results');
+    expect(links()).toEqual(demoExperiences.slice(8).map(item => '/experiences/' + item.id));
+    expect(page.querySelector<HTMLButtonElement>('[aria-label="Next page"]')?.disabled).toBe(true);
+    click('Local Culture');
+    expect(fixture.componentInstance.page()).toBe(1);
+    expect(cardTitles()).toEqual(['Cultural Village Tour', 'Sigiriya Rock Walk']);
+  });
+
   it('toggles a temporary favorite', () => {
     click('Preview favorite: Wildlife Safari');
     expect(page.querySelector('.favorite')?.getAttribute('aria-pressed')).toBe('true');

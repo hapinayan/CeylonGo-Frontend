@@ -18,7 +18,10 @@ import { loadState } from '../services/workflow-state';
         @if (result.status === 'error') { <p role="alert">Payment status could not be loaded.</p> }
         @if (result.status === 'ready' && (catalog.preview || result.owner === session.account())) {
           <p>{{ result.data.currency }} {{ result.data.total_price | number:'1.2-2' }} · {{ result.data.payment_method.replaceAll('_', ' ') }}</p>
-          <p>Reservation: {{ result.data.booking_status }} · Payment: {{ result.data.payment_status.replaceAll('_', ' ') }}</p>
+          <div class="workflow-statuses">
+            <span class="workflow-pill" [attr.data-status]="result.data.booking_status">Reservation: {{ result.data.booking_status }}</span>
+            <span class="workflow-pill" [attr.data-status]="result.data.payment_status">Payment: {{ result.data.payment_status.replaceAll('_', ' ') }}</span>
+          </div>
           @if (result.data.paid_at) { <p>Recorded payment time: {{ result.data.paid_at | date:'medium':'GMT+0530' }} (Sri Lanka time)</p> }
           @if (result.data.transaction_id != null) { <p>Transaction reference: {{ result.data.transaction_id }}</p> }
           @if (result.data.payment_status === 'pending') { <p>Payment is pending verification. Refresh to check for an update.</p> }

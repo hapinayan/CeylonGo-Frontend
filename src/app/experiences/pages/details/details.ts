@@ -1,9 +1,9 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DOCUMENT, DatePipe, DecimalPipe, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
+import { afterNextRender, Component, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, combineLatest, distinctUntilChanged, forkJoin, map, of, startWith, switchMap } from 'rxjs';
+import { catchError, combineLatest, distinctUntilChanged, forkJoin, map, of, startWith, switchMap, tap } from 'rxjs';
 import { BookingPanel } from '../../components/booking-panel';
 import { SaveControl } from '../../components/save-control';
 import { BOOKABLE_PREVIEW } from '../../services/travel-api';
@@ -11,15 +11,17 @@ import { WeatherPanel } from '../../components/weather-panel/weather-panel';
 import { coordinatesOf } from '../../models/weather';
 import { TravelerHeader } from '../../components/traveler-header';
 import { ExperienceIcon } from '../../components/icon';
-import { Experience } from '../../models/catalog';
+import { categories, Category, Experience } from '../../models/catalog';
 import { EcoDetail, EcoReviews, EcoSlot } from '../../models/eco';
 import { EXPERIENCE_CATALOG } from '../../services/catalog';
 import { EcoApi, ecoImageUrl, toExperience } from '../../services/eco-api';
 
+interface DetailImage { url: string; caption: string }
+
 interface Detail {
   card: Experience;
   eco?: EcoDetail;
-  images: { url: string; caption: string }[];
+  images: DetailImage[];
   reviews?: EcoReviews | null;
   slots?: EcoSlot[] | null;
 }
@@ -34,6 +36,13 @@ type DetailState = { status: 'loading' | 'missing' | 'error' } | { status: 'read
 })
 export class ExperienceDetails {
   private readonly route = inject(ActivatedRoute);
+  private readonly document = inject(DOCUMENT);
+  private readonly viewport = inject(ViewportScroller);
+  private readonly injector = inject(Injector);
+  readonly shareStatus = signal('');
+  readonly shareUrl = signal('');
+  readonly viewedImage = signal<DetailImage | null>(null);
+  readonly failedImages = signal<ReadonlySet<string>>(new Set());
   private readonly api = inject(EcoApi);
   private readonly reload = signal(0);
   readonly catalog = inject(EXPERIENCE_CATALOG);
@@ -41,7 +50,13 @@ export class ExperienceDetails {
   readonly sample = inject(BOOKABLE_PREVIEW);
 
   readonly state = toSignal(combineLatest([
-    this.route.paramMap.pipe(map(params => params.get('id') ?? ''), distinctUntilChanged()),
+    this.route.paramMap.pipe(map(params => params.get('id') ?? ''), distinctUntilChanged(), tap(() => {
+      this.failedImages.set(new Set());
+      this.shareStatus.set('');
+      this.shareUrl.set('');
+      this.viewedImage.set(null);
+      afterNextRender(() => this.viewport.scrollToPosition([0, 0], {behavior: 'instant'}), {injector: this.injector});
+    })),
     toObservable(this.reload),
   ]).pipe(switchMap(([id]) => {
     if (this.catalog.preview) {
@@ -77,6 +92,42 @@ export class ExperienceDetails {
       })),
     );
   })), { initialValue: { status: 'loading' } as DetailState });
+
+  categoryName(category: Category): string {
+    return categories.find(item => item.id === category)?.label ?? '';
+  }
+
+  openImage(image: DetailImage, dialog: HTMLDialogElement): void {
+    this.viewedImage.set(image);
+    dialog.showModal();
+  }
+
+  async share(title: string): Promise<void> {
+    const view = this.document.defaultView;
+    if (!view) return;
+    const url = view.location.origin + view.location.pathname;
+    this.shareStatus.set('');
+    this.shareUrl.set('');
+    try {
+      if (view.navigator.share) {
+        await view.navigator.share({title, url});
+        return;
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+    }
+    try {
+      await view.navigator.clipboard.writeText(url);
+      this.shareStatus.set('Link copied.');
+    } catch {
+      this.shareUrl.set(url);
+      this.shareStatus.set('Copy the link below to share this experience.');
+    }
+  }
+
+  imageFailed(url: string): void {
+    this.failedImages.update(images => new Set([...images, url]));
+  }
 
   retry(): void { this.reload.update(value => value + 1); }
 }

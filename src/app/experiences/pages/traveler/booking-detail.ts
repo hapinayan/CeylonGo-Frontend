@@ -38,7 +38,10 @@ import { loadState, positiveId } from '../../services/workflow-state';
             <h2>{{ row.reference }}</h2>
             @if (experienceLink(row); as id) { <a [routerLink]="['/experiences', id]">View experience</a> }
             <p>{{ row.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) · {{ row.participants }} travelers</p>
-            <p>Reservation: {{ row.status }} · Payment: {{ row.payment_status.replaceAll('_', ' ') }}</p>
+            <div class="workflow-statuses">
+              <span class="workflow-pill" [attr.data-status]="row.status">Reservation: {{ row.status }}</span>
+              <span class="workflow-pill" [attr.data-status]="row.payment_status">Payment: {{ row.payment_status.replaceAll('_', ' ') }}</span>
+            </div>
             <p>Reservation total: {{ row.currency }} {{ row.total | number:'1.2-2' }}</p>
             @if (canCancel(row)) {
               <button #trigger type="button" class="outline-control" [disabled]="cancelling() || checkRequired()"

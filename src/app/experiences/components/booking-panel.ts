@@ -1,3 +1,4 @@
+import { ExperienceIcon } from './icon';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
@@ -15,7 +16,7 @@ import { loadState, positiveId, publishDate } from '../services/workflow-state';
 
 @Component({
   selector: 'app-experience-booking',
-  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, RouterLink, ExperienceIcon],
   templateUrl: './booking-panel.html',
 })
 export class BookingPanel {
@@ -53,11 +54,15 @@ export class BookingPanel {
   )));
   readonly estimate = computed(() => {
     const review = this.review();
-    if (!review) return null;
-    const listing = this.listing();
-    if (listing.pricing_type === 'per_person') return Number(listing.base_price) * review.participants;
-    return listing.pricing_type === 'per_group' ? Number(listing.base_price) : null;
+    return review ? this.estimateFor(review.participants) : null;
   });
+
+  estimateFor(participants: number | null): number | null {
+    const listing = this.listing();
+    if (participants == null || !Number.isInteger(participants) || participants < listing.min_participants || participants > listing.max_group_size) return null;
+    if (listing.pricing_type === 'per_person') return Number(listing.base_price) * participants;
+    return listing.pricing_type === 'per_group' ? Number(listing.base_price) : null;
+  }
 
   constructor() {
     effect(() => {

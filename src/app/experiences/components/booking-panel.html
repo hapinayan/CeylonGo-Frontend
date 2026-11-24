@@ -1,6 +1,6 @@
 <section class="traveler-workflow">
   <h2>{{ reviewMode() ? 'Choose your booking' : 'Check availability' }}</h2>
-  @if (catalog.preview) { <p>Development preview · Sample availability and reservations.</p> }
+  @if (catalog.preview) { <p class="workflow-note">Development preview · Sample availability and reservations.</p> }
   @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
   @if (confirmed(); as result) {
     @if (catalog.preview || result.account === session.account()) {
@@ -19,20 +19,20 @@
       @if (estimate() !== null) { <p>Estimated total: {{ listing().currency }} {{ estimate() | number:'1.2-2' }}</p> }
       <p>Your reservation response supplies the final amount.</p>
       @if (catalog.preview || session.account()) {
-        <button type="button" class="outline-control" [disabled]="submitting()" (click)="submit()">{{ submitting() ? 'Submitting…' : 'Request reservation' }}</button>
+        <button type="button" class="outline-control workflow-primary" [disabled]="submitting()" (click)="submit()">{{ submitting() ? 'Submitting…' : 'Request reservation' }}</button>
         <button type="button" class="outline-control" [disabled]="submitting()" (click)="review.set(null)">Edit details</button>
       } @else { <a class="outline-control" routerLink="/auth">Sign in to request reservation</a> }
     </div>
   } @else {
     <form class="workflow-form" [formGroup]="form" (ngSubmit)="inspect()">
-      <label>Date in Sri Lanka <input type="date" formControlName="date" [min]="firstDay" [max]="lastDay" #dateInput (change)="chooseDay(dateInput.value)"></label>
+      <label><span class="workflow-field-heading"><app-experience-icon name="calendar" />Date in Sri Lanka</span><input type="date" formControlName="date" [min]="firstDay" [max]="lastDay" #dateInput (change)="chooseDay(dateInput.value)"></label>
       @if (slots(); as state) {
         @if (state.status === 'loading') { <p class="workflow-state" role="status">Loading available slots…</p> }
         @if (state.status === 'error') { <p role="alert">Availability could not be loaded.</p> }
         @if (state.status === 'ready') {
           @if (!state.data.length) { <p role="status">No open slots on this page.</p> }
           @else {
-            <label>Time slot <select formControlName="slot">
+            <label><span class="workflow-field-heading"><app-experience-icon name="clock" />Time slot</span><select formControlName="slot">
               <option [ngValue]="null">Choose a time</option>
               @for (slot of state.data; track slot.id) {
                 <option [ngValue]="slot.id" [disabled]="!selectable(slot)">
@@ -48,7 +48,7 @@
         }
       }
       @if (day()) { <button type="button" class="outline-control" (click)="refreshSlots()">Refresh availability</button> }
-      <label>Travelers ({{ listing().min_participants }}–{{ listing().max_group_size }})
+      <label><span class="workflow-field-heading"><app-experience-icon name="group" />Travelers ({{ listing().min_participants }}–{{ listing().max_group_size }})</span>
         <input type="number" formControlName="participants" [min]="listing().min_participants" [max]="listing().max_group_size" step="1" (input)="syncAges()">
       </label>
       @if (listing().min_age) { <p>Minimum age: {{ listing().min_age }}</p> }
@@ -64,9 +64,21 @@
             }
           </div></fieldset>
         }
-        @if (mandatory()) { <label><span><input type="checkbox" formControlName="safety"> I accept the mandatory safety rules.</span></label> }
+        @if (mandatory()) { <label class="workflow-consent"><span><input type="checkbox" formControlName="safety"> I accept the mandatory safety rules.</span></label> }
       }
-      <button class="outline-control" type="submit" [disabled]="slots()?.status !== 'ready'">{{ reviewMode() ? 'Review booking' : 'Continue to booking' }}</button>
+      @if (!reviewMode() && form.controls.slot.value != null) {
+        @let subtotal = estimateFor(form.controls.participants.value);
+        @if (subtotal != null) {
+          <div class="workflow-estimate">
+            <span>Estimated total</span><strong>{{ listing().currency }} {{ subtotal | number:'1.2-2' }}</strong>
+            @if (listing().pricing_type === 'per_person') {
+              <small>{{ form.controls.participants.value }} × {{ listing().currency }} {{ listing().base_price | number:'1.2-2' }} per person</small>
+            } @else { <small>{{ listing().currency }} {{ listing().base_price | number:'1.2-2' }} per group</small> }
+            <small>Final amount confirmed by the reservation response.</small>
+          </div>
+        }
+      }
+      <button class="outline-control workflow-primary" type="submit" [disabled]="slots()?.status !== 'ready'">{{ reviewMode() ? 'Review booking' : 'Continue to booking' }}</button>
     </form>
   }
 </section>

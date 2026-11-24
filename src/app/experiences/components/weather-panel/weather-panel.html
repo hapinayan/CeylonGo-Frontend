@@ -39,7 +39,7 @@
           @let value = result.value;
           <p class="weather-temperature"><span aria-hidden="true">{{ icon(value.condition.icon) }}</span>
             {{ value.temperature_c | number:'1.0-1' }} °C</p>
-          <p>{{ value.condition.description }}</p>
+          <p class="weather-condition">{{ value.condition.description }}@if (value.feels_like_c != null) { · Feels like {{ value.feels_like_c | number:'1.0-1' }} °C }</p>
           <dl><div><dt>Humidity</dt><dd>{{ value.humidity_percent }}%</dd></div>
             <div><dt>Wind</dt><dd>{{ value.wind_speed_kmh | number:'1.0-1' }} km/h
               @if (value.wind_direction_degrees != null) { · {{ value.wind_direction_degrees }}° }</dd></div></dl>

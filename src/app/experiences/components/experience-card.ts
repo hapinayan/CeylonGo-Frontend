@@ -9,7 +9,7 @@ import { ExperienceIcon } from './icon';
   selector: 'app-experience-card',
   imports: [ExperienceIcon, DecimalPipe, RouterLink, SaveControl],
   template: `
-    <article class="experience-card">
+    <article class="experience-card" [class.experience-card--linked]="detailLink()">
       <div class="card-media" [attr.data-category]="experience().category">
         @if (experience().image; as image) {
           <img [src]="image" [alt]="experience().imageAlt ?? ''"
@@ -24,7 +24,7 @@ import { ExperienceIcon } from './icon';
         <span class="category-badge"><app-experience-icon [name]="category()?.icon ?? 'grid'" />{{ experience().categoryLabel ?? category()?.label }}</span>
       </div>
       <div class="card-body">
-        <h3>@if (detailLink()) { <a [routerLink]="['/experiences', experience().id]">{{ experience().title }}</a> } @else { {{ experience().title }} }</h3>
+        <h3>@if (detailLink()) { <a class="card-title-link" [routerLink]="['/experiences', experience().id]">{{ experience().title }}</a> } @else { {{ experience().title }} }</h3>
         <p class="card-location"><app-experience-icon name="pin" />{{ experience().location }}</p>
         <div class="card-meta">
           @if (experience().rating != null && experience().reviews != null) { <span class="card-rating" [attr.aria-label]="experience().rating + ' out of 5, ' + experience().reviews + ' reviews'">

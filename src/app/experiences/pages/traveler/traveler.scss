@@ -1,25 +1,45 @@
 .experiences-shell .traveler-workflow {
-  h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); letter-spacing: -.035em; line-height: 1.12; }
   h2 { font-size: 1.2rem; }
   a:not(.outline-control) { color: #004ec7; text-decoration: underline; }
   .workflow-state, .workflow-card {
     border: 1px solid var(--experience-border);
-    border-radius: 14px;
-    padding: 1rem;
+    border-radius: 16px;
+    padding: clamp(.85rem, 2.2vw, 1.35rem);
     margin-block: 1rem;
     overflow-wrap: anywhere;
   }
   .workflow-state { background: var(--experience-light); }
+  .workflow-card { background: var(--experience-white); box-shadow: var(--experience-shadow); }
   .workflow-form { max-width: 42rem; display: grid; gap: .95rem; }
-  .workflow-form label { display: grid; gap: .4rem; }
+  .workflow-form label { display: grid; gap: .4rem; font-weight: 650; }
+  .workflow-note { color: var(--experience-muted); font-size: .84rem; }
+  .workflow-field-heading { display: flex; align-items: center; gap: .5rem; }
+  .workflow-field-heading app-experience-icon { color: var(--experience-blue); }
+  .workflow-consent { min-height: 44px; align-items: center; }
+  .workflow-consent input { accent-color: var(--experience-blue); }
   .workflow-form input:not([type='checkbox']), .workflow-form select, .workflow-form textarea {
-    width: 100%; min-width: 0; padding: .6rem;
+    width: 100%; min-width: 0; min-height: 44px; padding: .6rem;
     border: 1px solid var(--experience-border); border-radius: 8px; font: inherit;
   }
   .workflow-form fieldset { min-width: 0; border: 1px solid var(--experience-border); border-radius: 8px; }
+  .outline-control { min-height: 44px; }
+  .workflow-primary { background: var(--experience-blue); border-color: var(--experience-blue); color: #fff; }
+  .workflow-form > .workflow-primary { width: 100%; }
+  .workflow-estimate { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .35rem;
+    padding: .8rem; background: var(--experience-light); border-radius: 10px; }
+  .workflow-estimate small { flex-basis: 100%; color: var(--experience-muted); }
+  .workflow-statuses { display: flex; flex-wrap: wrap; gap: .45rem; margin-block: .75rem; }
+  .workflow-pill {
+    display: inline-flex; align-items: center; padding: .35rem .65rem; border-radius: 999px;
+    background: var(--experience-light); color: #004bb7; font-size: .82rem; font-weight: 700;
+  }
+  .workflow-pill:is([data-status='paid'], [data-status='confirmed'], [data-status='completed']) { background: #e7faeb; color: #146536; }
+  .workflow-pill:is([data-status='cancelled'], [data-status='failed'], [data-status='expired']) { background: #f4f6f9; color: #465d79; }
   .workflow-actions { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
   .workflow-ages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: .6rem; }
-  dialog { max-width: min(calc(100vw - 2rem), 34rem); border: 1px solid var(--experience-border); border-radius: 14px; padding: 1rem; color: inherit; }
+  dialog { max-width: min(calc(100vw - 2rem), 34rem); border: 1px solid var(--experience-border); border-radius: 18px; padding: clamp(1rem, 3vw, 1.5rem); color: inherit; }
+  dialog { box-shadow: 0 10px 30px rgb(8 43 92 / 17%); }
   dialog::backdrop { background: rgb(8 43 92 / 35%); }
 }
 .experiences-shell app-save-experience .outline-control { padding: .45rem; min-width: 2.3rem; min-height: 2.3rem; }
