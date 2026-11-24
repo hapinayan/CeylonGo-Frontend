@@ -7,10 +7,28 @@ import { Register } from './pages/register/register';
 
 export const routes: Routes = [
 
-  // FIRST PAGE - AUTH ENTRY
+  // DEFAULT ROUTE - HOMESTAY DISCOVERY
   {
     path: '',
-    redirectTo: 'auth',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+
+  // HOMESTAY DISCOVERY & BOOKING - TRAVELER FRONTEND (PHASE 1)
+  {
+    path: 'homestays',
+    loadComponent: () =>
+      import('./pages/homestay-discovery/homestay-discovery')
+        .then(m => m.HomestayDiscovery)
+  },
+  {
+    path: 'homestay',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+  {
+    path: 'explore',
+    redirectTo: 'homestays',
     pathMatch: 'full'
   },
 
@@ -125,10 +143,10 @@ export const routes: Routes = [
         .then(m => m.ProviderLoginPlaceholder)
   },
 
-  // UNKNOWN URL - GO TO FIRST PAGE
+  // UNKNOWN URL - GO TO HOMESTAY DISCOVERY
   {
     path: '**',
-    redirectTo: 'auth'
+    redirectTo: 'homestays'
   }
 
 ];

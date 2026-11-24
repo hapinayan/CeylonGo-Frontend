@@ -1,0 +1,687 @@
+<div class="homestay-page" (click)="closeGuestDropdown()">
+  <!-- =========================================================================
+       FIXED TOP SHELL (Pinned at top: Top Navbar + Hero Heading + Search + 8 Categories)
+       ========================================================================= -->
+  <header class="fixed-top-shell">
+    <!-- 1. TOP NAVIGATION -->
+    <nav class="cg-navbar" aria-label="Main Navigation">
+      <div class="navbar-container">
+        <!-- CeylonGo text logo on the left -->
+        <a routerLink="/homestays" class="brand-link" aria-label="CeylonGo Home">
+          <span class="brand-text-logo">
+            <span class="brand-ceylon">Ceylon</span><span class="brand-go">Go</span>
+          </span>
+        </a>
+
+        <!-- Navigation Links: Stays (active), Experiences, Tour Guides, Bike Rentals, Community, AI Trip Planner -->
+        <div class="nav-links" aria-label="Primary Navigation">
+          <a routerLink="/homestays" class="nav-item active" aria-current="page">Stays</a>
+          <a routerLink="/auth" class="nav-item">Experiences</a>
+          <a routerLink="/auth" class="nav-item">Tour Guides</a>
+          <a routerLink="/auth" class="nav-item">Bike Rentals</a>
+          <a routerLink="/auth" class="nav-item">Community</a>
+          <a routerLink="/auth" class="nav-item">AI Trip Planner</a>
+        </div>
+
+        <!-- Right Header Actions: Wishlist heart, Notification bell, Traveler avatar & dropdown -->
+        <div class="nav-actions">
+          <!-- Wishlist Heart Button -->
+          <button
+            type="button"
+            class="nav-icon-btn btn-wishlist-header"
+            (click)="showToast('You have ' + getWishlistCount() + ' saved homestays in your wishlist')"
+            aria-label="Wishlist"
+            [attr.title]="'Saved homestays (' + getWishlistCount() + ')'"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            @if (getWishlistCount() > 0) {
+              <span class="wishlist-badge">{{ getWishlistCount() }}</span>
+            }
+          </button>
+
+          <!-- Notification Bell Button -->
+          <button
+            type="button"
+            class="nav-icon-btn btn-notification-header"
+            (click)="showToast('2 new host updates and booking notifications')"
+            aria-label="Notifications"
+            title="Notifications"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            @if (notificationCount() > 0) {
+              <span class="notif-dot" aria-label="Unread notifications"></span>
+            }
+          </button>
+
+          <!-- Traveler Avatar and Dropdown -->
+          <div class="user-avatar-wrapper" (click)="toggleUserMenu($event)">
+            <div class="avatar-circle" aria-label="Traveler profile menu" role="button" tabindex="0">
+              <span class="avatar-initials">CG</span>
+            </div>
+            <svg class="avatar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+
+            @if (userMenuOpen()) {
+              <div class="user-dropdown-menu" (click)="$event.stopPropagation()">
+                <div class="user-dropdown-header">
+                  <span class="user-name">Ceylon Traveler</span>
+                  <span class="user-role">Explorer Account</span>
+                </div>
+                <div class="user-dropdown-divider"></div>
+                <a routerLink="/homestays" class="dropdown-item" (click)="userMenuOpen.set(false)">My Bookings</a>
+                <a routerLink="/homestays" class="dropdown-item" (click)="userMenuOpen.set(false)">Saved Wishlist ({{ getWishlistCount() }})</a>
+                <a routerLink="/provider/welcome" class="dropdown-item host-item" (click)="userMenuOpen.set(false)">Switch to Host</a>
+                <div class="user-dropdown-divider"></div>
+                <a routerLink="/auth" class="dropdown-item text-auth" (click)="userMenuOpen.set(false)">Sign In / Register</a>
+              </div>
+            }
+          </div>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button
+            type="button"
+            class="mobile-menu-btn"
+            (click)="toggleMobileMenu()"
+            [attr.aria-expanded]="mobileMenuOpen()"
+            aria-label="Toggle Navigation"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      @if (mobileMenuOpen()) {
+        <div class="mobile-menu-drawer">
+          <a routerLink="/homestays" class="mobile-nav-link active" (click)="mobileMenuOpen.set(false)">Stays</a>
+          <a routerLink="/auth" class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">Experiences</a>
+          <a routerLink="/auth" class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">Tour Guides</a>
+          <a routerLink="/auth" class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">Bike Rentals</a>
+          <a routerLink="/auth" class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">Community</a>
+          <a routerLink="/auth" class="mobile-nav-link" (click)="mobileMenuOpen.set(false)">AI Trip Planner</a>
+          <div class="mobile-drawer-divider"></div>
+          <a routerLink="/provider/welcome" class="mobile-nav-link host-link" (click)="mobileMenuOpen.set(false)">Host Your Homestay</a>
+          <a routerLink="/auth" class="mobile-nav-link signin-link" (click)="mobileMenuOpen.set(false)">Sign In / Register</a>
+        </div>
+      }
+    </nav>
+
+    <!-- 2. HEADING & 3. SEARCH BAR SECTION -->
+    <section class="hero-header-section">
+      <div class="hero-container">
+        <!-- Exact Heading & Subtitle -->
+        <div class="hero-text-block">
+          <h1 class="hero-title">Find Comfortable Homestays in Sri Lanka</h1>
+          <p class="hero-subtitle">Stay with friendly local hosts and experience the real Sri Lankan hospitality.</p>
+        </div>
+
+        <!-- Single Horizontal Rounded Search Bar -->
+        <div class="search-bar-wrapper">
+          <form class="search-bar" (ngSubmit)="onSearch()">
+            <!-- 1. Where to? -->
+            <div class="search-section location-section">
+              <label for="search-location" class="section-label">Where to?</label>
+              <div class="section-control">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <input
+                  id="search-location"
+                  type="text"
+                  class="search-input"
+                  placeholder="Search location (e.g., Ella, Kandy, Galle)"
+                  [ngModel]="locationQuery()"
+                  (ngModelChange)="locationQuery.set($event)"
+                  name="location"
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+
+            <div class="search-divider" aria-hidden="true"></div>
+
+            <!-- 2. Check-in – Check-out -->
+            <div class="search-section dates-section">
+              <span class="section-label">Check-in – Check-out</span>
+              <div class="section-control dates-control">
+                <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <div class="dates-inputs">
+                  <input
+                    id="search-checkin"
+                    type="date"
+                    class="date-input"
+                    [ngModel]="checkInDate()"
+                    (ngModelChange)="checkInDate.set($event)"
+                    name="checkin"
+                    aria-label="Check-in date"
+                  />
+                  <span class="date-sep">—</span>
+                  <input
+                    id="search-checkout"
+                    type="date"
+                    class="date-input"
+                    [ngModel]="checkOutDate()"
+                    (ngModelChange)="checkOutDate.set($event)"
+                    name="checkout"
+                    aria-label="Check-out date"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="search-divider" aria-hidden="true"></div>
+
+            <!-- 3. Guests -->
+            <div class="search-section guests-section" (click)="toggleGuestDropdown($event)">
+              <span class="section-label">Guests</span>
+              <div class="section-control guests-trigger">
+                <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                <span class="guests-display">
+                  {{ totalGuests() }} {{ totalGuests() === 1 ? 'Guest' : 'Guests' }}
+                </span>
+                <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+
+              <!-- Guest Dropdown Popup -->
+              @if (guestDropdownOpen()) {
+                <div class="guest-dropdown" (click)="$event.stopPropagation()">
+                  <div class="guest-row">
+                    <div class="guest-info">
+                      <span class="guest-type">Adults</span>
+                      <span class="guest-desc">Age 13 and above</span>
+                    </div>
+                    <div class="counter-controls">
+                      <button type="button" class="btn-counter" [disabled]="adultsCount() <= 1" (click)="updateAdults(-1)">-</button>
+                      <span class="counter-value">{{ adultsCount() }}</span>
+                      <button type="button" class="btn-counter" [disabled]="adultsCount() >= 10" (click)="updateAdults(1)">+</button>
+                    </div>
+                  </div>
+                  <div class="guest-row">
+                    <div class="guest-info">
+                      <span class="guest-type">Children</span>
+                      <span class="guest-desc">Ages 0 to 12</span>
+                    </div>
+                    <div class="counter-controls">
+                      <button type="button" class="btn-counter" [disabled]="childrenCount() <= 0" (click)="updateChildren(-1)">-</button>
+                      <span class="counter-value">{{ childrenCount() }}</span>
+                      <button type="button" class="btn-counter" [disabled]="childrenCount() >= 6" (click)="updateChildren(1)">+</button>
+                    </div>
+                  </div>
+                  <div class="dropdown-footer">
+                    <button type="button" class="btn-dropdown-apply" (click)="closeGuestDropdown()">Done</button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- 4. Blue Search button -->
+            <button type="submit" class="btn-search-submit" aria-label="Search Homestays">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Search</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. EIGHT CATEGORY BUTTONS (Exact Reference Labels, Pale Blue, Selected Blue Border) -->
+    <section class="categories-bar-section">
+      <div class="categories-container">
+        <div class="categories-track">
+          @for (cat of categories(); track cat.id) {
+            <button
+              type="button"
+              class="category-btn"
+              [class.active]="selectedCategory() === cat.id"
+              (click)="selectCategory(cat.id)"
+              [attr.aria-pressed]="selectedCategory() === cat.id"
+            >
+              <!-- Reference Icons -->
+              @switch (cat.id) {
+                @case ('all') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                }
+                @case ('mountain') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+                  </svg>
+                }
+                @case ('beach') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h20M2 16h20M2 20h20"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                }
+                @case ('nature') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a9 9 0 0 0-9 9c0 4.17 2.84 7.67 6.69 8.69L12 22l2.31-2.31C18.16 18.67 21 15.17 21 11a9 9 0 0 0-9-9z"></path>
+                  </svg>
+                }
+                @case ('cultural') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 22h16M4 2v4M20 2v4M6 6h12M6 6v16M18 6v16M10 22V12h4v10"></path>
+                  </svg>
+                }
+                @case ('eco') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+                  </svg>
+                }
+                @case ('family') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                }
+                @case ('budget') {
+                  <svg class="cat-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <path d="M6 12h.01M18 12h.01"></path>
+                  </svg>
+                }
+              }
+              <span class="cat-label">{{ cat.name }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <!-- =========================================================================
+       SCROLLABLE HOMESTAY LISTINGS AREA (Only this region scrolls vertically)
+       ========================================================================= -->
+  <div class="scrollable-content-region" #scrollRegion>
+    <!-- 5. RESULTS TOOLBAR -->
+    <section class="results-toolbar-section">
+      <div class="toolbar-container">
+        <!-- Results Heading: "312 Homestays in Sri Lanka" (labeled design preview / true filtered count) -->
+        <div class="toolbar-heading-group">
+          <h2 class="results-heading">
+            @if (locationQuery() || selectedCategory() !== 'all') {
+              <span>Showing <strong class="highlight-count">{{ totalCount() }}</strong> Homestays in Sri Lanka</span>
+            } @else {
+              <span><strong class="highlight-count">312</strong> Homestays in Sri Lanka</span>
+              <span class="design-preview-tag" title="Design Preview Reference Count">Design Preview</span>
+            }
+          </h2>
+        </div>
+
+        <!-- Right-aligned Sort by: Popular and Filters button -->
+        <div class="toolbar-actions">
+          <div class="sort-wrapper">
+            <label for="sort-select" class="sort-label">Sort by:</label>
+            <select
+              id="sort-select"
+              class="sort-select"
+              [ngModel]="sortBy()"
+              (ngModelChange)="onSortChange($event)"
+            >
+              <option value="popular">Popular</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+              <option value="rating">Highest Rated</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            class="btn-filter-trigger"
+            (click)="openFilterModal()"
+            aria-label="Open Filter Options"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Filters</span>
+            @if (selectedAmenities().length > 0 || verifiedOnly() || minPrice() > 3000 || maxPrice() < 15000) {
+              <span class="active-dot" aria-label="Filters applied"></span>
+            }
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. HOMESTAY CARDS (4 Columns on Desktop, 2 Rows Visible) -->
+    <main class="listings-main-section">
+      <div class="listings-container">
+        @if (isLoading()) {
+          <div class="listings-grid">
+            @for (p of [1, 2, 3, 4, 5, 6, 7, 8]; track p) {
+              <div class="homestay-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-body">
+                  <div class="skeleton-line line-short"></div>
+                  <div class="skeleton-line line-title"></div>
+                  <div class="skeleton-line line-desc"></div>
+                  <div class="skeleton-line line-footer"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (homestays().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon-circle">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <line x1="9" y1="17" x2="15" y2="17"></line>
+              </svg>
+            </div>
+            <h3 class="empty-title">No homestays match your search</h3>
+            <p class="empty-desc">
+              Try adjusting your dates, expanding your price range, or searching for other destinations in Sri Lanka.
+            </p>
+            <button type="button" class="btn-reset-filters" (click)="resetFilters()">
+              Clear All Filters
+            </button>
+          </div>
+        } @else {
+          <!-- Responsive 4-column card grid -->
+          <div class="listings-grid">
+            @for (homestay of homestays(); track homestay.id) {
+              <article class="homestay-card">
+                <!-- Image Wrapper with Rounded Corners & Badges -->
+                <div class="card-media">
+                  <img
+                    [src]="homestay.image_url"
+                    [alt]="homestay.name"
+                    class="card-img"
+                    loading="lazy"
+                  />
+
+                  <!-- Category Badge on Image -->
+                  <span class="category-badge">{{ homestay.category_name }}</span>
+
+                  <!-- Wishlist Heart in Top-Right Corner -->
+                  <button
+                    type="button"
+                    class="btn-card-wishlist"
+                    [class.active]="isWishlisted(homestay.id)"
+                    (click)="toggleWishlist(homestay, $event)"
+                    [attr.aria-label]="isWishlisted(homestay.id) ? 'Remove from wishlist' : 'Save to wishlist'"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      [attr.fill]="isWishlisted(homestay.id) ? '#FF385C' : 'rgba(0,0,0,0.3)'"
+                      [attr.stroke]="isWishlisted(homestay.id) ? '#FF385C' : '#FFFFFF'"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Homestay Card Content -->
+                <div class="card-content">
+                  <!-- Name -->
+                  <h3 class="card-title">
+                    <a href="javascript:void(0)" class="title-link" (click)="showToast('Opening details for ' + homestay.name)">
+                      {{ homestay.name }}
+                    </a>
+                  </h3>
+
+                  <!-- Location -->
+                  <div class="card-location">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>{{ homestay.location }}</span>
+                  </div>
+
+                  <!-- Star Rating and Review Count -->
+                  <div class="card-rating" [attr.aria-label]="'Rating ' + homestay.rating + ' of 5 stars'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C" stroke-width="1" aria-hidden="true">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="rating-val">{{ homestay.rating }}</span>
+                    <span class="review-count">({{ homestay.review_count }})</span>
+                  </div>
+
+                  <!-- LKR Price per Night & Quick Book -->
+                  <div class="card-price-row">
+                    <div class="card-price">
+                      <span class="price-val">LKR {{ homestay.price_per_night | number }}</span>
+                      <span class="price-period">/ night</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="btn-card-book"
+                      (click)="showToast('Booking ' + homestay.name + ' - reserve flow starting...')"
+                    >
+                      Book
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+
+        <!-- 7. PAGINATION (Matching Reference: 1, 2, ..., Next Arrow) -->
+        @if (totalPages() > 1 && !isLoading()) {
+          <nav class="pagination-section" aria-label="Homestay results pagination">
+            <div class="page-numbers">
+              @for (p of [1, 2, 3, 4, 5]; track p) {
+                @if (p <= totalPages()) {
+                  <button
+                    type="button"
+                    class="btn-page-num"
+                    [class.active]="currentPage() === p"
+                    (click)="goToPage(p)"
+                    [attr.aria-current]="currentPage() === p ? 'page' : null"
+                  >
+                    {{ p }}
+                  </button>
+                }
+              }
+              @if (totalPages() > 5) {
+                <span class="page-ellipsis">...</span>
+                <button
+                  type="button"
+                  class="btn-page-num"
+                  [class.active]="currentPage() === totalPages()"
+                  (click)="goToPage(totalPages())"
+                >
+                  {{ totalPages() }}
+                </button>
+              }
+            </div>
+
+            <!-- Next Arrow Button -->
+            <button
+              type="button"
+              class="btn-page-next"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+              aria-label="Next Page"
+            >
+              <span>Next</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </nav>
+        }
+      </div>
+    </main>
+
+    <!-- CeylonGo Footer at bottom of scrollable region -->
+    <footer class="cg-footer">
+      <div class="footer-container">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <span class="brand-text-logo footer-logo">
+              <span class="brand-ceylon">Ceylon</span><span class="brand-go">Go</span>
+            </span>
+            <p class="footer-desc">
+              Empowering authentic sustainable community homestays and local tourism in Sri Lanka.
+            </p>
+          </div>
+
+          <div class="footer-links-grid">
+            <div class="footer-col">
+              <h4 class="col-title">Homestays</h4>
+              <a routerLink="/homestays" class="col-link">Mountain Stays</a>
+              <a routerLink="/homestays" class="col-link">Beach Stays</a>
+              <a routerLink="/homestays" class="col-link">Cultural Stays</a>
+              <a routerLink="/homestays" class="col-link">Eco-Friendly</a>
+            </div>
+            <div class="footer-col">
+              <h4 class="col-title">Hosting</h4>
+              <a routerLink="/provider/welcome" class="col-link">Host Your Homestay</a>
+              <a routerLink="/provider/register" class="col-link">Provider Registration</a>
+              <a routerLink="/provider/login" class="col-link">Host Login</a>
+              <a routerLink="/terms" class="col-link">Host Standards</a>
+            </div>
+            <div class="footer-col">
+              <h4 class="col-title">CeylonGo</h4>
+              <a routerLink="/terms" class="col-link">Terms & Conditions</a>
+              <a routerLink="/privacy" class="col-link">Privacy Policy</a>
+              <a routerLink="/auth" class="col-link">Support & Safety</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p class="copy-text">© 2026 CeylonGo. All rights reserved. Crafted for authentic Sri Lankan travel.</p>
+          <div class="currency-tag">
+            <span class="curr-dot"></span>
+            <span>Sri Lankan Rupee (LKR)</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Extended Filters Modal / Drawer -->
+  @if (filterModalOpen()) {
+    <div class="modal-overlay" (click)="closeFilterModal()" aria-modal="true" role="dialog">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Filter Homestays</h3>
+          <button type="button" class="btn-close-modal" (click)="closeFilterModal()" aria-label="Close modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="filter-group">
+            <h4 class="group-title">Nightly Price Range (LKR)</h4>
+            <div class="price-inputs-row">
+              <div class="price-box">
+                <span class="box-label">Min</span>
+                <div class="box-input-wrap">
+                  <span>LKR</span>
+                  <input type="number" class="box-input" [ngModel]="minPrice()" (ngModelChange)="minPrice.set($event)" step="500" min="1000" max="50000" />
+                </div>
+              </div>
+              <span class="price-dash">—</span>
+              <div class="price-box">
+                <span class="box-label">Max</span>
+                <div class="box-input-wrap">
+                  <span>LKR</span>
+                  <input type="number" class="box-input" [ngModel]="maxPrice()" (ngModelChange)="maxPrice.set($event)" step="500" min="2000" max="100000" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-divider"></div>
+
+          <div class="filter-group">
+            <div class="toggle-row">
+              <div>
+                <h4 class="group-title">Verified Hosts Only</h4>
+                <p class="group-desc">Show homestays verified by CeylonGo local community officers.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" [checked]="verifiedOnly()" (change)="verifiedOnly.set(!verifiedOnly())" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-divider"></div>
+
+          <div class="filter-group">
+            <h4 class="group-title">Popular Amenities</h4>
+            <div class="amenities-grid">
+              @for (amenity of availableAmenities; track amenity) {
+                <label class="amenity-checkbox-label">
+                  <input type="checkbox" [checked]="isAmenitySelected(amenity)" (change)="toggleAmenity(amenity)" />
+                  <span class="custom-checkbox"></span>
+                  <span class="amenity-name">{{ amenity }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-reset-modal" (click)="resetFilters()">Reset All</button>
+          <button type="button" class="btn-apply-modal" (click)="applyModalFilters()">Show Homestays</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (toastMessage()) {
+    <div class="cg-toast" role="status" aria-live="polite">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>
