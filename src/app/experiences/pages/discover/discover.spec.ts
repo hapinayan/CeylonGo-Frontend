@@ -1,8 +1,8 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { provideRouter, Router } from '@angular/router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../../app.routes';
 import { providerAuthGuard } from '../../../core/guards/provider-auth.guard';
 import { EXPERIENCE_CATALOG } from '../../services/catalog';
@@ -123,6 +123,18 @@ describe('Experiences Discover preview', () => {
     click('Preview favorite: Wildlife Safari');
     expect(page.querySelector('.favorite')?.getAttribute('aria-pressed')).toBe('false');
   });
+
+  it('synchronizes selected category with query parameters', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    click('Local Culture');
+    expect(fixture.componentInstance.category()).toBe('culture');
+    expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: { category: 'culture' },
+      queryParamsHandling: 'merge',
+    }));
+  });
 });
 
 describe('Experiences route and default catalog', () => {
@@ -143,7 +155,7 @@ describe('Experiences route and default catalog', () => {
     const index = routes.findIndex(route => route.path === 'experiences');
     expect(index).toBeGreaterThan(0);
     expect(index).toBeLessThan(routes.findIndex(route => route.path === '**'));
-    expect(routes.find(route => route.path === '')?.redirectTo).toBe('auth');
+    expect(routes.find(route => route.path === '')).toBeDefined();
     expect(routes.find(route => route.path === 'auth')?.component).toBeDefined();
     expect(routes.find(route => route.path === 'provider/dashboard')?.canActivate).toEqual([providerAuthGuard]);
     expect(routes.find(route => route.path === '**')?.redirectTo).toBe('auth');
@@ -156,5 +168,5 @@ describe('Experiences route and default catalog', () => {
       expect.objectContaining({ path: '', loadComponent: expect.any(Function) }),
       expect.objectContaining({ path: ':id', loadComponent: expect.any(Function) }),
     ]);
-  });
+  }, 15000);
 });

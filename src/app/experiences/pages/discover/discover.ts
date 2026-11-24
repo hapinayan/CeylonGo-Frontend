@@ -1,7 +1,9 @@
 import { ViewportScroller } from '@angular/common';
 import { afterNextRender, Component, computed, DestroyRef, inject, signal, ViewEncapsulation } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Category, Sort } from '../../models/catalog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { categories, Category, Sort } from '../../models/catalog';
 import { EXPERIENCE_CATALOG } from '../../services/catalog';
 import { TravelerHeader } from '../../components/traveler-header';
 import { CategoryNav } from '../../components/category-nav';
@@ -32,6 +34,10 @@ export class Discover {
   readonly filtersOpen = signal(false);
   readonly searched = signal(false);
   readonly pageSize = 8;
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly searchForm = new FormGroup({
     location: new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) }),
@@ -66,12 +72,28 @@ export class Discover {
   });
 
   constructor() {
+    // Listen to query parameters for category selection (supports direct links, back navigation, refresh)
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const catParam = params.get('category') as Category | null;
+        if (catParam && categories.some((c) => c.id === catParam)) {
+          this.category.set(catParam);
+          this.page.set(1);
+        } else if (params.has('category') && (!catParam || catParam === 'all')) {
+          this.category.set('all');
+          this.page.set(1);
+        }
+      });
+
     if (!this.catalog.preview) return;
     const view = this.view;
     const lastScroll = view.captureScroll();
     const saved = view.preview;
     if (saved) {
-      this.category.set(saved.category);
+      if (!this.route.snapshot.queryParamMap.has('category')) {
+        this.category.set(saved.category);
+      }
       this.location.set(saved.location);
       this.sort.set(saved.sort);
       this.minimumRating.set(saved.rating);
@@ -81,7 +103,7 @@ export class Discover {
       this.searchForm.setValue(saved.form);
       if (saved.scroll[1]) afterNextRender(() => this.viewport.scrollToPosition(saved.scroll, {behavior: 'instant'}));
     }
-    inject(DestroyRef).onDestroy(() => view.preview = {
+    this.destroyRef.onDestroy(() => view.preview = {
       scroll: lastScroll(), category: this.category(), location: this.location(), sort: this.sort(), rating: this.minimumRating(),
       page: this.page(), filtersOpen: this.filtersOpen(), searched: this.searched(), form: this.searchForm.getRawValue(),
     });
@@ -102,8 +124,14 @@ export class Discover {
   }
 
   selectCategory(category: Category): void {
+    if (this.category() === category) return;
     this.category.set(category);
     this.page.set(1);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: category === 'all' ? null : category },
+      queryParamsHandling: 'merge',
+    });
   }
 
   changeSort(sort: string): void {

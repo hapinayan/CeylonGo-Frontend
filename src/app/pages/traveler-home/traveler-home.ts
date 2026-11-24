@@ -13,7 +13,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler-navbar';
 import { Footer } from '../../shared/components/footer/footer';
+import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { AuthService } from '../../core/services/auth.service';
+import { AuthModalService } from '../../core/services/auth-modal.service';
 
 export interface ExperienceCategory {
   id: string;
@@ -22,6 +24,34 @@ export interface ExperienceCategory {
   alt: string;
   region: string;
   filterParam: string;
+  targetCategory?: string;
+}
+
+export interface PopularDestination {
+  id: string;
+  name: string;
+  province: string;
+  image: string;
+  tag?: string;
+}
+
+export interface SpecialOfferItem {
+  id: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  discount: string;
+  location: string;
+  description: string;
+  image: string;
+  isDemo?: boolean;
+}
+
+export interface WhyCeylonGoPoint {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
 }
 
 export interface ExploreMoreCard {
@@ -32,6 +62,7 @@ export interface ExploreMoreCard {
   alt: string;
   ctaText: string;
   route: string;
+  icon?: string;
 }
 
 export interface PromotionCategory {
@@ -55,7 +86,7 @@ export interface PromotionCard {
 @Component({
   selector: 'app-traveler-home',
   standalone: true,
-  imports: [CommonModule, TravelerNavbar, Footer],
+  imports: [CommonModule, TravelerNavbar, Footer, TravelerAuthModal],
   templateUrl: './traveler-home.html',
   styleUrls: ['./traveler-home.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +96,7 @@ export class TravelerHome implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly elementRef = inject(ElementRef);
   readonly authService = inject(AuthService);
+  readonly authModalService = inject(AuthModalService);
 
   readonly toastMessage = signal<string | null>(null);
 
@@ -115,6 +147,7 @@ export class TravelerHome implements OnInit {
       alt: 'Traditional Tamil Kavadi dance and Hindu festival procession at Nallur, Jaffna, Northern Sri Lanka',
       region: 'Northern Province (Jaffna)',
       filterParam: 'culture',
+      targetCategory: 'culture',
     },
     {
       id: 'wildlife',
@@ -123,6 +156,7 @@ export class TravelerHome implements OnInit {
       alt: 'Wild Asian elephant herd gathering at Minneriya National Park, Sri Lanka',
       region: 'North Central Province',
       filterParam: 'wildlife',
+      targetCategory: 'wildlife',
     },
     {
       id: 'cooking',
@@ -131,6 +165,7 @@ export class TravelerHome implements OnInit {
       alt: 'Traditional Sri Lankan village cooking in clay pots over open hearth in Northern Sri Lanka',
       region: 'Northern Province',
       filterParam: 'cooking',
+      targetCategory: 'food',
     },
     {
       id: 'adventures',
@@ -139,6 +174,7 @@ export class TravelerHome implements OnInit {
       alt: 'Mountain hiking and outdoor adventure across Knuckles Mountain Range, Sri Lanka',
       region: 'Central Highlands',
       filterParam: 'adventures',
+      targetCategory: 'adventure',
     },
     {
       id: 'artisan',
@@ -171,6 +207,7 @@ export class TravelerHome implements OnInit {
       alt: 'Surfing point-break waves at Whiskey Point, Arugam Bay, Eastern Sri Lanka',
       region: 'Eastern Province (Arugam Bay)',
       filterParam: 'water',
+      targetCategory: 'water',
     },
   ];
 
@@ -184,35 +221,206 @@ export class TravelerHome implements OnInit {
     {
       id: 'homestays',
       title: 'Find Homestays',
-      description: 'Stay with local hosts and feel at home.',
+      description: 'Stay local. Feel at home.',
       image: '/images/traveler-home/find-homestays.webp',
-      alt: 'Authentic Sri Lankan hillside homestay surrounded by tea plantations in Ella',
-      ctaText: 'Explore Homestays →',
+      alt: 'Beautiful traditional Sri Lankan homestay with tropical garden and welcoming veranda',
+      ctaText: 'Explore Stays →',
       route: '/homestays',
+      icon: 'homestay',
     },
     {
       id: 'tour-guides',
       title: 'Find Your Tour Guide',
-      description: 'Discover Sri Lanka with trusted local experts.',
+      description: 'Discover Sri Lanka through local eyes.',
       image: '/images/traveler-home/find-tour-guide.webp',
-      alt: 'Sri Lankan local tour guide introducing ancient Sigiriya inscriptions',
+      alt: 'Friendly Sri Lankan local tour guide interacting with international tourists at heritage site',
       ctaText: 'Find a Guide →',
       route: '/tour-guides',
+      icon: 'guide',
     },
     {
       id: 'bicycles',
-      title: 'Rent a Bicycle',
-      description: 'Explore Sri Lanka freely on two wheels.',
+      title: 'Rent a Bike or Bicycle',
+      description: 'Your journey. Your pace.',
       image: '/images/traveler-home/rent-bicycle.webp',
-      alt: 'Traveler cycling along scenic coastal road in Batticaloa, Sri Lanka',
+      alt: 'Bicycles and scooter parked in beautiful Sri Lankan coastal setting',
       ctaText: 'Explore Rentals →',
       route: '/bicycles',
+      icon: 'rental',
     },
   ];
 
   // =========================================================================
   // SECTION 06: SPECIAL OFFERS & PROMOTIONS (3 CATEGORIES + HONEST EMPTY STATE)
   // =========================================================================
+
+  // =========================================================================
+  // SECTION 04: POPULAR DESTINATIONS (PRIORITIZING NORTH & EAST)
+  // =========================================================================
+  @ViewChild('destinationsTrack') destinationsTrack?: ElementRef<HTMLDivElement>;
+
+  readonly popularDestinations: readonly PopularDestination[] = [
+    {
+      id: 'jaffna',
+      name: 'Jaffna',
+      province: 'Northern Province',
+      image: '/images/destinations/jaffna.webp',
+      tag: 'Cultural Heritage',
+    },
+    {
+      id: 'trincomalee',
+      name: 'Trincomalee',
+      province: 'Eastern Province',
+      image: '/images/destinations/trincomalee.webp',
+      tag: 'Coastal Haven',
+    },
+    {
+      id: 'batticaloa',
+      name: 'Batticaloa',
+      province: 'Eastern Province',
+      image: '/images/destinations/batticaloa.webp',
+      tag: 'Lagoon Adventures',
+    },
+    {
+      id: 'mannar',
+      name: 'Mannar',
+      province: 'Northern Province',
+      image: '/images/destinations/mannar.webp',
+      tag: 'Historic Island',
+    },
+    {
+      id: 'arugam-bay',
+      name: 'Arugam Bay',
+      province: 'Eastern Province',
+      image: '/images/destinations/arugam-bay.webp',
+      tag: 'World Surf Point',
+    },
+    {
+      id: 'delft-island',
+      name: 'Delft Island',
+      province: 'Northern Province',
+      image: '/images/destinations/delft-island.webp',
+      tag: 'Wild Horses & Coral',
+    },
+    {
+      id: 'ella',
+      name: 'Ella',
+      province: 'Uva Province',
+      image: '/images/destinations/ella.webp',
+      tag: 'Highland Escapes',
+    },
+    {
+      id: 'sigiriya',
+      name: 'Sigiriya',
+      province: 'Central Province',
+      image: '/images/destinations/sigiriya.webp',
+      tag: 'Ancient Fortress',
+    },
+    {
+      id: 'galle',
+      name: 'Galle',
+      province: 'Southern Province',
+      image: '/images/destinations/galle.webp',
+      tag: 'Historic Fort',
+    },
+  ];
+
+  // =========================================================================
+  // SECTION 07: SAMPLE DEMO OFFERS (FALLBACK WHEN NO LIVE PROMOTIONS)
+  // =========================================================================
+  readonly demoOffers: readonly SpecialOfferItem[] = [
+    {
+      id: 'demo-offer-1',
+      title: 'Jaffna Homestay Escape',
+      category: 'homestays',
+      categoryLabel: 'Homestay Offer',
+      discount: '20% OFF',
+      location: 'Jaffna',
+      description: 'Experience authentic northern hospitality.',
+      image: '/images/destinations/jaffna.webp',
+      isDemo: true,
+    },
+    {
+      id: 'demo-offer-2',
+      title: 'Trincomalee Bike Adventure',
+      category: 'rentals',
+      categoryLabel: 'Rental Offer',
+      discount: '15% OFF',
+      location: 'Trincomalee',
+      description: 'Explore the beautiful eastern coastline.',
+      image: '/images/traveler-home/rent-bicycle.webp',
+      isDemo: true,
+    },
+    {
+      id: 'demo-offer-3',
+      title: 'Batticaloa Lagoon Experience',
+      category: 'experiences',
+      categoryLabel: 'Experience Offer',
+      discount: '25% OFF',
+      location: 'Batticaloa',
+      description: 'Discover scenic lagoons and local adventures.',
+      image: '/images/destinations/batticaloa.webp',
+      isDemo: true,
+    },
+  ];
+
+  get displayedOffers(): readonly SpecialOfferItem[] {
+    const realOffers: SpecialOfferItem[] = this.promotions().map(p => ({
+      id: String(p.id),
+      title: p.title,
+      category: p.category,
+      categoryLabel: p.category === 'homestays' ? 'Homestay Offer' : (p.category === 'rentals' ? 'Rental Offer' : 'Experience Offer'),
+      discount: p.discountPercent ? `${p.discountPercent}% OFF` : 'Special Deal',
+      location: p.location,
+      description: p.providerName,
+      image: p.image,
+      isDemo: false,
+    }));
+
+    const source = realOffers.length > 0 ? realOffers : this.demoOffers;
+    const cat = this.selectedPromotionCategory();
+    if (cat === 'all') {
+      return source;
+    }
+    return source.filter(o => o.category === cat);
+  }
+
+  // =========================================================================
+  // SECTION 08: WHY CEYLONGO? (5 UNIQUE SELLING POINTS)
+  // =========================================================================
+  readonly whyCeylonGoPoints: readonly WhyCeylonGoPoint[] = [
+    {
+      id: 'community-based',
+      title: 'Community-Based Tourism',
+      description: 'Support local families and experience authentic Sri Lankan hospitality.',
+      icon: 'community',
+    },
+    {
+      id: 'local-artisans',
+      title: 'Local Business & Artisan Promotion',
+      description: 'Discover handmade treasures and support local entrepreneurs.',
+      icon: 'store',
+    },
+    {
+      id: 'direct-connections',
+      title: 'Direct Local Connections',
+      description: 'Connect directly with local hosts, guides and communities.',
+      icon: 'handshake',
+    },
+    {
+      id: 'ai-planning',
+      title: 'AI-Powered Travel Planning',
+      description: 'Plan personalized journeys based on your interests.',
+      icon: 'ai',
+    },
+    {
+      id: 'all-in-one',
+      title: 'All-in-One Local Tourism Platform',
+      description: 'Discover stays, experiences, guides and rentals in one place.',
+      icon: 'globe',
+    },
+  ];
+
   readonly promotionCategories: readonly PromotionCategory[] = [
     { id: 'all', title: 'All Offers' },
     { id: 'homestays', title: 'Homestay Offers' },
@@ -307,7 +515,22 @@ export class TravelerHome implements OnInit {
       return;
     }
 
-    this.quickPlannerError.set(null);
+        this.quickPlannerError.set(null);
+
+    // If traveler is not authenticated, prompt login contextually and resume on success
+    if (!this.authService.isAuthenticated()) {
+      this.authModalService.open('login', undefined, {
+        type: 'generate-trip',
+        data: { destination: dest, duration: dur },
+        resumeCallback: () => {
+          this.showToast(`Resuming trip generation for ${dest} (${dur})...`);
+          this.onGenerateMyTrip();
+        },
+      });
+      this.showToast('Please log in or create an account to generate your AI itinerary.');
+      return;
+    }
+
     this.isGenerating.set(true);
 
     const msg = `Generating custom AI itinerary for ${dest} (${dur})...`;
@@ -356,13 +579,17 @@ export class TravelerHome implements OnInit {
   }
 
   onCategoryClick(cat: ExperienceCategory): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { experience_category: cat.filterParam },
-      queryParamsHandling: 'merge',
-    }).then(() => {
-      this.showToast(`Exploring "${cat.title}" experiences in ${cat.region}. Full discovery directory coming soon!`);
-    });
+    if (cat.targetCategory) {
+      // Connect to existing Experiences discovery page with selected category filter
+      this.router.navigate(['/experiences'], {
+        queryParams: { category: cat.targetCategory },
+      });
+    } else {
+      // Verified: Artisan & Handicrafts, Heritage & Landmarks, Village Experiences
+      // do not have dedicated categories in the existing Experiences catalog.
+      // Do not create misleading category mappings. Navigate to all experiences.
+      this.router.navigate(['/experiences']);
+    }
   }
 
   onExploreCardClick(card: ExploreMoreCard): void {
@@ -383,12 +610,38 @@ export class TravelerHome implements OnInit {
     });
   }
 
+    scrollDestinations(direction: number): void {
+    if (this.destinationsTrack?.nativeElement) {
+      const scrollAmount = 340 * direction;
+      const el = this.destinationsTrack.nativeElement;
+      if (typeof el.scrollBy === 'function') {
+        el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      } else {
+        el.scrollLeft += scrollAmount;
+      }
+    }
+  }
+
+  onDestinationClick(dest: PopularDestination): void {
+    this.selectedDestination.set(dest.name);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { destination: dest.name },
+      queryParamsHandling: 'merge',
+    });
+    this.showToast(`Discovering ${dest.name} in ${dest.province}. Local experiences & stays coming soon!`);
+  }
+
   selectPromotionCategory(catId: string): void {
     this.selectedPromotionCategory.set(catId);
   }
 
-  onViewOffer(promo: PromotionCard): void {
-    this.showToast(`Viewing offer: ${promo.title}`);
+  onViewOffer(promo: PromotionCard | SpecialOfferItem): void {
+    if ('isDemo' in promo && promo.isDemo) {
+      this.showToast(`Demo Offer: Special discount preview for ${promo.title} (${promo.location}). Live booking coming soon!`);
+    } else {
+      this.showToast(`Viewing offer: ${promo.title}`);
+    }
   }
 
   private showToast(msg: string): void {

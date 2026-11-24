@@ -1,13 +1,14 @@
 import { ViewportScroller } from '@angular/common';
 import { afterRenderEffect, Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { CategoryNav } from '../../components/category-nav';
 import { ExperienceCard } from '../../components/experience-card';
 import { ExperienceIcon } from '../../components/icon';
 import { Pagination } from '../../components/pagination';
-import { Category, Experience } from '../../models/catalog';
+import { categories, Category, Experience } from '../../models/catalog';
 import { DiscoverViewState } from '../../services/discover-view-state';
 import { WishlistState } from '../../services/wishlist-state';
 import { EcoApi } from '../../services/eco-api';
@@ -96,6 +97,9 @@ export class LiveCatalog {
   private readonly view = inject(DiscoverViewState);
   private readonly viewport = inject(ViewportScroller);
   private readonly api = inject(EcoApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly wishlist = inject(WishlistState);
   readonly searchInput = new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) });
   readonly search = signal('');
@@ -133,14 +137,33 @@ export class LiveCatalog {
   ), { initialValue: { status: 'loading' } as Results });
 
   constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const catParam = params.get('category') as Category | null;
+        if (catParam && categories.some((c) => c.id === catParam)) {
+          this.category.set(catParam);
+          if (catParam !== 'eco') {
+            this.ecoCategory.set('');
+          }
+          this.page.set(1);
+        } else if (params.has('category') && (!catParam || catParam === 'all')) {
+          this.category.set('all');
+          this.ecoCategory.set('');
+          this.page.set(1);
+        }
+      });
+
     const view = this.view;
     const lastScroll = view.captureScroll();
     const saved = view.live;
     if (saved) {
       this.searchInput.setValue(saved.search);
       this.search.set(saved.search);
-      this.category.set(saved.category);
-      this.ecoCategory.set(saved.ecoCategory);
+      if (!this.route.snapshot.queryParamMap.has('category')) {
+        this.category.set(saved.category);
+        this.ecoCategory.set(saved.ecoCategory);
+      }
       this.badgeOnly.set(saved.badgeOnly);
       this.page.set(saved.page);
       this.filtersOpen.set(saved.filtersOpen);
@@ -155,7 +178,7 @@ export class LiveCatalog {
         }
       });
     }
-    inject(DestroyRef).onDestroy(() => view.live = {
+    this.destroyRef.onDestroy(() => view.live = {
       scroll: lastScroll(), search: this.search(), category: this.category(), ecoCategory: this.ecoCategory(), badgeOnly: this.badgeOnly(),
       page: this.page(), filtersOpen: this.filtersOpen(), ranges: this.ranges(),
     });
@@ -165,6 +188,11 @@ export class LiveCatalog {
     if (this.category() === category) return;
     this.category.set(category);
     this.setCategory('');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: category === 'all' ? null : category },
+      queryParamsHandling: 'merge',
+    });
   }
 
   changePage(page: number, heading: HTMLElement): void {
@@ -209,5 +237,10 @@ export class LiveCatalog {
     this.category.set('all');
     this.setCategory('');
     this.setBadge(false);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: null },
+      queryParamsHandling: 'merge',
+    });
   }
 }

@@ -8,7 +8,7 @@ import { TravelerNavbar } from './traveler-navbar';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/auth.models';
 
-describe('TravelerNavbar Component', () => {
+describe('TravelerNavbar Component — Phase 10B Refinement', () => {
   let component: TravelerNavbar;
   let fixture: ComponentFixture<TravelerNavbar>;
   let router: Router;
@@ -55,20 +55,32 @@ describe('TravelerNavbar Component', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render the official CeylonGo logo linking to /traveler/home', () => {
+  it('should render the official CeylonGo logo linking to /', () => {
     const compiled = fixture.nativeElement as HTMLElement;
+    const brandLink = compiled.querySelector('.navbar-brand') as HTMLAnchorElement;
+    expect(brandLink).toBeTruthy();
     const logoImg = compiled.querySelector('.brand-logo-img') as HTMLImageElement;
     expect(logoImg).toBeTruthy();
     expect(logoImg.getAttribute('src')).toBe('/images/ceylongo-blue-logo.png');
   });
 
-  it('should render exactly 5 center navigation links in order', () => {
+  it('should render exactly 6 center navigation links in order', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.desktop-nav .nav-link');
-    expect(links.length).toBe(5);
+    expect(links.length).toBe(6);
 
     const labels = Array.from(links).map((l) => l.textContent?.trim());
-    expect(labels).toEqual(['Home', 'Community', 'AI Trip Planner', 'Contact Us', 'About']);
+    expect(labels).toEqual(['Home', 'Experiences', 'Community', 'AI Trip Planner', 'Contact Us', 'About']);
+  });
+
+  it('should navigate to /experiences when Experiences link is clicked', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('.desktop-nav .nav-link');
+    const experiencesLink = Array.from(links).find((l) => l.textContent?.trim() === 'Experiences') as HTMLAnchorElement;
+    expect(experiencesLink).toBeTruthy();
+
+    experiencesLink.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/experiences']);
   });
 
   it('should highlight Home as the active navigation item initially', () => {
@@ -77,7 +89,7 @@ describe('TravelerNavbar Component', () => {
     expect(activeLink?.textContent?.trim()).toBe('Home');
   });
 
-  it('should render the Become A Host button and navigate to /provider/register on click', () => {
+  it('should render the Become A Host button and navigate to /provider/register on click for authenticated traveler', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const hostBtn = compiled.querySelector('.btn-become-host') as HTMLButtonElement;
     expect(hostBtn).toBeTruthy();
@@ -162,5 +174,37 @@ describe('TravelerNavbar Component', () => {
 
     component.closeMobileMenu();
     expect(component.isMobileMenuOpen()).toBe(false);
+  });
+
+  // =========================================================================
+  // PHASE 10B: GUEST VS AUTHENTICATED STATE (EXACTLY TWO GUEST BUTTONS)
+  // =========================================================================
+  it('should render exactly two buttons in guest mode: Become a Host (outlined) and Login / Register (solid blue)', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    currentUserSignal.set(null);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const guestHostBtn = compiled.querySelector('.btn-guest-host') as HTMLButtonElement;
+    const loginRegisterBtn = compiled.querySelector('.btn-login-register') as HTMLButtonElement;
+
+    expect(guestHostBtn).toBeTruthy();
+    expect(guestHostBtn.textContent?.trim()).toContain('Become a Host');
+
+    expect(loginRegisterBtn).toBeTruthy();
+    expect(loginRegisterBtn.textContent?.trim()).toBe('Login / Register');
+
+    // Ensure authenticated elements are hidden
+    expect(compiled.querySelector('.btn-notification')).toBeNull();
+    expect(compiled.querySelector('.btn-profile')).toBeNull();
+
+    // Clicking Become a Host navigates to /provider/register
+    guestHostBtn.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/provider/register']);
+
+    // Clicking Login / Register opens auth modal in login mode
+    loginRegisterBtn.click();
+    expect(component.authModalService.isOpen()).toBe(true);
+    expect(component.authModalService.intentMode()).toBe('login');
   });
 });
