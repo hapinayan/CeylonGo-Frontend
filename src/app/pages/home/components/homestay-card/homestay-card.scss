@@ -1,0 +1,156 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.homestay-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 18px;
+  border: 1px solid $cg-light-border;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(8, 43, 92, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 102, 255, 0.12);
+    border-color: rgba(0, 102, 255, 0.25);
+  }
+}
+
+.card-image-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 66%; // 16:10.5 aspect ratio
+  overflow: hidden;
+  background-color: #eaf5ff;
+
+  .homestay-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  &:hover .homestay-image {
+    transform: scale(1.04);
+  }
+}
+
+.btn-wishlist {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.85);
+    transform: scale(1.1);
+
+    svg {
+      fill: rgba(255, 56, 92, 0.5);
+      stroke: #ff385c;
+    }
+  }
+
+  &.active {
+    background: #ffffff;
+
+    svg {
+      fill: #ff385c;
+      stroke: #ff385c;
+    }
+  }
+}
+
+.card-content {
+  padding: 1rem 1.15rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.homestay-name {
+  margin: 0;
+  font-family: $cg-font;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: $cg-primary-navy;
+  line-height: 1.3;
+}
+
+.homestay-location {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.85rem;
+  color: $cg-text-secondary;
+  font-size: 0.82rem;
+
+  svg {
+    color: #94a3b8;
+  }
+}
+
+.card-footer-row {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.homestay-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+
+  .star-icon {
+    flex-shrink: 0;
+  }
+
+  .rating-val {
+    font-weight: 700;
+    color: $cg-primary-navy;
+  }
+
+  .review-count {
+    color: $cg-text-secondary;
+  }
+}
+
+.homestay-price {
+  text-align: right;
+
+  .price-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $cg-primary-navy;
+  }
+
+  .price-period {
+    font-size: 0.78rem;
+    color: $cg-text-secondary;
+    margin-left: 2px;
+  }
+}
