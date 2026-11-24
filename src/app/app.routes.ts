@@ -135,6 +135,11 @@ export const routes: Routes = [
         .then(m => m.ProviderDashboard)
   },
 
+  {
+    path: 'experiences',
+    loadChildren: () => import('./experiences/experiences.routes').then(m => m.experiencesRoutes)
+  },
+
   // UNKNOWN URL - GO TO FIRST PAGE
   {
     path: '**',

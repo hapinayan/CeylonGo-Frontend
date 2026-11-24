@@ -1,5 +1,6 @@
 import {
   HttpClient,
+  HttpContext,
   provideHttpClient,
   withInterceptors,
 } from '@angular/common/http';
@@ -12,7 +13,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { AuthService } from '../services/auth.service';
 import { ProviderAuthService } from '../services/provider-auth.service';
-import { authInterceptor } from './auth.interceptor';
+import { environment } from '../../../environments/environment';
+import { ANONYMOUS_API_REQUEST, authInterceptor } from './auth.interceptor';
 
 describe('authInterceptor', () => {
   let http: HttpClient;
@@ -50,9 +52,9 @@ describe('authInterceptor', () => {
       created_at: '',
     });
 
-    http.get('/api/v1/auth/me').subscribe();
+    http.get(environment.apiBaseUrl + '/auth/me').subscribe();
 
-    const req = httpMock.expectOne('/api/v1/auth/me');
+    const req = httpMock.expectOne(environment.apiBaseUrl + '/auth/me');
     expect(req.request.headers.has('Authorization')).toBe(true);
     expect(req.request.headers.get('Authorization')).toBe('Bearer test-token-xyz');
     req.flush({});
@@ -68,7 +70,7 @@ describe('authInterceptor', () => {
       created_at: '',
     });
 
-    const url = '/api/v1/providers/registration/submit';
+    const url = environment.apiBaseUrl + '/providers/registration/submit';
     http.post(url, null, { headers: { Authorization: 'Bearer onboarding-token' } })
       .subscribe({ error: () => {} });
 
@@ -81,14 +83,14 @@ describe('authInterceptor', () => {
   it('should not attach Authorization header when token is not present', () => {
     authService.logout();
 
-    http.get('/api/v1/auth/me').subscribe();
+    http.get(environment.apiBaseUrl + '/auth/me').subscribe();
 
-    const req = httpMock.expectOne('/api/v1/auth/me');
+    const req = httpMock.expectOne(environment.apiBaseUrl + '/auth/me');
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
-  it('should not attach Authorization header when URL does not contain /api/v1/', () => {
+  it('does not send a session token or log out on an untrusted API origin', () => {
     (authService as any).setSession('test-token-xyz', {
       id: 1,
       full_name: 'Test',
@@ -98,11 +100,35 @@ describe('authInterceptor', () => {
       created_at: '',
     });
 
-    http.get('https://example.com/other-api').subscribe();
+    http.get('https://example.test/api/v1/auth/me').subscribe({ error: () => {} });
 
-    const req = httpMock.expectOne('https://example.com/other-api');
+    const req = httpMock.expectOne('https://example.test/api/v1/auth/me');
     expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush({});
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(authService.getToken()).toBe('test-token-xyz');
+  });
+
+  it('preserves a newer traveler session when an older private request returns 401', () => {
+    const user = {id: 1, full_name: 'Test', email: 'test@example.test', role: 'traveler', is_active: true, created_at: ''};
+    (authService as any).setSession('old-test-session', user);
+    const url = environment.apiBaseUrl + '/wishlists/me';
+    http.get(url).subscribe({error: () => {}});
+    const older = httpMock.expectOne(url);
+    (authService as any).setSession('new-test-session', {...user, id: 2});
+    older.flush({}, {status: 401, statusText: 'Unauthorized'});
+    expect(authService.getToken()).toBe('new-test-session');
+    expect(authService.currentUser()?.id).toBe(2);
+  });
+
+  it('strips explicit authorization from a request marked anonymous', () => {
+    const url = environment.apiBaseUrl + '/eco-experiences';
+    http.get(url, {
+      context: new HttpContext().set(ANONYMOUS_API_REQUEST, true),
+      headers: {Authorization: 'Bearer synthetic-test-token'},
+    }).subscribe();
+    const request = httpMock.expectOne(url);
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
   });
 
   it('should call authService.logout() on 401 Unauthorized for protected endpoints', () => {
@@ -111,12 +137,12 @@ describe('authInterceptor', () => {
       logoutCalled = true;
     };
 
-    http.get('/api/v1/auth/me').subscribe({
+    http.get(environment.apiBaseUrl + '/auth/me').subscribe({
       next: () => {},
       error: () => {},
     });
 
-    const req = httpMock.expectOne('/api/v1/auth/me');
+    const req = httpMock.expectOne(environment.apiBaseUrl + '/auth/me');
     req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(logoutCalled).toBe(true);
@@ -128,12 +154,12 @@ describe('authInterceptor', () => {
       logoutCalled = true;
     };
 
-    http.post('/api/v1/auth/login', {}).subscribe({
+    http.post(environment.apiBaseUrl + '/auth/login', {}).subscribe({
       next: () => {},
       error: () => {},
     });
 
-    const req = httpMock.expectOne('/api/v1/auth/login');
+    const req = httpMock.expectOne(environment.apiBaseUrl + '/auth/login');
     req.flush({ detail: 'Invalid credentials' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(logoutCalled).toBe(false);

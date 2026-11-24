@@ -1,0 +1,88 @@
+<div class="experiences-shell">
+  <app-traveler-header />
+  <main class="discover experience-details">
+    <nav aria-label="Breadcrumb"><a routerLink="/experiences">Experiences</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">Details</span></nav>
+    @switch (state().status) {
+      @case ('loading') { <p role="status" class="empty-results">Loading experience…</p> }
+      @case ('missing') { <section class="empty-results"><h1>Experience unavailable</h1><p>This experience may have been removed or unpublished.</p><a routerLink="/experiences">Browse experiences</a></section> }
+      @case ('error') { <section class="empty-results" role="alert"><h1>Could not load this experience</h1><button type="button" class="outline-control" (click)="retry()">Retry</button></section> }
+    }
+    @if (state(); as current) {
+      @if (current.status === 'ready') {
+        @let detail = current.detail;
+        <header class="detail-heading">
+          @if (catalog.preview) { <p class="search-note">Development preview · Sample experience</p> }
+          <h1>{{ detail.card.title }}</h1>
+          <app-save-experience [id]="detail.card.id" [title]="detail.card.title" />
+          <p><app-experience-icon name="pin" /> {{ detail.card.location }}
+            @if (detail.card.categoryLabel) { · {{ detail.card.categoryLabel }} }
+          </p>
+          @if (detail.eco?.has_verified_eco_badge) { <span class="detail-eco-badge">Verified Eco-Friendly Badge</span> }
+        </header>
+        <div class="detail-gallery" aria-label="Experience images">
+          @for (image of detail.images; track $index) {
+            <figure><img [src]="image.url" [alt]="image.caption || detail.card.title" [attr.loading]="$first ? 'eager' : 'lazy'"></figure>
+          } @empty { <div class="detail-placeholder"><app-experience-icon name="mountain" /><span>Images unavailable</span></div> }
+        </div>
+        <div class="detail-layout">
+          <div class="detail-content">
+            @if (detail.eco; as eco) {
+              <section><h2>About this experience</h2>
+                @if (eco.description) { <p>{{ eco.description }}</p> }
+                <p>{{ eco.duration_hours | number }} hours · Hosted group of {{ eco.min_participants }}–{{ eco.max_group_size }}</p>
+                @if (eco.provider_business_name) { <p>Hosted by {{ eco.provider_business_name }}</p> }
+                <p>Meeting point: {{ eco.meeting_point }}</p>
+                @if (eco.itinerary) { <h3>Itinerary</h3><p>{{ eco.itinerary }}</p> }
+              </section>
+              <section><h2>Requirements and safety</h2>
+                @if (eco.min_age != null) { <p>Minimum age: {{ eco.min_age }}</p> }
+                @if (eco.protected_area_permit_required) { <p>A protected area permit is required. {{ eco.permit_details }}</p> }
+                @if (eco.certified_guide_required) { <p>A certified guide is required.</p> }
+                @if (eco.wildlife_safety_summary) { <p>{{ eco.wildlife_safety_summary }}</p> }
+                @for (rule of eco.safety_rules; track rule.id) { <p><strong>{{ rule.title }}</strong>{{ rule.is_mandatory ? ' (required)' : '' }} · {{ rule.description }}</p> }
+              </section>
+              <section><h2>Sustainability and environmental guidelines</h2>
+                @if (eco.environmental_guidelines) { <p>{{ eco.environmental_guidelines }}</p> }
+                @if (eco.conservation_factual_contribution) { <p>{{ eco.conservation_factual_contribution }}</p> }
+                @if (eco.conservation_marketing_statement) { <p>Operator statement: {{ eco.conservation_marketing_statement }}</p> }
+                @for (practice of eco.practices; track practice.id) { <p>{{ practice.claim_description }}{{ practice.is_verified ? ' (verified)' : '' }}</p> }
+              </section>
+              <section><h2>Reviews</h2>
+                @if (detail.reviews; as reviews) {
+                  @if (reviews.total) { <p>{{ reviews.average_rating | number:'1.1-2' }} out of 5 · {{ reviews.total }} reviews</p> }
+                  @else { <p>No published reviews yet.</p> }
+                  @for (review of reviews.items; track review.id) {
+                    <article><h3>{{ review.title || review.reviewer_name }}</h3><p>{{ review.rating | number }} out of 5 · {{ review.reviewer_name }}</p>
+                      @if (review.comment) { <p>{{ review.comment }}</p> }
+                    </article>
+                  }
+                } @else if (detail.reviews === null) { <p>Reviews are currently unavailable.</p> }
+                @else { <p role="status">Loading reviews…</p> }
+              </section>
+            } @else if (detail.card.rating != null) {
+              <section><h2>Sample listing</h2><p>{{ detail.card.rating }} out of 5 · {{ detail.card.reviews }} sample reviews</p></section>
+            }
+          </div>
+          <div>
+          <aside class="detail-price">
+            <h2>{{ detail.card.currency ?? 'LKR' }} {{ detail.card.price | number }}
+              @if (detail.card.unit) { <small>/ {{ detail.card.unit }}</small> }
+            </h2>
+            @if (detail.slots; as slots) {
+              @if (slots[0]; as slot) { <p>Next open slot: {{ slot.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) · {{ slot.available_places }} places</p> }
+              @else { <p>No open slots are listed.</p> }
+            } @else if (catalog.preview || detail.slots === null) { <p>Availability is currently unavailable.</p> }
+            @else { <p role="status">Loading availability…</p> }
+            @if (detail.eco ?? sample(detail.card.id); as listing) {
+              <app-experience-booking [listing]="listing" [routeId]="detail.card.id" />
+            }
+          </aside>
+          <app-weather-panel [locationName]="detail.eco?.city || detail.card.location"
+            [coordinates]="coordinatesOf(detail.eco?.latitude, detail.eco?.longitude)" [preview]="catalog.preview" />
+          </div>
+        </div>
+      }
+    }
+  </main>
+</div>

@@ -1,0 +1,19 @@
+.experiences-shell .experience-details {
+  nav { display: flex; gap: .55rem; color: var(--experience-muted); }
+  a { color: #004ec7; text-decoration: underline; }
+  .detail-heading { margin: 1.5rem 0; }
+  h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.12; margin: .35rem 0; overflow-wrap: anywhere; }
+  h2 { margin-top: 0; }
+  .detail-eco-badge { display: inline-block; background: #e7faeb; color: #146536; padding: .4rem .7rem; border-radius: 2rem; }
+  .detail-gallery { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .detail-gallery figure { flex: 1 1 250px; min-width: 0; margin: 0; }
+  .detail-gallery img { width: 100%; height: clamp(180px, 30vw, 360px); object-fit: cover; border-radius: 16px; }
+  .detail-placeholder { width: 100%; min-height: 170px; display: grid; place-content: center; justify-items: center; gap: .5rem; background: var(--experience-light); border-radius: 16px; }
+  .detail-placeholder app-experience-icon { font-size: 3rem; }
+  .detail-layout { display: grid; align-items: start; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; overflow-wrap: anywhere; }
+  .detail-content section, .detail-price { margin-bottom: 1rem; padding: 1.15rem; border: 1px solid var(--experience-border); border-radius: 14px; }
+  .detail-content p { white-space: pre-line; }
+  .detail-price { box-shadow: var(--experience-shadow); }
+  .detail-price small { font-size: .75em; color: var(--experience-muted); }
+  @media (max-width: 700px) { .detail-layout { grid-template-columns: minmax(0, 1fr); } }
+}

@@ -1,0 +1,72 @@
+<section class="traveler-workflow">
+  <h2>{{ reviewMode() ? 'Choose your booking' : 'Check availability' }}</h2>
+  @if (catalog.preview) { <p>Development preview · Sample availability and reservations.</p> }
+  @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+  @if (confirmed(); as result) {
+    @if (catalog.preview || result.account === session.account()) {
+      <div class="workflow-state" role="status"><h3>Reservation request received</h3>
+        <p>{{ result.row.reference }} · {{ result.row.status }}</p>
+        <p>Confirmed amount: {{ result.row.currency }} {{ result.row.total | number:'1.2-2' }}</p>
+        <a [routerLink]="['/experiences/bookings', result.row.id]">View reservation</a>
+      </div>
+    }
+  } @else if (uncertain()) {
+    <a routerLink="/experiences/bookings">Check My Experience Bookings</a>
+  } @else if (review(); as selection) {
+    <div class="workflow-card" aria-label="Booking review">
+      <h3>Review your booking</h3>
+      <p>{{ selection.slot.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) · {{ selection.participants }} travelers</p>
+      @if (estimate() !== null) { <p>Estimated total: {{ listing().currency }} {{ estimate() | number:'1.2-2' }}</p> }
+      <p>Your reservation response supplies the final amount.</p>
+      @if (catalog.preview || session.account()) {
+        <button type="button" class="outline-control" [disabled]="submitting()" (click)="submit()">{{ submitting() ? 'Submitting…' : 'Request reservation' }}</button>
+        <button type="button" class="outline-control" [disabled]="submitting()" (click)="review.set(null)">Edit details</button>
+      } @else { <a class="outline-control" routerLink="/auth">Sign in to request reservation</a> }
+    </div>
+  } @else {
+    <form class="workflow-form" [formGroup]="form" (ngSubmit)="inspect()">
+      <label>Date in Sri Lanka <input type="date" formControlName="date" [min]="firstDay" [max]="lastDay" #dateInput (change)="chooseDay(dateInput.value)"></label>
+      @if (slots(); as state) {
+        @if (state.status === 'loading') { <p class="workflow-state" role="status">Loading available slots…</p> }
+        @if (state.status === 'error') { <p role="alert">Availability could not be loaded.</p> }
+        @if (state.status === 'ready') {
+          @if (!state.data.length) { <p role="status">No open slots on this page.</p> }
+          @else {
+            <label>Time slot <select formControlName="slot">
+              <option [ngValue]="null">Choose a time</option>
+              @for (slot of state.data; track slot.id) {
+                <option [ngValue]="slot.id" [disabled]="!selectable(slot)">
+                  {{ slot.starts_at | date:'shortTime':'GMT+0530' }}–{{ slot.ends_at | date:'shortTime':'GMT+0530' }} · {{ slot.available_places }} places
+                </option>
+              }
+            </select></label>
+          }
+          <div class="workflow-actions">
+            @if (page() > 1) { <button type="button" class="outline-control" (click)="form.controls.slot.reset(); page.set(page() - 1)">Previous times</button> }
+            @if (state.data.length === 10) { <button type="button" class="outline-control" (click)="form.controls.slot.reset(); page.set(page() + 1)">More times</button> }
+          </div>
+        }
+      }
+      @if (day()) { <button type="button" class="outline-control" (click)="refreshSlots()">Refresh availability</button> }
+      <label>Travelers ({{ listing().min_participants }}–{{ listing().max_group_size }})
+        <input type="number" formControlName="participants" [min]="listing().min_participants" [max]="listing().max_group_size" step="1" (input)="syncAges()">
+      </label>
+      @if (listing().min_age) { <p>Minimum age: {{ listing().min_age }}</p> }
+      @if (reviewMode()) {
+        @if (listing().wildlife_safety_summary) { <p>{{ listing().wildlife_safety_summary }}</p> }
+        @for (rule of listing().safety_rules; track rule.id) {
+          <p><strong>{{ rule.title }}</strong> {{ rule.description }}</p>
+        }
+        @if (form.controls.ages.length) {
+          <fieldset formArrayName="ages"><legend>Participant ages</legend><div class="workflow-ages">
+            @for (age of form.controls.ages.controls; track age; let index = $index) {
+              <label>Traveler {{ index + 1 }} age <input type="number" [formControlName]="index" [min]="listing().min_age ?? 0" max="100" step="1"></label>
+            }
+          </div></fieldset>
+        }
+        @if (mandatory()) { <label><span><input type="checkbox" formControlName="safety"> I accept the mandatory safety rules.</span></label> }
+      }
+      <button class="outline-control" type="submit" [disabled]="slots()?.status !== 'ready'">{{ reviewMode() ? 'Review booking' : 'Continue to booking' }}</button>
+    </form>
+  }
+</section>

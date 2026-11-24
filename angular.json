@@ -63,7 +63,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/experiences/services/catalog-provider.ts",
+                  "with": "src/app/experiences/services/catalog-provider.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

@@ -1,0 +1,83 @@
+<div class="experiences-shell">
+  <app-traveler-header />
+  <main class="discover">
+    <div class="discover-intro">
+      <h1>Experiences in Sri Lanka</h1>
+      <p>Discover local culture, adventure, nature and eco-friendly experiences<br class="desktop-break"> with verified local hosts.</p>
+      @if (catalog.preview) {
+        <p class="preview-note" id="preview-note">Development preview · Sample listings and prices. Date and traveler choices are for preview only.</p>
+      }
+    </div>
+    @if (catalog.preview) {
+      <form class="experience-search" [formGroup]="searchForm" (ngSubmit)="search()" aria-describedby="preview-note">
+        <label>
+          <app-experience-icon name="pin" />
+          <span>Where to?<input type="search" formControlName="location" maxlength="100" placeholder="Search location (e.g., Ella, Yala, Mirissa)"></span>
+        </label>
+        <label>
+          <app-experience-icon name="calendar" />
+          <span>Date<input type="date" formControlName="date"></span>
+        </label>
+        <label>
+          <app-experience-icon name="user" />
+          <span>Travelers<input type="number" min="1" max="20" step="1" required formControlName="travelers"
+            [attr.aria-invalid]="searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid"
+            [attr.aria-describedby]="searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid ? 'traveler-error' : null"></span>
+        </label>
+        <button type="submit" class="search-submit"><app-experience-icon name="search" />Search</button>
+      </form>
+      @if (searchForm.controls.travelers.touched && searchForm.controls.travelers.invalid) {
+        <p id="traveler-error" class="form-error" role="alert">Enter a whole number from 1 to 20 travelers.</p>
+      }
+      <app-experience-categories [selected]="category()" (select)="selectCategory($event)" />
+      <section aria-labelledby="experience-results">
+        <div class="results-bar">
+          <h2 id="experience-results" aria-live="polite">{{ results().length }} {{ results().length === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka</h2>
+          <div class="results-controls">
+            <label class="sort-control">Sort by:
+              <select #sortSelect [value]="sort()" (change)="changeSort(sortSelect.value)">
+                <option value="popular">Popular</option>
+                <option value="rating">Top rated</option>
+                <option value="price-low">Price: low to high</option>
+                <option value="price-high">Price: high to low</option>
+              </select>
+            </label>
+            <button type="button" class="outline-control" aria-controls="experience-filters"
+              [attr.aria-expanded]="filtersOpen()" (click)="filtersOpen.set(!filtersOpen())"><app-experience-icon name="filter" />Filters</button>
+          </div>
+        </div>
+        <fieldset class="filter-panel" id="experience-filters" [hidden]="!filtersOpen()">
+          <legend>Filter sample experiences</legend>
+          <label>Minimum rating
+            <select #ratingSelect [value]="minimumRating().toString()" (change)="changeRating(ratingSelect.value)">
+              <option value="0">Any rating</option>
+              <option value="4.8">4.8 and up</option>
+              <option value="4.9">4.9 and up</option>
+            </select>
+          </label>
+          <button type="button" class="outline-control" (click)="reset()">Reset filters</button>
+        </fieldset>
+        @if (searched() && (searchForm.controls.date.value || searchForm.controls.travelers.value !== 1)) {
+          <p class="search-note">Sample results use location and filters. Date and traveler count do not affect availability.</p>
+        }
+        @if (visibleResults().length) {
+          <div class="experience-grid">
+            @for (experience of visibleResults(); track experience.id) {
+              <app-experience-card [experience]="experience" [favorite]="favoriteIds().has(experience.id)" [preview]="true" [detailLink]="true"
+                (toggleFavorite)="toggleFavorite(experience.id)" />
+            }
+          </div>
+          <app-experience-pagination [page]="page()" [totalPages]="totalPages()" (change)="page.set($event)" />
+        } @else {
+          <div class="empty-results">
+            <h3>No experiences match your search</h3>
+            <p>Try another location or clear your filters.</p>
+            <button type="button" class="outline-control" (click)="reset()">Reset filters</button>
+          </div>
+        }
+      </section>
+    } @else {
+      <app-live-experience-catalog />
+    }
+  </main>
+</div>
