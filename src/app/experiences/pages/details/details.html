@@ -1,0 +1,148 @@
+<div class="experiences-shell">
+  <app-traveler-header />
+  <main class="discover experience-details">
+    <nav aria-label="Breadcrumb">
+      <a routerLink="/experiences"><app-experience-icon name="previous" /> Back to Experiences</a>
+    </nav>
+    @switch (state().status) {
+      @case ('loading') { <p role="status" class="empty-results">Loading experience…</p> }
+      @case ('missing') { <section class="empty-results"><h1>Experience unavailable</h1><p>This experience may have been removed or unpublished.</p><a routerLink="/experiences">Browse experiences</a></section> }
+      @case ('error') { <section class="empty-results" role="alert"><h1>Could not load this experience</h1><button type="button" class="outline-control" (click)="retry()">Retry</button></section> }
+    }
+    @if (state(); as current) {
+      @if (current.status === 'ready') {
+        @let detail = current.detail;
+        @let listing = detail.eco ?? sample(detail.card.id);
+        @let category = detail.card.categoryLabel || categoryName(detail.card.category);
+        @let rating = detail.reviews?.total ? detail.reviews?.average_rating : detail.card.rating;
+        @let reviewCount = detail.reviews?.total ?? detail.card.reviews;
+        <header class="detail-heading">
+          @if (catalog.preview) { <p class="search-note">Development preview · Sample experience and imagery</p> }
+          <div class="detail-heading-row">
+            <div class="detail-heading-copy">
+              @if (category) { <span class="detail-category">{{ category }}</span> }
+              @if (detail.eco?.has_verified_eco_badge) { <span class="detail-eco-badge">Verified Eco-Friendly Badge</span> }
+              <h1>{{ detail.card.title }}</h1>
+              <div class="detail-meta">
+                <span><app-experience-icon name="pin" />{{ detail.card.location }}</span>
+                @if (rating != null && reviewCount != null && reviewCount > 0) {
+                  <span><app-experience-icon class="detail-star" name="star" /><strong>{{ rating | number:'1.1-2' }}</strong> ({{ reviewCount }} {{ catalog.preview ? 'sample reviews' : 'reviews' }})</span>
+                }
+              </div>
+            </div>
+            <div class="detail-actions">
+              <app-save-experience [id]="detail.card.id" [title]="detail.card.title" [showLabel]="true" />
+              <button class="outline-control" type="button" (click)="share(detail.card.title)"><app-experience-icon name="share" />Share</button>
+            </div>
+          </div>
+          @if (shareStatus()) { <p class="detail-share-status" role="status">{{ shareStatus() }}</p> }
+          @if (shareUrl(); as url) {
+            <label class="detail-share-link">Copy this link <input type="url" [value]="url" readonly #link (focus)="link.select()"></label>
+          }
+        </header>
+
+        <div class="detail-gallery" [class.detail-gallery--multiple]="detail.images.length > 1" aria-label="Experience images">
+          @for (image of detail.images; track $index) {
+            @if (failedImages().has(image.url)) {
+              <div class="detail-placeholder"><app-experience-icon name="mountain" /><span>Image unavailable</span></div>
+            } @else {
+              <figure>
+                <button type="button" class="detail-photo" [attr.aria-label]="'View image ' + ($index + 1) + ': ' + (image.caption || detail.card.title)"
+                  (click)="openImage(image, imageDialog)">
+                  <img [src]="image.url" [alt]="image.caption || detail.card.title" (error)="imageFailed(image.url)" [attr.loading]="$first ? 'eager' : 'lazy'">
+                  <span class="detail-photo-action" aria-hidden="true"><app-experience-icon name="expand" /></span>
+                </button>
+              </figure>
+            }
+          } @empty { <div class="detail-placeholder"><app-experience-icon name="mountain" /><span>Images unavailable</span></div> }
+        </div>
+        <dialog #imageDialog class="detail-image-dialog" aria-label="Experience photo" (close)="viewedImage.set(null)">
+          <button class="outline-control" type="button" autofocus (click)="imageDialog.close()">Close</button>
+          @if (viewedImage(); as image) { <img [src]="image.url" [alt]="image.caption || detail.card.title"> }
+        </dialog>
+
+        @if (listing) {
+          <dl class="detail-facts">
+            <div><app-experience-icon name="clock" /><dt>Duration</dt><dd>{{ listing.duration_hours | number }} hours</dd></div>
+            <div><app-experience-icon name="group" /><dt>Group size</dt><dd>{{ listing.min_participants }}–{{ listing.max_group_size }} travelers</dd></div>
+            @if (listing.min_age != null) { <div><app-experience-icon name="user" /><dt>Minimum age</dt><dd>{{ listing.min_age }} years</dd></div> }
+            @if (listing.provider_business_name) { <div><app-experience-icon name="culture" /><dt>Host</dt><dd>{{ listing.provider_business_name }}</dd></div> }
+          </dl>
+        }
+
+        <div class="detail-layout">
+          <div class="detail-content">
+            @if (listing) {
+              <section class="detail-section">
+                <h2><app-experience-icon name="mountain" />About this experience</h2>
+                @if (listing.description) { <p>{{ listing.description }}</p> }
+                @if (listing.meeting_point) { <p><strong>Meeting point:</strong> {{ listing.meeting_point }}</p> }
+                @if (listing.itinerary) { <h3>Experience highlights</h3><p>{{ listing.itinerary }}</p> }
+              </section>
+              @if (listing.provider_business_name) {
+                <section class="detail-section"><h2><app-experience-icon name="user" />Your host</h2><p>{{ listing.provider_business_name }}</p></section>
+              }
+              @if (listing.min_age != null || listing.protected_area_permit_required || listing.certified_guide_required || listing.wildlife_safety_summary || listing.safety_rules?.length) {
+                <section class="detail-section"><h2><app-experience-icon name="shield" />Requirements and safety</h2>
+                  @if (listing.min_age != null) { <p>Minimum age: {{ listing.min_age }}</p> }
+                  @if (listing.protected_area_permit_required) { <p>A protected area permit is required. {{ listing.permit_details }}</p> }
+                  @if (listing.certified_guide_required) { <p>A certified guide is required.</p> }
+                  @if (listing.wildlife_safety_summary) { <p>{{ listing.wildlife_safety_summary }}</p> }
+                  @if (listing.safety_rules?.length) {
+                    <ul class="detail-rules">
+                      @for (rule of listing.safety_rules; track rule.id) { <li><strong>{{ rule.title }}</strong>{{ rule.is_mandatory ? ' (required)' : '' }} · {{ rule.description }}</li> }
+                    </ul>
+                  }
+                </section>
+              }
+              @if (listing.environmental_guidelines || listing.conservation_factual_contribution || listing.conservation_marketing_statement || listing.practices?.length) {
+                <section class="detail-section"><h2><app-experience-icon name="leaf" />Sustainability and environmental guidelines</h2>
+                  @if (listing.environmental_guidelines) { <p>{{ listing.environmental_guidelines }}</p> }
+                  @if (listing.conservation_factual_contribution) { <p>{{ listing.conservation_factual_contribution }}</p> }
+                  @if (listing.conservation_marketing_statement) { <p>Operator statement: {{ listing.conservation_marketing_statement }}</p> }
+                  @for (practice of listing.practices; track practice.id) { <p>{{ practice.claim_description }}{{ practice.is_verified ? ' (verified)' : '' }}</p> }
+                </section>
+              }
+            }
+
+            <app-weather-panel [locationName]="detail.eco?.city || detail.card.location"
+              [coordinates]="coordinatesOf(detail.eco?.latitude, detail.eco?.longitude)" [preview]="catalog.preview" />
+
+            <section class="detail-section detail-reviews"><h2><app-experience-icon class="detail-star" name="star" />Reviews</h2>
+              @if (rating != null && reviewCount != null && reviewCount > 0) {
+                <div class="detail-review-score"><strong>{{ rating | number:'1.1-2' }}</strong>
+                  <span>out of 5 · {{ reviewCount }} {{ catalog.preview ? 'sample reviews' : 'reviews' }}</span>
+                </div>
+              }
+              @if (detail.reviews; as reviews) {
+                @for (review of reviews.items; track review.id) {
+                  <article class="detail-review">
+                    <div><strong>{{ review.reviewer_name }}</strong><span><app-experience-icon class="detail-star" name="star" />{{ review.rating | number:'1.1-2' }}</span></div>
+                    @if (review.title) { <h3>{{ review.title }}</h3> }
+                    @if (review.comment) { <p>{{ review.comment }}</p> }
+                  </article>
+                } @empty { <p>No published reviews yet.</p> }
+              } @else if (catalog.preview) { <p>Individual reviews are unavailable in this preview.</p> }
+              @else if (detail.reviews === null) { <p>Reviews are currently unavailable.</p> }
+              @else { <p role="status">Loading reviews…</p> }
+            </section>
+          </div>
+
+          <aside class="detail-price" aria-label="Price and booking">
+            <p class="detail-price-label">Experience price</p>
+            <p class="detail-price-amount"><strong>{{ detail.card.currency ?? 'LKR' }} {{ detail.card.price | number }}</strong>
+              @if (detail.card.unit) { <small>/ {{ detail.card.unit }}</small> }
+            </p>
+            @if (detail.slots; as slots) {
+              @if (slots[0]; as slot) { <p class="detail-availability">Next open slot: {{ slot.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) · {{ slot.available_places }} places</p> }
+              @else { <p class="detail-availability">No open slots are listed.</p> }
+            } @else if (catalog.preview) { <p class="detail-availability">Choose a date to see sample slots.</p> }
+            @else if (detail.slots === null) { <p class="detail-availability">Availability is currently unavailable.</p> }
+            @else { <p class="detail-availability" role="status">Loading availability…</p> }
+            @if (listing) { <app-experience-booking [listing]="listing" [routeId]="detail.card.id" /> }
+          </aside>
+        </div>
+      }
+    }
+  </main>
+</div>
