@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 import { Home } from './home';
 
 describe('Home Component (Airbnb-Inspired Blue & White)', () => {
@@ -9,7 +10,7 @@ describe('Home Component (Airbnb-Inspired Blue & White)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(Home);
@@ -260,5 +261,10 @@ describe('Home Component (Airbnb-Inspired Blue & White)', () => {
   it('should render the footer component', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-footer')).toBeTruthy();
+  });
+
+  it('should render the traveler auth modal component', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-traveler-auth-modal')).toBeTruthy();
   });
 });

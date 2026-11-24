@@ -71,18 +71,26 @@ describe('Navbar Component (Airbnb-Inspired Blue & White)', () => {
     expect(lang).toBeNull();
   });
 
-  it('should render Login and Register buttons linked to /login and /register', () => {
+  it('should render Login and Register buttons and trigger authentication popup on click', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    const loginBtn = compiled.querySelector('a.btn-login') as HTMLAnchorElement;
-    const registerBtn = compiled.querySelector('a.btn-register') as HTMLAnchorElement;
+    const loginBtn = compiled.querySelector('.btn-login') as HTMLElement;
+    const registerBtn = compiled.querySelector('.btn-register') as HTMLElement;
 
     expect(loginBtn).toBeTruthy();
-    expect(loginBtn.getAttribute('routerLink')).toBe('/login');
     expect(loginBtn.textContent?.trim()).toBe('Login');
 
     expect(registerBtn).toBeTruthy();
-    expect(registerBtn.getAttribute('routerLink')).toBe('/register');
     expect(registerBtn.textContent?.trim()).toBe('Register');
+
+    loginBtn.click();
+    expect(component.authModalService.isOpen()).toBe(true);
+    expect(component.authModalService.intentMode()).toBe('login');
+
+    component.authModalService.close();
+
+    registerBtn.click();
+    expect(component.authModalService.isOpen()).toBe(true);
+    expect(component.authModalService.intentMode()).toBe('register');
   });
 
   it('should toggle mobile menu drawer', () => {
