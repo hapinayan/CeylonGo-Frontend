@@ -70,15 +70,25 @@
 
     <!-- RIGHT ACTION ITEMS -->
     <div class="nav-actions">
-      <!-- LOGIN BUTTON -->
-      <a routerLink="/login" class="btn btn-login" aria-label="Log in to your account">
+      <!-- LOGIN BUTTON (OPENS UNIFIED AUTH MODAL) -->
+      <button
+        type="button"
+        class="btn btn-login"
+        (click)="openAuthModal('login', $event)"
+        aria-label="Log in to your account"
+      >
         Login
-      </a>
+      </button>
 
-      <!-- REGISTER BUTTON -->
-      <a routerLink="/register" class="btn btn-register" aria-label="Create a new account">
+      <!-- REGISTER BUTTON (OPENS UNIFIED AUTH MODAL) -->
+      <button
+        type="button"
+        class="btn btn-register"
+        (click)="openAuthModal('register', $event)"
+        aria-label="Create a new account"
+      >
         Register
-      </a>
+      </button>
 
       <!-- MOBILE HAMBURGER BUTTON -->
       <button
@@ -168,12 +178,20 @@
       </ul>
 
       <div class="mobile-actions">
-        <a routerLink="/login" (click)="closeMobileMenu()" class="btn btn-login btn-block">
+        <button
+          type="button"
+          (click)="openAuthModal('login', $event)"
+          class="btn btn-login btn-block"
+        >
           Login
-        </a>
-        <a routerLink="/register" (click)="closeMobileMenu()" class="btn btn-register btn-block">
+        </button>
+        <button
+          type="button"
+          (click)="openAuthModal('register', $event)"
+          class="btn btn-register btn-block"
+        >
           Register
-        </a>
+        </button>
       </div>
     </nav>
   </div>

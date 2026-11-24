@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { Navbar } from '../../shared/components/navbar/navbar';
 import { Footer } from '../../shared/components/footer/footer';
+import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
+import { AuthModalService } from '../../core/services/auth-modal.service';
 import { CategoryShortcut, CategoryShortcutItem } from './components/category-shortcut/category-shortcut';
 import { WhyChooseCeylongo } from './components/why-choose-ceylongo/why-choose-ceylongo';
 import { HomestayCard, HomestayItem } from './components/homestay-card/homestay-card';
@@ -14,6 +16,7 @@ import { CommunityBanner } from './components/community-banner/community-banner'
   imports: [
     Navbar,
     Footer,
+    TravelerAuthModal,
     CategoryShortcut,
     WhyChooseCeylongo,
     HomestayCard,
@@ -24,8 +27,41 @@ import { CommunityBanner } from './components/community-banner/community-banner'
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class Home {
+export class Home implements OnInit {
+  private readonly authModalService = inject(AuthModalService);
+
   readonly searchFeedback = signal<{ message: string; type: 'info' | 'success' } | null>(null);
+
+  ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const step = urlParams.get('step');
+      const email = urlParams.get('email') || '';
+      const auth = urlParams.get('auth');
+
+      if (token || step === 'reset-password') {
+        const resetToken = token || '';
+        // Scrub reset token from visible URL immediately
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+        this.authModalService.openResetPassword(resetToken, email);
+      } else if (auth === 'true' || step) {
+        if (step === 'register') {
+          this.authModalService.open('register');
+        } else if (step === 'login') {
+          this.authModalService.open('login');
+          if (email) this.authModalService.setStep('login', email);
+        } else if (step === 'forgot-password' || step === 'check-email' || step === 'reset-success') {
+          this.authModalService.open('login');
+          this.authModalService.setStep(step, email);
+        } else {
+          this.authModalService.open('login');
+        }
+      }
+    }
+  }
 
   readonly categories: readonly CategoryShortcutItem[] = [
     {

@@ -6,6 +6,7 @@ import { AuthEntry } from './pages/auth-entry/auth-entry';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { providerAuthGuard } from './core/guards/provider-auth.guard';
+import { travelerAuthGuard } from './core/guards/traveler-auth.guard';
 
 export const routes: Routes = [
 
@@ -18,6 +19,20 @@ export const routes: Routes = [
   {
     path: 'home',
     redirectTo: '',
+    pathMatch: 'full'
+  },
+
+  // AUTHENTICATED TRAVELER HOMEPAGE
+  {
+    path: 'traveler/home',
+    canActivate: [travelerAuthGuard],
+    loadComponent: () =>
+      import('./pages/traveler-home/traveler-home')
+        .then(m => m.TravelerHome)
+  },
+  {
+    path: 'traveler',
+    redirectTo: 'traveler/home',
     pathMatch: 'full'
   },
 
