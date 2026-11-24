@@ -10,10 +10,12 @@ import { travelerAuthGuard } from './core/guards/traveler-auth.guard';
 
 export const routes: Routes = [
 
-  // HOMEPAGE
+  // UNIFIED HOMEPAGE (CANONICAL)
   {
     path: '',
-    component: Home,
+    loadComponent: () =>
+      import('./pages/traveler-home/traveler-home')
+        .then(m => m.TravelerHome),
     pathMatch: 'full'
   },
   {
@@ -22,18 +24,22 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // AUTHENTICATED TRAVELER HOMEPAGE
+  // LEGACY TRAVELER HOMEPAGE REDIRECT
   {
     path: 'traveler/home',
-    canActivate: [travelerAuthGuard],
-    loadComponent: () =>
-      import('./pages/traveler-home/traveler-home')
-        .then(m => m.TravelerHome)
+    redirectTo: '',
+    pathMatch: 'full'
   },
   {
     path: 'traveler',
-    redirectTo: 'traveler/home',
+    redirectTo: '',
     pathMatch: 'full'
+  },
+
+  // LEGACY MARKETING HOMEPAGE PRESERVED FOR REFERENCE
+  {
+    path: 'legacy-home',
+    component: Home
   },
 
   // AUTH ENTRY

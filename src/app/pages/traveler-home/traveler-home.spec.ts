@@ -7,7 +7,7 @@ import { TravelerHome } from './traveler-home';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/auth.models';
 
-describe('TravelerHome Component — Phase 09 Refinement', () => {
+describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
   let component: TravelerHome;
   let fixture: ComponentFixture<TravelerHome>;
   let router: Router;
@@ -53,12 +53,12 @@ describe('TravelerHome Component — Phase 09 Refinement', () => {
   });
 
   // =========================================================================
-  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (7 SECTIONS)
+  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (9 SECTIONS)
   // =========================================================================
-  it('should render all 7 sections in the exact specified order', () => {
+  it('should render all 9 sections in the exact specified order', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
-    // Section 01: Authenticated Navbar
+    // Section 01: Navbar
     const navbar = compiled.querySelector('app-traveler-navbar');
     expect(navbar).toBeTruthy();
 
@@ -70,29 +70,40 @@ describe('TravelerHome Component — Phase 09 Refinement', () => {
     const experienceCategories = compiled.querySelector('#experience-categories');
     expect(experienceCategories).toBeTruthy();
 
-    // Section 04: Explore More with CeylonGo
+    // Section 04: Popular Destinations
+    const destinations = compiled.querySelector('#popular-destinations');
+    expect(destinations).toBeTruthy();
+
+    // Section 05: Explore More with CeylonGo
     const exploreMore = compiled.querySelector('#explore-more');
     expect(exploreMore).toBeTruthy();
 
-    // Section 05: CeylonGo Travel Community
+    // Section 06: CeylonGo Travel Community
     const community = compiled.querySelector('#travel-community');
     expect(community).toBeTruthy();
 
-    // Section 06: Special Offers & Promotions
+    // Section 07: Special Offers & Promotions
     const specialOffers = compiled.querySelector('#special-offers');
     expect(specialOffers).toBeTruthy();
 
-    // Section 07: Footer
+    // Section 08: Why CeylonGo?
+    const whyCeylonGo = compiled.querySelector('#why-ceylongo');
+    expect(whyCeylonGo).toBeTruthy();
+
+    // Section 09: Footer
     const footer = compiled.querySelector('app-footer');
     expect(footer).toBeTruthy();
 
-    // Verify DOM sequence order
+    // Verify DOM sequence order inside <main>
     const mainChildren = Array.from(compiled.querySelector('main')?.children || []);
+    expect(mainChildren.length).toBe(7);
     expect(mainChildren[0]?.id).toBe('ai-planner');
     expect(mainChildren[1]?.id).toBe('experience-categories');
-    expect(mainChildren[2]?.id).toBe('explore-more');
-    expect(mainChildren[3]?.id).toBe('travel-community');
-    expect(mainChildren[4]?.id).toBe('special-offers');
+    expect(mainChildren[2]?.id).toBe('popular-destinations');
+    expect(mainChildren[3]?.id).toBe('explore-more');
+    expect(mainChildren[4]?.id).toBe('travel-community');
+    expect(mainChildren[5]?.id).toBe('special-offers');
+    expect(mainChildren[6]?.id).toBe('why-ceylongo');
   });
 
   // =========================================================================
@@ -152,18 +163,15 @@ describe('TravelerHome Component — Phase 09 Refinement', () => {
   });
 
   // =========================================================================
-  // SECTION 03: EXPLORE SRI LANKA EXPERIENCES (8 CATEGORIES)
+  // SECTION 03: EXPLORE SRI LANKA EXPERIENCES
   // =========================================================================
-  it('should render exactly 8 authentic experience categories in specified order', () => {
+  it('should render exactly 8 experience categories in order with photos', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    const section = compiled.querySelector('#experience-categories');
-    expect(section).toBeTruthy();
+    const cards = compiled.querySelectorAll('.experience-category-card');
+    expect(cards.length).toBe(8);
 
-    const cards = section?.querySelectorAll('.experience-category-card');
-    expect(cards?.length).toBe(8);
-
-    const titles = Array.from(cards || []).map((c) =>
-      c.querySelector('.category-card-title')?.textContent?.trim()
+    const titles = Array.from(cards).map(
+      (c) => c.querySelector('.category-card-title')?.textContent?.trim()
     );
     expect(titles).toEqual([
       'Local Culture',
@@ -177,183 +185,273 @@ describe('TravelerHome Component — Phase 09 Refinement', () => {
     ]);
   });
 
-  it('should support horizontal scrolling and arrow controls for experience categories', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const nextBtn = compiled.querySelector('.carousel-arrow-btn.next-btn') as HTMLButtonElement;
-    const prevBtn = compiled.querySelector('.carousel-arrow-btn.prev-btn') as HTMLButtonElement;
+  it('should navigate to /experiences with category query param when a supported experience category is clicked', () => {
+    const cultureCategory = component.experienceCategories[0]; // Local Culture
+    component.onCategoryClick(cultureCategory);
+    expect(router.navigate).toHaveBeenCalledWith(['/experiences'], {
+      queryParams: { category: 'culture' },
+    });
+  });
 
-    expect(nextBtn).toBeTruthy();
-    expect(prevBtn).toBeTruthy();
-    expect(prevBtn.disabled).toBe(true);
-
-    const scrollSpy = vi.spyOn(component, 'scrollCategories');
-    nextBtn.click();
-    expect(scrollSpy).toHaveBeenCalledWith(1);
-
-    component.categoryScrollPosition.set(200);
-    fixture.detectChanges();
-    expect(prevBtn.disabled).toBe(false);
-    prevBtn.click();
-    expect(scrollSpy).toHaveBeenCalledWith(-1);
+  it('should navigate to /experiences without misleading query param when an unsupported category is clicked', () => {
+    const artisanCategory = component.experienceCategories[4]; // Artisan & Handicrafts
+    component.onCategoryClick(artisanCategory);
+    expect(router.navigate).toHaveBeenCalledWith(['/experiences']);
   });
 
   // =========================================================================
-  // SECTION 04: EXPLORE MORE WITH CEYLONGO (3 LARGE PHOTO CARDS)
+  // SECTION 04: POPULAR DESTINATIONS (9 DESTINATIONS PRIORITIZING NORTH & EAST)
   // =========================================================================
-  it('should render Section 04 with heading and exactly 3 real-photo service cards', () => {
+  it('should render Popular Destinations heading, subtitle, and carousel navigation', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const section = compiled.querySelector('#popular-destinations');
+    expect(section).toBeTruthy();
+
+    const heading = section?.querySelector('#destinations-heading');
+    expect(heading?.textContent?.trim()).toBe('Popular Destinations');
+
+    const subtitle = section?.querySelector('.section-subtitle');
+    expect(subtitle?.textContent?.trim()).toBe('Discover hidden gems and unforgettable destinations across Sri Lanka.');
+
+    const arrowBtns = section?.querySelectorAll('.carousel-nav-controls .carousel-arrow-btn');
+    expect(arrowBtns?.length).toBe(2);
+  });
+
+  it('should render exactly 9 destinations in order with Northern and Eastern provinces first', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('.destination-card');
+    expect(cards.length).toBe(9);
+
+    const destNames = Array.from(cards).map(
+      (c) => c.querySelector('.dest-name')?.textContent?.trim()
+    );
+    expect(destNames).toEqual([
+      'Jaffna',
+      'Trincomalee',
+      'Batticaloa',
+      'Mannar',
+      'Arugam Bay',
+      'Delft Island',
+      'Ella',
+      'Sigiriya',
+      'Galle',
+    ]);
+
+    // Check provinces
+    const provinces = Array.from(cards).map(
+      (c) => c.querySelector('.dest-province')?.textContent?.trim()
+    );
+    expect(provinces[0]).toBe('Northern Province');
+    expect(provinces[1]).toBe('Eastern Province');
+    expect(provinces[2]).toBe('Eastern Province');
+    expect(provinces[3]).toBe('Northern Province');
+    expect(provinces[4]).toBe('Eastern Province');
+    expect(provinces[5]).toBe('Northern Province');
+  });
+
+  it('should update queryParams and show toast when destination card is clicked', () => {
+    const jaffna = component.popularDestinations[0];
+    component.onDestinationClick(jaffna);
+    fixture.detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: expect.objectContaining({ destination: 'Jaffna' }),
+      queryParamsHandling: 'merge',
+    }));
+    expect(component.toastMessage()).toContain('Jaffna');
+  });
+
+  it('should scroll destinations track left and right', () => {
+    expect(() => {
+      component.scrollDestinations(1);
+      component.scrollDestinations(-1);
+    }).not.toThrow();
+  });
+
+  // =========================================================================
+  // SECTION 05: STAY, DISCOVER & RIDE
+  // =========================================================================
+  it('should render 3 Stay, Discover & Ride service cards with badges', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const section = compiled.querySelector('#explore-more');
     expect(section).toBeTruthy();
 
-    const heading = section?.querySelector('#explore-more-heading');
-    expect(heading?.textContent?.trim()).toBe('Explore More with CeylonGo');
+    const heading = section?.querySelector('.section-heading');
+    expect(heading?.textContent?.trim()).toBe('Stay, Discover & Ride');
 
-    const cards = section?.querySelectorAll('.explore-card');
-    expect(cards?.length).toBe(3);
+    const subtitle = section?.querySelector('.section-subtitle');
+    expect(subtitle?.textContent?.trim()).toBe('Everything you need to explore Sri Lanka, your way.');
 
-    // Card 01: Find Homestays
-    const homestayCard = cards?.[0];
-    expect(homestayCard?.querySelector('.explore-card-title')?.textContent?.trim()).toBe('Find Homestays');
-    expect(homestayCard?.querySelector('.explore-card-description')?.textContent?.trim()).toBe('Stay with local hosts and feel at home.');
-    expect(homestayCard?.querySelector('.explore-card-cta')?.textContent?.trim()).toBe('Explore Homestays →');
-    const homestayImg = homestayCard?.querySelector('.explore-card-img') as HTMLImageElement;
-    expect(homestayImg?.getAttribute('src')).toBe('/images/traveler-home/find-homestays.webp');
+    const cards = compiled.querySelectorAll('.explore-card');
+    expect(cards.length).toBe(3);
 
-    // Card 02: Find Your Tour Guide
-    const guideCard = cards?.[1];
-    expect(guideCard?.querySelector('.explore-card-title')?.textContent?.trim()).toBe('Find Your Tour Guide');
-    expect(guideCard?.querySelector('.explore-card-description')?.textContent?.trim()).toBe('Discover Sri Lanka with trusted local experts.');
-    expect(guideCard?.querySelector('.explore-card-cta')?.textContent?.trim()).toBe('Find a Guide →');
-    const guideImg = guideCard?.querySelector('.explore-card-img') as HTMLImageElement;
-    expect(guideImg?.getAttribute('src')).toBe('/images/traveler-home/find-tour-guide.webp');
+    const titles = Array.from(cards).map((c) =>
+      c.querySelector('.explore-card-title')?.textContent?.trim()
+    );
+    expect(titles).toEqual([
+      'Find Homestays',
+      'Find Your Tour Guide',
+      'Rent a Bike or Bicycle',
+    ]);
 
-    // Card 03: Rent a Bicycle
-    const bikeCard = cards?.[2];
-    expect(bikeCard?.querySelector('.explore-card-title')?.textContent?.trim()).toBe('Rent a Bicycle');
-    expect(bikeCard?.querySelector('.explore-card-description')?.textContent?.trim()).toBe('Explore Sri Lanka freely on two wheels.');
-    expect(bikeCard?.querySelector('.explore-card-cta')?.textContent?.trim()).toBe('Explore Rentals →');
-    const bikeImg = bikeCard?.querySelector('.explore-card-img') as HTMLImageElement;
-    expect(bikeImg?.getAttribute('src')).toBe('/images/traveler-home/rent-bicycle.webp');
-  });
-
-  it('should handle service card click with router query params and toast feedback', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const firstCard = compiled.querySelector('.explore-card') as HTMLElement;
-    expect(firstCard).toBeTruthy();
-
-    firstCard.click();
-    fixture.detectChanges();
-
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: expect.objectContaining({ service: 'homestays' }),
-    }));
-    expect(component.toastMessage()).toContain('Find Homestays discovery is coming soon');
+    const ctas = Array.from(cards).map((c) =>
+      c.querySelector('.explore-card-cta')?.textContent?.trim()
+    );
+    expect(ctas).toEqual([
+      'Explore Stays →',
+      'Find a Guide →',
+      'Explore Rentals →',
+    ]);
   });
 
   // =========================================================================
-  // SECTION 05: CEYLONGO TRAVEL COMMUNITY (2-COLUMN PROMOTIONAL)
+  // SECTION 06: CEYLONGO TRAVEL COMMUNITY
   // =========================================================================
-  it('should render Travel Community 2-column section with authentic photo, label, heading, benefits, and CTA', () => {
+  it('should render Travel Community with 3D illustration and action button', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const section = compiled.querySelector('#travel-community');
     expect(section).toBeTruthy();
 
-    // Left Column: Photo
-    const photo = section?.querySelector('.community-img') as HTMLImageElement;
-    expect(photo).toBeTruthy();
-    expect(photo.getAttribute('src')).toBe('/images/traveler-home/travel-community.webp');
+    const img = section?.querySelector('.community-img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toBe('/images/traveler-home/travel-community.webp');
 
-    // Right Column: Label & Heading
-    const label = section?.querySelector('.community-badge-label');
-    expect(label?.textContent?.trim()).toBe('Travel Community');
-
-    const heading = section?.querySelector('#community-main-heading');
-    expect(heading?.textContent?.trim()).toBe('Travel Together. Share Your Journey.');
-
-    const desc = section?.querySelector('.community-description');
-    expect(desc?.textContent).toContain('Connect with fellow travelers, discover inspiring travel stories');
-
-    // 3 Benefits
-    const benefits = section?.querySelectorAll('.community-benefits-list .benefit-row');
-    expect(benefits?.length).toBe(3);
-    const benefitTexts = Array.from(benefits || []).map((b) => b.querySelector('.benefit-label')?.textContent?.trim());
-    expect(benefitTexts).toEqual([
-      'Share Your Experiences',
-      'Discover Travel Stories',
-      'Connect with Fellow Travelers',
-    ]);
-
-    // Primary CTA Button
     const ctaBtn = section?.querySelector('.btn-explore-community') as HTMLButtonElement;
     expect(ctaBtn).toBeTruthy();
     expect(ctaBtn.textContent?.trim()).toBe('Explore Community →');
-
-    ctaBtn.click();
-    fixture.detectChanges();
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: expect.objectContaining({ section: 'community' }),
-    }));
-    expect(component.toastMessage()).toContain('Travel Community features are coming soon');
   });
 
   // =========================================================================
-  // SECTION 06: SPECIAL OFFERS & PROMOTIONS (EMPTY STATE & CATEGORIES)
+  // SECTION 07: SPECIAL OFFERS & PROMOTIONS (WITH DEMO OFFERS)
   // =========================================================================
-  it('should render Special Offers & Promotions with heading, subtitle, category tabs, and honest empty state', () => {
+  it('should render 4 promotion category tabs and sample demo offers when no live promotions exist', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const section = compiled.querySelector('#special-offers');
     expect(section).toBeTruthy();
 
-    const heading = section?.querySelector('#special-offers-heading');
-    expect(heading?.textContent?.trim()).toBe('Special Offers & Promotions');
-
-    const subtitle = section?.querySelector('.section-subtitle');
-    expect(subtitle?.textContent?.trim()).toBe('Discover exclusive offers from local hosts and service providers across Sri Lanka.');
-
-    // 4 Category Tabs (All + 3 prompt categories)
+    // 4 Category Tabs
     const tabs = section?.querySelectorAll('.promo-tab-btn');
     expect(tabs?.length).toBe(4);
     const tabTexts = Array.from(tabs || []).map((t) => t.textContent?.trim());
-    expect(tabTexts).toContain('Homestay Offers');
-    expect(tabTexts).toContain('Rental Offers');
-    expect(tabTexts).toContain('Experience Offers');
+    expect(tabTexts).toEqual(['All Offers', 'Homestay Offers', 'Rental Offers', 'Experience Offers']);
 
-    // Honest empty state verification (since promotions API is unavailable)
-    const emptyState = section?.querySelector('.promo-empty-state');
-    expect(emptyState).toBeTruthy();
-    expect(emptyState?.querySelector('.empty-title')?.textContent?.trim()).toBe('New offers are coming soon.');
-    expect(emptyState?.querySelector('.empty-description')?.textContent?.trim()).toBe('Check back later for special deals from our local service providers.');
+    // Check that displayedOffers shows 3 demo offers
+    expect(component.displayedOffers.length).toBe(3);
+    const offerCards = section?.querySelectorAll('.promo-card');
+    expect(offerCards?.length).toBe(3);
+
+    // Check Demo Offer badges
+    const demoBadges = section?.querySelectorAll('.demo-badge');
+    expect(demoBadges?.length).toBe(3);
+    expect(demoBadges?.[0]?.textContent?.trim()).toBe('Demo Offer');
   });
 
-  it('should switch promotion category tabs', () => {
-    expect(component.selectedPromotionCategory()).toBe('all');
-
+  it('should filter demo offers by category tabs cleanly', () => {
+    // Homestay Offers
     component.selectPromotionCategory('homestays');
     fixture.detectChanges();
-    expect(component.selectedPromotionCategory()).toBe('homestays');
+    expect(component.displayedOffers.length).toBe(1);
+    expect(component.displayedOffers[0].title).toBe('Jaffna Homestay Escape');
 
+    // Rental Offers
     component.selectPromotionCategory('rentals');
     fixture.detectChanges();
-    expect(component.selectedPromotionCategory()).toBe('rentals');
+    expect(component.displayedOffers.length).toBe(1);
+    expect(component.displayedOffers[0].title).toBe('Trincomalee Bike Adventure');
+
+    // Experience Offers
+    component.selectPromotionCategory('experiences');
+    fixture.detectChanges();
+    expect(component.displayedOffers.length).toBe(1);
+    expect(component.displayedOffers[0].title).toBe('Batticaloa Lagoon Experience');
+
+    // All Offers
+    component.selectPromotionCategory('all');
+    fixture.detectChanges();
+    expect(component.displayedOffers.length).toBe(3);
+  });
+
+  it('should show informational non-redeemable toast when viewing a demo offer', () => {
+    const demoOffer = component.demoOffers[0];
+    component.onViewOffer(demoOffer);
+    fixture.detectChanges();
+
+    expect(component.toastMessage()).toContain('Demo Offer: Special discount preview for Jaffna Homestay Escape');
   });
 
   // =========================================================================
-  // VERIFY REMOVAL OF OLD / DUPLICATE SECTIONS
+  // SECTION 08: WHY CEYLONGO? (5 UNIQUE SELLING POINTS)
   // =========================================================================
-  it('should completely remove old 5 icon services, old Top Experiences, and excluded sections', () => {
+  it('should render Why CeylonGo section with 5 unique selling points and outline SVG icons', () => {
     const compiled = fixture.nativeElement as HTMLElement;
+    const section = compiled.querySelector('#why-ceylongo');
+    expect(section).toBeTruthy();
 
-    // Old 5 light-blue icon cards section
-    expect(compiled.querySelector('.services-section')).toBeNull();
-    expect(compiled.querySelector('#services-heading')).toBeNull();
+    const eyebrow = section?.querySelector('.why-eyebrow');
+    expect(eyebrow?.textContent?.trim()).toBe('THE CEYLONGO DIFFERENCE');
 
-    // Old Top Experiences in Sri Lanka section
-    expect(compiled.querySelector('.experiences-section')).toBeNull();
-    expect(compiled.querySelector('#experiences-heading')).toBeNull();
+    const heading = section?.querySelector('#why-heading');
+    expect(heading?.textContent?.trim()).toBe('Why CeylonGo?');
 
-    // Other excluded sections
-    expect(compiled.querySelector('#destinations')).toBeNull();
-    expect(compiled.querySelector('.why-choose-section')).toBeNull();
-    expect(compiled.querySelector('.search-bar')).toBeNull();
+    const tagline = section?.querySelector('.why-tagline');
+    expect(tagline?.textContent?.trim()).toBe('Discover Local. Feel at Home.');
+
+    const subtitle = section?.querySelector('.why-subtitle');
+    expect(subtitle?.textContent?.trim()).toBe('More than a holiday. An authentic connection to Sri Lanka.');
+
+    const items = section?.querySelectorAll('.why-feature-item');
+    expect(items?.length).toBe(5);
+
+    const titles = Array.from(items || []).map((c) =>
+      c.querySelector('.why-feature-title')?.textContent?.trim()
+    );
+    expect(titles).toEqual([
+      'Community-Based Tourism',
+      'Local Business & Artisan Promotion',
+      'Direct Local Connections',
+      'AI-Powered Travel Planning',
+      'All-in-One Local Tourism Platform',
+    ]);
+  });
+
+  // =========================================================================
+  // CONTEXTUAL AUTHENTICATION & RESUME ACTIONS
+  // =========================================================================
+  it('should render TravelerAuthModal component in template', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const modal = compiled.querySelector('app-traveler-auth-modal');
+    expect(modal).toBeTruthy();
+  });
+
+  it('should prompt contextual auth modal when guest clicks Generate My Trip with destination & duration', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+
+    component.selectDestination('Kandy');
+    component.selectDuration('3 Days');
+    component.onGenerateMyTrip();
+    fixture.detectChanges();
+
+    expect(component.authModalService.isOpen()).toBe(true);
+    expect(component.authModalService.intentMode()).toBe('login');
+
+    const pending = component.authModalService.pendingAction();
+    expect(pending).toBeTruthy();
+    expect(pending?.type).toBe('generate-trip');
+    expect(pending?.data).toEqual({ destination: 'Kandy', duration: '3 Days' });
+    expect(typeof pending?.resumeCallback).toBe('function');
+    expect(component.toastMessage()).toContain('Please log in or create an account');
+  });
+
+  it('should directly generate itinerary when authenticated traveler clicks Generate My Trip', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+
+    component.selectDestination('Ella');
+    component.selectDuration('2 Days');
+    component.onGenerateMyTrip();
+    fixture.detectChanges();
+
+    expect(component.authModalService.isOpen()).toBe(false);
+    expect(component.isGenerating()).toBe(true);
+    expect(component.toastMessage()).toContain('Generating custom AI itinerary for Ella (2 Days)...');
   });
 });

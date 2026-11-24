@@ -8,9 +8,11 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { User } from '../../../core/models/auth.models';
 
 export interface NotificationItem {
@@ -31,12 +33,25 @@ export interface NotificationItem {
 })
 export class TravelerNavbar implements OnInit {
   readonly authService = inject(AuthService);
+  readonly authModalService = inject(AuthModalService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
 
   readonly isMobileMenuOpen = signal(false);
   readonly isScrolled = signal(false);
   readonly activeSection = signal('home');
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  openAuthModal(mode: 'login' | 'register', event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+    this.closeMobileMenu();
+    this.authModalService.open(mode);
+  }
 
   // Dropdown states
   readonly isProfileMenuOpen = signal(false);
@@ -63,12 +78,37 @@ export class TravelerNavbar implements OnInit {
   }
 
   ngOnInit(): void {
+    this.updateActiveSectionFromUrl();
+
+    // Listen to route changes
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+        this.updateActiveSectionFromUrl();
+      });
+
     // Attempt to sync authenticated profile if token exists but user signal is not yet filled
     if (this.authService.isAuthenticated() && !this.authService.currentUser()) {
       this.authService.getCurrentUser().subscribe({
         next: () => {},
         error: () => {},
       });
+    }
+  }
+
+  private updateActiveSectionFromUrl(): void {
+    if (this.router.url.startsWith('/experiences')) {
+      this.activeSection.set('experiences');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash?.replace('#', '');
+      if (hash && ['community', 'ai-planner', 'destinations', 'contact', 'about'].includes(hash)) {
+        this.activeSection.set(hash);
+      } else {
+        this.activeSection.set('home');
+      }
     }
   }
 
@@ -157,15 +197,39 @@ export class TravelerNavbar implements OnInit {
     if (event) {
       event.preventDefault();
     }
-    this.activeSection.set(sectionId);
     this.closeMobileMenu();
 
+    if (sectionId === 'experiences') {
+      this.activeSection.set('experiences');
+      this.router.navigate(['/experiences']);
+      return;
+    }
+
     if (sectionId === 'home') {
-      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.activeSection.set('home');
+      if (this.router.url.startsWith('/experiences') || (this.router.url !== '/' && this.router.url !== '/traveler/home')) {
+        this.router.navigate(['/']).then(() => {
+          if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+      } else {
+        if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
-    } else if (sectionId === 'contact') {
+      return;
+    }
+
+    if (sectionId === 'contact') {
+      this.activeSection.set('contact');
       this.showToast('Contact Us: support@ceylongo.com | +94 11 234 5678');
+      return;
+    }
+
+    this.activeSection.set(sectionId);
+    if (this.router.url.startsWith('/experiences') || (this.router.url !== '/' && this.router.url !== '/traveler/home')) {
+      this.router.navigate(['/'], { fragment: sectionId });
     } else {
       const element = document.getElementById(sectionId);
       if (element && typeof element.scrollIntoView === 'function') {
@@ -183,10 +247,10 @@ export class TravelerNavbar implements OnInit {
         this.showToast('My Profile: ' + this.travelerName + ' (' + this.travelerEmail + ')');
         break;
       case 'bookings':
-        this.showToast('My Bookings: You currently have no active bookings.');
+        this.router.navigate(['/experiences/bookings']);
         break;
       case 'wishlist':
-        this.showToast('Wishlist: Your saved stays and experiences.');
+        this.router.navigate(['/experiences/wishlist']);
         break;
       case 'settings':
         this.showToast('Settings: Account preferences and notifications.');

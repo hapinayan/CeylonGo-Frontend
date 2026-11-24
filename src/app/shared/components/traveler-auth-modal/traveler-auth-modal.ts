@@ -340,12 +340,7 @@ export class TravelerAuthModal implements OnDestroy {
           return;
         }
 
-        this.isLoading.set(false);
-        this.successMessage.set('Signed in successfully! Welcome back to CeylonGo.');
-        setTimeout(() => {
-          this.close();
-          this.router.navigate(['/traveler/home']);
-        }, 500);
+        this.handleAuthenticationSuccess('Signed in successfully! Welcome back to CeylonGo.');
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
@@ -380,12 +375,7 @@ export class TravelerAuthModal implements OnDestroy {
       next: () => {
         this.authService.login({ email, password }).subscribe({
           next: () => {
-            this.isLoading.set(false);
-            this.successMessage.set('Account created successfully! Welcome to CeylonGo.');
-            setTimeout(() => {
-              this.close();
-              this.router.navigate(['/traveler/home']);
-            }, 500);
+            this.handleAuthenticationSuccess('Account created successfully! Welcome to CeylonGo.');
           },
           error: () => {
             this.isLoading.set(false);
@@ -610,12 +600,7 @@ export class TravelerAuthModal implements OnDestroy {
     this.isLoading.set(true);
     this.authService.loginWithGoogle(credential).subscribe({
       next: () => {
-        this.isLoading.set(false);
-        this.successMessage.set('Signed in with Google! Welcome to CeylonGo.');
-        setTimeout(() => {
-          this.close();
-          this.router.navigate(['/traveler/home']);
-        }, 500);
+        this.handleAuthenticationSuccess('Signed in with Google! Welcome to CeylonGo.');
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
@@ -635,5 +620,42 @@ export class TravelerAuthModal implements OnDestroy {
     this.phoneBackendNotice.set(
       'Notice: Traveler Phone SMS OTP API endpoint is not yet enabled on the CeylonGo backend. Please sign in using your verified email or Google account.'
     );
+  }
+
+  private handleAuthenticationSuccess(successText: string): void {
+    this.isLoading.set(false);
+    this.successMessage.set(successText);
+    setTimeout(() => {
+      const pendingAction = this.authModalService.consumePendingAction();
+      this.close();
+
+      if (pendingAction) {
+        if (pendingAction.resumeCallback) {
+          try {
+            pendingAction.resumeCallback();
+          } catch (err) {
+            console.error('Error executing pending auth action callback:', err);
+          }
+        } else if (pendingAction.route && this.isSafeInternalRoute(pendingAction.route)) {
+          this.router.navigate([pendingAction.route], { queryParams: pendingAction.queryParams });
+        }
+      } else {
+        const currentUrl = this.router.url;
+        if (
+          currentUrl.includes('/login') ||
+          currentUrl.includes('/register') ||
+          currentUrl.includes('/auth') ||
+          currentUrl.includes('/traveler/home')
+        ) {
+          this.router.navigate(['/']);
+        }
+      }
+    }, 500);
+  }
+
+  private isSafeInternalRoute(url: string): boolean {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    return trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.includes(':');
   }
 }

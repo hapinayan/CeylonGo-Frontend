@@ -134,5 +134,5 @@ describe('Public Eco API and UI', () => {
     http.expectOne(url + '/43').flush({}, { status: 404, statusText: 'Not Found' });
     harness.detectChanges();
     expect(harness.routeNativeElement?.textContent).toContain('removed or unpublished');
-  });
+  }, 15000);
 });

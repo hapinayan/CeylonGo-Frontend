@@ -329,7 +329,7 @@ describe('TravelerAuthModal', () => {
 
       vi.advanceTimersByTime(800);
       expect(modalService.isOpen()).toBe(false);
-      expect(router.navigate).toHaveBeenCalledWith(['/traveler/home']);
+      expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should reject non-traveler roles (e.g. provider) and logout', () => {
@@ -460,7 +460,7 @@ describe('TravelerAuthModal', () => {
 
       vi.advanceTimersByTime(800);
       expect(modalService.isOpen()).toBe(false);
-      expect(router.navigate).toHaveBeenCalledWith(['/traveler/home']);
+      expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should fallback to login step when post-registration auto-login fails', () => {
@@ -783,7 +783,7 @@ describe('TravelerAuthModal', () => {
       expect(modalService.userEmail()).toBe('traveler@ceylongo.com');
     });
 
-    it('should authenticate with Google credential and redirect to /traveler/home', () => {
+    it('should authenticate with Google credential and close modal contextually without unnecessary redirect', () => {
       vi.useFakeTimers();
       component.handleGoogleCredential('valid-google-jwt');
       expect(authServiceSpy.loginWithGoogle).toHaveBeenCalledWith('valid-google-jwt');
@@ -791,7 +791,59 @@ describe('TravelerAuthModal', () => {
 
       vi.advanceTimersByTime(800);
       expect(modalService.isOpen()).toBe(false);
-      expect(router.navigate).toHaveBeenCalledWith(['/traveler/home']);
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    // =========================================================================
+    // PHASE 10: CONTEXTUAL ACTION RESUME & ROUTE NAVIGATION
+    // =========================================================================
+    it('should invoke pendingAction.resumeCallback when present upon successful authentication', () => {
+      vi.useFakeTimers();
+      const resumeSpy = vi.fn();
+      modalService.open('login', undefined, {
+        type: 'generate-trip',
+        resumeCallback: resumeSpy,
+      });
+
+      component.loginPasswordControl.setValue('Password@123');
+      component.onLoginSubmit();
+      fixture.detectChanges();
+
+      vi.advanceTimersByTime(800);
+      expect(modalService.isOpen()).toBe(false);
+      expect(resumeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should navigate to pendingAction.route when specified without callback', () => {
+      vi.useFakeTimers();
+      modalService.open('login', undefined, {
+        type: 'navigation',
+        route: '/provider/dashboard',
+        queryParams: { tab: 'listings' },
+      });
+
+      component.loginPasswordControl.setValue('Password@123');
+      component.onLoginSubmit();
+      fixture.detectChanges();
+
+      vi.advanceTimersByTime(800);
+      expect(modalService.isOpen()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/provider/dashboard'], {
+        queryParams: { tab: 'listings' },
+      });
+    });
+
+    it('should navigate to / when user logs in while on a standalone auth page like /login', () => {
+      vi.useFakeTimers();
+      Object.defineProperty(router, 'url', { value: '/login', writable: true });
+
+      component.loginPasswordControl.setValue('Password@123');
+      component.onLoginSubmit();
+      fixture.detectChanges();
+
+      vi.advanceTimersByTime(800);
+      expect(modalService.isOpen()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
   });
 });
