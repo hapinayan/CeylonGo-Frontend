@@ -135,6 +135,19 @@ export const routes: Routes = [
         .then(m => m.ProviderDashboard)
   },
 
+  // LOCAL TOUR GUIDES DISCOVER PAGE
+  {
+    path: 'tour-guides',
+    loadComponent: () =>
+      import('./pages/tour-guides/tour-guides.component')
+        .then(m => m.TourGuidesComponent)
+  },
+  {
+    path: 'tour-guide',
+    redirectTo: 'tour-guides',
+    pathMatch: 'full'
+  },
+
   // UNKNOWN URL - GO TO FIRST PAGE
   {
     path: '**',

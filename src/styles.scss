@@ -27,6 +27,24 @@ body {
   --cg-green: #16a34a;
   --cg-muted: #64748b;
   --cg-border: #e2e8f0;
+
+  /* CeylonGo Tour Guide Design System (Airbnb-inspired Blue & White) */
+  --tg-primary-blue: #0066FF;
+  --tg-deep-navy: #082B5C;
+  --tg-light-blue: #EAF5FF;
+  --tg-bg: #FFFFFF;
+  --tg-border: #D8E8F8;
+  --tg-secondary-text: #64748B;
+  --tg-star-yellow: #F59E0B;
+  --tg-surface-subtle: #F8FAFC;
+  --tg-hover-blue: #0052CC;
+  --tg-shadow-sm: 0 2px 8px rgba(8, 43, 92, 0.04);
+  --tg-shadow-md: 0 6px 20px rgba(8, 43, 92, 0.08);
+  --tg-shadow-lg: 0 12px 32px rgba(8, 43, 92, 0.12);
+  --tg-radius-sm: 8px;
+  --tg-radius-md: 12px;
+  --tg-radius-lg: 16px;
+  --tg-radius-full: 9999px;
 }
 
 *,
