@@ -1,6 +1,7 @@
 
 import { Routes } from '@angular/router';
 
+import { Home } from './pages/home/home';
 import { AuthEntry } from './pages/auth-entry/auth-entry';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
@@ -8,10 +9,15 @@ import { providerAuthGuard } from './core/guards/provider-auth.guard';
 
 export const routes: Routes = [
 
-  // FIRST PAGE - AUTH ENTRY
+  // HOMEPAGE
   {
     path: '',
-    redirectTo: 'auth',
+    component: Home,
+    pathMatch: 'full'
+  },
+  {
+    path: 'home',
+    redirectTo: '',
     pathMatch: 'full'
   },
 

@@ -1,0 +1,65 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+}
+
+.category-shortcut-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-3px);
+
+    .shortcut-icon-circle {
+      background-color: #d8ecff;
+      box-shadow: 0 6px 18px rgba(0, 102, 255, 0.18);
+      transform: scale(1.05);
+    }
+
+    .shortcut-label {
+      color: $cg-royal-blue;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.shortcut-icon-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: $cg-light-blue;
+  color: $cg-royal-blue;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 102, 255, 0.08);
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.shortcut-label {
+  font-family: $cg-font;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $cg-primary-navy;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
