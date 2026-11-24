@@ -73,7 +73,7 @@ describe('Footer Component', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const link = compiled.querySelector('.footer-link') as HTMLAnchorElement;
     expect(link).toBeTruthy();
-    
+
     component.onUnavailableLink(new MouseEvent('click'), 'Help Center');
     fixture.detectChanges();
 
