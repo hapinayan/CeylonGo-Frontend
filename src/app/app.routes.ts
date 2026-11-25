@@ -237,6 +237,14 @@ export const routes: Routes = [
         .then(module => module.rentalRoutes)
   },
 
+  // CEYLONGO ADMIN MODULE (PHASE 01)
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('./admin/admin.routes')
+        .then(m => m.ADMIN_ROUTES)
+  },
+
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',

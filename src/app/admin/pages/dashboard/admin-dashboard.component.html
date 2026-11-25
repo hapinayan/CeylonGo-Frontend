@@ -1,0 +1,288 @@
+<div class="dashboard-container">
+  <!-- Top Welcome & Refresh Bar -->
+  <div class="dashboard-header">
+    <div class="header-titles">
+      <div class="title-row">
+        <h1 class="page-title">Platform Operations Dashboard</h1>
+        <span
+          class="role-badge"
+          [class.super]="isSuperAdmin()"
+          [class.standard]="!isSuperAdmin()"
+        >
+          {{ roleDisplayName() }}
+        </span>
+      </div>
+      <p class="page-subtitle">
+        Welcome back, <strong>{{ currentUser()?.full_name || 'Administrator' }}</strong>. Live metrics aggregated from verified backend registries.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      @if (lastUpdated()) {
+        <span class="last-refreshed">
+          Last synced: {{ lastUpdated() | date: 'mediumTime' }}
+        </span>
+      }
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadDashboardData()"
+        [disabled]="isLoading()"
+        title="Sync dashboard with backend"
+      >
+        <svg
+          class="refresh-icon"
+          [class.spinning]="isLoading()"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          width="16"
+          height="16"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75a.75.75 0 00-.75.75v4.482a.75.75 0 001.5 0v-2.067l.39.389a7 7 0 0011.977-3.177.75.75 0 00-1.555-.242zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.77a.75.75 0 000 1.5h4.482a.75.75 0 00.75-.75V2.689a.75.75 0 00-1.5 0v2.067l-.39-.389A7 7 0 003.135 7.544a.75.75 0 001.553.242z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>Refresh Data</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Permission Restriction Banner -->
+  @if (permissionNotice()) {
+    <div class="alert-banner alert-warning" role="alert">
+      <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path
+          fill-rule="evenodd"
+          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <span class="alert-text">{{ permissionNotice() }}</span>
+      <button type="button" class="close-alert-btn" (click)="dismissNotice()" aria-label="Dismiss alert">
+        ✕
+      </button>
+    </div>
+  }
+
+  <!-- Error Banner with Retry -->
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error" role="alert">
+      <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <div class="error-content">
+        <span class="error-title">Failed to communicate with CeylonGo backend</span>
+        <span class="alert-text">{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="btn-retry" (click)="loadDashboardData()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- Loading Skeleton State -->
+  @if (isLoading()) {
+    <div class="skeleton-grid" aria-busy="true" aria-label="Loading dashboard metrics">
+      <div class="skeleton-card" *ngFor="let i of [1, 2, 3, 4]">
+        <div class="skeleton-line shimmer short"></div>
+        <div class="skeleton-line shimmer number"></div>
+        <div class="skeleton-line shimmer label"></div>
+      </div>
+    </div>
+  } @else if (dashboardData()) {
+    <!-- Row 1: High-level Key Indicators -->
+    <section class="metrics-section" aria-label="Key Performance Indicators">
+      <div class="section-title-bar">
+        <h2 class="section-title">Core Performance Summaries</h2>
+        <span class="section-subtitle">Platform-wide registrations and bookings</span>
+      </div>
+
+      <div class="stats-grid">
+        <!-- Providers Card -->
+        <div class="stat-card">
+          <div class="stat-icon-wrapper icon-blue">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+              <path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572z" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Total Service Providers</span>
+            <span class="stat-value">{{ dashboardData()?.providers?.total_profiles ?? 0 }}</span>
+            <span class="stat-meta">
+              <strong>{{ dashboardData()?.providers?.pending_applications ?? 0 }}</strong> pending verification
+            </span>
+          </div>
+        </div>
+
+        <!-- Homestay Bookings -->
+        <div class="stat-card">
+          <div class="stat-icon-wrapper icon-teal">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+              <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Homestay Bookings</span>
+            <span class="stat-value">{{ dashboardData()?.bookings?.homestay ?? 0 }}</span>
+            <span class="stat-meta">Across approved homestay units</span>
+          </div>
+        </div>
+
+        <!-- Rental Bookings -->
+        <div class="stat-card">
+          <div class="stat-icon-wrapper icon-amber">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+              <path d="M4.5 15a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM15.5 15a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Rental Bookings</span>
+            <span class="stat-value">{{ dashboardData()?.bookings?.rental_vehicle ?? 0 }}</span>
+            <span class="stat-meta">Bikes, bicycles & scooters</span>
+          </div>
+        </div>
+
+        <!-- Tour Guide Bookings -->
+        <div class="stat-card">
+          <div class="stat-icon-wrapper icon-emerald">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Tour Guide Bookings</span>
+            <span class="stat-value">{{ dashboardData()?.bookings?.tour_guide ?? 0 }}</span>
+            <span class="stat-meta">Verified local guides booked</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 2: Actionable Review Queues -->
+    <section class="metrics-section" aria-label="Actionable Review Queues">
+      <div class="section-title-bar">
+        <div class="title-with-pill">
+          <h2 class="section-title">Actionable Review Queues</h2>
+          <span class="queue-total-pill">{{ totalPendingApprovals }} Pending Items</span>
+        </div>
+        <span class="section-subtitle">Items requiring administrative verification and decision</span>
+      </div>
+
+      <div class="queues-grid">
+        <!-- Provider Applications Queue -->
+        <div class="queue-card highlight">
+          <div class="queue-header">
+            <span class="queue-type">Provider Accounts</span>
+            <span class="queue-badge warning">{{ dashboardData()?.providers?.pending_applications ?? 0 }} Pending</span>
+          </div>
+          <p class="queue-desc">New provider registrations awaiting NIC and business review.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 04/05</span>
+          </div>
+        </div>
+
+        <!-- Homestay Listings -->
+        <div class="queue-card">
+          <div class="queue-header">
+            <span class="queue-type">Homestay Listings</span>
+            <span class="queue-badge" [class.warning]="(dashboardData()?.pending_approvals?.homestay_listings ?? 0) > 0">
+              {{ dashboardData()?.pending_approvals?.homestay_listings ?? 0 }} Pending
+            </span>
+          </div>
+          <p class="queue-desc">Submitted properties awaiting photo and room capacity checks.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 06</span>
+          </div>
+        </div>
+
+        <!-- Rental Vehicles -->
+        <div class="queue-card">
+          <div class="queue-header">
+            <span class="queue-type">Rental Vehicles</span>
+            <span class="queue-badge" [class.warning]="(dashboardData()?.pending_approvals?.rental_vehicles ?? 0) > 0">
+              {{ dashboardData()?.pending_approvals?.rental_vehicles ?? 0 }} Pending
+            </span>
+          </div>
+          <p class="queue-desc">Bikes and bicycles awaiting inspection and insurance review.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 08</span>
+          </div>
+        </div>
+
+        <!-- Tour Guide Profiles -->
+        <div class="queue-card">
+          <div class="queue-header">
+            <span class="queue-type">Tour Guide Profiles</span>
+            <span class="queue-badge" [class.warning]="(dashboardData()?.pending_approvals?.tour_guide_profiles ?? 0) > 0">
+              {{ dashboardData()?.pending_approvals?.tour_guide_profiles ?? 0 }} Pending
+            </span>
+          </div>
+          <p class="queue-desc">Guides awaiting license credential documents verification.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 09</span>
+          </div>
+        </div>
+
+        <!-- Adventure Activities -->
+        <div class="queue-card">
+          <div class="queue-header">
+            <span class="queue-type">Adventure Activities</span>
+            <span class="queue-badge" [class.warning]="(dashboardData()?.pending_approvals?.activity_listings ?? 0) > 0">
+              {{ dashboardData()?.pending_approvals?.activity_listings ?? 0 }} Pending
+            </span>
+          </div>
+          <p class="queue-desc">Activity listings awaiting safety protocol checks.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 07</span>
+          </div>
+        </div>
+
+        <!-- Artisan Listings -->
+        <div class="queue-card">
+          <div class="queue-header">
+            <span class="queue-type">Artisan Businesses</span>
+            <span class="queue-badge" [class.warning]="(dashboardData()?.pending_approvals?.artisan_listings ?? 0) > 0">
+              {{ dashboardData()?.pending_approvals?.artisan_listings ?? 0 }} Pending
+            </span>
+          </div>
+          <p class="queue-desc">Local handicraft and artisan listings for catalog review.</p>
+          <div class="queue-footer">
+            <span class="phase-info">Reviewable in Module 10</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 3: Traveler Safety & Verifications -->
+    <section class="metrics-section" aria-label="Traveler Safety Checks">
+      <div class="section-title-bar">
+        <h2 class="section-title">Traveler Verification & Eligibility</h2>
+        <span class="section-subtitle">Rental driving license verification records</span>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon-wrapper">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="24" height="24">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="safety-content">
+          <h3 class="safety-title">Pending Rental Driving License Checks</h3>
+          <p class="safety-desc">
+            Travelers who have submitted their national driving license or international driving permit for bike rental booking verification.
+          </p>
+        </div>
+        <div class="safety-stat">
+          <span class="safety-number">{{ dashboardData()?.traveler_eligibility?.pending_rental_checks ?? 0 }}</span>
+          <span class="safety-unit">Checks Pending</span>
+        </div>
+      </div>
+    </section>
+  }
+</div>

@@ -34,6 +34,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const providerAuthService = inject(ProviderAuthService);
 
+  // Requests targeting the Admin API (/api/v1/admin/) are managed exclusively by the Admin auth interceptor
+  const isAdminApi = /^admin(\/|$)/.test(path.slice(prefix.length));
+  if (isAdminApi) {
+    return next(req);
+  }
+
   const isProviderApi = /^providers?(\/|$)/.test(path.slice(prefix.length));
   const session = isProviderApi ? providerAuthService : authService;
   const token = session.getToken();

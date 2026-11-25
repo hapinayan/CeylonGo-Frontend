@@ -1,0 +1,109 @@
+<header class="admin-header">
+  <div class="header-left">
+    <!-- Mobile hamburger button -->
+    <button
+      type="button"
+      class="mobile-menu-btn"
+      (click)="openMobileDrawer.emit()"
+      aria-label="Open mobile navigation menu"
+    >
+      <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+        <path
+          fill-rule="evenodd"
+          d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z"
+          clip-rule="evenodd"
+        />
+      </svg>
+    </button>
+
+    <!-- Page Breadcrumb -->
+    <div class="header-breadcrumb">
+      <span class="crumb-parent">CeylonGo Administration</span>
+      <span class="crumb-separator">/</span>
+      <span class="crumb-current">Dashboard</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- Active Environment Badge -->
+    <div class="env-badge" title="Connected to Backend API">
+      <span class="env-dot"></span>
+      <span class="env-text">Live System</span>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div class="user-menu-container">
+      <button
+        type="button"
+        class="user-profile-btn"
+        (click)="toggleProfileMenu()"
+        [attr.aria-expanded]="isMenuOpen()"
+        aria-haspopup="true"
+        aria-label="Admin user profile menu"
+      >
+        <div class="user-avatar" aria-hidden="true">
+          {{ userInitials }}
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ currentUser()?.full_name || 'Administrator' }}</span>
+          <span
+            class="user-role-badge"
+            [class.super-admin]="isSuperAdmin()"
+            [class.standard-admin]="!isSuperAdmin()"
+          >
+            {{ roleDisplayName() }}
+          </span>
+        </div>
+        <svg class="dropdown-chevron" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+
+      <!-- Dropdown Card -->
+      @if (isMenuOpen()) {
+        <div class="profile-dropdown-card" role="menu">
+          <div class="dropdown-header">
+            <p class="dropdown-name">{{ currentUser()?.full_name || 'Administrator' }}</p>
+            <p class="dropdown-email">{{ currentUser()?.email || 'admin@ceylongo.com' }}</p>
+            <div class="role-pill-container">
+              <span
+                class="role-pill"
+                [class.super]="isSuperAdmin()"
+                [class.standard]="!isSuperAdmin()"
+              >
+                {{ roleDisplayName() }}
+              </span>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-actions">
+            <button
+              type="button"
+              class="dropdown-action-btn logout-action"
+              (click)="logout()"
+              role="menuitem"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path
+                  fill-rule="evenodd"
+                  d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
+                  clip-rule="evenodd"
+                />
+                <path
+                  fill-rule="evenodd"
+                  d="M19 10a.75.75 0 00-.75-.75H8.704l2.47-2.47a.75.75 0 10-1.06-1.06l-3.75 3.75a.75.75 0 000 1.06l3.75 3.75a.75.75 0 101.06-1.06L8.704 10.75H18.25A.75.75 0 0019 10z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</header>
