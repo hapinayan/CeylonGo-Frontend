@@ -1,0 +1,53 @@
+<main class="wrap booking-page">
+  <nav class="booking-nav" aria-label="Rentals">
+    <a class="outline" routerLink="/bicycles" [queryParams]="{ preview: 1 }">Browse rentals</a>
+    @if (reference()) { <a class="outline" routerLink="/bicycles/my-rentals" [queryParams]="{ preview: 1 }">My Rentals</a> }
+  </nav>
+  <header><p class="eyebrow">Development preview</p><h1>{{ reference() ? 'Booking details' : 'My Rentals' }}</h1>
+    <p>Sample bookings are kept until you reload or leave the app.</p>
+  </header>
+  @if (owner() === null) {
+    <div class="panel"><h2>Sign in to view sample bookings</h2>
+      <button type="button" class="primary" (click)="openSignIn($event)">Sign in</button>
+    </div>
+  } @else if (reference()) {
+    @if (rental(); as record) {
+      <section class="panel" aria-labelledby="booking-record">
+        <h2 id="booking-record">{{ record.vehicle.vehicle_name }} · {{ record.reference }}</h2>
+        <dl>
+          <dt>Booking status</dt><dd>{{ record.status === 'pending' ? 'Pending (simulation)' : 'Cancelled (simulation)' }}</dd>
+          <dt>Payment status</dt><dd>Unpaid · No payment collected</dd>
+          <dt>Pickup</dt><dd>{{ record.dates.pickup_at | date:'medium':'+0530' }} · {{ record.status === 'pending' ? 'Awaiting provider handover' : 'Not applicable' }}</dd>
+          <dt>Return</dt><dd>{{ record.dates.return_at | date:'medium':'+0530' }} · {{ record.status === 'pending' ? 'Awaiting provider return' : 'Not applicable' }}</dd>
+          <dt>Sample meetup</dt><dd>{{ record.vehicle.city }} · No real hub assigned</dd>
+          <dt>Traveler</dt><dd>{{ traveler }}</dd>
+          <dt>Estimated rental</dt><dd>{{ record.vehicle.currency }} {{ record.estimate | number:'1.0-2' }}</dd>
+          @if (record.cancelledAt) { <dt>Cancelled</dt><dd>{{ record.cancelledAt | date:'medium':'+0530' }}</dd> }
+        </dl>
+        @if (canCancel(record)) {
+          @if (cancellationOpen()) {
+            <p>Cancel this simulated booking? The sample has no charge or refund.</p>
+            <div class="edit-actions">
+              <button type="button" class="outline" (click)="cancellationOpen.set(false)">Keep sample booking</button>
+              <button type="button" class="primary" (click)="cancel()">Confirm sample cancellation</button>
+            </div>
+          } @else {
+            <button class="outline" type="button" (click)="cancellationOpen.set(true)">Cancel sample booking</button>
+          }
+        }
+        @if (message()) { <p role="status">{{ message() }}</p> }
+      </section>
+    } @else { <p class="state">Sample booking unavailable.</p> }
+  } @else if (records().length) {
+    <ul class="manage-list">
+      @for (record of records(); track record.reference) {
+        <li class="panel">
+          <div><strong>{{ record.vehicle.vehicle_name }}</strong><p>{{ record.reference }} · {{ record.status }} · {{ record.paymentStatus }}</p></div>
+          <a class="outline" [routerLink]="[record.reference]" queryParamsHandling="preserve">View booking</a>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="state">No sample bookings yet.</p>
+  }
+</main>

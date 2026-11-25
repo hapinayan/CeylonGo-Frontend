@@ -167,6 +167,11 @@ export const routes: Routes = [
     loadChildren: () => import('./experiences/experiences.routes').then(m => m.experiencesRoutes)
   },
 
+  {
+    path: 'bicycles',
+    loadChildren: () => import('./bike-rentals/rental.routes').then(module => module.rentalRoutes)
+  },
+
   // UNKNOWN URL - GO TO FIRST PAGE
   {
     path: '**',

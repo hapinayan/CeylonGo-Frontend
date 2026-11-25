@@ -1,0 +1,116 @@
+<main class="wrap booking-page">
+  <div class="booking-nav">
+    <a class="outline" routerLink="../" queryParamsHandling="preserve">Back to vehicle</a>
+    <a class="outline" routerLink="/bicycles/my-rentals" [queryParams]="{ preview: 1 }">My Rentals</a>
+  </div>
+  <header>
+    <p class="eyebrow">Development preview</p>
+    <h1>Rental booking</h1>
+    <p>Walk through a sample rental. This simulation creates no reservation, payment, or vehicle hold.</p>
+  </header>
+  @if (vehicle(); as listing) {
+    <ol class="stepper" aria-label="Booking progress">
+      @for (label of steps; track label; let index = $index) {
+        <li [attr.aria-current]="step() === index ? 'step' : null" [class.complete]="index < step()">
+          <span class="step-number">{{ index + 1 }}</span><span>{{ label }}</span>
+        </li>
+      }
+    </ol>
+    <div class="booking-grid">
+      <section class="panel" aria-labelledby="booking-step-title">
+        <h2 id="booking-step-title" tabindex="-1">{{ steps[step()] }}</h2>
+        @switch (step()) {
+          @case (0) {
+            <app-rental-date-picker [id]="listing.id" [preview]="true"
+              [initialDates]="draftDates()" [pickupDate]="search.get('pickup') ?? ''"
+              [returnDate]="search.get('return') ?? ''" (checked)="setDates($event)" />
+          }
+          @case (1) {
+            <dl>
+              <dt>Pickup</dt><dd>Sample meetup in {{ listing.city }}</dd>
+              <dt>Return</dt><dd>Same sample meetup</dd>
+              <dt>Delivery</dt><dd>Unavailable. There is no confirmed traveler delivery option.</dd>
+            </dl>
+            <p>Live pickup and return locations are unavailable while the hub policy is under review.</p>
+            <label class="check"><input type="checkbox" [checked]="locationAccepted()" (change)="locationAccepted.set(!locationAccepted())" /> Use the sample meetup for pickup and return.</label>
+          }
+          @case (2) {
+            <dl>
+              <dt>Traveler</dt><dd>{{ traveler }} · Sample profile</dd>
+              <dt>Minimum age</dt><dd>Backend default for this preview: {{ needsLicense() ? 18 : 16 }} at pickup. Configured rules can differ.</dd>
+              <dt>Driving licence</dt><dd>{{ needsLicense() ? 'Approved licence and trusted proof of age, with licence valid through return.' : 'The backend exempts the bicycle category from driving licence verification.' }}</dd>
+            </dl>
+            <p>No personal information or documents are collected here. Any real eligibility decision requires server verification.</p>
+            <label class="scenario">Sample eligibility scenario
+              <select #profile [value]="scenario()" (change)="scenario.set(profile.value)">
+                <option value="eligible">Meets sample requirements</option>
+                <option value="underage">Below sample minimum age</option>
+                @if (needsLicense()) {
+                  <option value="missing">Required driving evidence missing</option>
+                  <option value="expired">Sample licence expires before return</option>
+                }
+              </select>
+            </label>
+            <label class="check"><input type="checkbox" [checked]="safetyAccepted()" (change)="safetyAccepted.set(!safetyAccepted())" /> I acknowledge the safety requirements for the selected vehicle.</label>
+          }
+          @case (3) {
+            <dl>
+              <dt>Daily price</dt><dd>{{ listing.currency }} {{ listing.price_per_day | number:'1.0-2' }}</dd>
+              <dt>Duration</dt><dd>{{ checkedDates()?.days }} billable day(s)</dd>
+              <dt>Additional charges</dt><dd>Unavailable in preview.</dd>
+              <dt>Deposit</dt><dd>No deposit amount provided by the sample listing.</dd>
+              <dt>Estimated rental</dt><dd><strong>{{ listing.currency }} {{ estimate() | number:'1.0-2' }}</strong></dd>
+            </dl>
+            <p>This estimate is the sample daily rate multiplied by billable days. A real booking total would come from the server.</p>
+          }
+          @case (4) {
+            <dl>
+              <dt>Vehicle</dt><dd>{{ listing.vehicle_name }}</dd>
+              <dt>Pickup</dt><dd>{{ checkedDates()?.dates?.pickup_at | date:'medium':'+0530' }} · Sample meetup in {{ listing.city }}</dd>
+              <dt>Return</dt><dd>{{ checkedDates()?.dates?.return_at | date:'medium':'+0530' }} · Same sample meetup</dd>
+              <dt>Traveler</dt><dd>{{ traveler }} · Sample profile</dd>
+              <dt>Price</dt><dd>{{ checkedDates()?.days }} × {{ listing.currency }} {{ listing.price_per_day | number:'1.0-2' }} = <strong>{{ listing.currency }} {{ estimate() | number:'1.0-2' }} estimated</strong></dd>
+              <dt>Deposit and extras</dt><dd>Unavailable in preview.</dd>
+            </dl>
+            <div class="edit-actions">
+              <button class="outline" type="button" (click)="edit(0)">Edit dates</button>
+              <button class="outline" type="button" (click)="edit(1)">Edit pickup &amp; return</button>
+              <button class="outline" type="button" (click)="edit(2)">Edit requirements</button>
+            </div>
+            <label class="check"><input type="checkbox" [checked]="termsAccepted()" (change)="termsAccepted.set(!termsAccepted())" /> I understand these sample terms represent a simulation only.</label>
+          }
+          @case (5) {
+            @if (confirmation(); as booking) {
+              <p class="confirmation" role="status"><strong>Simulation complete</strong> · {{ booking.reference }}</p>
+              <p>{{ booking.vehicle.vehicle_name }} was added to My Rentals until you reload or leave the app. No reservation, charge, or vehicle hold was created.</p>
+              <a class="primary" [routerLink]="['/bicycles/my-rentals', booking.reference]" [queryParams]="{ preview: 1 }">View simulated booking</a>
+            }
+          }
+        }
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        @if (step() < 5) {
+          <div class="booking-actions">
+            @if (step() > 0) { <button class="outline" type="button" (click)="edit(step() - 1)">Previous step</button> }
+            @if (step() === 4) {
+              <button class="primary" type="button" (click)="confirm($event)">Confirm simulation</button>
+            } @else {
+              <button class="primary" type="button" (click)="continue()">Continue</button>
+            }
+          </div>
+        }
+      </section>
+      <aside class="panel booking-summary" aria-label="Booking summary">
+        <app-rental-image [src]="listing.primary_image_url" [alt]="'Illustrative photo for ' + listing.vehicle_name" />
+        <h2>{{ listing.vehicle_name }}</h2>
+        <p>{{ listing.city }} · Sample listing</p>
+        <p class="price">{{ listing.currency }} {{ listing.price_per_day | number:'1.0-2' }} <span>/ day</span></p>
+        @if (checkedDates()) {
+          <p>Estimated rental · {{ listing.currency }} {{ estimate() | number:'1.0-2' }}</p>
+        }
+      </aside>
+    </div>
+  } @else {
+    <p class="state" role="alert">This sample vehicle is unavailable.</p>
+    <a class="primary" routerLink="/bicycles" [queryParams]="{ preview: 1 }">Browse sample rentals</a>
+  }
+</main>

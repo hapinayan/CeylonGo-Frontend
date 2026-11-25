@@ -1,0 +1,6 @@
+@use './rental-ui';
+.dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-bottom: .75rem; }
+label { display: grid; gap: .25rem; min-width: 0; font-weight: 650; }
+input { width: 100%; }
+.hint { color: #475569; }
+.error { color: #9f1239; }

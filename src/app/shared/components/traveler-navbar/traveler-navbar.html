@@ -1,4 +1,4 @@
-<header class="navbar-header" [class.is-scrolled]="isScrolled()">
+<header class="navbar-header" [class.is-scrolled]="isScrolled()" [class.rental-nav]="isRentalRoute()">
   <div class="navbar-container">
 
     <!-- BRAND LOGO -->
@@ -35,6 +35,9 @@
             Experiences
           </a>
         </li>
+        @if (isRentalRoute()) {
+          <li><a routerLink="/bicycles" queryParamsHandling="preserve" class="nav-link active" aria-current="location">Rentals</a></li>
+        }
         <li>
           <a
             href="#community"
@@ -340,6 +343,9 @@
       <nav class="mobile-nav-links">
         <a href="#home" class="mobile-link" [class.active]="activeSection() === 'home'" (click)="onNavClick('home', $event)">Home</a>
         <a href="/experiences" class="mobile-link" [class.active]="activeSection() === 'experiences'" (click)="onNavClick('experiences', $event)">Experiences</a>
+        @if (isRentalRoute()) {
+          <a routerLink="/bicycles" queryParamsHandling="preserve" class="mobile-link active" aria-current="location" (click)="closeMobileMenu()">Rentals</a>
+        }
         <a href="#community" class="mobile-link" [class.active]="activeSection() === 'community'" (click)="onNavClick('community', $event)">Community</a>
         <a href="#ai-planner" class="mobile-link" [class.active]="activeSection() === 'ai-planner'" (click)="onNavClick('ai-planner', $event)">AI Trip Planner</a>
         <a href="#contact" class="mobile-link" [class.active]="activeSection() === 'contact'" (click)="onNavClick('contact', $event)">Contact Us</a>
