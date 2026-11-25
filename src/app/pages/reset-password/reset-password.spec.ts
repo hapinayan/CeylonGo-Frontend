@@ -3,9 +3,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, TimeoutError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ResetPassword } from './reset-password';
 
@@ -16,6 +17,7 @@ describe('ResetPassword', () => {
   let component: ResetPassword;
   let fixture: ComponentFixture<ResetPassword>;
   let authService: AuthService;
+  let authModalService: AuthModalService;
   let router: Router;
 
   const mockToken = 'valid-token-abc-123';
@@ -25,9 +27,11 @@ describe('ResetPassword', () => {
       imports: [ResetPassword],
       providers: [
         AuthService,
+        AuthModalService,
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
+          { path: '', component: DummyComponent },
           { path: 'login', component: DummyComponent },
           { path: 'reset-success', component: DummyComponent },
           { path: 'forgot-password', component: DummyComponent },
@@ -41,12 +45,14 @@ describe('ResetPassword', () => {
                 get: (key: string) => (key === 'token' ? mockToken : null),
               },
             },
+            queryParams: of({}),
           },
         },
       ],
     }).compileComponents();
 
     authService = TestBed.inject(AuthService);
+    authModalService = TestBed.inject(AuthModalService);
     router = TestBed.inject(Router);
   });
 
@@ -62,9 +68,10 @@ describe('ResetPassword', () => {
     expect(component.isTokenValid).toBe(true);
     expect(component.email).toBe('traveler@ceylongo.com');
     expect(component.token).toBe(mockToken);
+    expect(component.isNetworkOrServerError).toBe(false);
   });
 
-  it('should handle token verification failure on init', () => {
+  it('should handle token verification failure on init with 400', () => {
     vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
       throwError(() => ({ status: 400, error: { detail: 'Token expired' } }))
     );
@@ -75,6 +82,76 @@ describe('ResetPassword', () => {
 
     expect(component.isTokenValid).toBe(false);
     expect(component.errorMessage).toContain('Token expired');
+    expect(component.isNetworkOrServerError).toBe(false);
+  });
+
+  it('should handle network error (status 0) and set isNetworkOrServerError = true', () => {
+    vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
+      throwError(() => ({ status: 0, error: null }))
+    );
+
+    fixture = TestBed.createComponent(ResetPassword);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.isTokenValid).toBe(false);
+    expect(component.isNetworkOrServerError).toBe(true);
+    expect(component.errorMessage).toContain('Unable to connect to CeylonGo server');
+  });
+
+  it('should handle timeout error and set isNetworkOrServerError = true', () => {
+    const timeoutErr = new TimeoutError();
+    vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
+      throwError(() => timeoutErr)
+    );
+
+    fixture = TestBed.createComponent(ResetPassword);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.isTokenValid).toBe(false);
+    expect(component.isNetworkOrServerError).toBe(true);
+    expect(component.errorMessage).toContain('timed out');
+  });
+
+  it('should handle 422 validation error with array detail', () => {
+    vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
+      throwError(() => ({
+        status: 422,
+        error: {
+          detail: [{ loc: ['query', 'token'], msg: 'String should have at least 10 characters' }],
+        },
+      }))
+    );
+
+    fixture = TestBed.createComponent(ResetPassword);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.isTokenValid).toBe(false);
+    expect(component.errorMessage).toBe('String should have at least 10 characters');
+    expect(component.isNetworkOrServerError).toBe(false);
+  });
+
+  it('should retry verification on retryVerification()', () => {
+    const spy = vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
+      throwError(() => ({ status: 0 }))
+    );
+
+    fixture = TestBed.createComponent(ResetPassword);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    spy.mockReturnValue(
+      of({ valid: true, email: 'traveler@ceylongo.com', message: 'Token is valid' })
+    );
+
+    component.retryVerification();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(component.isTokenValid).toBe(true);
+    expect(component.isNetworkOrServerError).toBe(false);
   });
 
   it('should validate password matching', () => {
@@ -116,7 +193,8 @@ describe('ResetPassword', () => {
     component.resetPassword();
 
     expect(navSpy).toHaveBeenCalledWith(['/reset-success'], {
-      state: { email: 'traveler@ceylongo.com' },
+      state: { email: 'traveler@ceylongo.com', verified: true },
+      queryParams: { email: 'traveler@ceylongo.com' },
     });
   });
 
@@ -138,68 +216,53 @@ describe('ResetPassword', () => {
     expect(component.showConfirmPassword).toBe(true);
   });
 
-  it('should navigate back to /login with email query param', () => {
+  it('should open auth modal and navigate to / on backToLogin()', () => {
     vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
       of({ valid: true, email: 'traveler@ceylongo.com', message: 'Token is valid' })
     );
-    const navSpy = vi.spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(ResetPassword);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
+    const modalSpy = vi.spyOn(authModalService, 'open');
+    const navSpy = vi.spyOn(router, 'navigate');
     component.backToLogin();
-    expect(navSpy).toHaveBeenCalledWith(['/login'], {
-      queryParams: { email: 'traveler@ceylongo.com' },
-    });
+    expect(modalSpy).toHaveBeenCalledWith('login');
+    expect(authModalService.userEmail()).toBe('traveler@ceylongo.com');
+    expect(navSpy).toHaveBeenCalledWith(['/']);
   });
 
-  it('should navigate to /forgot-password on requestNewResetLink()', () => {
+  it('should navigate to / on closeModal()', () => {
     vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
       of({ valid: true, email: 'traveler@ceylongo.com', message: 'Token is valid' })
     );
-    const navSpy = vi.spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(ResetPassword);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.requestNewResetLink();
-    expect(navSpy).toHaveBeenCalledWith(['/forgot-password'], {
-      queryParams: { email: 'traveler@ceylongo.com' },
-    });
-  });
-
-  it('should navigate to /auth on closeModal()', () => {
-    vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
-      of({ valid: true, email: 'traveler@ceylongo.com', message: 'Token is valid' })
-    );
     const navSpy = vi.spyOn(router, 'navigate');
-
-    fixture = TestBed.createComponent(ResetPassword);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
     component.closeModal();
-    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+    expect(navSpy).toHaveBeenCalledWith(['/']);
   });
 
-  it('should close modal on backdrop click and ignore modal interior clicks', () => {
+  it('should handle backdrop clicks appropriately', () => {
     vi.spyOn(authService, 'verifyResetToken').mockReturnValue(
       of({ valid: true, email: 'traveler@ceylongo.com', message: 'Token is valid' })
     );
-    const navSpy = vi.spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(ResetPassword);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
+    const navSpy = vi.spyOn(router, 'navigate');
     const backdropEvent = {
-      target: { classList: { contains: (cls: string) => cls === 'reset-page' } },
+      target: { classList: { contains: (c: string) => c === 'reset-page' } },
     } as unknown as MouseEvent;
 
     component.onBackdropClick(backdropEvent);
-    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+    expect(navSpy).toHaveBeenCalledWith(['/']);
 
     navSpy.mockClear();
     const modalEvent = {

@@ -198,7 +198,7 @@ export class TravelerNavbar implements OnInit {
 
   navigateToBecomeAHost(): void {
     this.closeMobileMenu();
-    this.router.navigate(['/provider/register']);
+    this.router.navigate(['/provider']);
   }
 
   onNavClick(sectionId: string, event?: Event): void {
@@ -236,10 +236,11 @@ export class TravelerNavbar implements OnInit {
     }
 
     this.activeSection.set(sectionId);
-    if (this.router.url.startsWith('/experiences') || (this.router.url !== '/' && this.router.url !== '/traveler/home')) {
-      this.router.navigate(['/'], { fragment: sectionId });
+    const targetElementId = sectionId === 'community' ? 'travel-community' : sectionId;
+    if (this.router.url !== '/' && this.router.url !== '' && this.router.url !== '/traveler/home') {
+      this.router.navigate(['/'], { fragment: targetElementId });
     } else {
-      const element = document.getElementById(sectionId);
+      const element = document.getElementById(targetElementId);
       if (element && typeof element.scrollIntoView === 'function') {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }

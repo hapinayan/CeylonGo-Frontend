@@ -35,15 +35,11 @@ describe('TravelerAuthModal', () => {
       ),
       register: vi.fn().mockReturnValue(
         of({
-          message: 'Success',
-          user: {
-            id: 2,
-            full_name: 'New Traveler',
-            email: 'new@ceylongo.com',
-            role: 'traveler',
-            is_active: true,
-            created_at: '',
-          },
+          message: 'Verification code sent',
+          email: 'hapinayan017@gmail.com',
+          registration_id: 'reg-challenge-xyz-123',
+          expires_in: 300,
+          resend_after: 60,
         })
       ),
       loginWithGoogle: vi.fn().mockReturnValue(
@@ -57,6 +53,30 @@ describe('TravelerAuthModal', () => {
       ),
       resetPassword: vi.fn().mockReturnValue(
         of({ message: 'Password successfully updated' })
+      ),
+      verifyEmail: vi.fn().mockReturnValue(
+        of({ message: 'Email verified. You can now log in.' })
+      ),
+      resendEmailOtp: vi.fn().mockReturnValue(
+        of({
+          message: 'Verification code sent',
+          email: 'traveler@ceylongo.com',
+          registration_id: 'reg-challenge-new-456',
+          expires_in: 300,
+          resend_after: 60,
+        })
+      ),
+      verifyOtp: vi.fn().mockReturnValue(
+        of({ message: 'Email verified. You can now log in.' })
+      ),
+      resendOtp: vi.fn().mockReturnValue(
+        of({
+          message: 'Verification code sent',
+          email: 'traveler@ceylongo.com',
+          registration_id: 'reg-challenge-new-456',
+          expires_in: 300,
+          resend_after: 60,
+        })
       ),
       logout: vi.fn(),
     };
@@ -269,7 +289,8 @@ describe('TravelerAuthModal', () => {
       expect(passwordInput.type).toBe('password');
     });
 
-    it('should transition to forgot-password popup when clicking Forgot password?', () => {
+    it('should close the modal and navigate to /forgot-password with email when clicking Forgot password?', () => {
+      const navSpy = vi.spyOn(router, 'navigate');
       const forgotBtn = fixture.nativeElement.querySelector('.forgot-link-btn') as HTMLButtonElement;
       expect(forgotBtn).toBeTruthy();
       expect(forgotBtn.textContent?.trim()).toBe('Forgot password?');
@@ -277,8 +298,23 @@ describe('TravelerAuthModal', () => {
       forgotBtn.click();
       fixture.detectChanges();
 
-      expect(modalService.currentStep()).toBe('forgot-password');
-      expect(modalService.userEmail()).toBe('hapinayan017@gmail.com');
+      expect(modalService.isOpen()).toBe(false);
+      expect(navSpy).toHaveBeenCalledWith(['/forgot-password'], {
+        queryParams: { email: 'hapinayan017@gmail.com' },
+      });
+    });
+
+    it('should navigate to /forgot-password without queryParams if email is empty', () => {
+      modalService.userEmail.set('');
+      component.emailControl.setValue('');
+      const navSpy = vi.spyOn(router, 'navigate');
+      const forgotBtn = fixture.nativeElement.querySelector('.forgot-link-btn') as HTMLButtonElement;
+
+      forgotBtn.click();
+      fixture.detectChanges();
+
+      expect(modalService.isOpen()).toBe(false);
+      expect(navSpy).toHaveBeenCalledWith(['/forgot-password']);
     });
 
     it('should render Log in button and bottom switch link to Create account', () => {
@@ -438,8 +474,7 @@ describe('TravelerAuthModal', () => {
       expect(error?.textContent).toContain('Passwords do not match');
     });
 
-    it('should exclude confirmPassword from backend register payload', () => {
-      vi.useFakeTimers();
+    it('should exclude confirmPassword from backend register payload and transition to verify-email step with challenge ID', () => {
       component.registerFullNameControl.setValue('Hapinayan Perera');
       component.registerPasswordControl.setValue('SecurePass@123');
       component.registerConfirmPasswordControl.setValue('SecurePass@123');
@@ -453,30 +488,11 @@ describe('TravelerAuthModal', () => {
         password: 'SecurePass@123',
       });
 
-      expect(authServiceSpy.login).toHaveBeenCalledWith({
-        email: 'hapinayan017@gmail.com',
-        password: 'SecurePass@123',
-      });
-
-      vi.advanceTimersByTime(800);
-      expect(modalService.isOpen()).toBe(false);
-      expect(router.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should fallback to login step when post-registration auto-login fails', () => {
-      authServiceSpy.login.mockReturnValue(
-        throwError(() => ({ status: 401, error: { detail: 'Auto login failed' } }))
-      );
-
-      component.registerFullNameControl.setValue('Hapinayan Perera');
-      component.registerPasswordControl.setValue('SecurePass@123');
-      component.registerConfirmPasswordControl.setValue('SecurePass@123');
-
-      component.onRegisterSubmit();
-      fixture.detectChanges();
-
-      expect(modalService.currentStep()).toBe('login');
-      expect(component.successMessage()).toContain('Account created successfully! Please log in with your password.');
+      expect(modalService.currentStep()).toBe('verify-email');
+      expect(modalService.userEmail()).toBe('hapinayan017@gmail.com');
+      expect(modalService.registrationId()).toBe('reg-challenge-xyz-123');
+      expect(component.resendOtpCooldown()).toBe(60);
+      expect(component.otpExpiresIn()).toBe(300);
     });
 
     it('should handle registration conflict error (409)', () => {
@@ -844,6 +860,227 @@ describe('TravelerAuthModal', () => {
       vi.advanceTimersByTime(800);
       expect(modalService.isOpen()).toBe(false);
       expect(router.navigate).toHaveBeenCalledWith(['/']);
+    });
+  });
+
+  describe('Email OTP Verification Step', () => {
+    beforeEach(() => {
+      modalService.open('register');
+      modalService.setStep('verify-email', 'traveler@ceylongo.com');
+      modalService.registrationId.set('reg-challenge-xyz-123');
+      fixture.detectChanges();
+    });
+
+    it('should display the verify email step with email address', () => {
+      const heading = fixture.nativeElement.querySelector('.modal-title');
+      expect(heading?.textContent).toContain('Verify your email');
+
+      const emailText = fixture.nativeElement.querySelector('.otp-email-text');
+      expect(emailText?.textContent).toContain('traveler@ceylongo.com');
+
+      const inputs = fixture.nativeElement.querySelectorAll('.otp-digit-input');
+      expect(inputs.length).toBe(6);
+    });
+
+    it('should accept numeric input and auto-advance focus', () => {
+      const input0 = { value: '', focus: vi.fn() } as any;
+      const input1 = { value: '', focus: vi.fn() } as any;
+      vi.spyOn<any, any>(component, 'getOtpInputElement').mockImplementation((...args: any[]) => {
+        const idx = args[0];
+        if (idx === 0) return input0;
+        if (idx === 1) return input1;
+        return null;
+      });
+
+      const event = { target: { value: '5' } } as unknown as Event;
+      component.onOtpInput(event, 0);
+
+      expect(component.otpDigits()[0]).toBe('5');
+      expect(input1.focus).toHaveBeenCalled();
+    });
+
+    it('should handle backspace navigation to previous input', () => {
+      const prevInput = { value: '4', focus: vi.fn() } as any;
+      vi.spyOn<any, any>(component, 'getOtpInputElement').mockImplementation((...args: any[]) => {
+        const idx = args[0];
+        if (idx === 1) return prevInput;
+        return null;
+      });
+
+      component.otpDigits.set(['1', '4', '', '', '', '']);
+      const event = { key: 'Backspace', preventDefault: vi.fn() } as unknown as KeyboardEvent;
+
+      component.onOtpKeyDown(event, 2);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.otpDigits()[1]).toBe('');
+      expect(prevInput.value).toBe('');
+      expect(prevInput.focus).toHaveBeenCalled();
+    });
+
+    it('should handle pasting a complete 6-digit OTP code', () => {
+      const inputs = Array.from({ length: 6 }, () => ({ value: '', focus: vi.fn() }));
+      vi.spyOn<any, any>(component, 'getOtpInputElement').mockImplementation((...args: any[]) => inputs[args[0]]);
+
+      const pasteEvent = {
+        preventDefault: vi.fn(),
+        clipboardData: { getData: () => '049201' },
+      } as unknown as ClipboardEvent;
+
+      component.onOtpPaste(pasteEvent);
+
+      expect(pasteEvent.preventDefault).toHaveBeenCalled();
+      expect(component.otpDigits()).toEqual(['0', '4', '9', '2', '0', '1']);
+      expect(component.isOtpComplete).toBe(true);
+    });
+
+    it('should disable verify button until all 6 digits are entered', () => {
+      component.otpDigits.set(['1', '2', '3', '', '', '']);
+      expect(component.isOtpComplete).toBe(false);
+
+      component.otpDigits.set(['0', '1', '2', '3', '4', '5']);
+      expect(component.isOtpComplete).toBe(true);
+    });
+
+    it('should submit verification with registration_id and preserve leading zeroes in OTP string', () => {
+      component.otpDigits.set(['0', '1', '2', '3', '4', '5']);
+
+      component.onVerifyOtpSubmit();
+      fixture.detectChanges();
+
+      expect(authServiceSpy.verifyEmail).toHaveBeenCalledWith({
+        email: 'traveler@ceylongo.com',
+        registration_id: 'reg-challenge-xyz-123',
+        otp: '012345',
+      });
+      expect(modalService.currentStep()).toBe('register-success');
+      expect(modalService.registrationId()).toBeNull();
+    });
+
+    it('should display error message on invalid/expired OTP (400)', () => {
+      authServiceSpy.verifyEmail.mockReturnValue(
+        throwError(() => ({ status: 400, error: { detail: 'Invalid or expired OTP' } }))
+      );
+
+      component.otpDigits.set(['9', '9', '9', '9', '9', '9']);
+      component.onVerifyOtpSubmit();
+      fixture.detectChanges();
+
+      expect(component.errorMessage()).toContain('Invalid or expired OTP');
+      expect(modalService.currentStep()).toBe('verify-email');
+    });
+
+    it('should prompt to restart registration on expired or invalid challenge session', () => {
+      authServiceSpy.verifyEmail.mockReturnValue(
+        throwError(() => ({ status: 400, error: { detail: 'Registration challenge expired. Please restart.' } }))
+      );
+
+      component.otpDigits.set(['1', '2', '3', '4', '5', '6']);
+      component.onVerifyOtpSubmit();
+      fixture.detectChanges();
+
+      expect(component.errorMessage()).toContain('expired');
+      expect(component.showRestartRegistration()).toBe(true);
+
+      const restartBtn = fixture.nativeElement.querySelector('.btn-restart-registration');
+      expect(restartBtn).toBeTruthy();
+
+      component.restartRegistration();
+      fixture.detectChanges();
+
+      expect(modalService.currentStep()).toBe('register');
+      expect(modalService.registrationId()).toBeNull();
+      expect(component.showRestartRegistration()).toBe(false);
+    });
+
+    it('should prompt to restart registration when registration_id is missing', () => {
+      modalService.registrationId.set(null);
+      component.otpDigits.set(['1', '2', '3', '4', '5', '6']);
+
+      component.onVerifyOtpSubmit();
+      fixture.detectChanges();
+
+      expect(component.errorMessage()).toContain('expired or missing');
+      expect(component.showRestartRegistration()).toBe(true);
+      expect(authServiceSpy.verifyEmail).not.toHaveBeenCalled();
+    });
+
+    it('should handle network error (0) during OTP verification', () => {
+      authServiceSpy.verifyEmail.mockReturnValue(
+        throwError(() => ({ status: 0 }))
+      );
+
+      component.otpDigits.set(['1', '2', '3', '4', '5', '6']);
+      component.onVerifyOtpSubmit();
+      fixture.detectChanges();
+
+      expect(component.errorMessage()).toContain('Unable to connect to CeylonGo server');
+    });
+
+    it('should resend OTP code with registration_id and update stored registration_id', () => {
+      component.resendOtpCooldown.set(0);
+
+      component.onResendOtp();
+      fixture.detectChanges();
+
+      expect(authServiceSpy.resendEmailOtp).toHaveBeenCalledWith({
+        email: 'traveler@ceylongo.com',
+        registration_id: 'reg-challenge-xyz-123',
+      });
+      expect(modalService.registrationId()).toBe('reg-challenge-new-456');
+      expect(component.resendOtpCooldown()).toBe(60);
+      expect(component.otpExpiresIn()).toBe(300);
+      expect(component.successMessage()).toContain('A new verification code has been sent');
+    });
+
+    it('should respect Retry-After header on 429 rate limit during resend', () => {
+      component.resendOtpCooldown.set(0);
+      authServiceSpy.resendEmailOtp.mockReturnValue(
+        throwError(() => ({
+          status: 429,
+          headers: { get: (name: string) => (name.toLowerCase() === 'retry-after' ? '45' : null) },
+          error: { detail: 'Too many requests' },
+        }))
+      );
+
+      component.onResendOtp();
+      fixture.detectChanges();
+
+      expect(component.resendOtpCooldown()).toBe(45);
+      expect(component.errorMessage()).toContain('45s');
+    });
+
+    it('should navigate back to entry and clear challenge state on onChangeEmail()', () => {
+      component.onChangeEmail();
+      fixture.detectChanges();
+
+      expect(modalService.currentStep()).toBe('entry');
+      expect(modalService.registrationId()).toBeNull();
+    });
+
+    it('should transition to login step from register-success', () => {
+      modalService.setStep('register-success', 'traveler@ceylongo.com');
+      fixture.detectChanges();
+
+      component.onContinueToLoginAfterVerification();
+      fixture.detectChanges();
+
+      expect(modalService.currentStep()).toBe('login');
+      expect(modalService.userEmail()).toBe('traveler@ceylongo.com');
+    });
+
+    it('should display standard error message when login fails with 403', () => {
+      authServiceSpy.login.mockReturnValue(
+        throwError(() => ({ status: 403, error: { detail: 'Account is not activated.' } }))
+      );
+
+      modalService.setStep('login', 'traveler@ceylongo.com');
+      component.loginPasswordControl.setValue('Password@123');
+
+      component.onLoginSubmit();
+      fixture.detectChanges();
+
+      expect(component.errorMessage()).toContain('Account is not activated.');
     });
   });
 });

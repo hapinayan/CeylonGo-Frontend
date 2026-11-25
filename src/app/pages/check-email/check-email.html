@@ -1,10 +1,16 @@
-<div class="status-page" (click)="onBackdropClick($event)">
-  <div class="status-card" role="dialog" aria-modal="true" aria-labelledby="check-email-title">
+<!-- TRAVELER HOMEPAGE UNDERLAY (BLURRED IN BACKGROUND) -->
+<div class="homepage-underlay" aria-hidden="true" tabindex="-1">
+  <app-traveler-home></app-traveler-home>
+</div>
 
-    <!-- CLOSE BUTTON -->
+<!-- AUTH MODAL BACKDROP (DARK OVERLAY & BLUR) -->
+<div class="auth-modal-backdrop status-page" (click)="onBackdropClick($event)">
+  <div class="auth-modal-card status-card" role="dialog" aria-modal="true" aria-labelledby="check-email-title">
+
+    <!-- CLOSE (X) BUTTON IN TOP-RIGHT -->
     <button
       type="button"
-      class="close-btn"
+      class="modal-close-btn close-btn"
       aria-label="Close modal"
       (click)="closeModal()"
     >
@@ -24,21 +30,21 @@
       </svg>
     </button>
 
-    <!-- CEYLONGO LOGO -->
+    <!-- CEYLONGO BRAND LOGO -->
     <div class="modal-logo-wrapper">
       <img
         src="/images/ceylongo-brand-logo.png"
         alt="CeylonGo - Discover Local. Feel at Home."
-        class="modal-logo"
+        class="modal-logo-img modal-logo"
       />
     </div>
 
-    <!-- EMAIL ICON IN LIGHT ORANGE CIRCULAR BACKGROUND -->
-    <div class="status-icon-wrapper" aria-hidden="true">
+    <!-- BLUE EMAIL OUTLINE ICON IN LIGHT-BLUE CIRCULAR BACKGROUND -->
+    <div class="recovery-icon-badge status-icon-wrapper" aria-hidden="true">
       <div class="status-icon">
         <svg
-          width="26"
-          height="26"
+          width="38"
+          height="38"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -54,8 +60,8 @@
 
     <!-- HEADING & DESCRIPTION -->
     <div class="modal-header">
-      <h1 id="check-email-title">Check Your Email</h1>
-      <p class="subtitle">
+      <h1 id="check-email-title" class="modal-title">Check Your Email</h1>
+      <p class="modal-subtitle subtitle">
         If an account exists for this email address, we've sent a password reset link.
       </p>
     </div>
@@ -67,30 +73,31 @@
       </div>
     }
 
-    <!-- ADDITIONAL INSTRUCTIONS -->
+    <!-- INBOX AND SPAM FOLDER INSTRUCTIONS -->
     <p class="instruction-text">
       Please check your inbox and spam folder. Open the link in the email to reset your password.
     </p>
 
-    <!-- ACTION BUTTONS -->
+    <!-- ACTIONS GROUP -->
     <div class="actions-group">
-      <!-- PRIMARY BUTTON: OPEN EMAIL APP -->
+      <!-- PRIMARY BUTTON (SOLID BLUE #2563EB): OPEN EMAIL APP -->
       <a
         href="mailto:"
-        class="primary-btn"
+        class="btn-primary-blue primary-btn"
         (click)="openEmailApp()"
       >
         Open Email App
       </a>
 
-      <!-- SECONDARY NAVIGATION: BACK TO SIGN IN -->
-      <div class="bottom-nav">
+      <!-- BOTTOM NAVIGATION: BACK TO SIGN IN -->
+      <div class="auth-bottom-switch bottom-nav">
+        Remember your password?
         <button
           type="button"
-          class="back-link"
+          class="switch-auth-link back-link"
           (click)="backToLogin()"
         >
-          &larr; Back to Sign In
+          Back to Sign In
         </button>
       </div>
     </div>

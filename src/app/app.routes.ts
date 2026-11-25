@@ -53,6 +53,21 @@ export const routes: Routes = [
     redirectTo: 'homestays',
     pathMatch: 'full'
   },
+  {
+    path: 'stays',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+  {
+    path: 'bike-rentals',
+    redirectTo: 'bicycles',
+    pathMatch: 'full'
+  },
+  {
+    path: 'rentals',
+    redirectTo: 'bicycles',
+    pathMatch: 'full'
+  },
 
   // LEGACY TRAVELER HOMEPAGE REDIRECT
   {

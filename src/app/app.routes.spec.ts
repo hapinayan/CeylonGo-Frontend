@@ -27,9 +27,9 @@ describe('App Routing Configuration', () => {
     router = TestBed.inject(Router);
   });
 
-  it('should redirect root path ("") to "/homestays"', async () => {
+  it('should navigate to root path ("") and load unified homepage', async () => {
     await router.navigateByUrl('');
-    expect(router.url).toBe('/homestays');
+    expect(router.url).toBe('/');
   });
 
   it('should navigate directly to "/homestays" without authentication requirement', async () => {
@@ -42,12 +42,23 @@ describe('App Routing Configuration', () => {
     expect(homestayRoute?.canActivate).toBeUndefined(); // No blocking guards
   });
 
-  it('should redirect alias paths "/homestay" and "/explore" to "/homestays"', async () => {
+  it('should redirect alias paths "/homestay", "/explore", and "/stays" to "/homestays"', async () => {
     await router.navigateByUrl('/homestay');
     expect(router.url).toBe('/homestays');
 
     await router.navigateByUrl('/explore');
     expect(router.url).toBe('/homestays');
+
+    await router.navigateByUrl('/stays');
+    expect(router.url).toBe('/homestays');
+  });
+
+  it('should redirect alias paths "/bike-rentals" and "/rentals" to "/bicycles"', async () => {
+    await router.navigateByUrl('/bike-rentals');
+    expect(router.url).toBe('/bicycles');
+
+    await router.navigateByUrl('/rentals');
+    expect(router.url).toBe('/bicycles');
   });
 
   it('should navigate to "/auth" and resolve AuthEntry component', async () => {

@@ -13,9 +13,17 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResendEmailOtpRequest,
+  ResendEmailOtpResponse,
+  ResendOtpRequest,
+  ResendOtpResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   User,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
+  VerifyOtpRequest,
+  VerifyOtpResponse,
   VerifyResetTokenResponse,
 } from '../models/auth.models';
 
@@ -125,6 +133,42 @@ export class AuthService {
       `${this.authUrl}/reset-password`,
       payload
     );
+  }
+
+  /**
+   * Verify traveler email with 6-digit OTP code and registration challenge ID.
+   * Endpoint: POST /api/v1/auth/verify-email
+   */
+  verifyEmail(payload: VerifyEmailRequest): Observable<VerifyEmailResponse> {
+    return this.http.post<VerifyEmailResponse>(
+      `${this.authUrl}/verify-email`,
+      payload
+    );
+  }
+
+  /**
+   * Resend verification OTP code to traveler's email with registration challenge ID.
+   * Endpoint: POST /api/v1/auth/resend-email-otp
+   */
+  resendEmailOtp(payload: ResendEmailOtpRequest): Observable<ResendEmailOtpResponse> {
+    return this.http.post<ResendEmailOtpResponse>(
+      `${this.authUrl}/resend-email-otp`,
+      payload
+    );
+  }
+
+  /**
+   * Alias for verifyEmail
+   */
+  verifyOtp(payload: VerifyEmailRequest): Observable<VerifyEmailResponse> {
+    return this.verifyEmail(payload);
+  }
+
+  /**
+   * Alias for resendEmailOtp
+   */
+  resendOtp(payload: ResendEmailOtpRequest): Observable<ResendEmailOtpResponse> {
+    return this.resendEmailOtp(payload);
   }
 
   /**

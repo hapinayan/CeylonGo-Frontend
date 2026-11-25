@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
   HomestayCategory,
@@ -21,6 +21,7 @@ import { HomestayService } from '../../core/services/homestay.service';
 export class HomestayDiscovery implements OnInit {
   private readonly homestayService = inject(HomestayService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   @ViewChild('scrollRegion') scrollRegion?: ElementRef<HTMLElement>;
 
@@ -88,6 +89,16 @@ export class HomestayDiscovery implements OnInit {
 
   ngOnInit(): void {
     this.categories.set(this.homestayService.getCategories());
+    const qLocation =
+      this.route.snapshot.queryParamMap.get('location') ||
+      this.route.snapshot.queryParamMap.get('query');
+    if (qLocation) {
+      this.locationQuery.set(qLocation);
+    }
+    const qCategory = this.route.snapshot.queryParamMap.get('category');
+    if (qCategory) {
+      this.selectedCategory.set(qCategory as HomestayCategory);
+    }
     this.fetchHomestays();
   }
 

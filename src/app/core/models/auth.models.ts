@@ -24,8 +24,49 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   message: string;
-  user: User;
+  email: string;
+  registration_id: string;
+  expires_in: number;
+  resend_after: number;
+  user?: User;
 }
+
+export interface RegistrationChallengeResponse {
+  message: string;
+  email: string;
+  registration_id: string;
+  expires_in: number;
+  resend_after: number;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  registration_id: string;
+  otp: string;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+}
+
+export interface ResendEmailOtpRequest {
+  email: string;
+  registration_id: string;
+}
+
+export interface ResendEmailOtpResponse {
+  message: string;
+  email: string;
+  registration_id: string;
+  expires_in: number;
+  resend_after: number;
+}
+
+// Aliases for compatibility
+export type VerifyOtpRequest = VerifyEmailRequest;
+export type VerifyOtpResponse = VerifyEmailResponse;
+export type ResendOtpRequest = ResendEmailOtpRequest;
+export type ResendOtpResponse = ResendEmailOtpResponse;
 
 export interface LoginRequest {
   email: string;

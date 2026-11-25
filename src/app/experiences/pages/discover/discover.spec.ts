@@ -158,7 +158,7 @@ describe('Experiences route and default catalog', () => {
     expect(routes.find(route => route.path === '')).toBeDefined();
     expect(routes.find(route => route.path === 'auth')?.component).toBeDefined();
     expect(routes.find(route => route.path === 'provider/dashboard')?.canActivate).toEqual([providerAuthGuard]);
-    expect(routes.find(route => route.path === '**')?.redirectTo).toBe('auth');
+    expect(routes.find(route => route.path === '**')?.redirectTo).toBe('homestays');
     const children = await routes[index].loadChildren?.();
     expect(children).toEqual([
       expect.objectContaining({ path: 'wishlist', loadComponent: expect.any(Function) }),

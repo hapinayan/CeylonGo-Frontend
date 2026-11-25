@@ -116,13 +116,39 @@ describe('ProviderAuthService', () => {
     req.flush({ detail: 'Rate limit exceeded' }, { status: 429, statusText: 'Too Many Requests' });
   });
 
-  it('should clear provider session on logout', () => {
+  it('should clear provider session on logout and call logout endpoint', () => {
     service.setSession('test-token', mockProviderUser);
     expect(service.isAuthenticated()).toBe(true);
 
     service.logout();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/providers/logout`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ message: 'Successfully logged out' });
+
     expect(service.getToken()).toBeNull();
     expect(service.getUser()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
+  });
+
+  it('should fetch provider profile with getProfile', () => {
+    service.setSession('test-token', mockProviderUser);
+
+    service.getProfile().subscribe((profile) => {
+      expect(profile.business_name).toBe('Ceylon Eco Tours');
+      expect(profile.verification_status).toBe('approved');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/providers/me`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      id: 1,
+      user_id: 10,
+      business_name: 'Ceylon Eco Tours',
+      phone: '0771234567',
+      district: 'Kandy',
+      verification_status: 'approved',
+      created_at: '2026-01-01T00:00:00Z',
+    });
   });
 });
