@@ -1,0 +1,42 @@
+<div class="dashboard-container">
+  <div class="dashboard-card">
+    <div class="header">
+      <div class="badge">Provider Portal</div>
+      <button (click)="onLogout()" class="btn-logout" type="button">Sign Out</button>
+    </div>
+
+    <div class="welcome-section">
+      <h1 class="title">Provider Dashboard</h1>
+      <p class="subtitle">
+        Welcome, <strong>{{ user()?.business_name || user()?.full_name || 'Service Provider' }}</strong>!
+      </p>
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>Account Status: {{ user()?.approval_status || 'Approved' | titlecase }}</span>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Business Name</span>
+        <span class="info-value">{{ user()?.business_name || '—' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Provider Type</span>
+        <span class="info-value">{{ user()?.provider_type || '—' | titlecase }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">District</span>
+        <span class="info-value">{{ user()?.district || '—' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Registered Email</span>
+        <span class="info-value">{{ user()?.email || '—' }}</span>
+      </div>
+    </div>
+
+    <div class="placeholder-notice">
+      <p>Your business account is active and verified. Comprehensive dashboard modules (Listings, Bookings, Analytics, and Workspace) are coming next.</p>
+    </div>
+  </div>
+</div>

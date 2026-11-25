@@ -1,0 +1,45 @@
+<article
+  class="testimonial-card"
+  [attr.aria-label]="'Testimonial by ' + testimonial().name"
+>
+  <div class="testimonial-header">
+    <div class="avatar-wrap">
+      <img
+        [src]="testimonial().avatar"
+        [alt]="testimonial().name + ' avatar'"
+        class="traveler-avatar"
+        loading="lazy"
+      />
+    </div>
+
+    <div class="meta-block">
+      <h3 class="traveler-name">{{ testimonial().name }}</h3>
+      <div
+        class="star-rating"
+        role="img"
+        [attr.aria-label]="testimonial().rating + ' out of 5 stars'"
+      >
+        @for (star of [1, 2, 3, 4, 5]; track star) {
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="#FF9F1C"
+            class="star-icon"
+            aria-hidden="true"
+          >
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="testimonial-body">
+    <p class="testimonial-quote">"{{ testimonial().comment }}"</p>
+  </div>
+
+  <div class="testimonial-footer">
+    <span class="demo-review-tag">Demo Traveler Story</span>
+  </div>
+</article>

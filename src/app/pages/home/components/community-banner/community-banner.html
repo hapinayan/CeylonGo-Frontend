@@ -1,0 +1,40 @@
+<aside id="community" class="community-banner-card" aria-labelledby="community-banner-title">
+  <div class="banner-content">
+    <div class="banner-badge" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    </div>
+
+    <h2 id="community-banner-title" class="banner-title">Join the CeylonGo Community</h2>
+
+    <p class="banner-description">
+      Connect with travelers, local hosts and experience real Sri Lankan hospitality.
+    </p>
+
+    <button
+      type="button"
+      class="btn-join-community"
+      (click)="onJoinCommunity($event)"
+      aria-label="Join CeylonGo Community"
+    >
+      <span>Join Community</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <div class="banner-image-wrap">
+    <img
+      src="/images/banners/local-community.webp"
+      alt="Travelers and local hosts connecting in Sri Lanka"
+      class="banner-community-img"
+      loading="lazy"
+    />
+  </div>
+</aside>

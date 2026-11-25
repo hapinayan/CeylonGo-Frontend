@@ -63,7 +63,24 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                },
+                {
+                  "glob": "*.webp",
+                  "input": "src/development-assets/experiences",
+                  "output": "/images/experiences/"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/app/experiences/services/catalog-provider.ts",
+                  "with": "src/app/experiences/services/catalog-provider.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

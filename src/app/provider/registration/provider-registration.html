@@ -1,4 +1,4 @@
-<div class="provider-registration-page">
+<div class="provider-registration-page" [attr.data-step]="stateService.currentStepId()">
   <!-- 1. TOP NAVBAR -->
   <header class="reg-navbar">
     <div class="navbar-inner">
@@ -7,30 +7,24 @@
         <a routerLink="/provider" class="logo-link" aria-label="CeylonGo Provider Portal Home">
           <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="brand-logo" />
         </a>
-        <span class="nav-divider" aria-hidden="true"></span>
-        <span class="portal-title">Provider Portal</span>
+        <span class="sr-only portal-title">Provider Portal</span>
       </div>
 
-      <!-- Right: Help & Back to Home -->
+      <!-- Right: Service Provider Registration -->
       <div class="nav-actions">
-        <a routerLink="/provider" fragment="help" class="nav-link help-link">
-          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        <div class="provider-reg-header-label" aria-label="Service Provider Registration">
+          <svg class="header-user-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9F1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <span>Help</span>
-        </a>
+          <span class="header-reg-text">Service Provider Registration</span>
+        </div>
 
-        <span class="nav-divider" aria-hidden="true"></span>
-
-        <a routerLink="/provider" class="nav-link home-link">
-          <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-          <span>Back to Home</span>
-        </a>
+        <div class="sr-only">
+          <a routerLink="/provider" fragment="help" class="nav-link help-link">Help</a>
+          <span class="nav-divider" aria-hidden="true"></span>
+          <a routerLink="/provider" class="nav-link home-link">Back to Home</a>
+        </div>
       </div>
     </div>
   </header>
@@ -52,6 +46,7 @@
           <li
             class="step-item"
             [class.active]="step.active"
+            [attr.aria-current]="step.active ? 'step' : null"
             [class.completed]="step.completed"
             [class.disabled]="step.disabled"
           >
@@ -152,7 +147,44 @@
                 <span class="benefit-text">Grow your local business</span>
               </li>
             </ul>
-          } @else if (stateService.currentStepId() === 'identity_verification' || stateService.currentStepId() === 'review_submit') {
+          } @else if (flowState === 'review_submit') {
+            <div class="illustration-wrapper review-illustration-wrapper" aria-hidden="true">
+              <svg viewBox="0 0 240 200" fill="none" class="review-illustration">
+                <!-- Circular backdrop -->
+                <circle cx="120" cy="100" r="85" fill="#EBF4FD" />
+                <!-- Clipboard board -->
+                <rect x="65" y="40" width="110" height="140" rx="10" fill="#FFFFFF" stroke="#082B5C" stroke-width="3" />
+                <!-- Clipboard clip top -->
+                <rect x="94" y="32" width="52" height="18" rx="5" fill="#082B5C" />
+                <circle cx="120" cy="32" r="10" fill="#082B5C" />
+                <circle cx="120" cy="32" r="4" fill="#FFFFFF" />
+                <!-- Checklist rows with orange badges -->
+                @for (y of [68, 98, 128]; track y) {
+                  <rect x="80" [attr.y]="y" width="18" height="18" rx="4" fill="#FF9F1C" />
+                  <polyline [attr.points]="'84,' + (y + 9) + ' 87,' + (y + 13) + ' 94,' + (y + 5)" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                  <rect x="106" [attr.y]="y + 3" width="54" height="4" rx="2" fill="#94A3B8" />
+                  <rect x="106" [attr.y]="y + 11" width="36" height="3" rx="1.5" fill="#CBD5E1" />
+                }
+                <!-- Bottom-right large orange approved check badge -->
+                <circle cx="165" cy="160" r="22" fill="#FF9F1C" stroke="#FFFFFF" stroke-width="2.5" />
+                <polyline points="155,160 162,167 175,153" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <h2 class="card-side-title">Review &amp; Submit</h2>
+            <p class="review-side-copy">Please review all your information before submitting your registration.</p>
+            <ul class="benefits-list">
+              @for (item of ['Verify your personal details', 'Confirm your business details', 'Check uploaded documents', 'Submit for admin approval']; track item) {
+                <li class="benefit-item">
+                  <span class="check-badge" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                  <span class="benefit-text">{{ item }}</span>
+                </li>
+              }
+            </ul>
+          } @else if (stateService.currentStepId() === 'identity_verification') {
             <!-- ID CARD & SECURITY SHIELD ILLUSTRATION FOR STEP 4 -->
             <div class="illustration-wrapper" aria-hidden="true">
               <svg class="business-illustration identity-illustration" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -194,7 +226,7 @@
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </span>
-                <span class="benefit-text">Upload your valid ID</span>
+                <span class="benefit-text">Upload your NIC</span>
               </li>
               <li class="benefit-item">
                 <span class="check-badge" aria-hidden="true">
@@ -320,7 +352,7 @@
           }
 
           <!-- SUCCESS ALERT BANNER -->
-          @if (successMessage()) {
+          @if (successMessage() && flowState !== 'identity_verification' && flowState !== 'review_submit') {
             <div class="alert-banner alert-success" role="status">
               <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -765,8 +797,8 @@
                   </div>
                 </div>
 
-                <!-- ROW 3: 3 COLUMNS (Nationality, Identity Document Type, Identity Number) -->
-                <div class="form-row row-3-cols">
+                <!-- ROW 3: Nationality and NIC Number -->
+                <div class="form-row row-2-cols">
                   <!-- Nationality -->
                   <div class="form-field">
                     <label for="nationality" class="field-label">
@@ -805,47 +837,16 @@
                     }
                   </div>
 
-                  <!-- Identity Document Type -->
                   <div class="form-field">
-                    <label for="identity-doc-type" class="field-label">
-                      Identity Document <span class="required-star">*</span>
-                    </label>
-                    <div class="input-wrapper select-wrapper" [class.has-error]="isFieldInvalid('identityDocumentType')">
-                      <select
-                        id="identity-doc-type"
-                        formControlName="identityDocumentType"
-                        (change)="onIdentityDocumentTypeChange()"
-                        class="form-select"
-                        [attr.aria-invalid]="isFieldInvalid('identityDocumentType')"
-                        aria-describedby="doctype-error-msg"
-                      >
-                        <option value="nic">National Identity Card (NIC)</option>
-                        <option value="passport">Passport</option>
-                      </select>
-                      <span class="select-chevron" aria-hidden="true">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </span>
-                    </div>
-                    @if (getFieldError('identityDocumentType')) {
-                      <p id="doctype-error-msg" class="field-error-msg" role="alert">
-                        {{ getFieldError('identityDocumentType') }}
-                      </p>
-                    }
-                  </div>
-
-                  <!-- Identity Number (NIC or Passport) -->
-                  <div class="form-field">
-                    <label for="nic-passport" class="field-label">
-                      {{ personalDetailsForm.controls.identityDocumentType.value === 'passport' ? 'Passport Number' : 'NIC Number' }} <span class="required-star">*</span>
+                    <label for="nic-number" class="field-label">
+                      NIC Number <span class="required-star">*</span>
                     </label>
                     <div class="input-wrapper" [class.has-error]="isFieldInvalid('nicNumber')">
                       <input
-                        id="nic-passport"
+                        id="nic-number"
                         type="text"
                         formControlName="nicNumber"
-                        [placeholder]="personalDetailsForm.controls.identityDocumentType.value === 'passport' ? 'e.g. N1234567' : 'e.g. 199012345678 or 123456789V'"
+                        placeholder="e.g. 199012345678 or 123456789V"
                         class="form-input"
                         [attr.aria-invalid]="isFieldInvalid('nicNumber')"
                         aria-describedby="nic-error-msg"
@@ -1468,10 +1469,10 @@
           <!-- STATE 6: IDENTITY VERIFICATION FORM (STEP 4) -->
           @if (flowState === 'identity_verification') {
             <div class="state-container identity-verification-container">
-              <div class="form-header">
+              <div class="form-header identity-header">
                 <div class="title-with-icon">
                   <span class="header-icon-orange" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <rect x="3" y="4" width="18" height="16" rx="2"></rect>
                       <circle cx="9" cy="10" r="2"></circle>
                       <line x1="15" y1="8" x2="17" y2="8"></line>
@@ -1479,67 +1480,21 @@
                       <line x1="7" y1="16" x2="17" y2="16"></line>
                     </svg>
                   </span>
-                  <h2 class="form-title">Identity Verification</h2>
-                </div>
-                <p class="form-description">
-                  Verify your identity by uploading valid government-issued documents and a recent selfie.
-                </p>
-              </div>
-
-              <!-- ID DOCUMENT TYPE DISPLAY (READ-ONLY AS SELECTED IN STEP 2) -->
-              <div class="form-field id-type-section">
-                <label class="field-label">
-                  ID Document Type <span class="required-star">*</span>
-                </label>
-                <div class="id-type-selector-row" role="radiogroup" aria-label="Identity Document Type">
-                  <div
-                    class="id-type-option"
-                    [class.selected]="identityDocType() === 'nic'"
-                    [attr.aria-checked]="identityDocType() === 'nic'"
-                    role="radio"
-                  >
-                    <span class="id-type-radio" aria-hidden="true">
-                      @if (identityDocType() === 'nic') {
-                        <span class="id-type-radio-dot"></span>
-                      }
-                    </span>
-                    <span class="id-type-text">National Identity Card (NIC)</span>
-                  </div>
-
-                  <div
-                    class="id-type-option"
-                    [class.selected]="identityDocType() === 'passport'"
-                    [attr.aria-checked]="identityDocType() === 'passport'"
-                    role="radio"
-                  >
-                    <span class="id-type-radio" aria-hidden="true">
-                      @if (identityDocType() === 'passport') {
-                        <span class="id-type-radio-dot"></span>
-                      }
-                    </span>
-                    <span class="id-type-text">Passport</span>
+                  <div class="title-text-group">
+                    <h2 class="form-title">Identity Verification</h2>
+                    <p class="form-description">
+                      Upload both sides of your NIC and a selfie holding it.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <!-- SECTION: UPLOAD IMAGES HEADER -->
               <div class="upload-section-header">
-                <h3 class="upload-section-title">
-                  @if (identityDocType() === 'passport') {
-                    Upload Passport Images <span class="required-star">*</span>
-                  } @else {
-                    Upload NIC / Passport Images <span class="required-star">*</span>
-                  }
-                </h3>
+                <h3 class="upload-section-title">Upload NIC Images <span class="required-star">*</span></h3>
               </div>
 
-              <!-- UPLOAD CARDS GRID: 3 CARDS FOR NIC, 2 CARDS FOR PASSPORT -->
-              <div
-                class="upload-cards-grid"
-                [class.grid-3-cards]="identityDocType() === 'nic'"
-                [class.grid-2-cards]="identityDocType() === 'passport'"
-              >
-                <!-- CARD 1: FRONT SIDE / PASSPORT INFORMATION PAGE -->
+              <div class="upload-cards-grid">
+                <!-- CARD 1: NIC FRONT SIDE -->
                 <div
                   class="upload-card"
                   [class.is-uploaded]="nicFrontState().isUploaded"
@@ -1555,14 +1510,10 @@
                       </svg>
                     </span>
                     <h4 class="upload-card-title">
-                      {{ identityDocType() === 'passport' ? 'Passport Information Page' : 'Front Side' }}
+                      NIC Front Side
                     </h4>
                     <p class="upload-card-desc">
-                      {{
-                        identityDocType() === 'passport'
-                          ? 'Upload a clear photo of your passport information page'
-                          : 'Upload a clear photo of the front side of your NIC'
-                      }}
+                      Upload a clear photo of the front side of your NIC
                     </p>
                   </div>
 
@@ -1572,12 +1523,8 @@
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       (change)="onFileSelected($event, 'nic_front')"
-                      class="sr-only"
-                      [attr.aria-label]="
-                        identityDocType() === 'passport'
-                          ? 'Choose passport information page image'
-                          : 'Choose NIC front side image'
-                      "
+                      class="sr-only file-input-hidden"
+                      aria-label="Choose NIC front side image"
                     />
 
                     @if (nicFrontState().isUploading) {
@@ -1628,84 +1575,82 @@
                 </div>
 
                 <!-- CARD 2: BACK SIDE (FOR NIC ONLY) -->
-                @if (identityDocType() === 'nic') {
-                  <div
-                    class="upload-card"
-                    [class.is-uploaded]="nicBackState().isUploaded"
-                    [class.has-error]="nicBackState().errorMessage"
-                  >
-                    <div class="upload-card-header">
-                      <span class="upload-icon-wrapper" aria-hidden="true">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                          <line x1="2" y1="9" x2="22" y2="9"></line>
-                          <line x1="6" y1="14" x2="12" y2="14"></line>
-                          <line x1="15" y1="14" x2="18" y2="14"></line>
-                        </svg>
-                      </span>
-                      <h4 class="upload-card-title">Back Side</h4>
-                      <p class="upload-card-desc">Upload a clear photo of the back side of your NIC</p>
-                    </div>
+                <div
+                  class="upload-card"
+                  [class.is-uploaded]="nicBackState().isUploaded"
+                  [class.has-error]="nicBackState().errorMessage"
+                >
+                  <div class="upload-card-header">
+                    <span class="upload-icon-wrapper" aria-hidden="true">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <line x1="2" y1="9" x2="22" y2="9"></line>
+                        <line x1="6" y1="14" x2="12" y2="14"></line>
+                        <line x1="15" y1="14" x2="18" y2="14"></line>
+                      </svg>
+                    </span>
+                    <h4 class="upload-card-title">NIC Back Side</h4>
+                    <p class="upload-card-desc">Upload a clear photo of the back side of your NIC</p>
+                  </div>
 
-                    <div class="upload-card-body">
-                      <input
-                        #backFileInput
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        (change)="onFileSelected($event, 'nic_back')"
-                        class="sr-only"
-                        aria-label="Choose NIC back side image"
-                      />
+                  <div class="upload-card-body">
+                    <input
+                      #backFileInput
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      (change)="onFileSelected($event, 'nic_back')"
+                      class="sr-only file-input-hidden"
+                      aria-label="Choose NIC back side image"
+                    />
 
-                      @if (nicBackState().isUploading) {
-                        <div class="upload-status-box uploading">
-                          <span class="btn-spinner" aria-hidden="true"></span>
-                          <span>Uploading...</span>
+                    @if (nicBackState().isUploading) {
+                      <div class="upload-status-box uploading">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <span>Uploading...</span>
+                      </div>
+                    } @else if (nicBackState().isUploaded) {
+                      <div class="upload-status-box uploaded">
+                        <div class="uploaded-badge">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          <span class="filename" [title]="nicBackState().fileName || 'Uploaded'">
+                            {{ nicBackState().fileName || 'Uploaded' }}
+                          </span>
                         </div>
-                      } @else if (nicBackState().isUploaded) {
-                        <div class="upload-status-box uploaded">
-                          <div class="uploaded-badge">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span class="filename" [title]="nicBackState().fileName || 'Uploaded'">
-                              {{ nicBackState().fileName || 'Uploaded' }}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            class="btn-replace"
-                            (click)="triggerFileInput(backFileInput)"
-                            [disabled]="isAnyUploading()"
-                          >
-                            Replace file
-                          </button>
-                        </div>
-                      } @else {
                         <button
                           type="button"
-                          class="btn-choose-file"
+                          class="btn-replace"
                           (click)="triggerFileInput(backFileInput)"
                           [disabled]="isAnyUploading()"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                          </svg>
-                          <span>Choose File</span>
+                          Replace file
                         </button>
-                      }
+                      </div>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-choose-file"
+                        (click)="triggerFileInput(backFileInput)"
+                        [disabled]="isAnyUploading()"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Choose File</span>
+                      </button>
+                    }
 
-                      <p class="upload-format-hint">JPG, PNG (Max 5 MB)</p>
-                      @if (nicBackState().errorMessage) {
-                        <p class="upload-error-msg" role="alert">{{ nicBackState().errorMessage }}</p>
-                      }
-                    </div>
+                    <p class="upload-format-hint">JPG, PNG (Max 5 MB)</p>
+                    @if (nicBackState().errorMessage) {
+                      <p class="upload-error-msg" role="alert">{{ nicBackState().errorMessage }}</p>
+                    }
                   </div>
-                }
+                </div>
 
-                <!-- CARD 3: SELFIE (WITH NIC / PASSPORT) -->
+                <!-- CARD 3: SELFIE WITH NIC -->
                 <div
                   class="upload-card"
                   [class.is-uploaded]="selfieState().isUploaded"
@@ -1721,10 +1666,10 @@
                       </svg>
                     </span>
                     <h4 class="upload-card-title">
-                      Selfie (with {{ identityDocType() === 'passport' ? 'Passport' : 'NIC' }}) <span class="required-star">*</span>
+                      Selfie with NIC <span class="required-star">*</span>
                     </h4>
                     <p class="upload-card-desc">
-                      Take a clear selfie holding your {{ identityDocType() === 'passport' ? 'Passport' : 'NIC' }} next to your face
+                      Take a clear selfie holding your NIC next to your face
                     </p>
                   </div>
 
@@ -1734,12 +1679,8 @@
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       (change)="onFileSelected($event, 'selfie')"
-                      class="sr-only"
-                      [attr.aria-label]="
-                        identityDocType() === 'passport'
-                          ? 'Choose selfie holding passport image'
-                          : 'Choose selfie holding NIC image'
-                      "
+                      class="sr-only file-input-hidden"
+                      aria-label="Choose selfie holding NIC image"
                     />
 
                     @if (selfieState().isUploading) {
@@ -1803,67 +1744,296 @@
                   Please upload clear and valid documents and a recent selfie. Your information will be used only for verification and kept secure.
                 </p>
               </div>
-
-              <!-- FORM ACTIONS ROW -->
-              <div class="form-actions-row">
-                <button
-                  type="button"
-                  class="btn-back-action"
-                  (click)="onBackToBusinessDetails()"
-                  [disabled]="isSubmitting() || isAnyUploading()"
-                  aria-label="Back to Business Details step"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                  </svg>
-                  <span>Back to Business Details</span>
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-primary-action btn-continue-action"
-                  (click)="onContinueToReviewSubmit()"
-                  [disabled]="!isIdentityComplete() || isSubmitting() || isAnyUploading()"
-                  aria-label="Continue to Review & Submit step"
-                >
-                  <span>Continue to Review &amp; Submit</span>
-                  <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </div>
             </div>
           }
 
-          <!-- STATE 7: REVIEW & SUBMIT PLACEHOLDER (STEP 5) -->
           @if (flowState === 'review_submit') {
-            <div class="state-container verified-feedback">
-              <div class="feedback-card success-flow">
+            @if (submittedApplication(); as result) {
+              <div class="review-success">
                 <div class="feedback-badge-circle" aria-hidden="true">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                   </svg>
                 </div>
-                <h3 class="feedback-title">Identity Verification Saved!</h3>
-                <p class="feedback-description">
-                  Step 4 — Identity Verification has been completed and saved to your registration draft. Step 5 — Review &amp; Submit will be configured in the next phase.
-                </p>
-                <div class="placeholder-actions">
-                  <button type="button" class="btn-back-link" (click)="onBackToIdentityVerification()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <line x1="19" y1="12" x2="5" y2="12"></line>
-                      <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                    <span>Edit Identity Documents</span>
-                  </button>
+                <h1>Application Submitted Successfully</h1>
+                <p role="status">{{ result.message }}</p>
+                @if (result.approval_status === 'pending') {
+                  <p class="review-pending">Pending Admin Approval</p>
+                }
+                @if (result.next_action === 'await_admin_review') {
+                  <p>Our admin team will review your application. Once approved, check your email for account setup instructions.</p>
+                }
+                <button type="button" class="btn-primary-action btn-return-action" (click)="returnToProviderPortal()">
+                  Return to Provider Portal
+                </button>
+              </div>
+            } @else {
+              <div class="review-heading">
+                <span class="review-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </span>
+                <div class="review-heading-text">
+                  <h1>Review Your Information</h1>
+                  <p>Please review all the details below. You can edit any section before submitting.</p>
                 </div>
               </div>
-            </div>
+
+              @if (reviewLoading()) {
+                <p role="status" class="review-loading-text">Loading your saved registration...</p>
+              }
+
+              @if (reviewDraft(); as draft) {
+                <div class="review-card-grid">
+                  <section class="review-card" aria-labelledby="review-personal-title">
+                    <header>
+                      <span class="review-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </span>
+                      <h2 id="review-personal-title">Personal Details</h2>
+                      <button type="button" class="review-edit" [disabled]="isSubmitting() || reviewLoading()" (click)="editReviewPersonalDetails()" aria-label="Edit Personal Details">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>Edit</span>
+                      </button>
+                    </header>
+                    <dl class="review-fields">
+                      <div><dt>Full Name</dt><dd>{{ draft.full_name || '—' }}</dd></div>
+                      <div>
+                        <dt>Email Address</dt>
+                        <dd>
+                          <span>{{ draft.email }}</span>
+                          <span class="review-verified">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Verified</span>
+                          </span>
+                        </dd>
+                      </div>
+                      <div><dt>Phone Number</dt><dd>{{ draft.phone || '—' }}</dd></div>
+                      <div><dt>Date of Birth &amp; Gender</dt><dd>{{ (draft.date_of_birth | date:'d MMM y') || '—' }} &bull; {{ (draft.gender | titlecase) || '—' }}</dd></div>
+                      <div><dt>Nationality</dt><dd>{{ draft.nationality || '—' }}</dd></div>
+                      <div><dt>NIC Number</dt><dd>{{ draft.nic_number || '—' }}</dd></div>
+                      <div><dt>Province &amp; District</dt><dd>{{ draft.permanent_province || '—' }}{{ draft.permanent_district ? ', ' + draft.permanent_district : '' }}</dd></div>
+                      <div><dt>Address</dt><dd>{{ draft.permanent_landmark ? draft.permanent_landmark + ', ' : '' }}{{ draft.permanent_city || '—' }}{{ draft.permanent_postal_code ? ' ' + draft.permanent_postal_code : '' }}</dd></div>
+                    </dl>
+                  </section>
+                  <section class="review-card" aria-labelledby="review-business-title">
+                    <header>
+                      <span class="review-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                      </span>
+                      <h2 id="review-business-title">Business Details</h2>
+                      <button type="button" class="review-edit" [disabled]="isSubmitting() || reviewLoading()" (click)="onBackToBusinessDetails()" aria-label="Edit Business Details">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>Edit</span>
+                      </button>
+                    </header>
+                    <dl class="review-fields">
+                      <div><dt>Business Name</dt><dd>{{ draft.business_name || '—' }}</dd></div>
+                      <div><dt>Business Category</dt><dd>{{ reviewCategory(draft.provider_type) || '—' }}</dd></div>
+                      <div><dt>Contact Number</dt><dd>{{ draft.secondary_phone || '—' }}</dd></div>
+                      <div><dt>Registration Number</dt><dd>{{ draft.business_registration_number || 'Not provided' }}</dd></div>
+                      <div><dt>Province &amp; District</dt><dd>{{ draft.business_province || '—' }}{{ draft.business_district ? ', ' + draft.business_district : '' }}</dd></div>
+                      <div><dt>Business Address</dt><dd>{{ draft.business_landmark ? draft.business_landmark + ', ' : '' }}{{ draft.business_city || '—' }}{{ draft.business_postal_code ? ' ' + draft.business_postal_code : '' }}</dd></div>
+                      <div><dt>Business Description</dt><dd>{{ draft.description || '—' }}</dd></div>
+                    </dl>
+                  </section>
+                </div>
+
+                <section class="review-card" aria-labelledby="review-identity-title">
+                  <header>
+                    <span class="review-icon" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      </svg>
+                    </span>
+                    <h2 id="review-identity-title">Identity Verification</h2>
+                    <button type="button" class="review-edit" [disabled]="isSubmitting() || reviewLoading()" (click)="onBackToIdentityVerification()" aria-label="Edit Identity Verification">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                      <span>Edit</span>
+                    </button>
+                  </header>
+                  <div class="review-identity-layout">
+                    <div class="review-documents">
+                      @for (document of reviewDocuments(); track document.label) {
+                        <div class="review-doc-card">
+                          <div class="review-doc-thumb-wrapper">
+                            <div class="review-doc-thumb" aria-hidden="true">
+                              @if (document.type === 'selfie') {
+                                <svg viewBox="0 0 60 48" fill="none" class="thumb-illustration">
+                                  <circle cx="30" cy="18" r="9" fill="#94A3B8" />
+                                  <path d="M15 42C15 33 21 31 30 31C39 31 45 33 45 42" fill="#94A3B8" />
+                                  <rect x="36" y="24" width="16" height="18" rx="2" fill="#CBD5E1" stroke="#64748B" stroke-width="1.2" />
+                                  <circle cx="44" cy="30" r="2.5" fill="#64748B" />
+                                </svg>
+                              } @else if (document.type === 'back') {
+                                <svg viewBox="0 0 60 48" fill="none" class="thumb-illustration">
+                                  <rect x="7" y="9" width="46" height="30" rx="3" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" />
+                                  <rect x="7" y="14" width="46" height="7" fill="#082B5C" />
+                                  <line x1="12" y1="27" x2="30" y2="27" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" />
+                                  <line x1="12" y1="32" x2="24" y2="32" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                              } @else {
+                                <svg viewBox="0 0 60 48" fill="none" class="thumb-illustration">
+                                  <rect x="7" y="9" width="46" height="30" rx="3" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5" />
+                                  <rect x="11" y="14" width="12" height="15" rx="1.5" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1" />
+                                  <circle cx="17" cy="19" r="3" fill="#64748B" />
+                                  <path d="M13 27C13 24 15 23 17 23C19 23 21 24 21 27" fill="#64748B" />
+                                  <line x1="27" y1="16" x2="48" y2="16" stroke="#082B5C" stroke-width="2" stroke-linecap="round" />
+                                  <line x1="27" y1="21" x2="44" y2="21" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" />
+                                  <line x1="27" y1="26" x2="40" y2="26" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                              }
+                            </div>
+                            @if (document.uploaded) {
+                              <span class="review-doc-badge" title="Uploaded" aria-label="Uploaded">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </span>
+                            }
+                          </div>
+                          <strong class="review-doc-title">{{ document.label }}</strong>
+                          <span class="review-document-status" [class.uploaded]="document.uploaded">
+                            @if (document.uploaded) {
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              <span>Uploaded</span>
+                            } @else {
+                              <span>Upload required</span>
+                            }
+                          </span>
+                        </div>
+                      }
+                    </div>
+                    <aside class="review-next">
+                      <div class="review-next-header">
+                        <span class="review-next-icon" aria-hidden="true">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          </svg>
+                        </span>
+                        <span>Next Step</span>
+                      </div>
+                      <p>Our admin team will review your application. Once approved, check your email for account setup instructions.</p>
+                    </aside>
+                  </div>
+                </section>
+
+                <div class="review-confirmation">
+                  <input id="review-confirmation" type="checkbox" required aria-describedby="review-legal" [checked]="reviewConfirmed()"
+                    [disabled]="isSubmitting()" (change)="reviewConfirmed.set($any($event.target).checked)" />
+                  <div>
+                    <label for="review-confirmation">I confirm that all the information provided is accurate and true.</label>
+                    <span id="review-legal"> I agree to the <a routerLink="/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a routerLink="/privacy" target="_blank" rel="noopener">Privacy Policy</a> of CeylonGo.</span>
+                  </div>
+                </div>
+                @if (!reviewReady()) {
+                  <p class="review-warning">Complete all required details and uploads before submitting.</p>
+                }
+              }
+
+              @if (reviewNeedsVerification()) {
+                <button type="button" class="review-edit review-retry" (click)="reverifyReviewEmail()">Verify email again</button>
+              } @else if (!reviewDraft() && !reviewLoading()) {
+                <button type="button" class="review-edit review-retry" (click)="loadReviewDraft()">Retry loading the draft</button>
+              }
+
+              <div class="review-actions">
+                <button
+                  type="button"
+                  class="btn-back-action"
+                  [disabled]="isSubmitting() || reviewLoading()"
+                  (click)="onBackToIdentityVerification()"
+                  aria-label="Back to Identity Verification"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Back to Identity Verification</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-primary-action btn-submit-action"
+                  [disabled]="!reviewConfirmed() || !reviewReady() || isSubmitting() || reviewLoading() || reviewNeedsVerification()"
+                  (click)="submitForApproval()"
+                  aria-label="Submit for Approval"
+                >
+                  @if (!isSubmitting()) {
+                    <span>Submit for Approval</span>
+                    <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  } @else {
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                    <span>Submitting...</span>
+                  }
+                </button>
+              </div>
+            }
           }
         </section>
+
+        <!-- STEP 4 FULL-WIDTH CARD FOOTER -->
+        @if (flowState === 'identity_verification') {
+          <footer class="registration-card-footer">
+            <button
+              type="button"
+              class="btn-back-action"
+              (click)="onBackToBusinessDetails()"
+              [disabled]="isSubmitting() || isAnyUploading()"
+              aria-label="Back to Business Details step"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Back to Business Details</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-primary-action btn-continue-action"
+              (click)="onContinueToReviewSubmit()"
+              [disabled]="!isIdentityComplete() || isSubmitting() || isAnyUploading()"
+              aria-label="Continue to Review & Submit step"
+            >
+              <span>Continue to Review &amp; Submit</span>
+              <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </footer>
+        }
       </div>
     </div>
   </main>

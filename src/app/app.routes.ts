@@ -1,20 +1,30 @@
 
 import { Routes } from '@angular/router';
 
+import { Home } from './pages/home/home';
 import { AuthEntry } from './pages/auth-entry/auth-entry';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
+import { providerAuthGuard } from './core/guards/provider-auth.guard';
+import { travelerAuthGuard } from './core/guards/traveler-auth.guard';
 
 export const routes: Routes = [
 
-  // DEFAULT ROUTE - HOMESTAY DISCOVERY
+  // UNIFIED HOMEPAGE (CANONICAL)
   {
     path: '',
-    redirectTo: 'homestays',
+    loadComponent: () =>
+      import('./pages/traveler-home/traveler-home')
+        .then(m => m.TravelerHome),
+    pathMatch: 'full'
+  },
+  {
+    path: 'home',
+    redirectTo: '',
     pathMatch: 'full'
   },
 
-  // HOMESTAY DISCOVERY & BOOKING - TRAVELER FRONTEND (PHASE 1 & PHASE 2)
+  // HOMESTAY DISCOVERY & BOOKING
   {
     path: 'homestays',
     loadComponent: () =>
@@ -42,6 +52,24 @@ export const routes: Routes = [
     path: 'explore',
     redirectTo: 'homestays',
     pathMatch: 'full'
+  },
+
+  // LEGACY TRAVELER HOMEPAGE REDIRECT
+  {
+    path: 'traveler/home',
+    redirectTo: '',
+    pathMatch: 'full'
+  },
+  {
+    path: 'traveler',
+    redirectTo: '',
+    pathMatch: 'full'
+  },
+
+  // LEGACY MARKETING HOMEPAGE PRESERVED FOR REFERENCE
+  {
+    path: 'legacy-home',
+    component: Home
   },
 
   // AUTH ENTRY
@@ -147,7 +175,7 @@ export const routes: Routes = [
         .then(m => m.ProviderRegistration)
   },
 
-  // PROVIDER LOGIN (PLACEHOLDER ROUTE)
+  // PROVIDER LOGIN
   {
     path: 'provider/login',
     loadComponent: () =>
@@ -155,7 +183,40 @@ export const routes: Routes = [
         .then(m => m.ProviderLoginPlaceholder)
   },
 
-  // UNKNOWN URL - GO TO HOMESTAY DISCOVERY
+  // PROVIDER FORGOT PASSWORD
+  {
+    path: 'provider/forgot-password',
+    loadComponent: () =>
+      import('./pages/provider-forgot-password/provider-forgot-password')
+        .then(m => m.ProviderForgotPassword)
+  },
+
+  // PROVIDER RESET PASSWORD
+  {
+    path: 'provider/reset-password',
+    loadComponent: () =>
+      import('./pages/provider-reset-password/provider-reset-password')
+        .then(m => m.ProviderResetPassword)
+  },
+
+  // PROVIDER DASHBOARD (AUTHENTICATED)
+  {
+    path: 'provider/dashboard',
+    canActivate: [providerAuthGuard],
+    loadComponent: () =>
+      import('./pages/provider-dashboard/provider-dashboard')
+        .then(m => m.ProviderDashboard)
+  },
+
+  // EXPERIENCES MODULE
+  {
+    path: 'experiences',
+    loadChildren: () =>
+      import('./experiences/experiences.routes')
+        .then(m => m.experiencesRoutes)
+  },
+
+  // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',
     redirectTo: 'homestays'

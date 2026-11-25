@@ -7,6 +7,9 @@ import {
   BackendBusinessDetailsRequest,
   BackendPersonalDetailsRequest,
   DraftResponse,
+  ProviderPasswordSetupPayload,
+  ProviderPasswordSetupResponse,
+  RegistrationSubmitResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
@@ -126,6 +129,38 @@ export class ProviderOtpService {
     return this.http
       .get<DraftResponse>(
         `${environment.apiBaseUrl}/providers/registration/draft`,
+        { headers }
+      )
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  submitRegistration(authToken: string): Observable<RegistrationSubmitResponse> {
+    const headers = new HttpHeaders({ Authorization: 'Bearer ' + authToken.trim() });
+    return this.http
+      .post<RegistrationSubmitResponse>(
+        environment.apiBaseUrl + '/providers/registration/submit',
+        null,
+        { headers },
+      )
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  /**
+   * Set provider password and activate account using single-use authorization token.
+   * Endpoint: POST /api/v1/providers/password/setup
+   * Requires Authorization: Bearer <single-use-authorization-token>
+   */
+  setupPassword(
+    payload: ProviderPasswordSetupPayload,
+    authToken: string
+  ): Observable<ProviderPasswordSetupResponse> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken.trim()}`,
+    });
+    return this.http
+      .post<ProviderPasswordSetupResponse>(
+        `${environment.apiBaseUrl}/providers/password/setup`,
+        payload,
         { headers }
       )
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));

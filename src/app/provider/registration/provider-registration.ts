@@ -32,9 +32,9 @@ import {
   DocumentUploadState,
   DocumentUploadType,
   DraftResponse,
-  IdentityDocumentType,
   ProviderNextAction,
   RegistrationFlowState,
+  RegistrationSubmitResponse,
   SRI_LANKA_DISTRICTS,
   SRI_LANKA_PROVINCES,
   SriLankaProvince,
@@ -86,38 +86,6 @@ export function sriLankanNicValidator(control: AbstractControl): ValidationError
   const isNewNic = /^[0-9]{12}$/.test(val);
   if (!isOldNic && !isNewNic) {
     return { invalidNic: true };
-  }
-  return null;
-}
-
-/**
- * Custom validator for Passports (6 to 12 alphanumeric characters).
- */
-export function passportValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) {
-    return null;
-  }
-  const val = String(control.value).trim();
-  if (!/^[a-zA-Z0-9]{6,12}$/.test(val)) {
-    return { invalidPassport: true };
-  }
-  return null;
-}
-
-/**
- * Custom validator for Sri Lankan NIC (9 digits + V/X or 12 digits) or Passport number (6-12 chars).
- * Retained for backward compatibility.
- */
-export function nicOrPassportValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) {
-    return null;
-  }
-  const val = String(control.value).trim();
-  const isOldNic = /^[0-9]{9}[vVxX]$/.test(val);
-  const isNewNic = /^[0-9]{12}$/.test(val);
-  const isPassport = /^[a-zA-Z0-9]{6,12}$/.test(val);
-  if (!isOldNic && !isNewNic && !isPassport) {
-    return { invalidNicOrPassport: true };
   }
   return null;
 }
@@ -186,10 +154,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       validators: [Validators.required],
     }),
     nationality: new FormControl<string>('Sri Lankan', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    identityDocumentType: new FormControl<IdentityDocumentType>('nic', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -303,6 +267,34 @@ export class ProviderRegistration implements OnInit, OnDestroy {
 
   // UI status signals
   readonly isSubmitting = signal<boolean>(false);
+  readonly reviewDraft = signal<DraftResponse | null>(null);
+  readonly reviewLoading = signal(false);
+  readonly reviewConfirmed = signal(false);
+  readonly reviewNeedsVerification = signal(false);
+  readonly submittedApplication = signal<RegistrationSubmitResponse | null>(null);
+
+  readonly reviewDocuments = computed(() => {
+    const draft = this.reviewDraft();
+    if (!draft) return [];
+    return [
+      { label: 'NIC Front Side', uploaded: !!draft.nic_front_uploaded, type: 'front' },
+      { label: 'NIC Back Side', uploaded: !!draft.nic_back_uploaded, type: 'back' },
+      { label: 'Selfie with NIC', uploaded: !!draft.selfie_uploaded, type: 'selfie' },
+    ];
+  });
+
+  readonly reviewReady = computed(() => {
+    const draft = this.reviewDraft();
+    return !!(
+      draft?.email && draft.identity_document_type === 'nic' &&
+      draft.personal_completed && draft.business_completed &&
+      this.reviewDocuments().every((document) => document.uploaded)
+    );
+  });
+
+  reviewCategory(category: string | null | undefined): string | null | undefined {
+    return BUSINESS_CATEGORIES.find((option) => option.id === category)?.label ?? category;
+  }
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly currentAction = signal<ProviderNextAction | null>(null);
@@ -332,10 +324,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     errorMessage: null,
   });
 
-  readonly identityDocType = computed<IdentityDocumentType>(() => {
-    return this.stateService.identityDocumentType();
-  });
-
   readonly isAnyUploading = computed<boolean>(() => {
     return (
       this.nicFrontState().isUploading ||
@@ -345,12 +333,8 @@ export class ProviderRegistration implements OnInit, OnDestroy {
   });
 
   readonly isIdentityComplete = computed<boolean>(() => {
-    const docType = this.identityDocType();
     const selfieOk = this.selfieState().isUploaded || this.stateService.selfieUploaded();
     const frontOk = this.nicFrontState().isUploaded || this.stateService.nicFrontUploaded();
-    if (docType === 'passport') {
-      return selfieOk && frontOk && !this.isAnyUploading();
-    }
     const backOk = this.nicBackState().isUploaded || this.stateService.nicBackUploaded();
     return selfieOk && frontOk && backOk && !this.isAnyUploading();
   });
@@ -409,11 +393,10 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       this.loadPersonalDetailsToForm();
     } else if (this.stateService.currentStepId() === 'business_details') {
       this.loadBusinessDetailsToForm();
-    } else if (
-      this.stateService.currentStepId() === 'identity_verification' ||
-      this.stateService.currentStepId() === 'review_submit'
-    ) {
+    } else if (this.stateService.currentStepId() === 'identity_verification') {
       this.restoreDraftIfAvailable();
+    } else if (this.stateService.currentStepId() === 'review_submit') {
+      this.loadReviewDraft();
     }
   }
 
@@ -422,7 +405,7 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     if (!token) return;
     this.otpService.getRegistrationDraft(token).subscribe({
       next: (draft) => {
-        this.syncDocumentsFromDraft(draft);
+        this.syncDocumentsFromDraft(draft, true);
       },
       error: () => {
         // Silently preserve in-memory signals if offline
@@ -432,6 +415,7 @@ export class ProviderRegistration implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCooldownTimer();
+    if (this.submittedApplication()) this.stateService.clearRegistrationState();
   }
 
   /**
@@ -566,12 +550,17 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     switch (action) {
       case 'continue_registration':
       case 'resubmit_application':
-        this.stateService.goToPersonalDetails();
-        this.loadPersonalDetailsToForm();
+        this.resumeRegistration();
         break;
       case 'create_password':
         this.router.navigate(['/provider/login'], {
           queryParams: { action: 'password_setup' },
+          state: {
+            token: this.stateService.getAuthorizationToken(),
+            email: this.activeEmail,
+            backendAuthorized: true,
+            nextAction: 'create_password',
+          },
         });
         break;
       case 'login_required':
@@ -584,23 +573,39 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     }
   }
 
-  // Step 2: Personal Details Methods
-
-  onIdentityDocumentTypeChange(): void {
-    const docType = this.personalDetailsForm.controls.identityDocumentType.value;
-    this.stateService.setIdentityDocumentType(docType);
-    this.updateIdentityValidators(docType);
-  }
-
-  updateIdentityValidators(docType: IdentityDocumentType): void {
-    const nicCtrl = this.personalDetailsForm.controls.nicNumber;
-    if (docType === 'passport') {
-      nicCtrl.setValidators([Validators.required, passportValidator]);
-    } else {
-      nicCtrl.setValidators([Validators.required, sriLankanNicValidator]);
+  private resumeRegistration(): void {
+    if (this.isSubmitting()) return;
+    const token = this.stateService.getAuthorizationToken();
+    if (!token || (this.stateService.personalDetails() && !this.reviewNeedsVerification())) {
+      this.stateService.goToPersonalDetails();
+      this.loadPersonalDetailsToForm();
+      return;
     }
-    nicCtrl.updateValueAndValidity();
+
+    this.isSubmitting.set(true);
+    this.otpService.getRegistrationDraft(token).subscribe({
+      next: (draft) => {
+        this.isSubmitting.set(false);
+        this.restoreReviewDetails(draft);
+        if (draft.identity_document_type === 'nic' && draft.current_step === 'review') {
+          this.stateService.completeIdentityVerification();
+          this.reviewDraft.set(draft);
+          this.reviewConfirmed.set(false);
+          this.reviewNeedsVerification.set(false);
+        } else {
+          this.stateService.goToPersonalDetails();
+          this.loadPersonalDetailsToForm();
+        }
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.stateService.goToPersonalDetails();
+        this.loadPersonalDetailsToForm();
+      },
+    });
   }
+
+  // Step 2: Personal Details Methods
 
   onProvinceChange(): void {
     const selected = this.personalDetailsForm.controls.province.value as SriLankaProvince;
@@ -670,16 +675,16 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       permanent_landmark: formVal.residentialAddress.trim(),
       permanent_postal_code: formVal.postalCode.trim(),
       // Forward-compatible contract fields (Phase C preparation)
-      identity_document_type: formVal.identityDocumentType,
+      identity_document_type: 'nic',
       date_of_birth: formVal.dateOfBirth,
       gender: formVal.gender,
       nationality: formVal.nationality,
     };
 
     this.otpService.savePersonalDetails(payload, token).subscribe({
-      next: (_res) => {
+      next: (draft) => {
         this.isSubmitting.set(false);
-        this.stateService.setIdentityDocumentType(formVal.identityDocumentType);
+        this.syncDocumentsFromDraft(draft, true);
         this.stateService.completePersonalDetails(formVal);
         this.loadBusinessDetailsToForm();
         this.successMessage.set('Personal details saved successfully!');
@@ -746,7 +751,7 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       next: (_res) => {
         this.isSubmitting.set(false);
         this.stateService.completeBusinessDetails(formVal);
-        this.successMessage.set('Business details saved successfully!');
+        this.successMessage.set(null);
       },
       error: (err: ProviderApiError) => {
         this.isSubmitting.set(false);
@@ -875,7 +880,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     if (!ctrl || !ctrl.touched || !ctrl.errors) {
       return null;
     }
-    const docType = this.personalDetailsForm.controls.identityDocumentType.value;
     if (ctrl.errors['required']) {
       switch (fieldName) {
         case 'fullName':
@@ -888,12 +892,8 @@ export class ProviderRegistration implements OnInit, OnDestroy {
           return 'Please select your gender.';
         case 'nationality':
           return 'Please select your nationality.';
-        case 'identityDocumentType':
-          return 'Please select an identity document type.';
         case 'nicNumber':
-          return docType === 'passport'
-            ? 'Please enter your passport number.'
-            : 'Please enter your NIC number.';
+          return 'Please enter your NIC number.';
         case 'province':
           return 'Please select your province.';
         case 'district':
@@ -942,12 +942,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     if (ctrl.errors['invalidNic']) {
       return 'Please enter a valid Sri Lankan NIC (e.g. 123456789V or 200012345678).';
     }
-    if (ctrl.errors['invalidPassport']) {
-      return 'Please enter a valid passport number (6 to 12 alphanumeric characters).';
-    }
-    if (ctrl.errors['invalidNicOrPassport']) {
-      return 'Please enter a valid Sri Lankan NIC (9 digits+V/X or 12 digits) or Passport number.';
-    }
     if (ctrl.errors['pattern']) {
       if (fieldName === 'postalCode') {
         return 'Please enter a valid postal code (e.g. 20000).';
@@ -966,8 +960,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
         this.availableDistricts.set(SRI_LANKA_DISTRICTS[saved.province as SriLankaProvince]);
         this.personalDetailsForm.controls.district.enable();
       }
-      const docType = saved.identityDocumentType || 'nic';
-      this.stateService.setIdentityDocumentType(docType);
       this.personalDetailsForm.patchValue({
         fullName: saved.fullName,
         email: email,
@@ -975,7 +967,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
         dateOfBirth: saved.dateOfBirth,
         gender: saved.gender,
         nationality: saved.nationality || 'Sri Lankan',
-        identityDocumentType: docType,
         nicNumber: saved.nicNumber,
         province: saved.province,
         district: saved.district,
@@ -983,7 +974,6 @@ export class ProviderRegistration implements OnInit, OnDestroy {
         postalCode: saved.postalCode || '',
         residentialAddress: saved.residentialAddress,
       });
-      this.updateIdentityValidators(docType);
       if (saved.province && SRI_LANKA_DISTRICTS[saved.province as SriLankaProvince]) {
         this.availableDistricts.set(SRI_LANKA_DISTRICTS[saved.province as SriLankaProvince]);
       }
@@ -1255,49 +1245,38 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     if (docType === 'selfie') this.selfieState.update(updater);
   }
 
-  syncDocumentsFromDraft(draft: DraftResponse): void {
-    if (draft.identity_document_type) {
-      this.stateService.setIdentityDocumentType(draft.identity_document_type);
-      if (
-        this.personalDetailsForm.controls.identityDocumentType.value !==
-        draft.identity_document_type
-      ) {
-        this.personalDetailsForm.controls.identityDocumentType.setValue(
-          draft.identity_document_type
-        );
+  syncDocumentsFromDraft(draft: DraftResponse, reconcileMissing = false): void {
+    const legacyDraft = draft.identity_document_type != null
+      && draft.identity_document_type !== 'nic';
+    const documents = [
+      { state: this.nicFrontState, uploaded: !!draft.nic_front_uploaded, name: 'Front document uploaded' },
+      { state: this.nicBackState, uploaded: !!draft.nic_back_uploaded, name: 'Back document uploaded' },
+      { state: this.selfieState, uploaded: !!draft.selfie_uploaded, name: 'Selfie uploaded' },
+    ];
+
+    for (const { state, uploaded, name } of documents) {
+      if (!legacyDraft && uploaded) {
+        state.update((current) => ({
+          ...current,
+          isUploaded: true,
+          fileName: current.fileName || name,
+        }));
+      } else if (reconcileMissing) {
+        state.set({
+          file: null,
+          fileName: null,
+          isUploaded: false,
+          isUploading: false,
+          errorMessage: null,
+        });
       }
     }
 
     this.stateService.setIdentityDocumentsStatus(
-      !!draft.selfie_uploaded,
-      !!draft.nic_front_uploaded,
-      !!draft.nic_back_uploaded
+      this.selfieState().isUploaded,
+      this.nicFrontState().isUploaded,
+      this.nicBackState().isUploaded,
     );
-
-    if (draft.nic_front_uploaded) {
-      this.nicFrontState.update((s) => ({
-        ...s,
-        isUploaded: true,
-        isUploading: false,
-        fileName: s.fileName || 'Front document uploaded',
-      }));
-    }
-    if (draft.nic_back_uploaded) {
-      this.nicBackState.update((s) => ({
-        ...s,
-        isUploaded: true,
-        isUploading: false,
-        fileName: s.fileName || 'Back document uploaded',
-      }));
-    }
-    if (draft.selfie_uploaded) {
-      this.selfieState.update((s) => ({
-        ...s,
-        isUploaded: true,
-        isUploading: false,
-        fileName: s.fileName || 'Selfie uploaded',
-      }));
-    }
   }
 
   onContinueToReviewSubmit(): void {
@@ -1305,20 +1284,137 @@ export class ProviderRegistration implements OnInit, OnDestroy {
     this.successMessage.set(null);
 
     if (!this.isIdentityComplete()) {
-      const docType = this.identityDocType();
-      if (docType === 'passport') {
-        this.errorMessage.set(
-          'Please upload both your Passport information page and a selfie.'
-        );
-      } else {
-        this.errorMessage.set(
-          'Please upload your NIC front side, NIC back side, and a selfie.'
-        );
-      }
+      this.errorMessage.set('Please upload your NIC front side, NIC back side, and a selfie with NIC.');
       return;
     }
 
     this.stateService.completeIdentityVerification();
+    this.reviewDraft.set(null);
+    this.reviewConfirmed.set(false);
+    this.loadReviewDraft();
+  }
+
+  loadReviewDraft(): void {
+    if (this.reviewLoading() || this.isSubmitting() || this.submittedApplication()) return;
+    const token = this.stateService.getAuthorizationToken();
+    if (!token) {
+      this.showReviewError({ status: 401, message: '' });
+      return;
+    }
+
+    this.reviewLoading.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.otpService.getRegistrationDraft(token).subscribe({
+      next: (draft) => {
+        this.reviewLoading.set(false);
+        this.reviewNeedsVerification.set(false);
+        this.restoreReviewDetails(draft);
+        if (draft.identity_document_type && draft.identity_document_type !== 'nic') {
+          this.editReviewPersonalDetails();
+          return;
+        }
+        this.reviewDraft.set(draft);
+      },
+      error: (error: ProviderApiError) => {
+        this.reviewLoading.set(false);
+        this.showReviewError(error);
+      },
+    });
+  }
+
+  private restoreReviewDetails(draft: DraftResponse): void {
+    if (draft.full_name) {
+      this.stateService.setPersonalDetails({
+        fullName: draft.full_name,
+        email: draft.email,
+        phone: draft.phone ?? '',
+        dateOfBirth: draft.date_of_birth ?? '',
+        gender: draft.gender ?? '',
+        nationality: draft.nationality ?? '',
+        nicNumber: draft.identity_document_type === 'nic' ? draft.nic_number ?? '' : '',
+        residentialAddress: draft.permanent_landmark ?? '',
+        province: draft.permanent_province ?? '',
+        district: draft.permanent_district ?? '',
+        city: draft.permanent_city ?? '',
+        postalCode: draft.permanent_postal_code ?? '',
+      });
+    }
+    if (draft.business_name) {
+      this.stateService.setBusinessDetails({
+        businessName: draft.business_name,
+        category: draft.provider_type ?? '',
+        contactNumber: draft.secondary_phone ?? '',
+        registrationNumber: draft.business_registration_number ?? '',
+        description: draft.description ?? '',
+        businessStreetAddress: draft.business_landmark ?? '',
+        businessProvince: draft.business_province ?? '',
+        businessDistrict: draft.business_district ?? '',
+        businessCity: draft.business_city ?? '',
+        businessPostalCode: draft.business_postal_code ?? '',
+      });
+    }
+    this.syncDocumentsFromDraft(draft, true);
+  }
+
+  editReviewPersonalDetails(): void {
+    this.errorMessage.set(null);
+    this.stateService.goToPersonalDetails();
+    this.loadPersonalDetailsToForm();
+  }
+
+  reverifyReviewEmail(): void {
+    this.reviewConfirmed.set(false);
+    this.onChangeEmail();
+  }
+
+  submitForApproval(): void {
+    if (
+      this.stateService.currentStepId() !== 'review_submit' ||
+      this.isSubmitting() || this.reviewLoading() ||
+      this.submittedApplication() || this.reviewNeedsVerification() || !this.reviewConfirmed() || !this.reviewReady()
+    ) return;
+
+    const token = this.stateService.getAuthorizationToken();
+    if (!token) {
+      this.showReviewError({ status: 401, message: '' });
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.isSubmitting.set(true);
+    this.otpService.submitRegistration(token).subscribe({
+      next: (result) => {
+        this.isSubmitting.set(false);
+        if (result.submitted) {
+          this.submittedApplication.set(result);
+          this.reviewDraft.set(null);
+          this.stateService.clearAuthorization();
+        } else {
+          this.errorMessage.set(result.message || 'The application could not be submitted.');
+        }
+      },
+      error: (error: ProviderApiError) => {
+        this.isSubmitting.set(false);
+        this.showReviewError(error);
+      },
+    });
+  }
+
+  private showReviewError(error: ProviderApiError): void {
+    if (error.status === 401 || error.status === 403) {
+      this.reviewNeedsVerification.set(true);
+      this.errorMessage.set(
+        'Your registration authorization is no longer valid. Verify your email again to check your application and continue.',
+      );
+    } else {
+      this.errorMessage.set(error.message);
+    }
+  }
+
+  returnToProviderPortal(): void {
+    this.stateService.clearRegistrationState();
+    this.router.navigate(['/provider']);
   }
 
   onBackToIdentityVerification(): void {
