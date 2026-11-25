@@ -1,0 +1,347 @@
+@import 'leaflet/dist/leaflet.css';
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.interactive-map-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #CBEBFB;
+  border-radius: 20px;
+  user-select: none;
+}
+
+.leaflet-map-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  background: #CBEBFB;
+  border-radius: 20px;
+}
+
+// -----------------------------------------------------------------------------
+// LEAFLET CONTAINER & TILE REFINEMENT
+// -----------------------------------------------------------------------------
+:host ::ng-deep {
+  .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 20px;
+    background-color: #CBEBFB !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  // Ensure attribution sits cleanly in bottom right
+  .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(4px);
+    font-size: 10.5px !important;
+    padding: 2px 8px !important;
+    border-top-left-radius: 8px;
+    color: #475569 !important;
+
+    a {
+      color: #0066FF !important;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CUSTOM LEAFLET PRICE MARKERS
+  // ---------------------------------------------------------------------------
+  .cg-price-marker-host {
+    background: transparent;
+    border: none;
+  }
+
+  .price-marker-anchor {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    &.is-active {
+      transform: translateY(-3px) scale(1.1);
+      z-index: 1000;
+    }
+  }
+
+  .price-marker-pill {
+    background: #FFFFFF;
+    color: #082B5C;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    border: 1px solid rgba(8, 43, 92, 0.12);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    .price-text {
+      letter-spacing: -0.2px;
+    }
+
+    &.is-active {
+      background: #0066FF;
+      color: #FFFFFF;
+      border-color: #0066FF;
+      font-weight: 800;
+      box-shadow: 0 4px 16px rgba(0, 102, 255, 0.45);
+    }
+  }
+
+  .price-marker-dot {
+    width: 6px;
+    height: 6px;
+    background: #082B5C;
+    border-radius: 50%;
+    margin-top: 2px;
+    transition: all 0.2s ease;
+
+    &.is-active {
+      width: 8px;
+      height: 8px;
+      background: #0066FF;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0, 102, 255, 0.5);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CUSTOM LEAFLET POPUP
+  // ---------------------------------------------------------------------------
+  .cg-leaflet-popup-custom {
+    margin-bottom: 8px;
+
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(8, 43, 92, 0.18);
+      border: 1px solid #E2E8F0;
+      background: #FFFFFF;
+    }
+
+    .leaflet-popup-content {
+      margin: 0;
+      line-height: 1.4;
+      width: 230px !important;
+    }
+
+    .leaflet-popup-tip-container {
+      margin-top: -1px;
+    }
+
+    .leaflet-popup-tip {
+      background: #FFFFFF;
+      box-shadow: none;
+    }
+
+    .leaflet-popup-close-button {
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: rgba(0, 0, 0, 0.45);
+      color: #FFFFFF !important;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.15s ease;
+      z-index: 10;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.7);
+        color: #FFFFFF !important;
+      }
+    }
+  }
+
+  .cg-map-popup-body {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .cg-popup-img-wrap {
+    width: 100%;
+    height: 110px;
+    background: #F1F5F9;
+    overflow: hidden;
+
+    .cg-popup-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .cg-popup-details {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cg-popup-title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #082B5C;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cg-popup-loc {
+    margin: 0;
+    font-size: 11.5px;
+    color: #64748B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cg-popup-price-row {
+    margin-top: 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+
+    .cg-popup-price {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0066FF;
+    }
+
+    .cg-popup-period {
+      font-size: 11px;
+      color: #64748B;
+    }
+  }
+
+  .cg-popup-btn-view {
+    margin-top: 6px;
+    width: 100%;
+    padding: 7px 10px;
+    background: #0066FF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: #0052CC;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// MAP NAVIGATION CONTROLS (Top Right)
+// -----------------------------------------------------------------------------
+.map-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(8, 43, 92, 0.14);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  border: 1px solid rgba(8, 43, 92, 0.08);
+
+  .control-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #082B5C;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: #EAF5FF;
+      color: #0066FF;
+    }
+
+    &:active {
+      background: #D8E8F8;
+    }
+  }
+
+  .control-divider {
+    height: 1px;
+    width: 100%;
+    background: #E2E8F0;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// STATUS PILLS OVERLAY
+// -----------------------------------------------------------------------------
+.map-status-pill {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(8, 43, 92, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #082B5C;
+
+  &.tile-warning {
+    bottom: 60px;
+    color: #D97706;
+    border-color: #FCD34D;
+  }
+}

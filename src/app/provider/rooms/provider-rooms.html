@@ -1,0 +1,222 @@
+<div class="rooms-shell">
+  <!-- Header -->
+  <div class="rooms-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/dashboard" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="badge">Room & Availability APIs</span>
+      </div>
+      <h1 class="page-title">Rooms & Availability Management</h1>
+      <p class="page-subtitle">Configure room units, guest capacities, and block maintenance or personal dates.</p>
+    </div>
+
+    <div class="header-right">
+      <button type="button" class="btn-primary" (click)="openAddRoomModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        <span>Add Room Unit</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Routine Update Preservation Notice -->
+  <div class="preservation-notice">
+    <div class="notice-icon">🛡️</div>
+    <div class="notice-text">
+      <strong>Approval Preservation Guarantee:</strong> Routine room pricing, inventory, and availability updates preserve existing listing approval status without requiring compliance re-verification.
+    </div>
+  </div>
+
+  <!-- Property Selector -->
+  @if (listings().length > 0) {
+    <div class="selector-card">
+      <div class="selector-left">
+        <label class="selector-label">Active Property:</label>
+        <select
+          class="selector-dropdown"
+          [ngModel]="selectedListingId()"
+          (ngModelChange)="onListingChange($event)"
+        >
+          @for (l of listings(); track l.listing.id) {
+            <option [value]="l.listing.id">
+              {{ l.listing.title }} ({{ l.listing.locality || l.listing.district }})
+            </option>
+          }
+        </select>
+      </div>
+      <div class="selector-right">
+        <span class="units-count">{{ rooms().length }} room unit(s) registered</span>
+      </div>
+    </div>
+  }
+
+  <!-- Rooms Grid -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading room inventory from backend...</span>
+    </div>
+  } @else {
+    <div class="rooms-grid">
+      @for (room of rooms(); track room.id) {
+        <div class="room-management-card">
+          <div class="card-head">
+            <div class="room-type-icon">🛏️</div>
+            <div class="room-details">
+              <h3 class="room-name">{{ room.label }}</h3>
+              <div class="room-specs">
+                <span>{{ room.room_type || 'Double Room' }}</span>
+                <span>•</span>
+                <span>Max {{ room.capacity }} Guests</span>
+              </div>
+            </div>
+            <div class="price-badge">
+              <span class="val">LKR {{ (room.nightly_price || 0) | number }}</span>
+              <span class="sub">/ night</span>
+            </div>
+          </div>
+
+          <!-- Availability & Blocks -->
+          <div class="availability-section">
+            <div class="avail-header">
+              <h4 class="avail-title">Availability Slots & Blocked Dates</h4>
+              <button type="button" class="btn-block-slot" (click)="openBlockModal(room)">
+                + Set Availability / Block
+              </button>
+            </div>
+
+            @if (getSlotsForRoom(room.id).length > 0) {
+              <div class="blocks-list">
+                @for (slot of getSlotsForRoom(room.id); track slot.id) {
+                  <div class="block-tag-row" [class.open-slot]="slot.is_open">
+                    <span class="block-icon">{{ slot.is_open ? '🟢' : '🔒' }}</span>
+                    <div class="block-info">
+                      <span class="block-dates">
+                        {{ slot.starts_at | date:'mediumDate' }} → {{ slot.ends_at | date:'mediumDate' }}
+                      </span>
+                      <span class="block-reason">
+                        {{ slot.is_open ? 'Open for bookings' : 'Blocked (Maintenance/Private)' }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="all-available-badge">
+                <span class="dot"></span>
+                <span>Fully open for traveler bookings across all dates</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Add Room Modal -->
+  @if (isAddRoomModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddRoomModal()">
+      <div class="modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Room Inventory Unit</h3>
+          <button type="button" class="btn-close" (click)="closeAddRoomModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Room Label / Name <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="newRoomLabel"
+              placeholder="e.g. Deluxe Balcony Suite"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bedding Configuration</label>
+            <select class="form-input" [(ngModel)]="newRoomType">
+              <option value="Single Bed">Single Bed (1 Person)</option>
+              <option value="Double Bed">Double Bed (2 People)</option>
+              <option value="Queen Bed">Queen Bed (2 People)</option>
+              <option value="King Bed">King Bed (2 People)</option>
+              <option value="Family Suite">Family Suite (3–5 People)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Guest Capacity</label>
+              <input type="number" min="1" max="10" class="form-input" [(ngModel)]="newRoomCapacity" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nightly Rate (LKR)</label>
+              <input type="number" min="1000" step="500" class="form-input" [(ngModel)]="newRoomPrice" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeAddRoomModal()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="submitAddRoom()"
+            [disabled]="isAddingRoom || !newRoomLabel.trim()"
+          >
+            {{ isAddingRoom ? 'Adding...' : 'Save Room' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Block Dates Modal -->
+  @if (isBlockModalOpen() && selectedRoomForBlock) {
+    <div class="modal-backdrop" (click)="closeBlockModal()">
+      <div class="modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Set Availability Slot for {{ selectedRoomForBlock.label }}</h3>
+          <button type="button" class="btn-close" (click)="closeBlockModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-sub">
+            Sets date slots via <code>POST /api/v1/provider/listings/&#123;id&#125;/availability</code>.
+          </p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-input" [(ngModel)]="blockStartDate" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-input" [(ngModel)]="blockEndDate" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeBlockModal()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="submitBlockDates()"
+            [disabled]="isSavingBlock || !blockStartDate || !blockEndDate"
+          >
+            {{ isSavingBlock ? 'Saving...' : 'Apply Availability Slot' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

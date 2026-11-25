@@ -25,6 +25,18 @@
             Home
           </a>
         </li>
+        @if (isHomestayRoute()) {
+          <li>
+            <a
+              routerLink="/homestays"
+              (click)="onNavClick('stays', $event)"
+              class="nav-link active"
+              aria-current="page"
+            >
+              Stays
+            </a>
+          </li>
+        }
         <li>
           <a
             href="/experiences"
@@ -342,6 +354,9 @@
       <!-- MOBILE CENTER LINKS -->
       <nav class="mobile-nav-links">
         <a href="#home" class="mobile-link" [class.active]="activeSection() === 'home'" (click)="onNavClick('home', $event)">Home</a>
+        @if (isHomestayRoute()) {
+          <a routerLink="/homestays" class="mobile-link active" aria-current="page" (click)="onNavClick('stays', $event)">Stays</a>
+        }
         <a href="/experiences" class="mobile-link" [class.active]="activeSection() === 'experiences'" (click)="onNavClick('experiences', $event)">Experiences</a>
         @if (isRentalRoute()) {
           <a routerLink="/bicycles" queryParamsHandling="preserve" class="mobile-link active" aria-current="location" (click)="closeMobileMenu()">Rentals</a>

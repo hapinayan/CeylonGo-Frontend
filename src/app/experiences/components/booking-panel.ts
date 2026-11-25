@@ -118,6 +118,24 @@ export class BookingPanel {
       slot.available_places >= this.listing().min_participants;
   }
 
+  decrementParticipants(): void {
+    const min = this.listing().min_participants;
+    const current = this.form.controls.participants.value ?? min;
+    if (current > min) {
+      this.form.controls.participants.setValue(current - 1);
+      this.syncAges();
+    }
+  }
+
+  incrementParticipants(): void {
+    const max = this.listing().max_group_size;
+    const current = this.form.controls.participants.value ?? this.listing().min_participants;
+    if (current < max) {
+      this.form.controls.participants.setValue(current + 1);
+      this.syncAges();
+    }
+  }
+
   refreshSlots(): void {
     this.form.controls.slot.reset();
     this.review.set(null);

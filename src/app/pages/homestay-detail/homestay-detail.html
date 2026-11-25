@@ -77,11 +77,11 @@
     }
   </header>
 
-  <!-- DEMO / SIMULATION BANNER -->
+  <!-- LIVE AVAILABILITY BANNER -->
   <div class="demo-notice-bar" role="status">
     <div class="demo-notice-content">
-      <span class="demo-tag">DEMO MODE</span>
-      <span>Frontend homestay details & booking preview. No live charges or real backend reservation requests.</span>
+      <span class="demo-tag" style="background-color: #16A34A;">LIVE LISTING</span>
+      <span>Real-time homestay availability and rooms directly connected to CeylonGo backend.</span>
     </div>
   </div>
 
@@ -133,13 +133,19 @@
           <div class="property-meta-row">
             <div class="meta-left">
               <!-- Rating -->
-              <div class="rating-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-                <span class="rating-val">{{ homestay()!.rating }}</span>
-                <span class="review-val">({{ homestay()!.review_count }} reviews)</span>
-              </div>
+              @if (homestay()!.review_count > 0 && homestay()!.rating > 0) {
+                <div class="rating-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span class="rating-val">{{ homestay()!.rating }}</span>
+                  <span class="review-val">({{ homestay()!.review_count }} reviews)</span>
+                </div>
+              } @else {
+                <div class="rating-badge" style="background: #F1F5F9; border-color: #CBD5E1;">
+                  <span class="review-val" style="color: #475569; font-weight: 600;">New Stay · Awaiting reviews</span>
+                </div>
+              }
 
               <!-- Superhost / Verified -->
               @if (homestay()!.is_superhost) {
@@ -198,7 +204,7 @@
         <section class="gallery-section" aria-label="Photo Gallery">
           <div class="gallery-grid">
             <!-- Hero Image Left -->
-            <div class="gallery-hero" (click)="openGallery(0)">
+            <div class="gallery-hero" (click)="homestay()!.images.length > 0 && openGallery(0)">
               <img [src]="homestay()!.images[0] || homestay()!.image_url" [alt]="homestay()!.name + ' hero image'" class="gallery-img" />
             </div>
 
@@ -210,31 +216,33 @@
                 </div>
               }
               @if (homestay()!.images.length <= 1) {
-                <!-- Graceful placeholders if listing has fewer images -->
-                <div class="gallery-subitem" (click)="openGallery(0)">
-                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 2'" class="gallery-img" />
+                <!-- Neutral placeholder slots if listing has no extra images -->
+                <div class="gallery-subitem">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo placeholder'" class="gallery-img" />
                 </div>
-                <div class="gallery-subitem" (click)="openGallery(0)">
-                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 3'" class="gallery-img" />
+                <div class="gallery-subitem">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo placeholder'" class="gallery-img" />
                 </div>
-                <div class="gallery-subitem" (click)="openGallery(0)">
-                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 4'" class="gallery-img" />
+                <div class="gallery-subitem">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo placeholder'" class="gallery-img" />
                 </div>
-                <div class="gallery-subitem" (click)="openGallery(0)">
-                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 5'" class="gallery-img" />
+                <div class="gallery-subitem">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo placeholder'" class="gallery-img" />
                 </div>
               }
             </div>
 
             <!-- View All Photos Pill -->
-            <button type="button" class="btn-all-photos" (click)="openGallery(0)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <span>View all {{ homestay()!.images.length }} photos</span>
-            </button>
+            @if (homestay()!.images.length > 0) {
+              <button type="button" class="btn-all-photos" (click)="openGallery(0)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>View all {{ homestay()!.images.length }} photos</span>
+              </button>
+            }
           </div>
         </section>
 
@@ -331,6 +339,71 @@
             <section class="description-section">
               <h3 class="section-title">About this Homestay</h3>
               <p class="description-paragraph">{{ homestay()!.description }}</p>
+            </section>
+
+            <!-- Page 03: ROOM SELECTION & LIVE AVAILABILITY -->
+            <section class="room-selection-section" aria-label="Available Rooms and Units">
+              <div class="rooms-header-row">
+                <h3 class="section-title">Rooms & Live Availability</h3>
+                <span class="rooms-subtitle">Authoritative availability directly from CeylonGo backend</span>
+              </div>
+
+              @if (isCheckingAvailability()) {
+                <div class="alert-info-box" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                  <span class="btn-spinner" style="border: 2px solid #2563EB; border-top-color: transparent; width: 16px; height: 16px; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
+                  <span>Checking room availability with CeylonGo backend...</span>
+                </div>
+              } @else if (availabilityError()) {
+                <div class="alert-error" role="alert" style="margin-bottom: 16px;">
+                  <span>{{ availabilityError() }}</span>
+                </div>
+              }
+
+              @if (availableRooms().length > 0) {
+                <div class="rooms-grid">
+                  @for (unit of availableRooms(); track unit.id) {
+                    <div
+                      class="room-card"
+                      [class.selected]="selectedUnitId() === unit.id"
+                      (click)="selectUnit(unit.id)"
+                    >
+                      <div class="room-info">
+                        <div class="room-top-line">
+                          <h4 class="room-label">{{ unit.label }}</h4>
+                          <span class="badge-available">Available</span>
+                        </div>
+                        <div class="room-specs">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                          </svg>
+                          <span>Up to {{ unit.capacity }} Guests</span>
+                          @if (unit.notes) {
+                            <span class="room-notes">• {{ unit.notes }}</span>
+                          }
+                        </div>
+                      </div>
+                      <div class="room-action">
+                        <button
+                          type="button"
+                          class="btn-select-room"
+                          [class.active]="selectedUnitId() === unit.id"
+                          (click)="$event.stopPropagation(); selectUnit(unit.id)"
+                        >
+                          {{ selectedUnitId() === unit.id ? 'Selected' : 'Select Room' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else if (!isCheckingAvailability()) {
+                <div class="not-found-state" style="padding: 24px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; margin-top: 12px;">
+                  <h4 style="margin: 0 0 6px 0; color: #1E293B; font-size: 15px;">No rooms currently available for requested dates</h4>
+                  <p style="margin: 0; color: #64748B; font-size: 14px;">
+                    This homestay has no eligible inventory units for your selected travel dates or guest count. Please adjust your dates or browse another stay.
+                  </p>
+                </div>
+              }
             </section>
 
             <!-- Amenities Section -->
@@ -448,8 +521,8 @@
               <div class="panel-price-header">
                 <div class="price-stack">
                   <div class="price-main">
-                    <span class="currency">LKR</span>
-                    <span class="amount">{{ homestay()!.price_per_night | number }}</span>
+                    <span class="currency">{{ quote()?.currency || 'LKR' }}</span>
+                    <span class="amount">{{ (quote()?.nightly_rate ? (+quote()!.nightly_rate) : homestay()!.price_per_night) | number }}</span>
                     <span class="period">/ night</span>
                   </div>
                   @if (homestay()!.original_price_per_night) {
@@ -461,13 +534,36 @@
                 </div>
 
                 <div class="panel-rating">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                  </svg>
-                  <span class="rate-val">{{ homestay()!.rating }}</span>
-                  <span class="rev-val">({{ homestay()!.review_count }})</span>
+                  @if (homestay()!.review_count > 0 && homestay()!.rating > 0) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="rate-val">{{ homestay()!.rating }}</span>
+                    <span class="rev-val">({{ homestay()!.review_count }})</span>
+                  } @else {
+                    <span class="rev-val" style="color: #64748B;">New Stay</span>
+                  }
                 </div>
               </div>
+
+              <!-- Selected Room Pill or Prompt in Sidebar -->
+              @if (selectedUnit()) {
+                <div class="selected-room-banner">
+                  <div class="room-banner-left">
+                    <span class="banner-tag">ROOM</span>
+                    <span class="banner-title">{{ selectedUnit()!.label }}</span>
+                  </div>
+                  <span class="banner-cap">Max {{ selectedUnit()!.capacity }} guests</span>
+                </div>
+              } @else if (availableRooms().length > 0) {
+                <div class="alert-info-box" style="margin-bottom: 12px; font-size: 13px;">
+                  <span>Please select a room above to continue</span>
+                </div>
+              } @else if (!isCheckingAvailability()) {
+                <div class="alert-error" role="alert" style="margin-bottom: 12px; font-size: 13px;">
+                  <span>No rooms available for requested dates</span>
+                </div>
+              }
 
               <!-- Date Picker Box -->
               <div class="booking-dates-box">
@@ -583,18 +679,18 @@
                 <div class="price-breakdown-card">
                   <div class="breakdown-row">
                     <span class="breakdown-label">
-                      LKR {{ homestay()!.price_per_night | number }} × {{ nightsCount() }} night{{ nightsCount() > 1 ? 's' : '' }}
+                      {{ quote()?.currency || 'LKR' }} {{ (quote()?.nightly_rate ? (+quote()!.nightly_rate) : homestay()!.price_per_night) | number }} × {{ nightsCount() }} night{{ nightsCount() > 1 ? 's' : '' }}
                     </span>
-                    <span class="breakdown-val">LKR {{ estimatedBasePrice() | number }}</span>
+                    <span class="breakdown-val">{{ quote()?.currency || 'LKR' }} {{ estimatedBasePrice() | number }}</span>
                   </div>
                   <div class="breakdown-row">
-                    <span class="breakdown-label text-muted">Demo Mode Estimate</span>
-                    <span class="breakdown-val text-green">LKR 0 (No Fees)</span>
+                    <span class="breakdown-label text-muted">{{ quote() ? 'Server Verified Quote' : 'Base Rate' }}</span>
+                    <span class="breakdown-val text-green">Included</span>
                   </div>
                   <div class="breakdown-divider"></div>
                   <div class="breakdown-row total-row">
-                    <span class="total-label">Total Booking Estimate</span>
-                    <span class="total-val">LKR {{ estimatedTotal() | number }}</span>
+                    <span class="total-label">Total Amount</span>
+                    <span class="total-val">{{ quote()?.currency || 'LKR' }} {{ estimatedTotal() | number }}</span>
                   </div>
                 </div>
               } @else if (!dateErrorMessage()) {
@@ -610,7 +706,15 @@
                 [disabled]="!canContinueToBooking()"
                 (click)="continueToBooking()"
               >
-                Continue to Booking
+                @if (isCheckingAvailability()) {
+                  Checking Availability...
+                } @else if (availableRooms().length === 0) {
+                  No Rooms Available
+                } @else if (!selectedUnitId()) {
+                  Select a Room to Continue
+                } @else {
+                  Continue to Booking
+                }
               </button>
 
               <div class="panel-disclaimer">
@@ -667,6 +771,9 @@
       </div>
     </div>
   }
+
+  <!-- TRAVELER AUTHENTICATION MODAL -->
+  <app-traveler-auth-modal />
 
   <!-- TOAST NOTIFICATION -->
   @if (toastMessage()) {

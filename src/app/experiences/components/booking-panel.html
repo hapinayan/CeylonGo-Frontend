@@ -49,7 +49,11 @@
       }
       @if (day()) { <button type="button" class="outline-control" (click)="refreshSlots()">Refresh availability</button> }
       <label><span class="workflow-field-heading"><app-experience-icon name="group" />Travelers ({{ listing().min_participants }}–{{ listing().max_group_size }})</span>
-        <input type="number" formControlName="participants" [min]="listing().min_participants" [max]="listing().max_group_size" step="1" (input)="syncAges()">
+        <div class="quantity-stepper">
+          <button type="button" class="stepper-btn btn-minus" (click)="decrementParticipants()" [disabled]="(form.controls.participants.value ?? listing().min_participants) <= listing().min_participants" aria-label="Decrease travelers">−</button>
+          <input type="number" formControlName="participants" [min]="listing().min_participants" [max]="listing().max_group_size" step="1" (input)="syncAges()">
+          <button type="button" class="stepper-btn btn-plus" (click)="incrementParticipants()" [disabled]="(form.controls.participants.value ?? listing().min_participants) >= listing().max_group_size" aria-label="Increase travelers">+</button>
+        </div>
       </label>
       @if (listing().min_age) { <p>Minimum age: {{ listing().min_age }}</p> }
       @if (reviewMode()) {

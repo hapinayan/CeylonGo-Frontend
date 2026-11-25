@@ -1,0 +1,281 @@
+<div class="bookings-shell">
+  <!-- Header -->
+  <div class="bookings-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/dashboard" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="badge">Guest Reservations</span>
+      </div>
+      <h1 class="page-title">Provider Booking Management</h1>
+      <p class="page-subtitle">Review incoming reservation requests, check-in schedules, and guest payment statuses.</p>
+    </div>
+
+    <div class="header-right">
+      <div class="academic-notice-pill">
+        <span class="notice-dot"></span>
+        <span>Academic MVP V1.1 Live Integration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="controls-bar">
+    <div class="filter-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'all'"
+        (click)="onFilterChange('all')"
+      >
+        All ({{ bookings().length }})
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'pending'"
+        (click)="onFilterChange('pending')"
+      >
+        Pending
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'confirmed'"
+        (click)="onFilterChange('confirmed')"
+      >
+        Confirmed
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'completed'"
+        (click)="onFilterChange('completed')"
+      >
+        Completed
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'rejected'"
+        (click)="onFilterChange('rejected')"
+      >
+        Rejected
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'cancelled'"
+        (click)="onFilterChange('cancelled')"
+      >
+        Cancelled
+      </button>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search by ID, listing, traveler..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+  </div>
+
+  <!-- Error notification if any -->
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="btn-retry" (click)="loadBookings()">Retry</button>
+    </div>
+  }
+
+  <!-- Bookings Content -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Retrieving provider reservations from backend...</span>
+    </div>
+  } @else if (filteredBookings().length === 0) {
+    <div class="empty-bookings-card">
+      <div class="empty-icon">📅</div>
+      <h3 class="empty-title">No reservations found</h3>
+      <p class="empty-desc">
+        @if (selectedFilter() === 'all') {
+          When travelers book your homestays or experiences, their reservations and schedules will appear here.
+        } @else {
+          No reservations match the status "{{ selectedFilter() }}".
+        }
+      </p>
+    </div>
+  } @else {
+    <div class="bookings-table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Listing</th>
+              <th>Traveler</th>
+              <th>Dates</th>
+              <th>Guests / Qty</th>
+              <th>Total Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of filteredBookings(); track b.id) {
+              <tr>
+                <td class="font-mono">#{{ b.id }}</td>
+                <td>
+                  <div class="listing-cell">
+                    <span class="l-title">Listing #{{ b.listing_id }}</span>
+                    @if (b.room_ids && b.room_ids.length > 0) {
+                      <span class="l-room">Room IDs: {{ b.room_ids.join(', ') }}</span>
+                    } @else {
+                      <span class="l-room">Standard Unit</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="traveler-cell">
+                    <span class="t-name">Traveler #{{ b.traveler_id }}</span>
+                    <span class="t-email font-mono text-xs">Ref: {{ b.request_key.substring(0, 8) }}...</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="dates-cell">
+                    <span class="d-range">{{ b.starts_at | date:'mediumDate' }} → {{ b.ends_at | date:'mediumDate' }}</span>
+                  </div>
+                </td>
+                <td>{{ b.quantity }}</td>
+                <td class="font-semibold text-blue">{{ b.currency }} {{ b.total_amount | number:'1.2-2' }}</td>
+                <td>
+                  @if (b.payments && b.payments.length > 0) {
+                    <span class="payment-badge" [class]="b.payments[0].status">
+                      {{ b.payments[0].status | titlecase }}
+                    </span>
+                  } @else {
+                    <span class="payment-badge pending">Pending</span>
+                  }
+                </td>
+                <td>
+                  <span class="status-badge" [class]="b.status">
+                    {{ b.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btn-group">
+                    @if (b.status === 'pending') {
+                      <button
+                        type="button"
+                        class="btn-confirm"
+                        (click)="promptAction(b, 'confirm')"
+                        title="Confirm Booking"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-reject"
+                        (click)="promptAction(b, 'reject')"
+                        title="Reject Booking"
+                      >
+                        Reject
+                      </button>
+                    } @else {
+                      <span class="text-muted text-xs">—</span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Action Modal Dialog -->
+  @if (isActionModalOpen() && activeBooking()) {
+    <div class="modal-backdrop" (click)="closeActionModal()">
+      <div class="modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            {{ actionType() === 'confirm' ? 'Confirm Reservation' : 'Decline Reservation' }}
+          </h3>
+          <button type="button" class="btn-close" (click)="closeActionModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-prompt">
+            Are you sure you want to {{ actionType() }} booking <strong>#{{ activeBooking()?.id }}</strong>?
+          </p>
+
+          <div class="booking-summary-box">
+            <div class="row">
+              <span class="label">Listing:</span>
+              <span class="val">Listing #{{ activeBooking()?.listing_id }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Traveler:</span>
+              <span class="val">Traveler #{{ activeBooking()?.traveler_id }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Dates:</span>
+              <span class="val">{{ activeBooking()?.starts_at | date:'mediumDate' }} → {{ activeBooking()?.ends_at | date:'mediumDate' }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Guests / Qty:</span>
+              <span class="val">{{ activeBooking()?.quantity }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Total Amount:</span>
+              <span class="val font-semibold">{{ activeBooking()?.currency }} {{ activeBooking()?.total_amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          @if (actionType() === 'reject') {
+            <div class="reject-reason-box">
+              <label for="rejectReason" class="reason-label">Decline Reason (Optional):</label>
+              <textarea
+                id="rejectReason"
+                class="reason-textarea"
+                rows="3"
+                placeholder="Explain why this reservation cannot be accepted..."
+                [(ngModel)]="rejectReason"
+                maxlength="500"
+              ></textarea>
+              <span class="char-count">{{ rejectReason.length }}/500</span>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeActionModal()">Cancel</button>
+          <button
+            type="button"
+            class="btn-action-submit"
+            [class.btn-green]="actionType() === 'confirm'"
+            [class.btn-red]="actionType() === 'reject'"
+            (click)="confirmAction()"
+            [disabled]="isUpdating"
+          >
+            {{ isUpdating ? 'Updating...' : (actionType() === 'confirm' ? 'Yes, Confirm Booking' : 'Yes, Decline Booking') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

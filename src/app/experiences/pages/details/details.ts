@@ -6,9 +6,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, distinctUntilChanged, forkJoin, map, of, startWith, switchMap, tap } from 'rxjs';
 import { BookingPanel } from '../../components/booking-panel';
 import { SaveControl } from '../../components/save-control';
+import { Footer } from '../../../shared/components/footer/footer';
 import { BOOKABLE_PREVIEW } from '../../services/travel-api';
-import { WeatherPanel } from '../../components/weather-panel/weather-panel';
-import { coordinatesOf } from '../../models/weather';
 import { TravelerHeader } from '../../components/traveler-header';
 import { ExperienceIcon } from '../../components/icon';
 import { categories, Category, Experience } from '../../models/catalog';
@@ -29,7 +28,7 @@ interface Detail {
 type DetailState = { status: 'loading' | 'missing' | 'error' } | { status: 'ready'; detail: Detail };
 
 @Component({
-  imports: [RouterLink, DatePipe, DecimalPipe, TravelerHeader, ExperienceIcon, WeatherPanel, BookingPanel, SaveControl],
+  imports: [RouterLink, DatePipe, DecimalPipe, TravelerHeader, ExperienceIcon, BookingPanel, SaveControl, Footer],
   templateUrl: './details.html',
   styleUrls: ['../discover/discover.scss', './details.scss', '../traveler/traveler.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -46,7 +45,6 @@ export class ExperienceDetails {
   private readonly api = inject(EcoApi);
   private readonly reload = signal(0);
   readonly catalog = inject(EXPERIENCE_CATALOG);
-  readonly coordinatesOf = coordinatesOf;
   readonly sample = inject(BOOKABLE_PREVIEW);
 
   readonly state = toSignal(combineLatest([

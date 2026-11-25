@@ -172,6 +172,7 @@ export const routes: Routes = [
   // SERVICE PROVIDER PORTAL WELCOME PAGE
   {
     path: 'provider',
+    pathMatch: 'full',
     loadComponent: () =>
       import('./pages/provider-welcome/provider-welcome')
         .then(m => m.ProviderWelcome)
@@ -219,8 +220,138 @@ export const routes: Routes = [
     path: 'provider/dashboard',
     canActivate: [providerAuthGuard],
     loadComponent: () =>
-      import('./pages/provider-dashboard/provider-dashboard')
-        .then(m => m.ProviderDashboard)
+      import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/provider-dashboard/provider-dashboard').then(
+            (m) => m.ProviderDashboard
+          ),
+      },
+    ],
+  },
+
+  // AUTHENTICATED PROVIDER PORTAL WITH COMMON LAYOUT & SIDEBAR
+  {
+    path: 'provider',
+    canActivate: [providerAuthGuard],
+    loadComponent: () =>
+      import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/provider-dashboard/provider-dashboard').then(
+            (m) => m.ProviderDashboard
+          ),
+      },
+      {
+        path: 'services/new',
+        loadComponent: () =>
+          import('./provider/services-catalog/services-catalog').then(
+            (m) => m.ServicesCatalog
+          ),
+      },
+      {
+        path: 'homestays/new',
+        loadComponent: () =>
+          import('./provider/homestays/wizard/homestay-wizard').then(
+            (m) => m.HomestayWizard
+          ),
+      },
+      {
+        path: 'listings',
+        loadComponent: () =>
+          import('./provider/listings/provider-listings').then(
+            (m) => m.ProviderListings
+          ),
+      },
+      {
+        path: 'rooms',
+        loadComponent: () =>
+          import('./provider/rooms/provider-rooms').then((m) => m.ProviderRooms),
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./provider/bookings/provider-bookings').then(
+            (m) => m.ProviderBookings
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'My Provider Profile',
+          description:
+            'Manage your verified business credentials, contact phone, and registered district.',
+        },
+      },
+      {
+        path: 'promotions',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Promotions & Discounts',
+          description:
+            'Create seasonal promotional codes and discounts for upcoming holidays in Sri Lanka.',
+        },
+      },
+      {
+        path: 'community',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Provider Community Feed',
+          description:
+            'Connect with fellow hosts, tour guides, and local artisans across Sri Lanka.',
+        },
+      },
+      {
+        path: 'payouts',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Payouts & Financial Settlements',
+          description:
+            'View your earnings, bank account details, and completed payouts in LKR.',
+        },
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Provider Account Settings',
+          description:
+            'Configure notifications, password, language preferences, and business policies.',
+        },
+      },
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Help & Host Support',
+          description:
+            'Access host guides, FAQs, and contact CeylonGo support representatives.',
+        },
+      },
+    ],
   },
 
   // LOCAL TOUR GUIDES DISCOVER PAGE

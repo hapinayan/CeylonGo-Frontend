@@ -1,5 +1,13 @@
 import { ViewportScroller } from '@angular/common';
-import { afterNextRender, Component, computed, DestroyRef, inject, signal, ViewEncapsulation } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+  ViewEncapsulation,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,9 +21,19 @@ import { WishlistState } from '../../services/wishlist-state';
 import { DiscoverViewState } from '../../services/discover-view-state';
 import { LiveCatalog } from './live-catalog';
 import { Pagination } from '../../components/pagination';
+import { Footer } from '../../../shared/components/footer/footer';
 
 @Component({
-  imports: [ReactiveFormsModule, TravelerHeader, CategoryNav, ExperienceCard, ExperienceIcon, Pagination, LiveCatalog],
+  imports: [
+    ReactiveFormsModule,
+    TravelerHeader,
+    CategoryNav,
+    ExperienceCard,
+    ExperienceIcon,
+    Pagination,
+    LiveCatalog,
+    Footer,
+  ],
   templateUrl: './discover.html',
   styleUrl: './discover.scss',
   encapsulation: ViewEncapsulation.None,
@@ -43,7 +61,10 @@ export class Discover {
     location: new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) }),
     date: new FormControl('', { nonNullable: true }),
     travelers: new FormControl<number | null>(1, [
-      Validators.required, Validators.min(1), Validators.max(20), Validators.pattern(/^\d+$/),
+      Validators.required,
+      Validators.min(1),
+      Validators.max(20),
+      Validators.pattern(/^\d+$/),
     ]),
   });
 
@@ -51,17 +72,22 @@ export class Discover {
     const term = this.location();
     const category = this.category();
     const rating = this.minimumRating();
-    const results = this.catalog.experiences.filter(experience =>
-      (!term || experience.location.toLowerCase().includes(term)) &&
-      (category === 'all' || experience.category === category) &&
-      (experience.rating ?? 0) >= rating,
+    const results = this.catalog.experiences.filter(
+      (experience) =>
+        (!term || experience.location.toLowerCase().includes(term)) &&
+        (category === 'all' || experience.category === category) &&
+        (experience.rating ?? 0) >= rating
     );
 
     switch (this.sort()) {
-      case 'rating': return results.sort((left, right) => (right.rating ?? 0) - (left.rating ?? 0));
-      case 'price-low': return results.sort((left, right) => left.price - right.price);
-      case 'price-high': return results.sort((left, right) => right.price - left.price);
-      default: return results;
+      case 'rating':
+        return results.sort((left, right) => (right.rating ?? 0) - (left.rating ?? 0));
+      case 'price-low':
+        return results.sort((left, right) => left.price - right.price);
+      case 'price-high':
+        return results.sort((left, right) => right.price - left.price);
+      default:
+        return results;
     }
   });
 
@@ -101,11 +127,24 @@ export class Discover {
       this.filtersOpen.set(saved.filtersOpen);
       this.searched.set(saved.searched);
       this.searchForm.setValue(saved.form);
-      if (saved.scroll[1]) afterNextRender(() => this.viewport.scrollToPosition(saved.scroll, {behavior: 'instant'}));
+      if (saved.scroll[1]) {
+        afterNextRender(() =>
+          this.viewport.scrollToPosition(saved.scroll, { behavior: 'instant' })
+        );
+      }
     }
-    this.destroyRef.onDestroy(() => view.preview = {
-      scroll: lastScroll(), category: this.category(), location: this.location(), sort: this.sort(), rating: this.minimumRating(),
-      page: this.page(), filtersOpen: this.filtersOpen(), searched: this.searched(), form: this.searchForm.getRawValue(),
+    this.destroyRef.onDestroy(() => {
+      view.preview = {
+        scroll: lastScroll(),
+        category: this.category(),
+        location: this.location(),
+        sort: this.sort(),
+        rating: this.minimumRating(),
+        page: this.page(),
+        filtersOpen: this.filtersOpen(),
+        searched: this.searched(),
+        form: this.searchForm.getRawValue(),
+      };
     });
   }
 
@@ -119,12 +158,11 @@ export class Discover {
     this.searchForm.markAllAsTouched();
     if (this.searchForm.invalid) return;
     this.location.set(this.searchForm.controls.location.value.trim().toLowerCase());
-    this.searched.set(true);
     this.page.set(1);
+    this.searched.set(true);
   }
 
   selectCategory(category: Category): void {
-    if (this.category() === category) return;
     this.category.set(category);
     this.page.set(1);
     this.router.navigate([], {
@@ -134,27 +172,38 @@ export class Discover {
     });
   }
 
-  changeSort(sort: string): void {
-    if (sort !== 'popular' && sort !== 'rating' && sort !== 'price-low' && sort !== 'price-high') return;
-    this.sort.set(sort);
-    this.page.set(1);
+  changeSort(value: string): void {
+    if (value === 'popular' || value === 'rating' || value === 'price-low' || value === 'price-high') {
+      this.sort.set(value);
+      this.page.set(1);
+    }
   }
 
-  changeRating(rating: string): void {
-    this.minimumRating.set(Number(rating));
-    this.page.set(1);
-  }
-
-  toggleFavorite(id: string): void {
-    this.wishlist.togglePreview(id);
+  changeRating(value: string): void {
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed)) {
+      this.minimumRating.set(parsed);
+      this.page.set(1);
+    }
   }
 
   reset(): void {
     this.searchForm.reset({ location: '', date: '', travelers: 1 });
     this.location.set('');
-    this.searched.set(false);
+    this.category.set('all');
+    this.sort.set('popular');
     this.minimumRating.set(0);
-    this.changeSort('popular');
-    this.selectCategory('all');
+    this.page.set(1);
+    this.filtersOpen.set(false);
+    this.searched.set(false);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  toggleFavorite(id: string): void {
+    this.wishlist.togglePreview(id);
   }
 }

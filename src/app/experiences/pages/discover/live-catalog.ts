@@ -22,26 +22,54 @@ type Results =
   imports: [ReactiveFormsModule, CategoryNav, ExperienceCard, ExperienceIcon, Pagination],
   template: `
     <form class="experience-search" (submit)="$event.preventDefault(); submit()">
-      <label><app-experience-icon name="pin" /><span>Where to?
-        <input type="search" [formControl]="searchInput" maxlength="100" placeholder="Search by city, meeting point or keyword">
-      </span></label>
-      <label><app-experience-icon name="calendar" /><span>Date<span class="search-field-hint">Availability in Details</span><input type="date" aria-label="Date search unavailable" disabled hidden></span></label>
-      <label><app-experience-icon name="user" /><span>Travelers<span class="search-field-hint">Group size in Details</span><input type="number" aria-label="Traveler search unavailable" disabled hidden></span></label>
-      <button class="search-submit"><app-experience-icon name="search" />Search</button>
+      <label class="search-field field-location">
+        <div class="field-icon-circle"><app-experience-icon name="pin" /></div>
+        <div class="field-text-wrap">
+          <span class="field-heading">Where to?</span>
+          <input type="search" [formControl]="searchInput" maxlength="100" placeholder="Search by city, meeting point or keyword">
+        </div>
+      </label>
+      <label class="search-field field-date">
+        <div class="field-icon-circle"><app-experience-icon name="calendar" /></div>
+        <div class="field-text-wrap">
+          <span class="field-heading">Date</span>
+          <span class="search-field-hint">Availability in Details</span>
+          <input type="date" aria-label="Date search unavailable" disabled hidden>
+        </div>
+      </label>
+      <label class="search-field field-travelers">
+        <div class="field-icon-circle"><app-experience-icon name="user" /></div>
+        <div class="field-text-wrap">
+          <span class="field-heading">Travelers</span>
+          <span class="search-field-hint">Group size in Details</span>
+          <input type="number" aria-label="Traveler search unavailable" disabled hidden>
+        </div>
+      </label>
+      <button class="search-submit"><app-experience-icon name="search" /><span>Search</span></button>
     </form>
     <app-experience-categories [selected]="category()" [live]="true" (select)="selectCategory($event)" />
     <section aria-labelledby="live-experience-results">
       <div class="results-bar">
-        <h2 #resultsHeading id="live-experience-results" tabindex="-1" aria-live="polite">
+        <div class="results-count-wrap">
           @if (results(); as state) {
-            @if (state.status === 'ready') { {{ state.total }} {{ state.total === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka }
-            @else { Experiences in Sri Lanka }
+            @if (state.status === 'ready') {
+              <div class="count-pill">
+                <span class="pill-badge">{{ state.total }}</span>
+                <span class="pill-text">Experiences Found</span>
+              </div>
+            }
           }
-        </h2>
+          <h2 #resultsHeading id="live-experience-results" tabindex="-1" aria-live="polite">
+            @if (results(); as state) {
+              @if (state.status === 'ready') { {{ state.total }} {{ state.total === 1 ? 'Experience' : 'Experiences' }} in Sri Lanka }
+              @else { Experiences in Sri Lanka }
+            }
+          </h2>
+        </div>
         <div class="results-controls">
-          <label class="sort-control">Sort by: <select disabled><option>Default order</option></select></label>
-          <button type="button" class="outline-control" [attr.aria-expanded]="filtersOpen()" aria-controls="live-eco-filters"
-            (click)="filtersOpen.set(!filtersOpen())"><app-experience-icon name="filter" />Filters</button>
+          <label class="sort-control"><span class="sort-label">Sort by:</span> <select disabled><option>Default order</option></select></label>
+          <button type="button" class="outline-control btn-filter" [attr.aria-expanded]="filtersOpen()" aria-controls="live-eco-filters"
+            (click)="filtersOpen.set(!filtersOpen())"><app-experience-icon name="filter" /><span>Filters</span></button>
         </div>
       </div>
       @if (wishlist.error()) { <p role="alert">{{ wishlist.error() }}</p> }

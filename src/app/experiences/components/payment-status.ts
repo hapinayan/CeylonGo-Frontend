@@ -11,20 +11,44 @@ import { loadState } from '../services/workflow-state';
   selector: 'app-experience-payment-status',
   imports: [DatePipe, DecimalPipe],
   template: `
-    <section class="workflow-card">
-      <h2>Payment status</h2>
+    <section class="workflow-card payment-status-card">
+      <div class="card-header-row">
+        <h2>Payment status</h2>
+        <span class="payment-sim-badge">Academic MVP Demo</span>
+      </div>
+
       @if (state(); as result) {
-        @if (result.status === 'loading') { <p role="status">Loading payment status…</p> }
-        @if (result.status === 'error') { <p role="alert">Payment status could not be loaded.</p> }
+        @if (result.status === 'loading') { <p role="status" class="workflow-state">Loading payment status…</p> }
+        @if (result.status === 'error') { <p role="alert" class="workflow-state">Payment status could not be loaded.</p> }
         @if (result.status === 'ready' && (catalog.preview || result.owner === session.account())) {
-          <p>{{ result.data.currency }} {{ result.data.total_price | number:'1.2-2' }} · {{ result.data.payment_method.replaceAll('_', ' ') }}</p>
-          <div class="workflow-statuses">
-            <span class="workflow-pill" [attr.data-status]="result.data.booking_status">Reservation: {{ result.data.booking_status }}</span>
-            <span class="workflow-pill" [attr.data-status]="result.data.payment_status">Payment: {{ result.data.payment_status.replaceAll('_', ' ') }}</span>
+          <div class="payment-summary-box">
+            <div class="payment-amount-line">
+              <span class="amount-val">{{ result.data.currency }} {{ result.data.total_price | number:'1.2-2' }}</span>
+              <span class="method-tag">{{ result.data.payment_method.replaceAll('_', ' ') }}</span>
+            </div>
+
+            <div class="workflow-statuses">
+              <span class="workflow-pill" [attr.data-status]="result.data.booking_status">Reservation: {{ result.data.booking_status }}</span>
+              <span class="workflow-pill" [attr.data-status]="result.data.payment_status">Payment: {{ result.data.payment_status.replaceAll('_', ' ') }}</span>
+            </div>
+
+            @if (result.data.paid_at) {
+              <p class="paid-time-note">Recorded payment time: {{ result.data.paid_at | date:'medium':'GMT+0530' }} (Sri Lanka time)</p>
+            }
+            @if (result.data.transaction_id != null) {
+              <p class="trans-ref-note">Transaction reference: {{ result.data.transaction_id }}</p>
+            }
+            @if (result.data.payment_status === 'pending') {
+              <p class="pending-note">Payment is pending verification. Refresh to check for an update.</p>
+            }
+
+            <div class="pay-location-box">
+              <p>
+                <strong>Academic Prototype Policy:</strong> In this academic evaluation build, real card gateways are simulated.
+                For in-person activities, <em>Pay at Location (Cash on Arrival)</em> is accepted upon arrival at the meeting point.
+              </p>
+            </div>
           </div>
-          @if (result.data.paid_at) { <p>Recorded payment time: {{ result.data.paid_at | date:'medium':'GMT+0530' }} (Sri Lanka time)</p> }
-          @if (result.data.transaction_id != null) { <p>Transaction reference: {{ result.data.transaction_id }}</p> }
-          @if (result.data.payment_status === 'pending') { <p>Payment is pending verification. Refresh to check for an update.</p> }
         }
       }
       <div class="workflow-actions">

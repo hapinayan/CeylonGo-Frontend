@@ -1,0 +1,233 @@
+<div class="provider-shell">
+  <!-- Mobile Sidebar Backdrop -->
+  @if (isSidebarOpenMobile()) {
+    <div class="sidebar-backdrop" (click)="closeMobileSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="provider-sidebar" [class.mobile-open]="isSidebarOpenMobile()">
+    <!-- Brand / Header -->
+    <div class="sidebar-brand">
+      <a routerLink="/provider/dashboard" class="brand-link" (click)="closeMobileSidebar()">
+        <svg class="brand-icon" viewBox="0 0 40 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 24L16 6L23 16L28 9L36 24H4Z" fill="#0066FF" />
+          <path d="M12 24L18 14L22 20L26 14L32 24H12Z" fill="#082B5C" opacity="0.6" />
+        </svg>
+        <div class="brand-text">
+          <span class="brand-title">CeylonGo</span>
+          <span class="portal-badge">Host Portal</span>
+        </div>
+      </a>
+      <button class="mobile-close-btn" (click)="closeMobileSidebar()" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation List -->
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        @for (item of navItems; track item.route) {
+          <li class="nav-item">
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              class="nav-link"
+              (click)="closeMobileSidebar()"
+            >
+              <span class="nav-icon-wrap">
+                <!-- Dashboard Icon -->
+                @if (item.icon === 'dashboard') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="9" rx="1" />
+                    <rect x="14" y="3" width="7" height="5" rx="1" />
+                    <rect x="14" y="12" width="7" height="9" rx="1" />
+                    <rect x="3" y="16" width="7" height="5" rx="1" />
+                  </svg>
+                }
+                <!-- Profile Icon -->
+                @else if (item.icon === 'person') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                }
+                <!-- Manage Listings Icon -->
+                @else if (item.icon === 'inventory_2') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                    <path d="m3.3 7 8.7 5 8.7-5" />
+                    <path d="M12 22V12" />
+                  </svg>
+                }
+                <!-- Add New Service Icon -->
+                @else if (item.icon === 'add_circle') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v8M8 12h8" stroke-linecap="round" />
+                  </svg>
+                }
+                <!-- Rooms and Availability Icon -->
+                @else if (item.icon === 'meeting_room') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+                    <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" />
+                  </svg>
+                }
+                <!-- Bookings Icon -->
+                @else if (item.icon === 'calendar_month') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                }
+                <!-- Promotions Icon -->
+                @else if (item.icon === 'loyalty') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                    <line x1="7" y1="7" x2="7.01" y2="7" />
+                  </svg>
+                }
+                <!-- Community Feed Icon -->
+                @else if (item.icon === 'forum') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                }
+                <!-- Payouts Icon -->
+                @else if (item.icon === 'payments') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                  </svg>
+                }
+                <!-- Settings Icon -->
+                @else if (item.icon === 'settings') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                }
+                <!-- Help Icon -->
+                @else if (item.icon === 'help_outline') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                }
+              </span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <!-- Logout Button in Sidebar -->
+      <div class="sidebar-footer">
+        <button class="logout-btn" (click)="onLogout()">
+          <span class="nav-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </span>
+          <span class="nav-label">Logout</span>
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content Shell -->
+  <div class="provider-main">
+    <!-- Top Header -->
+    <header class="provider-header">
+      <div class="header-left">
+        <button class="menu-toggle-btn" (click)="toggleMobileSidebar()" aria-label="Toggle navigation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <div class="header-greeting">
+          <span class="provider-role-badge">Service Provider</span>
+          <h2 class="header-business-name">{{ businessName() }}</h2>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Quick Action: Add Service -->
+        <a routerLink="/provider/services/new" class="btn-quick-add">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+          </svg>
+          <span>Add Service</span>
+        </a>
+
+        <!-- Notifications -->
+        <div class="header-action-wrap">
+          <button class="icon-action-btn" title="Notifications" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+
+        <!-- Profile / Dropdown -->
+        <div class="header-profile-wrap">
+          <button class="profile-chip" (click)="toggleProfileMenu()">
+            <div class="avatar-circle">
+              {{ businessName().charAt(0).toUpperCase() }}
+            </div>
+            <div class="profile-info-text">
+              <span class="profile-name">{{ businessName() }}</span>
+              <span class="profile-sub">Verified Host</span>
+            </div>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          @if (isProfileMenuOpen()) {
+            <div class="profile-dropdown-menu">
+              <a routerLink="/provider/profile" class="dropdown-item" (click)="isProfileMenuOpen.set(false)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>My Profile</span>
+              </a>
+              <a routerLink="/provider/settings" class="dropdown-item" (click)="isProfileMenuOpen.set(false)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <span>Settings</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item logout-item" (click)="onLogout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="provider-content-wrapper">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

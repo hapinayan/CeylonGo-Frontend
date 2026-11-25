@@ -1,1667 +1,1250 @@
 // =============================================================================
-// CEYLONGO HOMESTAY DISCOVERY PAGE – EXACT BLUE THEME DESIGN SYSTEM
-// Deep Navy: #061838 | Royal Blue: #082452 | Primary Blue: #0066FF
-// Cyan Highlight: #00E5FF | Icy Blue: #F0F7FF | Category Bar: #08214D
+// CEYLONGO HOMESTAY DISCOVERY PAGE STYLES (REDESIGNED BASED ON TARGET REFERENCE)
 // =============================================================================
 
-$cg-navy-hero: #061838;
-$cg-navy-navbar: #071b3d;
-$cg-deep-navy: #082b5c;
-$cg-royal-blue: #082452;
-$cg-royal-blue-mid: #0a295c;
-$cg-royal-gradient-end: #0c3370;
-$cg-category-bar-bg: #08214d;
-$cg-category-pill-bg: rgba(255, 255, 255, 0.12);
-$cg-category-pill-border: rgba(255, 255, 255, 0.22);
-
-$cg-primary-blue: #0066ff;
-$cg-primary-blue-hover: #0052cc;
-$cg-cyan-glow: #00d2ff;
-$cg-cyan-highlight: #00e5ff;
-
-$cg-page-ice-bg: #f0f7ff;
-$cg-light-blue: #eaf5ff;
-$cg-light-blue-hover: #d8eeff;
-$cg-white: #ffffff;
-$cg-border: #d8e8f8;
-$cg-border-light: #eef5fc;
-$cg-card-border: #dcebfa;
-
-$cg-text-primary: #082b5c;
-$cg-text-secondary: #64748b;
-$cg-text-muted: #94a3b8;
-$cg-star-gold: #ff9f1c;
-$cg-success-green: #16a34a;
-$cg-wishlist-red: #ff385c;
-
-$font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-$shadow-sm: 0 2px 8px rgba(8, 43, 92, 0.05);
-$shadow-md: 0 4px 16px rgba(8, 43, 92, 0.08);
-$shadow-lg: 0 10px 30px rgba(8, 43, 92, 0.12);
-$shadow-search: 0 8px 30px rgba(3, 18, 48, 0.25), 0 2px 8px rgba(0, 102, 255, 0.15);
-$shadow-active-pill: 0 0 16px rgba(0, 180, 255, 0.5), 0 2px 8px rgba(0, 102, 255, 0.25);
-
-*, *::before, *::after {
-  box-sizing: border-box;
+:host {
+  display: block;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #0f172a;
+  background-color: #ffffff;
 }
 
-// -----------------------------------------------------------------------------
-// VIEWPORT SHELL ARCHITECTURE (Zero Page-Level Overflow)
-// -----------------------------------------------------------------------------
-.homestay-page {
-  font-family: $font-family;
-  color: $cg-text-primary;
-  background-color: $cg-page-ice-bg;
-  height: 100vh;
-  height: 100dvh;
-  width: 100%;
-  max-width: 100vw;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-
-// Pinned Fixed Top Shell (Navbar + Heading + Search + 8 Categories)
-.fixed-top-shell {
-  flex: 0 0 auto;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  z-index: 50;
-  background: $cg-navy-navbar;
-  border-bottom: none;
-  box-shadow: 0 4px 20px rgba(3, 18, 48, 0.2);
+.homestay-discovery-page {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-// Scrollable Homestay Listings Area (Only this area scrolls vertically)
-.scrollable-content-region {
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  -webkit-overflow-scrolling: touch;
-  background-color: $cg-page-ice-bg;
-}
-
 // -----------------------------------------------------------------------------
-// 1. TOP NAVIGATION (Deep Navy-to-Royal-Blue Gradient matching reference)
+// 1. HORIZONTAL SEARCH BAR & FILTERS SECTION (Scrolls normally with page)
 // -----------------------------------------------------------------------------
-.cg-navbar {
+.discovery-search-section {
   width: 100%;
-  background: linear-gradient(90deg, #061838 0%, #082452 50%, #0c3370 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-  z-index: 60;
+  background-color: #ffffff;
+  padding: 24px 32px 16px;
+
+  .search-section-container {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
 }
 
-.navbar-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10px 24px;
+// Single Horizontal Rounded Pill Search Bar
+.horizontal-search-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 0;
-}
-
-// CeylonGo text logo on the left
-.brand-link {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-.brand-text-logo {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 1;
-
-  .brand-ceylon {
-    color: #ffffff;
-  }
-
-  .brand-go {
-    color: $cg-cyan-glow;
-  }
-}
-
-// Navigation links: Stays (active), Experiences, Tour Guides, Bike Rentals, Community, AI Trip Planner
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-
-  @media (max-width: 1023px) {
-    display: none;
-  }
-}
-
-.nav-item {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 9999px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.88);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-
-  &:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.12);
-  }
-
-  &.active {
-    color: #ffffff;
-    background-color: $cg-primary-blue;
-    font-weight: 600;
-    box-shadow: 0 2px 10px rgba(0, 102, 255, 0.4);
-  }
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.nav-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.5);
-  }
-}
-
-.wishlist-badge {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  background-color: $cg-wishlist-red;
-  color: $cg-white;
-  font-size: 10px;
-  font-weight: 700;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid $cg-navy-navbar;
-}
-
-.notif-dot {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: $cg-cyan-glow;
-  border: 1.5px solid $cg-navy-navbar;
-}
-
-// Traveler avatar & dropdown
-.user-avatar-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 9999px;
-  position: relative;
-  user-select: none;
-
-  &:hover .avatar-circle {
-    box-shadow: 0 0 0 2px $cg-cyan-glow;
-  }
-}
-
-.avatar-circle {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #0d3575;
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  color: $cg-white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-size: 12px;
-  font-weight: 700;
-  transition: all 0.15s ease;
-}
-
-.user-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 220px;
-  background: $cg-white;
-  border: 1px solid $cg-border;
-  border-radius: 12px;
-  box-shadow: $shadow-lg;
-  padding: 8px 0;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-
-  .user-dropdown-header {
-    padding: 8px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-
-    .user-name {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: $cg-deep-navy;
-    }
-
-    .user-role {
-      font-size: 11px;
-      color: $cg-text-muted;
-    }
-  }
-
-  .user-dropdown-divider {
-    height: 1px;
-    background-color: $cg-border-light;
-    margin: 4px 0;
-  }
-
-  .dropdown-item {
-    padding: 8px 16px;
-    font-size: 13px;
-    color: $cg-text-primary;
-    text-decoration: none;
-    transition: background 0.15s ease;
-
-    &:hover {
-      background-color: $cg-light-blue;
-      color: $cg-primary-blue;
-    }
-
-    &.host-item {
-      color: $cg-primary-blue;
-      font-weight: 600;
-    }
-
-    &.text-auth {
-      font-weight: 600;
-      color: $cg-deep-navy;
-    }
-  }
-}
-
-.mobile-menu-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid $cg-border;
-  cursor: pointer;
-
-  @media (max-width: 1023px) {
-    display: inline-flex;
-  }
-}
-
-.mobile-menu-drawer {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: $cg-white;
-  border-bottom: 1px solid $cg-border;
-  box-shadow: $shadow-lg;
-  padding: 12px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 150;
-
-  .mobile-nav-link {
-    display: block;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: $cg-text-primary;
-    text-decoration: none;
-
-    &:hover, &.active {
-      background-color: $cg-light-blue;
-      color: $cg-primary-blue;
-    }
-
-    &.host-link {
-      color: $cg-primary-blue;
-      font-weight: 600;
-    }
-
-    &.signin-link {
-      background-color: $cg-deep-navy;
-      color: $cg-white;
-      text-align: center;
-    }
-  }
-
-  .mobile-drawer-divider {
-    height: 1px;
-    background-color: $cg-border-light;
-    margin: 4px 0;
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 2. HEADING & 3. SEARCH BAR SECTION
-// -----------------------------------------------------------------------------
-.hero-header-section {
-  width: 100%;
-  background: #071c42 url('/images/sigiriya-hero-panorama.png') no-repeat right center / cover;
-  padding: 16px 24px 14px 24px;
-  border-bottom: none;
-  position: relative;
-}
-
-.hero-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.hero-text-block {
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 6px 8px 6px 20px;
   gap: 4px;
-  min-width: 0;
-
-  .hero-title {
-    font-size: 24px;
-    font-weight: 800;
-    color: #ffffff;
-    margin: 0;
-    line-height: 1.25;
-    letter-spacing: -0.3px;
-
-    .highlight-cyan {
-      color: $cg-cyan-highlight;
-      text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
-    }
-
-    @media (max-width: 640px) {
-      font-size: 19px;
-    }
-  }
-
-  .hero-subtitle {
-    font-size: 13.5px;
-    color: rgba(255, 255, 255, 0.92);
-    margin: 0;
-    line-height: 1.35;
-  }
-}
-
-// Single Horizontal Rounded Search Bar
-.search-bar-wrapper {
-  width: 100%;
-  max-width: 980px;
-  min-width: 0;
-}
-
-.search-bar {
-  background: $cg-white;
-  border: 1.5px solid $cg-border;
-  border-radius: 9999px;
-  box-shadow: $shadow-search;
-  padding: 4px 5px 4px 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 
   &:focus-within {
-    border-color: $cg-primary-blue;
-    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
+    border-color: #0066ff;
+    box-shadow: 0 4px 24px rgba(0, 102, 255, 0.12);
   }
 
-  @media (max-width: 860px) {
-    border-radius: 16px;
-    padding: 10px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-}
-
-.search-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: left;
-  min-width: 0;
-  position: relative;
-
-  .section-label {
-    font-size: 10.5px;
-    font-weight: 700;
-    color: $cg-deep-navy;
-    margin-bottom: 2px;
-    display: block;
-    cursor: pointer;
-  }
-
-  .section-control {
+  .search-segment {
     display: flex;
     align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
+    gap: 10px;
+    padding: 6px 10px;
+    position: relative;
 
-  .search-icon {
-    flex-shrink: 0;
-  }
+    .segment-icon {
+      flex-shrink: 0;
+      color: #0066ff;
+    }
 
-  .search-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 13px;
-    font-weight: 500;
-    color: $cg-text-primary;
-    width: 100%;
-    min-width: 0;
-    padding: 0;
+    .input-stack {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
 
-    &::placeholder {
-      color: $cg-text-muted;
+    .segment-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: capitalize;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
     }
   }
 
-  &.location-section {
-    flex: 1.5;
-    @media (max-width: 860px) { flex: 1 1 100%; }
+  // Segment 1: Homestays indicator
+  .segment-type {
+    flex-shrink: 0;
+    .segment-text-bold {
+      font-size: 15px;
+      font-weight: 700;
+      color: #082b5c;
+      white-space: nowrap;
+    }
   }
 
-  &.dates-section {
-    flex: 1.2;
+  // Segment 2: Destination input
+  .segment-destination {
+    flex: 1.4;
+    min-width: 160px;
 
-    .dates-control {
+    .segment-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+
+      &::placeholder {
+        color: #94a3b8;
+        font-weight: 500;
+      }
+    }
+  }
+
+  // Segments 3 & 4: Dates
+  .segment-date {
+    flex: 1;
+    min-width: 130px;
+
+    .segment-date-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+    }
+  }
+
+  // Segment 5: Guests
+  .segment-guests {
+    flex: 1;
+    min-width: 120px;
+    cursor: pointer;
+
+    .guests-display {
       display: flex;
       align-items: center;
       gap: 6px;
-    }
 
-    .dates-inputs {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      min-width: 0;
-
-      .date-input {
-        border: none;
-        outline: none;
-        background: transparent;
-        font-family: inherit;
-        font-size: 12px;
-        color: $cg-text-primary;
-        width: 105px;
-        padding: 0;
+      .guests-count-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
       }
 
-      .date-sep {
-        color: $cg-text-muted;
-        font-size: 11px;
+      .chevron-sm {
+        color: #64748b;
       }
     }
-
-    @media (max-width: 860px) { flex: 1 1 calc(50% - 8px); }
   }
 
-  &.guests-section {
-    flex: 1;
+  // Vertical Divider
+  .segment-separator {
+    width: 1px;
+    height: 32px;
+    background-color: #e2e8f0;
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  // Segment 6: Blue Search Button
+  .btn-search-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #0066ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, transform 0.1s ease;
 
-    .guests-trigger {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-      user-select: none;
+    &:hover {
+      background-color: #0052cc;
     }
 
-    .guests-display {
-      font-size: 13px;
-      font-weight: 500;
-      color: $cg-text-primary;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
+    &:active {
+      transform: scale(0.98);
     }
-
-    .chevron-icon {
-      flex-shrink: 0;
-    }
-
-    @media (max-width: 860px) { flex: 1 1 calc(50% - 8px); }
   }
 }
 
-.search-divider {
-  width: 1px;
-  height: 24px;
-  background-color: $cg-border;
-  flex-shrink: 0;
-
-  @media (max-width: 860px) {
-    display: none;
-  }
-}
-
-.btn-search-submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 20px;
-  border-radius: 9999px;
-  background-color: $cg-primary-blue;
-  color: $cg-white;
-  font-size: 13.5px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.18s ease;
-
-  &:hover {
-    background-color: $cg-primary-blue-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
-  }
-
-  @media (max-width: 860px) {
-    width: 100%;
-    margin-top: 4px;
-  }
-}
-
-// Guest selection dropdown
-.guest-dropdown {
+// Guest Dropdown Popover
+.guest-dropdown-panel {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   right: 0;
-  width: 260px;
-  background: $cg-white;
-  border: 1px solid $cg-border;
-  border-radius: 12px;
-  box-shadow: $shadow-lg;
-  padding: 14px;
-  z-index: 100;
+  width: 280px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 
-  .guest-row {
+  .guest-counter-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+
+    .guest-desc {
+      display: flex;
+      flex-direction: column;
+
+      .guest-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .guest-sub {
+        font-size: 12px;
+        color: #64748b;
+      }
+    }
+
+    .counter-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .btn-step {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(:disabled) {
+          border-color: #0066ff;
+          color: #0066ff;
+        }
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      }
+
+      .counter-num {
+        font-size: 15px;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+      }
+    }
   }
 
-  .guest-type {
-    font-size: 13px;
-    font-weight: 600;
-    color: $cg-deep-navy;
-    display: block;
-  }
-
-  .guest-desc {
-    font-size: 11px;
-    color: $cg-text-muted;
-    display: block;
-  }
-
-  .counter-controls {
+  .dropdown-actions {
     display: flex;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+
+    .btn-done {
+      padding: 6px 16px;
+      border-radius: 8px;
+      background-color: #0066ff;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #0052cc;
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 2. SIMPLIFIED FILTERS SECTION (Single Outlined Blue Filters Button)
+// -----------------------------------------------------------------------------
+.filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+
+  .btn-filters-pill {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    padding: 8px 20px;
+    border-radius: 9999px;
+    border: 1.5px solid #0066ff;
+    background-color: #ffffff;
+    color: #0066ff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
-    .btn-counter {
-      width: 28px;
-      height: 28px;
+    &:hover {
+      background-color: #eff6ff;
+      border-color: #0052cc;
+      color: #0052cc;
+    }
+
+    .filter-indicator-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      border: 1px solid $cg-border;
-      background: $cg-white;
-      color: $cg-deep-navy;
+      background-color: #0066ff;
+      margin-left: 2px;
+    }
+  }
+
+  // Mobile View Mode Toggle (Hidden on Desktop)
+  .mobile-toggle-wrapper {
+    display: none;
+    align-items: center;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    padding: 3px;
+
+    .mobile-toggle-btn {
+      padding: 6px 14px;
+      border-radius: 9999px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+
+      &.active {
+        background: #ffffff;
+        color: #0066ff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 3. SPLIT-SCREEN MAIN CONTENT SECTION
+// -----------------------------------------------------------------------------
+.discovery-main-layout {
+  flex: 1;
+  width: 100%;
+  padding: 8px 32px 48px;
+
+  .split-screen-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+}
+
+// LEFT COLUMN: 55% Scrollable Listings Pane
+.listings-pane {
+  flex: 0 0 55%;
+  min-width: 0;
+
+  // Results Header Bar
+  .results-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .header-titles {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .results-count-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #082b5c;
+        margin: 0;
+        letter-spacing: -0.01em;
+
+        .count-bold {
+          color: #082b5c;
+        }
+      }
+
+      .results-location-subtitle {
+        font-size: 14px;
+        color: #64748b;
+        font-weight: 500;
+      }
+    }
+
+    .header-badges {
+      .badge-price-includes {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 6px 14px;
+        border-radius: 9999px;
+      }
+    }
+  }
+
+  // 2-Column Grid of Homestay Cards
+  .homestays-grid-2col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+// RIGHT COLUMN: 45% Sticky Sri Lanka Map Pane
+.map-pane {
+  flex: 0 0 calc(45% - 32px);
+  min-width: 0;
+  position: sticky;
+  top: 92px;
+  height: calc(100vh - 110px);
+  max-height: 820px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  background-color: #e0f2fe;
+
+  .sticky-map-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+
+    .map-preview-tag {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #082b5c;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      pointer-events: none;
+
+      .preview-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: #2563eb;
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 4. HOMESTAY CARD REDESIGN
+// -----------------------------------------------------------------------------
+.homestay-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover,
+  &.is-hovered {
+    transform: translateY(-3px);
+    border-color: #93c5fd;
+    box-shadow: 0 12px 28px rgba(0, 102, 255, 0.12);
+  }
+
+  &.is-selected {
+    border-color: #0066ff;
+    box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.25), 0 12px 28px rgba(0, 102, 255, 0.12);
+  }
+
+  // Media box with image, top badges and heart button
+  .card-media-box {
+    position: relative;
+    width: 100%;
+    padding-top: 60%;
+    overflow: hidden;
+    cursor: pointer;
+    background-color: #f1f5f9;
+
+    .card-photo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+
+    &:hover .card-photo {
+      transform: scale(1.04);
+    }
+
+    // Badges in top-left
+    .card-pill-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #082b5c;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      z-index: 2;
+
+      .crown-icon {
+        font-size: 12px;
+      }
+    }
+
+    // Wishlist Heart in top-right
+    .btn-card-wishlist {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(4px);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+
+      &:hover {
+        transform: scale(1.1);
+        background-color: #ffffff;
+      }
+
+      &.wishlisted svg {
+        fill: #ef4444;
+        stroke: #ef4444;
+      }
+    }
+
+    // Carousel dots indicator
+    .carousel-dots-indicator {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      z-index: 2;
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.6);
+        transition: all 0.2s ease;
+
+        &.active {
+          background-color: #ffffff;
+          width: 7px;
+          height: 7px;
+        }
+      }
+    }
+  }
+
+  // Card Content Area
+  .card-content-area {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #082b5c;
+      margin: 0;
+      line-height: 1.35;
+
+      .card-title-link {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.15s ease;
+
+        &:hover {
+          color: #0066ff;
+        }
+      }
+    }
+
+    .card-rating-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+
+      .amber-star {
+        color: #f59e0b;
+        font-size: 14px;
+      }
+
+      .rating-value {
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .review-count {
+        color: #64748b;
+      }
+    }
+
+    .card-location-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .card-amenities-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+
+      .amenity-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+
+        .amenity-svg {
+          color: #64748b;
+        }
+      }
+    }
+
+    .card-bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+
+      .price-container {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+
+        .price-amount {
+          font-size: 18px;
+          font-weight: 700;
+          color: #082b5c;
+        }
+
+        .price-suffix {
+          font-size: 13px;
+          color: #64748b;
+        }
+      }
+
+      .btn-view-details {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background-color: #0066ff;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+
+        &:hover {
+          background-color: #0052cc;
+        }
+
+        &:active {
+          transform: scale(0.98);
+        }
+
+        .arrow-symbol {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. PAGINATION
+// -----------------------------------------------------------------------------
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+
+  .page-buttons-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .btn-page {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #0f172a;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.15s ease;
 
-      &:hover:not(:disabled) {
-        border-color: $cg-primary-blue;
-        color: $cg-primary-blue;
-        background-color: $cg-light-blue;
+      &:hover:not(.active) {
+        border-color: #0066ff;
+        color: #0066ff;
       }
 
-      &:disabled { opacity: 0.35; cursor: not-allowed; }
-    }
-
-    .counter-value {
-      font-size: 13px;
-      font-weight: 600;
-      width: 18px;
-      text-align: center;
-      color: $cg-deep-navy;
+      &.active {
+        background-color: #0066ff;
+        border-color: #0066ff;
+        color: #ffffff;
+      }
     }
   }
 
-  .dropdown-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 6px;
-    border-top: 1px solid $cg-border-light;
-
-    .btn-dropdown-apply {
-      padding: 5px 12px;
-      background-color: $cg-deep-navy;
-      color: $cg-white;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-
-      &:hover { background-color: $cg-primary-blue; }
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 4. EIGHT CATEGORY BUTTONS (Exact Deep-Blue Section & Glowing Active Pill)
-// -----------------------------------------------------------------------------
-.categories-bar-section {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  background: $cg-category-bar-bg;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  padding: 8px 24px 10px 24px;
-  overflow: hidden;
-}
-
-.categories-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  min-width: 0;
-}
-
-.categories-track {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  overflow-x: auto;
-  min-width: 0;
-  width: 100%;
-  scrollbar-width: none;
-  padding: 2px 0;
-
-  &::-webkit-scrollbar { display: none; }
-}
-
-.category-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 15px;
-  border-radius: 9999px;
-  background-color: $cg-category-pill-bg;
-  border: 1px solid $cg-category-pill-border;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.18s ease;
-
-  .cat-svg {
-    flex-shrink: 0;
-    color: #ffffff;
-  }
-
-  .cat-label {
-    font-weight: inherit;
-  }
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.35);
-  }
-
-  // Selected All Homestays pill: white with glowing blue edges
-  &.active {
-    background-color: $cg-white;
-    border: 1.5px solid $cg-primary-blue;
-    color: $cg-deep-navy;
-    font-weight: 700;
-    box-shadow: $shadow-active-pill;
-
-    .cat-svg {
-      color: $cg-primary-blue;
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 5. RESULTS TOOLBAR (Heading: "312 Homestays in Sri Lanka", Sort by, Filters)
-// -----------------------------------------------------------------------------
-.results-toolbar-section {
-  width: 100%;
-  background: transparent;
-  padding: 14px 24px 8px 24px;
-}
-
-.toolbar-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-
-  @media (max-width: 680px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
-
-.toolbar-heading-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-
-  .results-heading {
-    font-size: 15px;
-    font-weight: 600;
-    color: $cg-deep-navy;
-    margin: 0;
-
-    .highlight-count {
-      color: $cg-deep-navy;
-      font-weight: 700;
-    }
-  }
-
-  .design-preview-tag {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background-color: #f1f5f9;
-    color: $cg-text-secondary;
-    border: 1px solid $cg-border;
-  }
-}
-
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-
-  @media (max-width: 680px) {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
-
-.sort-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  .sort-label {
-    font-size: 13px;
-    color: $cg-text-secondary;
-    white-space: nowrap;
-  }
-
-  .sort-select {
-    padding: 6px 12px;
+  .btn-next-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
     border-radius: 8px;
-    border: 1px solid $cg-border;
-    background-color: $cg-white;
-    font-size: 13px;
-    font-weight: 500;
-    color: $cg-deep-navy;
-    cursor: pointer;
-    outline: none;
-
-    &:focus { border-color: $cg-primary-blue; }
-  }
-}
-
-.btn-filter-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1px solid $cg-border;
-  background-color: $cg-white;
-  font-size: 13px;
-  font-weight: 600;
-  color: $cg-deep-navy;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.15s ease;
-
-  &:hover {
-    border-color: $cg-primary-blue;
-    color: $cg-primary-blue;
-  }
-
-  .active-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: $cg-primary-blue;
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 6. HOMESTAY CARDS (4 Columns on Desktop, 2 Rows Visible)
-// -----------------------------------------------------------------------------
-.listings-main-section {
-  width: 100%;
-  flex: 1 0 auto;
-  padding: 6px 24px 28px 24px;
-}
-
-.listings-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  min-width: 0;
-}
-
-.listings-grid {
-  display: grid;
-  gap: 20px;
-  width: 100%;
-  min-width: 0;
-  // Three columns on desktop matching reference
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-
-  @media (max-width: 1023px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  @media (max-width: 679px) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-}
-
-// Homestay Card Component
-.homestay-card {
-  background: $cg-white;
-  border-radius: 16px;
-  border: 1px solid $cg-card-border;
-  overflow: hidden;
-  box-shadow: 0 4px 18px rgba(8, 43, 92, 0.06);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-width: 0;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(0, 102, 255, 0.12);
-    border-color: rgba(0, 102, 255, 0.25);
-  }
-}
-
-.card-media {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  background-color: #e2e8f0;
-
-  .card-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-  }
-
-  &:hover .card-img {
-    transform: scale(1.04);
-  }
-}
-
-// Category Badge on Image
-.category-badge {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(8, 43, 92, 0.88);
-  backdrop-filter: blur(4px);
-  color: $cg-white;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  z-index: 2;
-}
-
-// Wishlist Heart in Top-Right Corner
-.btn-card-wishlist {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(6px);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: transform 0.15s ease, background 0.15s ease;
-
-  &:hover {
-    transform: scale(1.1);
+    border: 1px solid #e2e8f0;
     background: #ffffff;
-  }
-}
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
-.card-content {
-  padding: 12px 14px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 6px;
-  min-width: 0;
-}
+    &:hover:not(:disabled) {
+      border-color: #0066ff;
+      color: #0066ff;
+    }
 
-.card-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.3;
-
-  .title-link {
-    color: $cg-deep-navy;
-    text-decoration: none;
-    transition: color 0.15s ease;
-
-    &:hover { color: $cg-primary-blue; }
-  }
-}
-
-.card-location {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: $cg-text-secondary;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.card-rating {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 600;
-  color: $cg-deep-navy;
-
-  .review-count {
-    color: $cg-text-muted;
-    font-weight: 400;
-    font-size: 11.5px;
-  }
-}
-
-.card-price-row {
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid $cg-border-light;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.card-price {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-
-  .price-val {
-    font-size: 15px;
-    font-weight: 700;
-    color: $cg-deep-navy;
-  }
-
-  .price-period {
-    font-size: 11px;
-    color: $cg-text-muted;
-  }
-}
-
-.btn-card-book {
-  position: relative;
-  z-index: 5;
-  pointer-events: auto;
-  padding: 6px 16px;
-  border-radius: 8px;
-  background-color: $cg-primary-blue;
-  color: $cg-white;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.28);
-  transition: all 0.15s ease;
-
-  .btn-arrow {
-    flex-shrink: 0;
-    transition: transform 0.15s ease;
-  }
-
-  &:hover {
-    background-color: $cg-primary-blue-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4);
-
-    .btn-arrow {
-      transform: translateX(2px);
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   }
 }
 
 // -----------------------------------------------------------------------------
-// 7. PAGINATION (1, 2, ..., Next Arrow matching reference design)
+// 6. EMPTY STATE & SKELETON LOADING
 // -----------------------------------------------------------------------------
-.pagination-section {
+.empty-state-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 48px 24px;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
-}
+  gap: 12px;
 
-.page-numbers {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  .empty-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
 
-  .page-ellipsis {
-    color: $cg-text-muted;
-    padding: 0 4px;
+  .empty-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #082b5c;
+    margin: 0;
+  }
+
+  .empty-desc {
+    font-size: 14px;
+    color: #64748b;
+    max-width: 380px;
+    margin: 0;
+  }
+
+  .btn-clear-filters {
+    margin-top: 8px;
+    padding: 9px 22px;
+    border-radius: 9999px;
+    background-color: #0066ff;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #0052cc;
+    }
   }
 }
 
-.btn-page-num, .btn-page-next {
-  border-radius: 8px;
-  background-color: $cg-white;
-  border: 1px solid $cg-border;
-  color: $cg-deep-navy;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover:not(:disabled) {
-    border-color: $cg-primary-blue;
-    color: $cg-primary-blue;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
-.btn-page-num {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &.active {
-    background-color: $cg-primary-blue;
-    border-color: $cg-primary-blue;
-    color: $cg-white;
-  }
-}
-
-.btn-page-next {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  height: 34px;
-}
-
-// -----------------------------------------------------------------------------
-// 8. SKELETON & EMPTY STATES
-// -----------------------------------------------------------------------------
 .skeleton-card {
-  height: 320px;
-  background: $cg-white;
+  pointer-events: none;
 
-  .skeleton-image, .skeleton-line {
+  .skeleton-media {
+    width: 100%;
+    padding-top: 60%;
     background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
 
-  .skeleton-image { height: 185px; }
-
   .skeleton-body {
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
+    gap: 10px;
 
-  .skeleton-line {
-    height: 12px;
-    border-radius: 4px;
-    &.line-short { width: 40%; }
-    &.line-title { width: 85%; height: 16px; }
-    &.line-desc { width: 60%; }
-    &.line-footer { width: 100%; height: 22px; margin-top: auto; }
+    .skeleton-line {
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+
+      &.line-title {
+        width: 80%;
+        height: 16px;
+      }
+      &.line-location {
+        width: 50%;
+      }
+      &.line-amenities {
+        width: 65%;
+      }
+      &.line-price {
+        width: 40%;
+        height: 18px;
+        margin-top: 8px;
+      }
+    }
   }
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 20px;
-  text-align: center;
-  background: $cg-white;
-  border-radius: 16px;
-  border: 1px dashed $cg-border;
-  margin: 16px 0;
-
-  .empty-icon-circle {
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    background-color: $cg-light-blue;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
+  0% {
+    background-position: 200% 0;
   }
-
-  .empty-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: $cg-deep-navy;
-    margin: 0 0 6px 0;
-  }
-
-  .empty-desc {
-    font-size: 13px;
-    color: $cg-text-secondary;
-    max-width: 420px;
-    margin: 0 0 18px 0;
-    line-height: 1.4;
-  }
-
-  .btn-reset-filters {
-    padding: 7px 18px;
-    border-radius: 9999px;
-    background-color: $cg-primary-blue;
-    color: $cg-white;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    &:hover { background-color: $cg-primary-blue-hover; }
+  100% {
+    background-position: -200% 0;
   }
 }
 
 // -----------------------------------------------------------------------------
-// 9. FOOTER
+// 7. EXTENDED FILTERS MODAL DIALOG
 // -----------------------------------------------------------------------------
-.cg-footer {
-  width: 100%;
-  background: $cg-white;
-  border-top: 1px solid $cg-border;
-  padding: 28px 24px 20px 24px;
-  margin-top: auto;
-}
-
-.footer-container {
-  max-width: 1360px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.footer-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 32px;
-}
-
-.footer-brand {
-  max-width: 300px;
-
-  .footer-logo {
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .footer-desc {
-    font-size: 12px;
-    color: $cg-text-secondary;
-    line-height: 1.5;
-    margin: 0;
-  }
-}
-
-.footer-links-grid {
-  display: flex;
-  gap: 48px;
-}
-
-.footer-col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.col-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: $cg-deep-navy;
-  margin: 0 0 4px 0;
-}
-
-.col-link {
-  font-size: 12px;
-  color: $cg-text-secondary;
-  text-decoration: none;
-  transition: color 0.15s ease;
-
-  &:hover { color: $cg-primary-blue; }
-}
-
-.footer-bottom {
-  padding-top: 14px;
-  border-top: 1px solid $cg-border-light;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.copy-text {
-  font-size: 11.5px;
-  color: $cg-text-muted;
-  margin: 0;
-}
-
-.currency-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: $cg-deep-navy;
-
-  .curr-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: $cg-success-green;
-  }
-}
-
-// -----------------------------------------------------------------------------
-// 10. MODAL & TOAST
-// -----------------------------------------------------------------------------
-.modal-overlay {
+.filter-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(8, 43, 92, 0.45);
+  background-color: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(4px);
-  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1050;
   padding: 16px;
-}
 
-.modal-content {
-  background: $cg-white;
-  border-radius: 16px;
-  box-shadow: $shadow-lg;
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid $cg-border;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: $cg-deep-navy;
-  margin: 0;
-}
-
-.btn-close-modal {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-
-  &:hover { background-color: #f1f5f9; }
-}
-
-.modal-body {
-  padding: 18px 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.group-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: $cg-deep-navy;
-  margin: 0;
-}
-
-.group-desc {
-  font-size: 12px;
-  color: $cg-text-secondary;
-  margin: 0;
-}
-
-.modal-divider {
-  height: 1px;
-  background-color: $cg-border-light;
-}
-
-.price-inputs-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .price-dash { color: $cg-text-muted; }
-}
-
-.price-box {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.box-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: $cg-text-secondary;
-}
-
-.box-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  border: 1px solid $cg-border;
-  background: $cg-white;
-  font-size: 12px;
-  color: $cg-text-muted;
-
-  .box-input {
-    border: none;
-    outline: none;
+  .filter-modal-window {
+    background-color: #ffffff;
+    border-radius: 20px;
     width: 100%;
-    font-size: 13px;
-    font-weight: 600;
-    color: $cg-deep-navy;
+    max-width: 520px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
   }
-}
 
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
+  .modal-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 42px;
-  height: 22px;
-  flex-shrink: 0;
+    .modal-heading {
+      font-size: 18px;
+      font-weight: 700;
+      color: #082b5c;
+      margin: 0;
+    }
 
-  input { opacity: 0; width: 0; height: 0; }
+    .btn-close-modal {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background-color: #cbd5e1;
-    transition: 0.2s;
-    border-radius: 22px;
-
-    &::before {
-      position: absolute;
-      content: "";
-      height: 16px;
-      width: 16px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: 0.2s;
-      border-radius: 50%;
+      &:hover {
+        background-color: #f1f5f9;
+      }
     }
   }
 
-  input:checked + .slider { background-color: $cg-primary-blue; }
-  input:checked + .slider::before { transform: translateX(20px); }
-}
+  .modal-scroll-area {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 
-.amenities-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
+    .filter-section {
+      .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #082b5c;
+        margin: 0 0 12px;
+      }
 
-.amenity-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  color: $cg-deep-navy;
-  cursor: pointer;
+      .section-note {
+        font-size: 12px;
+        color: #64748b;
+        margin: 2px 0 0;
+      }
+    }
 
-  input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    accent-color: $cg-primary-blue;
-    cursor: pointer;
+    .price-range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .price-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 6px 12px;
+
+        .field-prefix {
+          font-size: 11px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .field-input {
+          border: none;
+          outline: none;
+          font-size: 14px;
+          font-weight: 600;
+          color: #0f172a;
+          width: 100%;
+        }
+      }
+
+      .field-dash {
+        color: #94a3b8;
+        font-weight: 600;
+      }
+    }
+
+    .toggle-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+
+        input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+
+          &:checked + .toggle-track {
+            background-color: #0066ff;
+
+            &::before {
+              transform: translateX(20px);
+            }
+          }
+        }
+
+        .toggle-track {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #cbd5e1;
+          border-radius: 24px;
+          transition: 0.2s;
+
+          &::before {
+            position: absolute;
+            content: '';
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.2s;
+          }
+        }
+      }
+    }
+
+    .amenities-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+
+      .amenity-toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #334155;
+
+        input {
+          cursor: pointer;
+        }
+
+        .amenity-title {
+          font-weight: 500;
+        }
+      }
+    }
+
+    .modal-sep {
+      height: 1px;
+      background-color: #f1f5f9;
+      width: 100%;
+    }
+  }
+
+  .modal-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid #f1f5f9;
+    background-color: #fafafa;
+
+    .btn-modal-reset {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        color: #0f172a;
+      }
+    }
+
+    .btn-modal-apply {
+      padding: 10px 24px;
+      border-radius: 9999px;
+      background-color: #0066ff;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #0052cc;
+      }
+    }
   }
 }
 
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid $cg-border;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.btn-reset-modal {
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  color: $cg-text-secondary;
-  cursor: pointer;
-
-  &:hover { color: #b91c1c; }
-}
-
-.btn-apply-modal {
-  padding: 6px 16px;
-  border-radius: 8px;
-  background-color: $cg-primary-blue;
-  color: $cg-white;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-
-  &:hover { background-color: $cg-primary-blue-hover; }
-}
-
-.cg-toast {
+// Toast
+.discovery-toast {
   position: fixed;
   bottom: 24px;
-  right: 24px;
-  background-color: $cg-deep-navy;
-  color: $cg-white;
-  padding: 10px 18px;
-  border-radius: 10px;
-  box-shadow: $shadow-lg;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #082b5c;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-size: 14px;
   font-weight: 500;
-  z-index: 300;
-  animation: slideUp 0.25s ease-out;
-
-  svg { stroke: #60a5fa; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(16px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 1200;
 }
 
 // -----------------------------------------------------------------------------
-// RESPONSIVE MEDIA BREAKPOINTS
+// 8. MOBILE & RESPONSIVE BREAKPOINTS
 // -----------------------------------------------------------------------------
-@media (max-width: 860px) {
-  .footer-top { flex-direction: column; gap: 20px; }
+@media (max-width: 1100px) {
+  .horizontal-search-bar {
+    .segment-type {
+      display: none;
+    }
+  }
 }
 
-@media (max-width: 679px) {
-  .hero-title { font-size: 17px !important; }
-  .toolbar-container { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .toolbar-actions { width: 100%; justify-content: space-between; }
-  .footer-links-grid { gap: 24px; flex-wrap: wrap; }
-  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
+@media (max-width: 992px) {
+  .discovery-search-section {
+    padding: 16px 16px 12px;
+  }
+
+  .horizontal-search-bar {
+    flex-wrap: wrap;
+    border-radius: 20px;
+    padding: 12px;
+    gap: 8px;
+
+    .search-segment {
+      flex: 1 1 calc(50% - 10px);
+      min-width: 120px;
+    }
+
+    .segment-separator {
+      display: none;
+    }
+
+    .btn-search-submit {
+      width: 100%;
+      justify-content: center;
+      margin-top: 4px;
+    }
+  }
+
+  .filters-row {
+    .mobile-toggle-wrapper {
+      display: inline-flex;
+    }
+  }
+
+  .discovery-main-layout {
+    padding: 8px 16px 36px;
+
+    .split-screen-container {
+      flex-direction: column;
+    }
+  }
+
+  .listings-pane {
+    flex: 1 1 100%;
+    width: 100%;
+
+    &.mobile-hidden {
+      display: none !important;
+    }
+
+    .homestays-grid-2col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .map-pane {
+    flex: 1 1 100%;
+    width: 100%;
+    position: static;
+    height: 480px;
+
+    &.mobile-hidden {
+      display: none !important;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .horizontal-search-bar {
+    .search-segment {
+      flex: 1 1 100%;
+    }
+  }
+
+  .results-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

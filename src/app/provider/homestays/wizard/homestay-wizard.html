@@ -1,0 +1,599 @@
+<div class="wizard-shell">
+  <!-- Top Navigation & Header -->
+  <div class="wizard-header">
+    <div class="header-left">
+      <a routerLink="/provider/services/new" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Exit Wizard</span>
+      </a>
+      <h1 class="wizard-title">New Homestay Listing Wizard</h1>
+      @if (listingId()) {
+        <span class="draft-badge">Draft #{{ listingId() }}</span>
+      }
+    </div>
+
+    @if (!submitSuccess()) {
+      <div class="header-right">
+        <button type="button" class="btn-save-draft" (click)="saveCurrentDraft()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          <span>Save Draft</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Draft Recovery Banner -->
+  @if (hasDraft() && !submitSuccess()) {
+    <div class="draft-alert-banner">
+      <div class="draft-icon">📝</div>
+      <div class="draft-text">
+        <strong>Unsaved Draft Found:</strong> You have an in-progress listing saved from your previous session.
+      </div>
+      <div class="draft-actions">
+        <button type="button" class="btn-load-draft" (click)="loadDraft()">Restore Draft</button>
+        <button type="button" class="btn-discard-draft" (click)="discardDraft()">Discard</button>
+      </div>
+    </div>
+  }
+
+  <!-- Success Screen -->
+  @if (submitSuccess()) {
+    <div class="success-screen">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <h2 class="success-title">Homestay Listing Submitted!</h2>
+      <p class="success-subtitle">
+        Your homestay <strong>{{ title }}</strong> has been submitted with listing reference <strong>#{{ submittedListingId() }}</strong>.
+      </p>
+
+      <div class="status-receipt-box">
+        <div class="receipt-row">
+          <span class="label">Verification Status:</span>
+          <span class="status-badge pending">pending</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Location:</span>
+          <span class="value">{{ locality }}, {{ district }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Configured Rooms:</span>
+          <span class="value">{{ rooms().length }} Room Unit(s)</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Uploaded Photos:</span>
+          <span class="value">{{ photos().length }} Photo(s)</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Evidence Files:</span>
+          <span class="value">{{ verificationData.files.length }} Document(s) attached</span>
+        </div>
+      </div>
+
+      <div class="success-next-steps">
+        <h4 class="next-title">Verification & Publishing Process:</h4>
+        <p class="next-text">
+          1. CeylonGo compliance officers will review your attached evidence within 24–48 hours.<br />
+          2. Once your listing is marked <strong>approved</strong>, you can activate it anytime via the <strong>Publish</strong> button in Manage Listings.
+        </p>
+      </div>
+
+      <div class="success-actions">
+        <a routerLink="/provider/listings" class="btn-primary">View in Manage Listings</a>
+        <a routerLink="/provider/dashboard" class="btn-secondary">Return to Dashboard</a>
+      </div>
+    </div>
+  } @else {
+    <!-- Stepper Navigation -->
+    <div class="stepper-wrap">
+      <div class="stepper-item" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1" (click)="goToStep(1)">
+        <span class="step-num">1</span>
+        <span class="step-label">Basic Info</span>
+      </div>
+      <div class="stepper-line" [class.filled]="currentStep() > 1"></div>
+
+      <div class="stepper-item" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" (click)="goToStep(2)">
+        <span class="step-num">2</span>
+        <span class="step-label">Location</span>
+      </div>
+      <div class="stepper-line" [class.filled]="currentStep() > 2"></div>
+
+      <div class="stepper-item" [class.active]="currentStep() === 3" [class.completed]="currentStep() > 3" (click)="goToStep(3)">
+        <span class="step-num">3</span>
+        <span class="step-label">Photos & Amenities</span>
+      </div>
+      <div class="stepper-line" [class.filled]="currentStep() > 3"></div>
+
+      <div class="stepper-item" [class.active]="currentStep() === 4" [class.completed]="currentStep() > 4" (click)="goToStep(4)">
+        <span class="step-num">4</span>
+        <span class="step-label">Rooms & Pricing</span>
+      </div>
+      <div class="stepper-line" [class.filled]="currentStep() > 4"></div>
+
+      <div class="stepper-item" [class.active]="currentStep() === 5" [class.completed]="currentStep() > 5" (click)="goToStep(5)">
+        <span class="step-num">5</span>
+        <span class="step-label">Verification</span>
+      </div>
+      <div class="stepper-line" [class.filled]="currentStep() > 5"></div>
+
+      <div class="stepper-item" [class.active]="currentStep() === 6" (click)="goToStep(6)">
+        <span class="step-num">6</span>
+        <span class="step-label">Review & Submit</span>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- STEP 1: Basic Information -->
+    @if (currentStep() === 1) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 1: Basic Property Information</h2>
+          <p class="step-desc">Enter core details that introduce your homestay to travelers.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label class="form-label">Property Title <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="title"
+              maxlength="160"
+              placeholder="e.g. Ella Green View Heritage Homestay"
+            />
+            <span class="char-count">{{ title.length }} / 160</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Property Type <span class="required">*</span></label>
+            <select class="form-input" [(ngModel)]="property_type">
+              <option value="villa">Entire Villa</option>
+              <option value="bungalow">Heritage Bungalow</option>
+              <option value="house">Residential House</option>
+              <option value="guesthouse">Family Guesthouse</option>
+              <option value="cottage">Traditional Cottage</option>
+              <option value="apartment">Serviced Apartment</option>
+              <option value="other">Eco Lodge / Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contact Phone</label>
+            <input
+              type="tel"
+              class="form-input"
+              [(ngModel)]="contactPhone"
+              placeholder="+94 77 123 4567"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contact Email</label>
+            <input
+              type="email"
+              class="form-input"
+              [(ngModel)]="contactEmail"
+              placeholder="host@ceylongo.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Check-in Time</label>
+            <input type="time" class="form-input" [(ngModel)]="checkInTime" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Check-out Time</label>
+            <input type="time" class="form-input" [(ngModel)]="checkOutTime" />
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Description <span class="required">*</span></label>
+            <textarea
+              class="form-input"
+              rows="4"
+              [(ngModel)]="description"
+              maxlength="2000"
+              placeholder="Describe your homestay's character, mountain or garden views, homemade breakfast, host family story, and surrounding sights..."
+            ></textarea>
+            <span class="char-count">{{ description.length }} / 2000</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">House Rules</label>
+            <textarea
+              class="form-input"
+              rows="2"
+              [(ngModel)]="houseRules"
+              placeholder="e.g. No smoking in bedrooms. Quiet hours after 10 PM. Footwear off inside living areas."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 2: Location -->
+    @if (currentStep() === 2) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 2: Property Location & Interactive Map</h2>
+          <p class="step-desc">Pin your homestay on the Leaflet map to help travelers navigate easily.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Province <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="province"
+              placeholder="e.g. Uva Province"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">District <span class="required">*</span></label>
+            <select class="form-input" [(ngModel)]="district">
+              @for (d of districts; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Locality / City / Town <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="locality"
+              placeholder="e.g. Ella, Badulla"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Street Address</label>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="streetAddress"
+              placeholder="e.g. No. 42, Passara Road, Ella"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Interactive Leaflet & OpenStreetMap Pin</label>
+            <app-location-picker
+              [latitude]="latitude"
+              [longitude]="longitude"
+              (coordinatesChange)="onCoordinatesChange($event)"
+            ></app-location-picker>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 3: Photos & Amenities -->
+    @if (currentStep() === 3) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 3: Property Photos & Amenities</h2>
+          <p class="step-desc">Upload actual property images (JPEG, PNG, WebP up to 5MB each). At least 1 photo is required.</p>
+        </div>
+
+        <!-- Photos Section -->
+        <div class="photos-block">
+          @if (photoUploadError()) {
+            <div class="error-banner">
+              {{ photoUploadError() }}
+            </div>
+          }
+
+          <div class="photos-gallery">
+            @for (photo of photos(); track photo.id) {
+              <div class="photo-card" [class.cover-selected]="coverPhotoId() === photo.id">
+                <img [src]="photo.image_url || photo.storage_key" [alt]="photo.alt_text || 'Homestay photo'" />
+                @if (coverPhotoId() === photo.id) {
+                  <span class="cover-tag">Cover Photo</span>
+                }
+                <div class="photo-actions">
+                  <button type="button" class="btn-set-cover" (click)="setAsCover(photo.id)">
+                    {{ coverPhotoId() === photo.id ? 'Cover' : 'Set Cover' }}
+                  </button>
+                  <button type="button" class="btn-del-photo" (click)="removePhoto(photo.id)">✕</button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Multipart Photo Upload Button -->
+          <div class="photo-upload-container">
+            <input
+              type="file"
+              id="homestayPhotoInput"
+              class="file-input-hidden"
+              (change)="onPhotoFileSelected($event)"
+              accept=".jpg,.jpeg,.png,.webp"
+              [disabled]="isUploadingPhoto()"
+            />
+            <label for="homestayPhotoInput" class="btn-upload-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>{{ isUploadingPhoto() ? 'Uploading Photo...' : '+ Upload Property Photo' }}</span>
+            </label>
+            <span class="upload-hint">JPEG, PNG, WebP up to 5 MB</span>
+          </div>
+        </div>
+
+        <!-- Amenities Section -->
+        <div class="amenities-block">
+          <div class="block-title-row">
+            <h3 class="block-heading">Available Amenities</h3>
+            <span class="block-sub">Select all amenities available to guests at your homestay.</span>
+          </div>
+
+          <div class="amenities-chips-grid">
+            @for (amenity of availableAmenities; track amenity) {
+              <button
+                type="button"
+                class="amenity-chip"
+                [class.selected]="selectedAmenities.includes(amenity)"
+                (click)="toggleAmenity(amenity)"
+              >
+                <span class="check-box">
+                  @if (selectedAmenities.includes(amenity)) {
+                    ✓
+                  }
+                </span>
+                <span>{{ amenity }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 4: Rooms, Pricing & Availability -->
+    @if (currentStep() === 4) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 4: Rooms, Pricing & Inventory Units</h2>
+          <p class="step-desc">Configure individual rooms, guest capacities, and nightly base rates in Sri Lankan Rupees (LKR).</p>
+        </div>
+
+        <!-- Configured Rooms List -->
+        <div class="rooms-list">
+          @for (room of rooms(); track $index) {
+            <div class="room-card">
+              <div class="room-icon">🛏️</div>
+              <div class="room-info">
+                <h4 class="room-label">{{ room.label }}</h4>
+                <div class="room-meta">
+                  <span>{{ room.room_type || 'Standard Room' }}</span>
+                  <span>•</span>
+                  <span>Up to {{ room.capacity }} Guests</span>
+                </div>
+              </div>
+              <div class="room-price-tag">
+                <span class="rate-val">LKR {{ room.nightly_price | number }}</span>
+                <span class="rate-sub">/ night</span>
+              </div>
+              @if (rooms().length > 1) {
+                <button type="button" class="btn-remove-room" (click)="removeRoom($index)" title="Remove room">
+                  ✕
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Add Room Form -->
+        <div class="add-room-panel">
+          <h4 class="panel-heading">Add Another Room / Unit</h4>
+          <div class="room-form-grid">
+            <div class="form-group">
+              <label class="form-label">Room Label</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="newRoomLabel"
+                placeholder="e.g. Superior Garden Suite"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bedding Type</label>
+              <select class="form-input" [(ngModel)]="newRoomType">
+                <option value="Single Bed">Single Bed</option>
+                <option value="Double Bed">Double Bed</option>
+                <option value="Queen Bed">Queen Bed</option>
+                <option value="King Bed">King Bed</option>
+                <option value="Family Suite">Family Suite</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Max Guest Capacity</label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                class="form-input"
+                [(ngModel)]="newRoomCapacity"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nightly Rate (LKR)</label>
+              <input
+                type="number"
+                min="1000"
+                step="500"
+                class="form-input"
+                [(ngModel)]="newRoomPrice"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-add-unit"
+            (click)="addRoom()"
+            [disabled]="!newRoomLabel.trim()"
+          >
+            + Add Room Unit
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 5: Verification Evidence -->
+    @if (currentStep() === 5) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 5: Verify Your Homestay Service</h2>
+          <p class="step-desc">
+            Attach official proof and public review links. Private evidence is only accessible to CeylonGo compliance officers.
+          </p>
+        </div>
+
+        <app-service-verification
+          [category]="'homestay'"
+          [listingId]="listingId()"
+          [initialData]="verificationData"
+          (verificationChange)="onVerificationChange($event)"
+        ></app-service-verification>
+      </div>
+    }
+
+    <!-- STEP 6: Review & Submit -->
+    @if (currentStep() === 6) {
+      <div class="step-card">
+        <div class="step-card-header">
+          <h2 class="step-title">Step 6: Review & Submit for Verification</h2>
+          <p class="step-desc">Please review all submitted details before publishing for administrator review.</p>
+        </div>
+
+        <div class="review-sections">
+          <!-- Basic & Location Summary -->
+          <div class="review-box">
+            <div class="box-header">
+              <h3 class="box-title">Property & Location</h3>
+              <button type="button" class="btn-edit-step" (click)="goToStep(1)">Edit</button>
+            </div>
+            <div class="summary-details">
+              <div class="summary-item">
+                <span class="label">Property Title:</span>
+                <span class="val font-bold">{{ title || '—' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Property Type:</span>
+                <span class="val">{{ property_type | titlecase }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Location:</span>
+                <span class="val">{{ locality }}, {{ district }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Check-in / Check-out:</span>
+                <span class="val">{{ checkInTime }} / {{ checkOutTime }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rooms & Pricing Summary -->
+          <div class="review-box">
+            <div class="box-header">
+              <h3 class="box-title">Rooms & Nightly Rates</h3>
+              <button type="button" class="btn-edit-step" (click)="goToStep(4)">Edit</button>
+            </div>
+            <div class="summary-rooms">
+              @for (r of rooms(); track $index) {
+                <div class="room-summary-chip">
+                  <span class="r-name">{{ r.label }}</span>
+                  <span class="r-rate">LKR {{ r.nightly_price | number }} / night</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Verification Summary -->
+          <div class="review-box">
+            <div class="box-header">
+              <h3 class="box-title">Verification Evidence</h3>
+              <button type="button" class="btn-edit-step" (click)="goToStep(5)">Edit</button>
+            </div>
+            <div class="summary-details">
+              <div class="summary-item">
+                <span class="label">Attached Documents:</span>
+                <span class="val">{{ verificationData.files.length }} file(s) attached</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">External Profiles:</span>
+                <span class="val">{{ verificationData.evidence.links.length }} link(s) provided</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Declaration Agreement -->
+          <div class="declaration-box">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="declarationAgreed" class="checkbox-input" />
+              <span class="declaration-text">
+                I hereby declare that all information, photographs, and identity verification credentials provided in this submission are genuine, accurate, and comply with CeylonGo Host Guidelines and Sri Lanka Tourism standards.
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Wizard Navigation Footer -->
+    <div class="wizard-footer">
+      <div class="footer-left">
+        @if (currentStep() > 1) {
+          <button type="button" class="btn-prev" (click)="prevStep()">
+            ← Previous
+          </button>
+        }
+      </div>
+
+      <div class="footer-right">
+        @if (currentStep() < 6) {
+          <button type="button" class="btn-next" (click)="nextStep()">
+            Continue to Step {{ currentStep() + 1 }} →
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn-submit-listing"
+            (click)="submitListing()"
+            [disabled]="isSubmitting() || !declarationAgreed"
+          >
+            @if (isSubmitting()) {
+              <span>Submitting to CeylonGo Backend...</span>
+            } @else {
+              <span>Submit for Admin Verification</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -41,6 +41,7 @@ export class TravelerNavbar implements OnInit {
   readonly isScrolled = signal(false);
   readonly activeSection = signal('home');
   readonly isRentalRoute = signal(false);
+  readonly isHomestayRoute = signal(false);
 
   get isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
@@ -102,6 +103,13 @@ export class TravelerNavbar implements OnInit {
     this.isRentalRoute.set(isRentalRoute);
     if (isRentalRoute) {
       this.activeSection.set('bicycles');
+      return;
+    }
+
+    const isHomestayRoute = /^\/homestays(?:[/?#]|$)|^\/stays(?:[/?#]|$)/.test(this.router.url);
+    this.isHomestayRoute.set(isHomestayRoute);
+    if (isHomestayRoute) {
+      this.activeSection.set('stays');
       return;
     }
 
@@ -206,6 +214,12 @@ export class TravelerNavbar implements OnInit {
       event.preventDefault();
     }
     this.closeMobileMenu();
+
+    if (sectionId === 'stays') {
+      this.activeSection.set('stays');
+      this.router.navigate(['/homestays']);
+      return;
+    }
 
     if (sectionId === 'experiences') {
       this.activeSection.set('experiences');

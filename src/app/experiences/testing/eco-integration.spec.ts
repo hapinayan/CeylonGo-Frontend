@@ -121,11 +121,6 @@ describe('Public Eco API and UI', () => {
     http.expectOne(req => req.url === url + '/42/reviews').flush({ total: 1, average_rating: 5, items: [] });
     http.expectOne(req => req.url === url + '/42/availability').flush([]);
     harness.detectChanges();
-    http.expectOne(req => req.url === environment.apiBaseUrl + '/weather/locations')
-      .flush({}, { status: 503, statusText: 'Unavailable' });
-    harness.detectChanges();
-    expect(harness.routeNativeElement?.textContent).toContain('The weather service is currently unavailable.');
-    harness.detectChanges();
     expect(harness.routeNativeElement?.textContent).toContain('Stay on marked paths');
     expect(harness.routeNativeElement?.textContent).toContain('Verified Eco-Friendly Badge');
     expect(harness.routeNativeElement?.textContent).toContain('No open slots');

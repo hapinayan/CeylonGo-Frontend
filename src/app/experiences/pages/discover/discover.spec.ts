@@ -48,15 +48,15 @@ describe('Experiences Discover preview', () => {
   }
 
   it('renders preview inventory and the named categories', () => {
-    expect(page.querySelector('h1')?.textContent).toBe('Experiences in Sri Lanka');
+    expect(page.querySelector('h1')).toBeNull();
     expect(page.querySelector('#preview-note')?.textContent).toContain('Development preview');
-    expect(page.querySelectorAll('.category-nav button')).toHaveLength(8);
+    expect(page.querySelectorAll('.category-nav button')).toHaveLength(9);
     expect(cardTitles()).toHaveLength(8);
   });
 
-  it('selects Eco-Tourism and resets combined filters', () => {
-    click('Eco-Tourism');
-    expect(page.querySelector('.category-nav [aria-pressed="true"]')?.textContent.trim()).toBe('Eco-Tourism');
+  it('selects Nature & Eco and resets combined filters', () => {
+    click('Nature & Eco');
+    expect(page.querySelector('.category-nav [aria-pressed="true"]')?.textContent.trim()).toBe('Nature & Eco');
     expect(cardTitles()).toEqual(['Tea Plantation Experience', 'Mangrove Exploration', 'Wetland Bird Walk']);
     click('Filters');
     edit('#experience-filters select', '4.9');
@@ -112,7 +112,7 @@ describe('Experiences Discover preview', () => {
     expect(document.activeElement?.id).toBe('experience-results');
     expect(links()).toEqual(demoExperiences.slice(8).map(item => '/experiences/' + item.id));
     expect(page.querySelector<HTMLButtonElement>('[aria-label="Next page"]')?.disabled).toBe(true);
-    click('Local Culture');
+    click('Cultural & Village');
     expect(fixture.componentInstance.page()).toBe(1);
     expect(cardTitles()).toEqual(['Cultural Village Tour', 'Sigiriya Rock Walk']);
   });
@@ -128,7 +128,7 @@ describe('Experiences Discover preview', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate');
 
-    click('Local Culture');
+    click('Cultural & Village');
     expect(fixture.componentInstance.category()).toBe('culture');
     expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({
       queryParams: { category: 'culture' },
