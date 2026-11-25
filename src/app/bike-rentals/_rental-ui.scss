@@ -1,0 +1,18 @@
+main { color: #082b5c; background: white; font-family: Inter, system-ui, sans-serif; }
+.wrap { width: min(100% - 2rem, 1280px); margin-inline: auto; }
+button, select, input { font: inherit; }
+button { min-height: 44px; cursor: pointer; }
+button:disabled { opacity: .55; cursor: default; }
+input:not([type=checkbox]), select { min-height: 44px; border: 1px solid #d8e8f8; color: #082b5c; background: #fff; border-radius: .5rem; padding: .4rem .5rem; min-width: 0; }
+:where(button, a, input, select, summary):focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.primary, .outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .55rem .85rem; border-radius: .55rem; border: 1px solid #2563eb; font-weight: 650; font-size: .9rem; text-decoration: none; }
+.primary { color: white; background: #2563eb; }
+.primary:hover { color: white; background: #174bb9; }
+.outline, .text-button { color: #174dae; background: transparent; }
+.outline:hover, .text-button:hover { background: #eaf5ff; }
+.text-button { border: 0; border-radius: .35rem; font-size: .875rem; font-weight: 650; padding-inline: .3rem; }
+.state { padding: 1.7rem; border-radius: .9rem; text-align: center; background: #eaf5ff; }
+.state h3 { margin-top: 0; }
+.star { color: #a65b06; }
+p.price { color: #082b5c; font-size: 1.22rem; font-weight: 750; }
+.price span { color: #475569; font-size: .83rem; font-weight: 500; }

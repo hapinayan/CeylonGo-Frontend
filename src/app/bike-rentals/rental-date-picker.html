@@ -1,0 +1,37 @@
+<form (submit)="check($event)" novalidate>
+  <p class="hint">All times are in Sri Lanka (UTC+05:30).</p>
+  @if (preview()) { <p class="hint">Sample maintenance day: <strong>{{ blocked }}</strong>. No live availability is checked.</p> }
+  <div class="dates">
+    <label>Pickup date<input required #start type="date" [min]="today" [value]="pickup()" (input)="pickup.set(start.value); edited()" /></label>
+    <label>Pickup time<input required #startTime type="time" [value]="pickupTime()" (input)="pickupTime.set(startTime.value); edited()" /></label>
+    <label>Return date<input required #end type="date" [min]="pickup() || today" [value]="dropoff()" (input)="dropoff.set(end.value); edited()" /></label>
+    <label>Return time<input required #endTime type="time" [value]="dropoffTime()" (input)="dropoffTime.set(endTime.value); edited()" /></label>
+  </div>
+  @if (duration().dates; as dates) {
+    <p class="hint">Estimated duration: {{ duration().hours }} hours · {{ duration().days }} billable day(s).</p>
+  }
+  <button type="submit" class="outline" [disabled]="busy()">{{ busy() ? 'Checking…' : 'Check availability' }}</button>
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (result(); as check) {
+    <p class="hint" role="status">{{ preview() ? 'Sample dates available.' : 'Dates were available when checked.' }} {{ check.days }} billable day(s).</p>
+  }
+  @let quote = quoteState();
+  @switch (quote.kind) {
+    @case ('loading') { <p class="hint" role="status">Loading the rental estimate&hellip;</p> }
+    @case ('unavailable') { <p class="error" role="alert">A rental estimate is unavailable for this vehicle and interval. Check availability again to retry.</p> }
+    @case ('error') { <p class="error" role="alert">The rental estimate couldn&rsquo;t be loaded. Check availability again to retry.</p> }
+    @case ('elapsed') { <p class="error" role="status">The pickup time has passed. Choose new dates to check availability and pricing.</p> }
+    @case ('ready') {
+      @let price = quote.price;
+      <div class="hint" role="status">
+        <p><strong>Server rental estimate &middot; {{ price.currency }} {{ price.total_price | number:'1.2-2' }}</strong> ({{ price.selected_plan_name }})</p>
+        @if (price.security_deposit == null) {
+          <p>The estimate does not specify a security deposit.</p>
+        } @else {
+          <p>Quoted security deposit &middot; {{ price.currency }} {{ price.security_deposit | number:'1.2-2' }} separately. The required amount can differ at booking or pickup.</p>
+        }
+        <p>Price and availability may change. This estimate does not hold the vehicle or guarantee a price. The server calculates the final booking total separately.</p>
+      </div>
+    }
+  }
+</form>

@@ -229,6 +229,14 @@ export const routes: Routes = [
         .then(m => m.experiencesRoutes)
   },
 
+  // BIKE & BICYCLE RENTAL MODULE
+  {
+    path: 'bicycles',
+    loadChildren: () =>
+      import('./bike-rentals/rental.routes')
+        .then(module => module.rentalRoutes)
+  },
+
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',

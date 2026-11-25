@@ -40,6 +40,7 @@ export class TravelerNavbar implements OnInit {
   readonly isMobileMenuOpen = signal(false);
   readonly isScrolled = signal(false);
   readonly activeSection = signal('home');
+  readonly isRentalRoute = signal(false);
 
   get isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
@@ -97,6 +98,13 @@ export class TravelerNavbar implements OnInit {
   }
 
   private updateActiveSectionFromUrl(): void {
+    const isRentalRoute = /^\/bicycles(?:[/?#]|$)/.test(this.router.url);
+    this.isRentalRoute.set(isRentalRoute);
+    if (isRentalRoute) {
+      this.activeSection.set('bicycles');
+      return;
+    }
+
     if (this.router.url.startsWith('/experiences')) {
       this.activeSection.set('experiences');
       return;

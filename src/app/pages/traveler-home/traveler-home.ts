@@ -593,6 +593,10 @@ export class TravelerHome implements OnInit {
   }
 
   onExploreCardClick(card: ExploreMoreCard): void {
+    if (card.id === 'bicycles') {
+      void this.router.navigateByUrl(card.route);
+      return;
+    }
     this.showToast(`${card.title} discovery is coming soon in the next release!`);
     this.router.navigate([], {
       relativeTo: this.route,

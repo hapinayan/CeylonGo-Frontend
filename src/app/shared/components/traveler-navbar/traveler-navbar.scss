@@ -763,3 +763,20 @@
     font-size: 15px;
   }
 }
+
+.rental-nav .navbar-container {
+  max-width: 1440px;
+}
+
+.rental-nav .nav-list {
+  gap: clamp(8px, 1.5vw, 24px);
+}
+
+.rental-nav .nav-link {
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  .rental-nav .desktop-nav { display: none; }
+  .rental-nav .mobile-toggle-btn { display: flex; }
+}
