@@ -1,0 +1,47 @@
+<div class="landing-page-root">
+  <!-- CEYLONGO NAVIGATION BAR -->
+  <app-traveler-navbar />
+
+  <!-- DEMO MODE BANNER -->
+  @if (isDemoMode()) {
+    <div class="demo-banner">
+      <div class="demo-banner-inner">
+        <span class="demo-dot"></span>
+        <span class="demo-text">Demo Mode Active &bull; Showing Verified Reference UI Showcase</span>
+        <a routerLink="/artisans" class="exit-demo-link">Exit Demo</a>
+      </div>
+    </div>
+  }
+
+  <!-- COMPACT SPLIT HERO SECTION -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">Authentic Sri Lankan Heritage</div>
+        <h1 class="hero-title">Discover Sri Lanka’s Local Artisans</h1>
+        <p class="hero-subtitle">
+          Connect directly with master craftspeople, explore generational traditions, and support sustainable village livelihoods across the island.
+        </p>
+        <div class="hero-cta-group">
+          <a [routerLink]="['/artisans/discover']" [queryParams]="queryParams()" class="primary-hero-btn">
+            <span>Explore Artisans</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual-side">
+        <div class="hero-image-frame">
+          <img src="/images/artisan/kandy_cover.jpg" alt="Master Sri Lankan woodcarver craftsperson" class="hero-craft-img" />
+          <div class="hero-img-badge">
+            <span class="badge-dot"></span>
+            <span>200+ Verified Workshops</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

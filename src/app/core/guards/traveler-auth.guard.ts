@@ -4,26 +4,27 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Functional Route Guard that protects Authenticated Traveler routes (e.g. /traveler/home).
- * Enforces that:
- * 1. An active traveler session exists (JWT token present).
- * 2. If user profile is loaded, role is 'traveler'.
- * 3. Provider and admin accounts are strictly rejected from traveler-only routes.
- * 4. Unauthenticated users are redirected back to the public homepage (/).
+ * Protects authenticated traveler routes.
+ * Preserves role-based access restrictions.
+ * Redirects unauthenticated users to authentication.
  */
-export const travelerAuthGuard: CanActivateFn = (_route, _state) => {
+export const travelerAuthGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (!authService.isAuthenticated()) {
-    return router.createUrlTree(['/']);
+    return router.createUrlTree(['/auth'], {
+      queryParams: { returnUrl: state.url },
+    });
   }
 
   const user = authService.currentUser();
+
   if (user) {
     if (user.role === 'provider') {
       return router.createUrlTree(['/provider/dashboard']);
     }
+
     if (user.role !== 'traveler') {
       return router.createUrlTree(['/']);
     }

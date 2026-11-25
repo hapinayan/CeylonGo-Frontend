@@ -208,6 +208,14 @@ export const routes: Routes = [
         .then(m => m.ProviderDashboard)
   },
 
+  // ARTISAN TRAVELER MODULE
+  {
+    path: 'artisans',
+    loadChildren: () =>
+      import('./features/artisan/artisan.routes')
+        .then(m => m.artisanRoutes)
+  },
+
   // LOCAL TOUR GUIDES DISCOVER PAGE
   {
     path: 'tour-guides',

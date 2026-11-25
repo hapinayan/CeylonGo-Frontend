@@ -1,9 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
 
-import { travelerAuthGuard } from './traveler-auth.guard';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { AuthService } from '../services/auth.service';
+import { travelerAuthGuard } from './traveler-auth.guard';
 import { User } from '../models/auth.models';
 
 describe('travelerAuthGuard', () => {
@@ -11,17 +18,26 @@ describe('travelerAuthGuard', () => {
     isAuthenticated: ReturnType<typeof vi.fn>;
     currentUser: ReturnType<typeof vi.fn>;
   };
-  let routerMock: {
-    createUrlTree: ReturnType<typeof vi.fn>;
-  };
 
   const sampleTraveler: User = {
     id: 1,
-    full_name: 'Hapinayan Perera',
-    email: 'hapinayan017@gmail.com',
+    full_name: 'Test Traveler',
+    email: 'traveler@example.com',
     role: 'traveler',
     is_active: true,
     created_at: '2026-11-20T10:00:00Z',
+  };
+
+  const executeGuard = (
+    url = '/artisans/favorites',
+    queryParams: Record<string, string> = {}
+  ) => {
+    return TestBed.runInInjectionContext(() =>
+      travelerAuthGuard(
+        { queryParams } as ActivatedRouteSnapshot,
+        { url } as RouterStateSnapshot
+      )
+    );
   };
 
   beforeEach(() => {
@@ -30,79 +46,81 @@ describe('travelerAuthGuard', () => {
       currentUser: vi.fn(),
     };
 
-    routerMock = {
-      createUrlTree: vi.fn((commands: any[]) => ({ toString: () => commands.join('/') } as unknown as UrlTree)),
-    };
-
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         { provide: AuthService, useValue: authServiceMock },
-        { provide: Router, useValue: routerMock },
       ],
     });
   });
 
-  it('should allow access when user is authenticated with traveler role', () => {
+  it('allows authenticated travelers', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(sampleTraveler);
 
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as any, {} as any)
-    );
-
-    expect(result).toBe(true);
+    expect(executeGuard()).toBe(true);
   });
 
-  it('should allow access when authenticated and user profile is not yet loaded', () => {
+  it('allows authenticated users while profile is loading', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(null);
 
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as any, {} as any)
-    );
-
-    expect(result).toBe(true);
+    expect(executeGuard()).toBe(true);
   });
 
-  it('should redirect unauthenticated users to public homepage (/)', () => {
+  it('redirects unauthenticated users with returnUrl', () => {
     authServiceMock.isAuthenticated.mockReturnValue(false);
     authServiceMock.currentUser.mockReturnValue(null);
 
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as any, {} as any)
-    );
+    const result = executeGuard() as UrlTree;
 
-    expect(routerMock.createUrlTree).toHaveBeenCalledWith(['/']);
-    expect(result).not.toBe(true);
+    expect(result instanceof UrlTree).toBe(true);
+    expect(result.toString()).toBe(
+      '/auth?returnUrl=%2Fartisans%2Ffavorites'
+    );
   });
 
-  it('should redirect provider users away from traveler routes to provider dashboard', () => {
+  it('redirects provider users to provider dashboard', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue({
       ...sampleTraveler,
       role: 'provider',
     });
 
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as any, {} as any)
-    );
+    const result = executeGuard() as UrlTree;
 
-    expect(routerMock.createUrlTree).toHaveBeenCalledWith(['/provider/dashboard']);
-    expect(result).not.toBe(true);
+    expect(result.toString()).toBe('/provider/dashboard');
   });
 
-  it('should redirect admin users away from traveler routes to public homepage', () => {
+  it('redirects admin users to homepage', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue({
       ...sampleTraveler,
       role: 'admin',
     });
 
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as any, {} as any)
-    );
+    const result = executeGuard() as UrlTree;
 
-    expect(routerMock.createUrlTree).toHaveBeenCalledWith(['/']);
-    expect(result).not.toBe(true);
+    expect(result.toString()).toBe('/');
+  });
+
+  it('prevents demo authentication bypass', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+
+    const result = executeGuard('/artisans/favorites', {
+      demo: 'true',
+    });
+
+    expect(result instanceof UrlTree).toBe(true);
+  });
+
+  it('prevents preview authentication bypass', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+
+    const result = executeGuard('/artisans/favorites', {
+      preview: 'true',
+    });
+
+    expect(result instanceof UrlTree).toBe(true);
   });
 });
