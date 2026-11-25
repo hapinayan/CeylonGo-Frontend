@@ -1,0 +1,929 @@
+@if (authModalService.isOpen()) {
+  <div
+    class="auth-modal-backdrop"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="auth-modal-heading"
+    aria-describedby="auth-modal-subtitle"
+    tabindex="-1"
+  >
+    <div class="auth-modal-card" (click)="$event.stopPropagation()">
+      <!-- TOP-RIGHT CLOSE BUTTON (X) -->
+      <button
+        type="button"
+        class="modal-close-btn"
+        (click)="close()"
+        aria-label="Close authentication modal"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- TOP-LEFT BACK BUTTON (CONTEXT-AWARE NAVIGATION) -->
+      @if (authModalService.currentStep() === 'login' || authModalService.currentStep() === 'register' || authModalService.currentStep() === 'phone') {
+        <button
+          type="button"
+          class="modal-back-btn"
+          (click)="goToStep('entry')"
+          aria-label="Back to email entry"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+      } @else if (authModalService.currentStep() === 'forgot-password' || authModalService.currentStep() === 'reset-password') {
+        <button
+          type="button"
+          class="modal-back-btn"
+          (click)="goToStep('login')"
+          aria-label="Back to login"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+      }
+
+      <!-- CEYLONGO BLUE ISLAND LOGO -->
+      <div class="modal-logo-wrapper">
+        <img
+          src="/images/ceylongo-blue-logo.png"
+          alt="CeylonGo"
+          class="modal-logo-img"
+        />
+      </div>
+
+      <!-- ============================================== -->
+      <!-- 1. ENTRY STEP (INITIAL EMAIL-FIRST POPUP)      -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'entry') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Log in or create an account</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            Enter your email and we'll take you to the right place.
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="emailForm" (ngSubmit)="onContinueWithEmail()" novalidate class="auth-modal-form">
+          <div
+            class="input-group"
+            [class.has-error]="emailControl.touched && emailControl.invalid"
+          >
+            <div class="input-icon-wrapper" aria-hidden="true">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="m2 6 10 7 10-7"/>
+              </svg>
+            </div>
+            <input
+              #emailInput
+              type="email"
+              formControlName="email"
+              placeholder="Email address"
+              autocomplete="email"
+              class="auth-text-input"
+              aria-label="Email address"
+            />
+          </div>
+
+          @if (emailControl.touched && emailControl.invalid) {
+            <p class="inline-field-error" role="alert">
+              @if (emailControl.hasError('required')) {
+                Email address is required.
+              } @else if (emailControl.hasError('email')) {
+                Please enter a valid email address.
+              }
+            </p>
+          }
+
+          <button
+            type="submit"
+            class="btn-primary-continue"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span>Checking account...</span>
+            } @else {
+              <span>Continue with email</span>
+            }
+          </button>
+        </form>
+
+        <div class="divider-row">
+          <span class="divider-line"></span>
+          <span class="divider-text">or</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <div class="social-actions-group">
+          <!-- CONTINUE WITH GOOGLE -->
+          <button
+            type="button"
+            class="btn-outlined-social"
+            (click)="onContinueWithGoogle()"
+            [disabled]="isLoading()"
+            aria-label="Continue with Google"
+          >
+            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <!-- CONTINUE WITH PHONE NUMBER -->
+          <button
+            type="button"
+            class="btn-outlined-social"
+            (click)="onContinueWithPhone()"
+            [disabled]="isLoading()"
+            aria-label="Continue with phone number"
+          >
+            <svg class="social-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>Continue with phone number</span>
+          </button>
+        </div>
+
+        <p class="terms-legal-text">
+          By continuing, you agree to CeylonGo's
+          <a routerLink="/terms" (click)="close()" class="legal-link">Terms of Service</a>
+          and
+          <a routerLink="/privacy" (click)="close()" class="legal-link">Privacy Policy</a>.
+        </p>
+      }
+
+      <!-- ============================================== -->
+      <!-- 2. LOGIN STEP (APPROVED REFERENCE REPRODUCTION)-->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'login') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Welcome back</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            Log in to your CeylonGo account and continue exploring Sri Lanka.
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="modal-alert-success" role="status">
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" novalidate class="auth-modal-form">
+          <!-- EMAIL ADDRESS (READ-ONLY, AUTO-POPULATED) -->
+          <div class="field-wrapper">
+            <label class="field-label" for="login-email">Email address</label>
+            <div class="input-group input-group-readonly">
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m2 6 10 7 10-7"/>
+                </svg>
+              </div>
+              <input
+                id="login-email"
+                type="email"
+                [value]="authModalService.userEmail()"
+                readonly
+                tabindex="-1"
+                class="auth-text-input input-readonly"
+                aria-label="Email address (read-only)"
+              />
+            </div>
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="field-wrapper mt-3">
+            <label class="field-label" for="login-password">Password</label>
+            <div
+              class="input-group"
+              [class.has-error]="loginPasswordControl.touched && loginPasswordControl.invalid"
+            >
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <input
+                #loginPasswordInput
+                id="login-password"
+                [type]="isLoginPasswordVisible() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••••"
+                autocomplete="current-password"
+                class="auth-text-input"
+                aria-label="Password"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleLoginPasswordVisibility()"
+                [attr.aria-label]="isLoginPasswordVisible() ? 'Hide password' : 'Show password'"
+              >
+                @if (isLoginPasswordVisible()) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+
+          @if (loginPasswordControl.touched && loginPasswordControl.invalid) {
+            <p class="inline-field-error" role="alert">
+              Password is required (minimum 8 characters).
+            </p>
+          }
+
+          <div class="form-extra-row">
+            <button
+              type="button"
+              class="forgot-link-btn"
+              (click)="goToStep('forgot-password')"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-primary-continue mt-3"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span>Signing in...</span>
+            } @else {
+              <span>Log in</span>
+            }
+          </button>
+        </form>
+
+        <div class="auth-bottom-switch">
+          Don't have an account?
+          <button type="button" class="switch-auth-link" (click)="goToStep('register')">
+            Create account
+          </button>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- 3. REGISTER STEP (APPROVED REFERENCE MATCH)   -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'register') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Create your account</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            Join CeylonGo as a new traveler and start exploring Sri Lanka's best experiences.
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="modal-alert-success" role="status">
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" novalidate class="auth-modal-form">
+          <!-- FULL NAME -->
+          <div class="field-wrapper">
+            <label class="field-label" for="register-fullname">Full name</label>
+            <div
+              class="input-group"
+              [class.has-error]="registerFullNameControl.touched && registerFullNameControl.invalid"
+            >
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <input
+                #registerFullNameInput
+                id="register-fullname"
+                type="text"
+                formControlName="fullName"
+                placeholder="Full name"
+                autocomplete="name"
+                class="auth-text-input"
+                aria-label="Full name"
+              />
+            </div>
+            @if (registerFullNameControl.touched && registerFullNameControl.invalid) {
+              <p class="inline-field-error" role="alert">
+                Full name is required (minimum 2 characters).
+              </p>
+            }
+          </div>
+
+          <!-- EMAIL ADDRESS (READ-ONLY, AUTO-POPULATED) -->
+          <div class="field-wrapper mt-3">
+            <label class="field-label" for="register-email">Email address</label>
+            <div class="input-group input-group-readonly">
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m2 6 10 7 10-7"/>
+                </svg>
+              </div>
+              <input
+                id="register-email"
+                type="email"
+                [value]="authModalService.userEmail()"
+                readonly
+                tabindex="-1"
+                class="auth-text-input input-readonly"
+                aria-label="Email address (read-only)"
+              />
+            </div>
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="field-wrapper mt-3">
+            <label class="field-label" for="register-password">Password</label>
+            <div
+              class="input-group"
+              [class.has-error]="registerPasswordControl.touched && registerPasswordControl.invalid"
+            >
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <input
+                id="register-password"
+                [type]="isRegisterPasswordVisible() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••••"
+                autocomplete="new-password"
+                class="auth-text-input"
+                aria-label="Create password"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleRegisterPasswordVisibility()"
+                [attr.aria-label]="isRegisterPasswordVisible() ? 'Hide password' : 'Show password'"
+              >
+                @if (isRegisterPasswordVisible()) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (registerPasswordControl.touched && registerPasswordControl.invalid) {
+              <p class="inline-field-error" role="alert">
+                Password is required (minimum 8 characters).
+              </p>
+            }
+          </div>
+
+          <!-- CONFIRM PASSWORD -->
+          <div class="field-wrapper mt-3">
+            <label class="field-label" for="register-confirm-password">Confirm password</label>
+            <div
+              class="input-group"
+              [class.has-error]="(registerConfirmPasswordControl.touched && registerConfirmPasswordControl.invalid) || (registerForm.touched && registerForm.hasError('passwordMismatch'))"
+            >
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <input
+                id="register-confirm-password"
+                [type]="isRegisterConfirmPasswordVisible() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="••••••••••"
+                autocomplete="new-password"
+                class="auth-text-input"
+                aria-label="Confirm password"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleRegisterConfirmPasswordVisibility()"
+                [attr.aria-label]="isRegisterConfirmPasswordVisible() ? 'Hide password' : 'Show password'"
+              >
+                @if (isRegisterConfirmPasswordVisible()) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (registerForm.touched && registerForm.hasError('passwordMismatch') && registerConfirmPasswordControl.value) {
+              <p class="inline-field-error" role="alert">
+                Passwords do not match.
+              </p>
+            } @else if (registerConfirmPasswordControl.touched && registerConfirmPasswordControl.hasError('required')) {
+              <p class="inline-field-error" role="alert">
+                Please confirm your password.
+              </p>
+            }
+          </div>
+
+          <!-- PASSWORD REQUIREMENT HELPER TEXT (MATCHING APPROVED REFERENCE) -->
+          <p class="password-helper-text">
+            Use at least 8 characters with a mix of letters, numbers and symbols.
+          </p>
+
+          <button
+            type="submit"
+            class="btn-primary-continue mt-3"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span>Creating account...</span>
+            } @else {
+              <span>Create account</span>
+            }
+          </button>
+        </form>
+
+        <div class="auth-bottom-switch">
+          Already have an account?
+          <button type="button" class="switch-auth-link" (click)="goToStep('login')">
+            Log in
+          </button>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- 4. FORGOT PASSWORD STEP (SCREEN 06)            -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'forgot-password') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Forgot your password?</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            No worries. Enter your email address and we'll send you a link to reset your password.
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="onForgotPasswordSubmit()" novalidate class="auth-modal-form">
+          <!-- EMAIL ADDRESS (READ-ONLY, AUTO-POPULATED) -->
+          <div class="field-wrapper">
+            <label class="field-label" for="forgot-email">Email address</label>
+            <div class="input-group input-group-readonly">
+              <div class="input-icon-wrapper" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m2 6 10 7 10-7"/>
+                </svg>
+              </div>
+              <input
+                id="forgot-email"
+                type="email"
+                [value]="authModalService.userEmail()"
+                readonly
+                tabindex="-1"
+                class="auth-text-input input-readonly"
+                aria-label="Email address (read-only)"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-primary-continue mt-4"
+            [disabled]="isLoading() || !authModalService.userEmail()"
+          >
+            @if (isLoading()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span>Sending reset link...</span>
+            } @else {
+              <span>Send reset link</span>
+            }
+          </button>
+        </form>
+
+        <div class="auth-bottom-switch">
+          Remember your password?
+          <button type="button" class="switch-auth-link" (click)="goToStep('login')">
+            Log in
+          </button>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- 5. CHECK YOUR EMAIL STEP (SCREEN 07)           -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'check-email') {
+        <div class="recovery-icon-badge badge-blue" aria-hidden="true">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+          </svg>
+        </div>
+
+        <div class="modal-header text-center">
+          <h2 id="auth-modal-heading" class="modal-title">Check your email</h2>
+          <p class="modal-text-lead">
+            We've sent a password reset link to
+            <strong class="email-highlight">{{ authModalService.userEmail() }}</strong>.
+          </p>
+          <p class="modal-supporting-text">
+            The link will expire in 30 minutes. If you don't see it, please check your Spam or Junk folder.
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="modal-alert-success" role="status">
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <button
+          type="button"
+          class="btn-outlined-resend mt-2"
+          (click)="onResendResetEmail()"
+          [disabled]="isLoading() || resendCooldown() > 0"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          @if (resendCooldown() > 0) {
+            <span>Resend email ({{ resendCooldown() }}s)</span>
+          } @else if (isLoading()) {
+            <span>Sending...</span>
+          } @else {
+            <span>Resend email</span>
+          }
+        </button>
+      }
+
+      <!-- ============================================== -->
+      <!-- 6. RESET PASSWORD STEP (SCREEN 08)             -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'reset-password') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Reset your password</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            Enter a new password for your account.
+          </p>
+        </div>
+
+        @if (isVerifyingToken()) {
+          <div class="token-verifying-wrapper">
+            <span class="btn-spinner large-spinner" aria-hidden="true"></span>
+            <p>Verifying your password reset link...</p>
+          </div>
+        } @else if (tokenError()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ tokenError() }}</span>
+          </div>
+
+          <button
+            type="button"
+            class="btn-primary-continue mt-4"
+            (click)="goToStep('forgot-password')"
+          >
+            <span>Request a new reset link</span>
+          </button>
+        } @else {
+          @if (errorMessage()) {
+            <div class="modal-alert-error" role="alert">
+              <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <form [formGroup]="resetPasswordForm" (ngSubmit)="onResetPasswordSubmit()" novalidate class="auth-modal-form">
+            <!-- NEW PASSWORD -->
+            <div class="field-wrapper">
+              <label class="field-label" for="reset-new-password">New password</label>
+              <div
+                class="input-group"
+                [class.has-error]="resetNewPasswordControl.touched && resetNewPasswordControl.invalid"
+              >
+                <div class="input-icon-wrapper" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <input
+                  #resetNewPasswordInput
+                  id="reset-new-password"
+                  [type]="isNewPasswordVisible() ? 'text' : 'password'"
+                  formControlName="newPassword"
+                  placeholder="••••••••••"
+                  autocomplete="new-password"
+                  class="auth-text-input"
+                  aria-label="New password"
+                />
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  (click)="toggleNewPasswordVisibility()"
+                  [attr.aria-label]="isNewPasswordVisible() ? 'Hide password' : 'Show password'"
+                >
+                  @if (isNewPasswordVisible()) {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  } @else {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  }
+                </button>
+              </div>
+              @if (resetNewPasswordControl.touched && resetNewPasswordControl.invalid) {
+                <p class="inline-field-error" role="alert">
+                  Password is required (minimum 8 characters).
+                </p>
+              }
+            </div>
+
+            <!-- CONFIRM NEW PASSWORD -->
+            <div class="field-wrapper mt-3">
+              <label class="field-label" for="reset-confirm-password">Confirm new password</label>
+              <div
+                class="input-group"
+                [class.has-error]="(resetConfirmNewPasswordControl.touched && resetConfirmNewPasswordControl.invalid) || (resetPasswordForm.touched && resetPasswordForm.hasError('passwordMismatch'))"
+              >
+                <div class="input-icon-wrapper" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <input
+                  id="reset-confirm-password"
+                  [type]="isConfirmNewPasswordVisible() ? 'text' : 'password'"
+                  formControlName="confirmNewPassword"
+                  placeholder="••••••••••"
+                  autocomplete="new-password"
+                  class="auth-text-input"
+                  aria-label="Confirm new password"
+                />
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  (click)="toggleConfirmNewPasswordVisibility()"
+                  [attr.aria-label]="isConfirmNewPasswordVisible() ? 'Hide password' : 'Show password'"
+                >
+                  @if (isConfirmNewPasswordVisible()) {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  } @else {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  }
+                </button>
+              </div>
+              @if (resetPasswordForm.touched && resetPasswordForm.hasError('passwordMismatch') && resetConfirmNewPasswordControl.value) {
+                <p class="inline-field-error" role="alert">
+                  Passwords do not match.
+                </p>
+              } @else if (resetConfirmNewPasswordControl.touched && resetConfirmNewPasswordControl.hasError('required')) {
+                <p class="inline-field-error" role="alert">
+                  Please confirm your password.
+                </p>
+              }
+            </div>
+
+            <!-- PASSWORD REQUIREMENT HELPER TEXT -->
+            <p class="password-helper-text">
+              Use at least 8 characters with a mix of letters, numbers and symbols.
+            </p>
+
+            <button
+              type="submit"
+              class="btn-primary-continue mt-3"
+              [disabled]="isLoading() || resetPasswordForm.invalid"
+            >
+              @if (isLoading()) {
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span>Updating password...</span>
+              } @else {
+                <span>Reset password</span>
+              }
+            </button>
+          </form>
+        }
+      }
+
+      <!-- ============================================== -->
+      <!-- 7. PASSWORD RESET SUCCESSFUL (SCREEN 09)       -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'reset-success') {
+        <div class="recovery-icon-badge badge-green" aria-hidden="true">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+
+        <div class="modal-header text-center">
+          <h2 id="auth-modal-heading" class="modal-title">Password reset successful!</h2>
+          <p class="modal-success-description">
+            Your password has been updated. You can now log in to your CeylonGo account with your new password.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn-primary-continue mt-4"
+          (click)="onBackToLoginFromSuccess()"
+        >
+          <span>Back to login</span>
+        </button>
+      }
+
+      <!-- ============================================== -->
+      <!-- 8. PHONE STEP (COUNTRY CODE & OTP PREPARATION) -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'phone') {
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Phone verification</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            Enter your mobile number to receive a verification code.
+          </p>
+        </div>
+
+        @if (phoneBackendNotice()) {
+          <div class="modal-alert-info" role="status">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>{{ phoneBackendNotice() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="phoneForm" (ngSubmit)="onPhoneSubmit()" novalidate class="auth-modal-form">
+          <div class="phone-input-row">
+            <div class="country-select-wrapper">
+              <select formControlName="countryCode" class="country-code-select" aria-label="Select Country Code">
+                @for (c of countryCodes; track c.code) {
+                  <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+                }
+              </select>
+            </div>
+            <div
+              class="input-group phone-number-group"
+              [class.has-error]="phoneNumberControl.touched && phoneNumberControl.invalid"
+            >
+              <input
+                type="tel"
+                formControlName="phoneNumber"
+                placeholder="Mobile number"
+                class="auth-text-input"
+                aria-label="Mobile phone number"
+              />
+            </div>
+          </div>
+
+          @if (phoneNumberControl.touched && phoneNumberControl.invalid) {
+            <p class="inline-field-error" role="alert">
+              Please enter a valid phone number.
+            </p>
+          }
+
+          <button
+            type="submit"
+            class="btn-primary-continue mt-3"
+          >
+            <span>Send code</span>
+          </button>
+        </form>
+      }
+
+    </div>
+  </div>
+}

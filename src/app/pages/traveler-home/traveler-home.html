@@ -1,0 +1,695 @@
+<div class="traveler-homepage-root">
+  <!-- ========================================================================= -->
+  <!-- SECTION 01: AUTHENTICATED / GUEST NAVBAR (AUTHENTICATION-AWARE)           -->
+  <!-- ========================================================================= -->
+  <app-traveler-navbar />
+
+  <main id="main-content">
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 02: HERO — AI TRIP PLANNER WITH AI QUICK PLANNER CARD             -->
+    <!-- ========================================================================= -->
+    <section id="ai-planner" class="hero-ai-section" aria-labelledby="hero-title">
+      <div class="hero-bg-wrapper">
+        <img
+          src="/images/hero-traveler-bg.jpg"
+          alt="Sri Lanka tea plantation with worker picking leaves and Nine Arches Bridge"
+          class="hero-bg-image"
+        />
+        <div class="hero-overlay" aria-hidden="true"></div>
+      </div>
+
+      <div class="hero-container">
+        <div class="hero-grid">
+
+          <!-- LEFT COLUMN: AI TRIP PLANNER HEADLINE & ACTIONS -->
+          <div class="hero-left-col">
+            <!-- AI PILL BADGE -->
+            <div class="ai-badge-pill">
+              <svg class="sparkle-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+              </svg>
+              <span>AI Trip Planner</span>
+            </div>
+
+            <!-- MAIN TITLE -->
+            <h1 id="hero-title" class="hero-heading">
+              Plan Your Sri Lanka Trip<br />
+              <span class="highlight-ai">
+                with AI
+                <svg class="ai-underline-stroke" width="128" height="12" viewBox="0 0 128 12" fill="none" aria-hidden="true">
+                  <path d="M3 9C40 2 92 2 125 9" stroke="#00E5FF" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </h1>
+
+            <!-- SUBHEADING / DESCRIPTION -->
+            <p class="hero-description">
+              Get a personalized itinerary, discover hidden gems, choose the best stays and experiences — all in seconds.
+            </p>
+
+            <!-- THREE SUPPORTING BENEFITS -->
+            <div class="hero-benefits-row">
+              <div class="benefit-item">
+                <div class="check-icon-wrap" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span>Personalized Itinerary</span>
+              </div>
+
+              <div class="benefit-item">
+                <div class="check-icon-wrap" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span>Best Places & Stays</span>
+              </div>
+
+              <div class="benefit-item">
+                <div class="check-icon-wrap" aria-hidden="true">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span>Time & Budget Optimized</span>
+              </div>
+            </div>
+
+            <!-- PRIMARY CTA BUTTON -->
+            <div class="hero-action-row">
+              <button
+                type="button"
+                class="btn-plan-ai"
+                (click)="onPlanTripWithAI()"
+                aria-label="Plan Your Trip with AI"
+              >
+                <svg class="btn-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+                </svg>
+                <span>Plan Your Trip with AI</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: INTERACTIVE AI QUICK PLANNER CARD -->
+          <div class="hero-right-col">
+            <div class="ai-quick-planner-card" role="form" aria-label="AI Quick Planner">
+
+              <!-- DECORATIVE MOUNTAIN / SUN GRAPHIC -->
+              <div class="mountain-graphic" aria-hidden="true">
+                <!-- Sun rays burst outside top corner -->
+                <div class="sun-rays-burst">
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                    <path d="M8 28L2 34" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M18 20L18 10" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M26 24L34 20" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <!-- Stylized Mountain Icon -->
+                <svg class="mountain-svg" width="52" height="32" viewBox="0 0 52 32" fill="none">
+                  <path d="M4 28L18 8L30 22L38 12L48 28H4Z" fill="#93C5FD" opacity="0.9"/>
+                  <path d="M16 28L24 16L34 28H16Z" fill="#60A5FA"/>
+                </svg>
+              </div>
+
+              <!-- CARD HEADER -->
+              <div class="planner-card-header">
+                <div class="quick-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+                  </svg>
+                  <span>AI Quick Planner</span>
+                </div>
+                <h2 class="planner-title">Let's plan your adventure</h2>
+                <p class="planner-subtitle">Tell us where you want to go and for how long.</p>
+              </div>
+
+              <!-- CARD FORM BODY -->
+              <div class="planner-card-body">
+                <div class="planner-inputs-stack">
+
+                  <!-- DESTINATION SELECTOR -->
+                  <div class="custom-select-wrapper">
+                    <button
+                      type="button"
+                      class="custom-select-trigger"
+                      [class.active]="isDestinationDropdownOpen()"
+                      [class.has-value]="selectedDestination() !== null"
+                      (click)="toggleDestinationDropdown($event)"
+                      aria-haspopup="listbox"
+                      [attr.aria-expanded]="isDestinationDropdownOpen()"
+                      aria-label="Choose destination"
+                    >
+                      <div class="trigger-left">
+                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span class="trigger-text">
+                          {{ selectedDestination() || 'Choose destination' }}
+                        </span>
+                      </div>
+                      <svg class="chevron-icon" [class.open]="isDestinationDropdownOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+
+                    @if (isDestinationDropdownOpen()) {
+                      <div class="custom-select-options-panel" role="listbox" aria-label="Destinations">
+                        @for (dest of destinations; track dest) {
+                          <button
+                            type="button"
+                            class="custom-select-option"
+                            [class.selected]="selectedDestination() === dest"
+                            (click)="selectDestination(dest, $event)"
+                            role="option"
+                            [attr.aria-selected]="selectedDestination() === dest"
+                          >
+                            <span>{{ dest }}</span>
+                            @if (selectedDestination() === dest) {
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            }
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- DURATION SELECTOR -->
+                  <div class="custom-select-wrapper">
+                    <button
+                      type="button"
+                      class="custom-select-trigger"
+                      [class.active]="isDurationDropdownOpen()"
+                      [class.has-value]="selectedDuration() !== null"
+                      (click)="toggleDurationDropdown($event)"
+                      aria-haspopup="listbox"
+                      [attr.aria-expanded]="isDurationDropdownOpen()"
+                      aria-label="Select days"
+                    >
+                      <div class="trigger-left">
+                        <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6"/>
+                          <line x1="8" y1="2" x2="8" y2="6"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span class="trigger-text">
+                          {{ selectedDuration() || 'Select days' }}
+                        </span>
+                      </div>
+                      <svg class="chevron-icon" [class.open]="isDurationDropdownOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+
+                    @if (isDurationDropdownOpen()) {
+                      <div class="custom-select-options-panel" role="listbox" aria-label="Trip Durations">
+                        @for (dur of durations; track dur) {
+                          <button
+                            type="button"
+                            class="custom-select-option"
+                            [class.selected]="selectedDuration() === dur"
+                            (click)="selectDuration(dur, $event)"
+                            role="option"
+                            [attr.aria-selected]="selectedDuration() === dur"
+                          >
+                            <span>{{ dur }}</span>
+                            @if (selectedDuration() === dur) {
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            }
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                </div>
+
+                <!-- SUBMIT / GENERATE BUTTON -->
+                <button
+                  type="button"
+                  class="btn-generate-trip"
+                  (click)="onGenerateMyTrip()"
+                  [disabled]="isGenerating()"
+                  aria-label="Generate My Trip"
+                >
+                  @if (isGenerating()) {
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span>Creating Your Plan...</span>
+                  } @else {
+                    <svg class="btn-sparkle" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+                    </svg>
+                    <span>Generate My Trip</span>
+                  }
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 03: EXPLORE SRI LANKA EXPERIENCES (8 CATEGORY DISCOVERY CARDS)    -->
+    <!-- ========================================================================= -->
+    <section id="experience-categories" class="experience-categories-section" aria-labelledby="experience-categories-heading">
+      <div class="section-container">
+        <!-- HEADER ROW WITH AIRBNB-INSPIRED NAVIGATION CONTROL -->
+        <div class="section-header-row experience-categories-header">
+          <div class="heading-group">
+            <h2 id="experience-categories-heading" class="section-heading">Explore Sri Lanka Experiences</h2>
+          </div>
+          <div class="carousel-nav-controls" aria-label="Experience Categories Navigation">
+            <button
+              type="button"
+              class="carousel-arrow-btn prev-btn"
+              (click)="scrollCategories(-1)"
+              [disabled]="categoryScrollPosition() <= 5"
+              aria-label="Previous experience categories"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="carousel-arrow-btn next-btn"
+              (click)="scrollCategories(1)"
+              aria-label="Next experience categories"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 8 CATEGORY CARDS HORIZONTAL TRACK -->
+        <div
+          #categoryTrack
+          class="experience-categories-track"
+          role="region"
+          aria-label="Sri Lanka Experience Categories"
+          (scroll)="onCategoryScroll()"
+        >
+          @for (cat of experienceCategories; track cat.id) {
+            <div
+              class="experience-category-card"
+              (click)="onCategoryClick(cat)"
+              [attr.aria-label]="cat.title"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="onCategoryClick(cat)"
+            >
+              <div class="category-image-wrap">
+                <img
+                  [src]="cat.image"
+                  [alt]="cat.alt"
+                  loading="lazy"
+                />
+              </div>
+              <span class="category-card-title">{{ cat.title }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 04: POPULAR DESTINATIONS (9 DESTINATIONS CAROUSEL)                -->
+    <!-- ========================================================================= -->
+    <section id="popular-destinations" class="popular-destinations-section" aria-labelledby="destinations-heading">
+      <div class="section-container">
+        <div class="section-header-row destinations-header">
+          <div class="heading-group">
+            <h2 id="destinations-heading" class="section-heading">Popular Destinations</h2>
+            <p class="section-subtitle">Discover hidden gems and unforgettable destinations across Sri Lanka.</p>
+          </div>
+          <div class="carousel-nav-controls" aria-label="Popular Destinations Navigation">
+            <button
+              type="button"
+              class="carousel-arrow-btn prev-btn"
+              (click)="scrollDestinations(-1)"
+              aria-label="Previous destinations"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="carousel-arrow-btn next-btn"
+              (click)="scrollDestinations(1)"
+              aria-label="Next destinations"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div
+          #destinationsTrack
+          class="destinations-track"
+          role="region"
+          aria-label="Popular Destinations in Sri Lanka"
+        >
+          @for (dest of popularDestinations; track dest.id) {
+            <div
+              class="destination-card"
+              (click)="onDestinationClick(dest)"
+              [attr.aria-label]="dest.name + ', ' + dest.province"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="onDestinationClick(dest)"
+            >
+              <div class="dest-image-wrap">
+                <img
+                  [src]="dest.image"
+                  [alt]="dest.name + ', ' + dest.province"
+                  class="dest-img"
+                  loading="lazy"
+                />
+                @if (dest.tag) {
+                  <span class="dest-tag">{{ dest.tag }}</span>
+                }
+              </div>
+              <div class="dest-info">
+                <h3 class="dest-name">{{ dest.name }}</h3>
+                <span class="dest-province">{{ dest.province }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 05: STAY, DISCOVER & RIDE (3 SERVICE CARDS)                       -->
+    <!-- ========================================================================= -->
+    <section id="explore-more" class="explore-more-section" aria-labelledby="explore-more-heading">
+      <div class="section-container">
+        <div class="section-header-block">
+          <h2 id="explore-more-heading" class="section-heading">Stay, Discover & Ride</h2>
+          <p class="section-subtitle">Everything you need to explore Sri Lanka, your way.</p>
+        </div>
+
+        <div class="explore-more-grid" role="region" aria-label="Stay, Discover and Ride Services">
+          @for (card of exploreCards; track card.id) {
+            <div
+              class="explore-card"
+              (click)="onExploreCardClick(card)"
+              [attr.aria-label]="card.title"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="onExploreCardClick(card)"
+            >
+              <div class="explore-card-image-wrap">
+                <img
+                  [src]="card.image"
+                  [alt]="card.alt"
+                  class="explore-card-img"
+                  loading="lazy"
+                />
+                <div class="service-icon-badge" aria-hidden="true">
+                  @switch (card.icon) {
+                    @case ('homestay') {
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                      </svg>
+                    }
+                    @case ('guide') {
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                      </svg>
+                    }
+                    @case ('rental') {
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="5.5" cy="17.5" r="3.5"/>
+                        <circle cx="18.5" cy="17.5" r="3.5"/>
+                        <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5L9 6H5"/>
+                        <path d="M12 17.5V14l-3-3 4-3 2 3h3"/>
+                      </svg>
+                    }
+                  }
+                </div>
+              </div>
+              <div class="explore-card-body">
+                <h3 class="explore-card-title">{{ card.title }}</h3>
+                <p class="explore-card-description">{{ card.description }}</p>
+                <div class="explore-card-cta-wrap">
+                  <span class="explore-card-cta">{{ card.ctaText }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 06: CEYLONGO TRAVEL COMMUNITY (2-COLUMN PROMOTIONAL SECTION)      -->
+    <!-- ========================================================================= -->
+    <section id="travel-community" class="travel-community-section" aria-labelledby="community-main-heading">
+      <div class="section-container">
+        <div class="section-header-row visually-hidden">
+          <h2>Connect with the CeylonGo Community</h2>
+        </div>
+
+        <div class="community-grid">
+          <!-- LEFT COLUMN: AUTHENTIC PHOTOGRAPH / 3D TRAVEL APP ART -->
+          <div class="community-image-col">
+            <div class="community-image-wrap">
+              <img
+                src="/images/traveler-home/travel-community.webp"
+                alt="CeylonGo travel community and interactive mobile app experience"
+                class="community-img"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: COMMUNITY CONTENT -->
+          <div class="community-content-col">
+            <span class="community-badge-label">Travel Community</span>
+            <h2 id="community-main-heading" class="community-heading">Travel Together. Share Your Journey.</h2>
+            <p class="community-description">
+              Connect with fellow travelers, discover inspiring travel stories, share your experiences and make meaningful connections across Sri Lanka.
+            </p>
+
+            <!-- THREE SIMPLE BENEFITS -->
+            <ul class="community-benefits-list">
+              <li class="benefit-row">
+                <div class="benefit-check" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span class="benefit-label">Share Your Experiences</span>
+              </li>
+              <li class="benefit-row">
+                <div class="benefit-check" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span class="benefit-label">Discover Travel Stories</span>
+              </li>
+              <li class="benefit-row">
+                <div class="benefit-check" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <span class="benefit-label">Connect with Fellow Travelers</span>
+              </li>
+            </ul>
+
+            <!-- PRIMARY SOLID ROYAL BLUE CTA BUTTON -->
+            <div class="community-cta-wrap">
+              <button
+                type="button"
+                class="btn-explore-community"
+                (click)="onExploreCommunity()"
+                aria-label="Explore Community"
+              >
+                <span>Explore Community →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 07: SPECIAL OFFERS & PROMOTIONS                                   -->
+    <!-- ========================================================================= -->
+    <section id="special-offers" class="special-offers-section" aria-labelledby="special-offers-heading">
+      <div class="section-container">
+        <!-- HEADER BLOCK WITH SUBTITLE -->
+        <div class="section-header-block">
+          <h2 id="special-offers-heading" class="section-heading">Special Offers & Promotions</h2>
+          <p class="section-subtitle">Discover exclusive offers from local hosts and service providers across Sri Lanka.</p>
+        </div>
+
+        <!-- FOUR PROMOTION CATEGORIES TABS -->
+        <div class="promo-category-tabs" role="tablist" aria-label="Promotion Categories">
+          @for (cat of promotionCategories; track cat.id) {
+            <button
+              type="button"
+              role="tab"
+              class="promo-tab-btn"
+              [class.active]="selectedPromotionCategory() === cat.id"
+              [attr.aria-selected]="selectedPromotionCategory() === cat.id"
+              (click)="selectPromotionCategory(cat.id)"
+            >
+              {{ cat.title }}
+            </button>
+          }
+        </div>
+
+        <!-- ACTIVE PROMOTIONS OR SAMPLE DEMO OFFERS -->
+        @if (displayedOffers.length > 0) {
+          <div class="promotions-grid" role="region" aria-label="Available Promotions">
+            @for (promo of displayedOffers; track promo.id) {
+              <div class="promo-card">
+                <div class="promo-image-wrap">
+                  <img [src]="promo.image" [alt]="promo.title" loading="lazy" />
+                  <div class="promo-badges-overlay">
+                    @if (promo.discount) {
+                      <span class="discount-badge">{{ promo.discount }}</span>
+                    }
+                    @if (promo.isDemo) {
+                      <span class="demo-badge">Demo Offer</span>
+                    }
+                  </div>
+                </div>
+                <div class="promo-card-body">
+                  <span class="promo-provider">{{ promo.categoryLabel }} • {{ promo.location }}</span>
+                  <h3 class="promo-title">{{ promo.title }}</h3>
+                  <p class="promo-description">{{ promo.description }}</p>
+                  <div class="promo-card-footer">
+                    <button type="button" class="btn-view-offer" (click)="onViewOffer(promo)">
+                      View Offer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- HONEST EMPTY STATE WHEN FILTER YIELDS NO OFFERS -->
+          <div class="promo-empty-state" role="status">
+            <div class="empty-icon-wrap" aria-hidden="true">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            </div>
+            <h3 class="empty-title">New offers are coming soon.</h3>
+            <p class="empty-description">Check back later for special deals from our local service providers.</p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 08: WHY CEYLONGO? (PREMIUM BORDERLESS MINIMAL FEATURE SECTION)     -->
+    <!-- ========================================================================= -->
+    <section id="why-ceylongo" class="why-ceylongo-section" aria-labelledby="why-heading">
+      <div class="section-container">
+        <div class="why-header">
+          <span class="why-eyebrow">THE CEYLONGO DIFFERENCE</span>
+          <h2 id="why-heading" class="why-main-heading">Why CeylonGo?</h2>
+          <p class="why-tagline">Discover Local. Feel at Home.</p>
+          <p class="why-subtitle">More than a holiday. An authentic connection to Sri Lanka.</p>
+        </div>
+
+        <div class="why-features-row" role="region" aria-label="Why Choose CeylonGo Features">
+          @for (point of whyCeylonGoPoints; track point.id) {
+            <div class="why-feature-item">
+              <div class="why-icon-circle" aria-hidden="true">
+                @switch (point.icon) {
+                  @case ('community') {
+                    <!-- Community / Users -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  }
+                  @case ('store') {
+                    <!-- Store / Shop -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                  }
+                  @case ('handshake') {
+                    <!-- Handshake -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 17l-5-5a2.83 2.83 0 0 1 4-4l1 1 1-1a2.83 2.83 0 0 1 4 4l-5 5z"/>
+                      <path d="M14 14l3.5 3.5a2.12 2.12 0 0 0 3-3L17 11"/>
+                      <path d="M10 10L6.5 6.5a2.12 2.12 0 0 0-3 3L7 13"/>
+                    </svg>
+                  }
+                  @case ('ai') {
+                    <!-- AI Sparkles -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+                      <path d="M5 3L6 6L9 7L6 8L5 11L4 8L1 7L4 6L5 3Z"/>
+                    </svg>
+                  }
+                  @case ('globe') {
+                    <!-- Globe -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                  }
+                }
+              </div>
+              <h3 class="why-feature-title">{{ point.title }}</h3>
+              <p class="why-feature-desc">{{ point.description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  @if (toastMessage()) {
+    <div class="toast-popup" role="status" aria-live="polite">
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- AUTHENTICATION MODAL DIALOG (CONTEXTUAL LOGIN & REGISTER)                 -->
+  <!-- ========================================================================= -->
+  <app-traveler-auth-modal />
+
+  <!-- ========================================================================= -->
+  <!-- SECTION 09: FOOTER                                                        -->
+  <!-- ========================================================================= -->
+  <app-footer />
+</div>

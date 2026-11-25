@@ -52,8 +52,6 @@ export type RegistrationFlowState =
   | 'identity_verification'
   | 'review_submit';
 
-export type IdentityDocumentType = 'nic' | 'passport';
-
 export interface PersonalDetailsFormModel {
   fullName: string;
   email: string;
@@ -61,7 +59,6 @@ export interface PersonalDetailsFormModel {
   dateOfBirth: string;
   gender: string;
   nationality: string;
-  identityDocumentType: IdentityDocumentType;
   nicNumber: string;
   province: string;
   district: string;
@@ -107,7 +104,7 @@ export interface BackendPersonalDetailsRequest {
   permanent_landmark?: string | null;
   permanent_postal_code: string;
   // Proposed Phase C fields (forward-compatible):
-  identity_document_type?: IdentityDocumentType;
+  identity_document_type?: 'nic';
   date_of_birth?: string;
   gender?: string;
   nationality?: string;
@@ -137,11 +134,18 @@ export interface DocumentUploadState {
   errorMessage: string | null;
 }
 
+export interface RegistrationSubmitResponse {
+  submitted: boolean;
+  approval_status: string;
+  next_action: string;
+  message: string;
+}
+
 export interface DraftResponse {
   email: string;
   full_name?: string | null;
   phone?: string | null;
-  identity_document_type?: IdentityDocumentType | null;
+  identity_document_type?: string | null;
   nic_number?: string | null;
   date_of_birth?: string | null;
   gender?: string | null;
@@ -235,4 +239,16 @@ export interface ProviderRegistrationState {
   nextAction: ProviderNextAction | null;
   actionMessage: string | null;
   resendCooldownRemaining: number;
+}
+
+export interface ProviderPasswordSetupPayload {
+  password: string;
+  confirm_password: string;
+}
+
+export interface ProviderPasswordSetupResponse {
+  success: boolean;
+  account_activated: boolean;
+  next_action: string;
+  message: string;
 }

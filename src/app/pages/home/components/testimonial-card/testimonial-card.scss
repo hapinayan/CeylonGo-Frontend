@@ -1,0 +1,112 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.testimonial-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: $cg-white;
+  border-radius: 14px;
+  padding: 0.85rem 1rem 0.75rem;
+  box-shadow: 0 4px 14px rgba(4, 29, 64, 0.05);
+  border: 1px solid rgba(8, 43, 92, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  gap: 0.5rem;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(4, 29, 64, 0.1);
+  }
+}
+
+.testimonial-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.avatar-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(4, 29, 64, 0.1);
+  border: 1.5px solid $cg-white;
+  background-color: #e2e8f0;
+
+  .traveler-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .traveler-name {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: $cg-primary-navy;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .star-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+
+    svg {
+      width: 10px;
+      height: 10px;
+    }
+  }
+}
+
+.testimonial-body {
+  flex: 1;
+
+  .testimonial-quote {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: $cg-text-body;
+    font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.testimonial-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(8, 43, 92, 0.05);
+  padding-top: 0.45rem;
+
+  .traveler-location {
+    font-size: 0.65rem;
+    color: $cg-royal-blue;
+    font-weight: 600;
+  }
+
+  .demo-review-tag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: $cg-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}

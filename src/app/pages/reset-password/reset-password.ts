@@ -93,6 +93,28 @@ export class ResetPassword implements OnInit {
       )
       .subscribe({
         next: (res) => {
+          let storedProviderEmail = '';
+          try {
+            if (typeof localStorage !== 'undefined') {
+              storedProviderEmail = localStorage.getItem('ceylongo_provider_reset_email') || '';
+            }
+          } catch {
+            // Ignore
+          }
+
+          const isProvider =
+            this.route.snapshot.queryParamMap.get('portal') === 'provider' ||
+            (storedProviderEmail && storedProviderEmail.toLowerCase() === res.email.toLowerCase());
+
+          if (isProvider) {
+            void this.router.navigate(['/provider/reset-password'], {
+              state: { token, email: res.email },
+              queryParams: { token },
+              replaceUrl: true,
+            });
+            return;
+          }
+
           this.token = token;
           this.isTokenValid = true;
           this.email = res.email;

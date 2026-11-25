@@ -1,0 +1,79 @@
+<section class="weather-panel" aria-label="Experience weather">
+  <h2>Weather</h2>
+  @if (preview()) { <p class="weather-muted">Development preview · Sample weather</p> }
+  @if (!target()) {
+    <p class="weather-muted">Choose a place to see nearby weather.</p>
+    <form (submit)="$event.preventDefault(); find(placeInput.value)">
+      <label>Find a location <input #placeInput type="search" [value]="query()" maxlength="120"></label>
+      <button type="submit">Find</button>
+    </form>
+    @if (validation()) { <p role="alert">{{ validation() }}</p> }
+    @if (places(); as result) {
+      @if (result.status === 'loading') {
+        <div class="weather-skeleton" role="status">Finding weather locations…</div>
+      } @else if (result.status === 'ready') {
+        @if (result.value.stale) { <p class="weather-muted">Showing cached location matches.</p> }
+        <ul class="weather-places">
+          @for (place of result.value.locations; track $index) {
+            <li><button type="button" (click)="select(place)">
+              {{ place.name }}@if (place.region) { , {{ place.region }} }
+              <small>{{ place.latitude | number:'1.2-3' }}, {{ place.longitude | number:'1.2-3' }}</small>
+            </button></li>
+          } @empty { <li>No matching locations. Try a nearby town.</li> }
+        </ul>
+      } @else if (result.status === 'error') {
+        <p role="status">{{ result.message }}</p>
+        <button type="button" (click)="retryPlaces()" [disabled]="!retryAllowed(result.retryAt)">Retry location search</button>
+      } @else {
+        <p>Weather is unavailable until a location is selected.</p>
+      }
+    }
+  } @else {
+    <p class="weather-location">{{ weatherName() }}</p>
+    @if (selection() && !explicit()) { <button type="button" (click)="changeLocation()">Change location</button> }
+    @if (current(); as result) {
+      @switch (result.status) {
+        @case ('loading') { <div class="weather-skeleton" role="status">Loading current weather…</div> }
+        @case ('error') { <p role="status">{{ result.message }}</p> }
+        @case ('ready') {
+          @let value = result.value;
+          <p class="weather-temperature"><span aria-hidden="true">{{ icon(value.condition.icon) }}</span>
+            {{ value.temperature_c | number:'1.0-1' }} °C</p>
+          <p class="weather-condition">{{ value.condition.description }}@if (value.feels_like_c != null) { · Feels like {{ value.feels_like_c | number:'1.0-1' }} °C }</p>
+          <dl><div><dt>Humidity</dt><dd>{{ value.humidity_percent }}%</dd></div>
+            <div><dt>Wind</dt><dd>{{ value.wind_speed_kmh | number:'1.0-1' }} km/h
+              @if (value.wind_direction_degrees != null) { · {{ value.wind_direction_degrees }}° }</dd></div></dl>
+          <p class="weather-muted">
+            @if (value.stale) { Cached conditions · }
+            {{ value.source }} · Updated {{ value.fetched_at | date:'medium':'GMT+0530' }} (Sri Lanka time)
+          </p>
+        }
+      }
+    }
+    @if (forecast(); as result) {
+      @switch (result.status) {
+        @case ('loading') { <div class="weather-skeleton" role="status">Loading forecast…</div> }
+        @case ('error') { <p role="status">Forecast: {{ result.message }}</p> }
+        @case ('ready') {
+          <h3>Forecast</h3>
+          <p class="weather-muted">{{ result.value.source }} · Updated {{ result.value.fetched_at | date:'medium':'GMT+0530' }} (Sri Lanka time)</p>
+          @if (result.value.stale) { <p class="weather-muted">Showing a cached forecast.</p> }
+          <ul class="weather-forecast">
+            @for (day of result.value.days; track day.date) {
+              <li><strong>{{ day.date | date:'EEE, MMM d' }}</strong>
+                <span><span aria-hidden="true">{{ icon(day.condition.icon) }}</span> {{ day.condition.description }}</span>
+                <span>{{ day.min_temperature_c | number:'1.0-1' }}–{{ day.max_temperature_c | number:'1.0-1' }} °C</span>
+                @if (day.rain_probability_percent != null) { <span>{{ day.rain_probability_percent | number:'1.0-1' }}% chance of rain</span> }
+                @if (day.partial) { <small>Partial day</small> }
+              </li>
+            } @empty { <li>No forecast is available for this location.</li> }
+          </ul>
+        }
+      }
+    }
+    @if (current()?.status === 'error' || forecast()?.status === 'error') {
+      <button type="button" (click)="retryWeather()" [disabled]="!weatherRetryAllowed()">Retry weather</button>
+    }
+    <p class="weather-muted">Check official warnings and local conditions before traveling.</p>
+  }
+</section>
