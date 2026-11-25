@@ -1,0 +1,21 @@
+# CeylonGo Experience Category Image Credits & Licenses
+
+All photographs used in the **Explore Sri Lanka Experiences** category discovery section are authentic, real-life photographs sourced from Wikimedia Commons and licensed under Creative Commons.
+
+| Category | Photograph Subject & Location | Local Asset | Original Wikimedia Commons Source | Photographer / Creator | License |
+|---|---|---|---|---|---|
+| **Local Culture** | Traditional Kavadi dance and Hindu temple procession at Nallur, Jaffna, Northern Province | `/images/experience-categories/local-culture.webp` | [File:Nallur Kandaswamy Kavadi.jpg](https://commons.wikimedia.org/wiki/File:Nallur_Kandaswamy_Kavadi.jpg) | Anton Croos | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) |
+| **Wildlife** | Wild Asian elephant herd gathering at Minneriya National Park, North Central Province | `/images/experience-categories/wildlife.webp` | [File:Elephants at Minneriya National Park, Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Elephants_at_Minneriya_National_Park,_Sri_Lanka.jpg) | Elisoli | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| **Cooking** | Traditional Sri Lankan village cooking in earthenware clay pots over an open hearth in Kurivisuttakulam, Northern Province | `/images/experience-categories/cooking.webp` | [File:A Tamil women cooks in the remain of her old home in the village of Kurivisuttakulam, in Northern Sri Lanka. (10663715985).jpg](https://commons.wikimedia.org/wiki/File:A_Tamil_women_cooks_in_the_remain_of_her_old_home_in_the_village_of_Kurivisuttakulam,_in_Northern_Sri_Lanka._(10663715985).jpg) | EU Civil Protection and Humanitarian Aid | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) |
+| **Adventures** | Mountain hiking across the cloud-draped peaks of the UNESCO-designated Knuckles Mountain Range, Central Highlands | `/images/experience-categories/adventures.webp` | [File:Knuckles mountain range - Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Knuckles_mountain_range_-_Sri_Lanka.jpg) | Hashan Shanaka | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| **Artisan & Handicrafts** | Traditional Northern Sri Lankan palmyra leaf weaving and handicraft production in Nelliady, Jaffna | `/images/experience-categories/artisan.webp` | [File:பனையோலை உற்பத்திப் பொருட்களுக்கான வேலைப்பாடு.jpg](https://commons.wikimedia.org/wiki/File:%E0%AE%AA%E0%AE%A9%E0%AF%88%E0%AE%AF%E0%AF%8B%E0%AE%B2%E0%AF%88_%E0%AE%89%E0%AE%B1%E0%AF%8D%E0%AE%AA%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%BF%E0%AE%AA%E0%AF%8D_%E0%AE%AA%E0%AF%8A%E0%AE%B0%E0%AF%81%E0%AE%9F%E0%AF%8D%E0%AE%95%E0%AE%B3%E0%AF%81%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AE%BE%E0%AE%A9_%E0%AE%B5%E0%AF%87%E0%AE%B2%E0%AF%88%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AE%BE%E0%AE%9F%E0%AF%81.jpg) | Noolaham Foundation / Tamil Wikimedia Documentation Project | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| **Heritage & Landmarks** | Iconic golden gopuram entrance and Dravidian architecture of historic Nallur Kandaswamy Temple, Jaffna | `/images/experience-categories/heritage.webp` | [File:Nallur Kandasamy front entrance.jpg](https://commons.wikimedia.org/wiki/File:Nallur_Kandasamy_front_entrance.jpg) | Koshy Koshy | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/) |
+| **Village Experiences** | Traditional wooden lagoon fishing boats and tranquil village lifestyle in Batticaloa, Eastern Province | `/images/experience-categories/village-experiences.webp` | [File:Batticaloa lagoon, fishing boats.jpg](https://commons.wikimedia.org/wiki/File:Batticaloa_lagoon,_fishing_boats.jpg) | Anton 17 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| **Water Activities** | Surfer navigating ocean point-breaks at Whiskey Point, Arugam Bay, Eastern Province | `/images/experience-categories/water-activities.webp` | [File:Whiskey Point 2.jpg](https://commons.wikimedia.org/wiki/File:Whiskey_Point_2.jpg) | Rehman Abubakr | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+
+## Image Optimization Specifications
+- **Format:** WebP
+- **Dimensions:** $600 \times 600\text{px}$ (1:1 aspect ratio)
+- **Quality Level:** 88
+- **Average Size:** $\sim 85\text{ KB}$ per image
+- **Hosting:** Self-hosted locally under `/images/experience-categories/`

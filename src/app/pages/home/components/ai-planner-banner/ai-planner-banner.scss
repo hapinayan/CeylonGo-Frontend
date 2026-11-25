@@ -1,0 +1,142 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.ai-banner-card {
+  height: 100%;
+  min-height: 230px;
+  background: linear-gradient(135deg, #eaf5ff 0%, #f4faff 100%);
+  border: 1px solid $cg-light-border;
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.1);
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+}
+
+.banner-content {
+  flex: 1.2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.banner-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.12);
+}
+
+.banner-title {
+  margin: 0;
+  font-family: $cg-font;
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: $cg-primary-navy;
+  line-height: 1.25;
+}
+
+.banner-description {
+  margin: 0.45rem 0 1.15rem;
+  font-family: $cg-font;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: $cg-text-secondary;
+  max-width: 320px;
+}
+
+.btn-try-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: $cg-royal-blue;
+  color: #ffffff;
+  font-family: $cg-font;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.6rem 1.35rem;
+  border-radius: $cg-radius-pill;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0, 102, 255, 0.3);
+  transition: all 0.2s ease;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background-color: $cg-royal-blue-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(0, 102, 255, 0.4);
+
+    svg {
+      transform: translateX(3px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $cg-royal-blue;
+    outline-offset: 2px;
+  }
+}
+
+.banner-image-wrap {
+  flex: 0.95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+
+  .banner-laptop-img {
+    max-width: 100%;
+    height: auto;
+    max-height: 170px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(8, 43, 92, 0.12));
+    transition: transform 0.3s ease;
+  }
+
+  &:hover .banner-laptop-img {
+    transform: scale(1.03);
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: center;
+
+    .banner-laptop-img {
+      max-height: 140px;
+    }
+  }
+}
