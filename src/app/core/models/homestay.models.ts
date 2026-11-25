@@ -35,6 +35,21 @@ export interface HomestayAmenity {
   icon?: string;
 }
 
+export interface HomestayReview {
+  id: number;
+  author: string;
+  avatar?: string;
+  date: string;
+  rating: number;
+  comment: string;
+}
+
+export interface HomestayHighlight {
+  title: string;
+  desc: string;
+  icon: string;
+}
+
 export interface HomestaySummary {
   id: number;
   name: string;
@@ -64,6 +79,53 @@ export interface HomestaySummary {
   host_name?: string;
   host_avatar?: string;
   is_wishlisted?: boolean;
+  // Detail-level properties
+  house_rules?: string[];
+  check_in_time?: string;
+  check_out_time?: string;
+  host_bio?: string;
+  host_joined?: string;
+  host_response_rate?: string;
+  host_response_time?: string;
+  highlights?: HomestayHighlight[];
+  reviews?: HomestayReview[];
+  neighborhood?: string;
+  landmarks?: string[];
+}
+
+export type HomestayDetail = HomestaySummary;
+
+export interface BookingDraft {
+  homestayId: number;
+  homestayName: string;
+  homestayLocation: string;
+  homestayImage: string;
+  nightlyRate: number;
+  checkIn: string; // YYYY-MM-DD
+  checkOut: string; // YYYY-MM-DD
+  adults: number;
+  children: number;
+  totalGuests: number;
+  nights: number;
+  basePrice: number;
+  estimatedTotal: number;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  specialRequests?: string;
+}
+
+export interface BookingConfirmation {
+  bookingReference: string;
+  homestayId: number;
+  homestayName: string;
+  checkIn: string;
+  checkOut: string;
+  totalGuests: number;
+  nights: number;
+  estimatedTotal: number;
+  hostName: string;
+  confirmedAt: string;
 }
 
 export interface HomestaySearchParams {

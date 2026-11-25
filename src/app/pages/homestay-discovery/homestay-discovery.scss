@@ -1,18 +1,32 @@
 // =============================================================================
-// CEYLONGO HOMESTAY DISCOVERY PAGE DESIGN SYSTEM
-// Primary Blue: #0066FF | Deep Navy: #082B5C | Light Blue: #EAF5FF | Border: #D8E8F8
-// Secondary Text: #64748B | Font: Inter | Viewport-Fitted Shell with Fixed Pinned Header
+// CEYLONGO HOMESTAY DISCOVERY PAGE – EXACT BLUE THEME DESIGN SYSTEM
+// Deep Navy: #061838 | Royal Blue: #082452 | Primary Blue: #0066FF
+// Cyan Highlight: #00E5FF | Icy Blue: #F0F7FF | Category Bar: #08214D
 // =============================================================================
+
+$cg-navy-hero: #061838;
+$cg-navy-navbar: #071b3d;
+$cg-deep-navy: #082b5c;
+$cg-royal-blue: #082452;
+$cg-royal-blue-mid: #0a295c;
+$cg-royal-gradient-end: #0c3370;
+$cg-category-bar-bg: #08214d;
+$cg-category-pill-bg: rgba(255, 255, 255, 0.12);
+$cg-category-pill-border: rgba(255, 255, 255, 0.22);
 
 $cg-primary-blue: #0066ff;
 $cg-primary-blue-hover: #0052cc;
-$cg-deep-navy: #082b5c;
-$cg-navy-dark: #051d3e;
+$cg-cyan-glow: #00d2ff;
+$cg-cyan-highlight: #00e5ff;
+
+$cg-page-ice-bg: #f0f7ff;
 $cg-light-blue: #eaf5ff;
 $cg-light-blue-hover: #d8eeff;
 $cg-white: #ffffff;
 $cg-border: #d8e8f8;
 $cg-border-light: #eef5fc;
+$cg-card-border: #dcebfa;
+
 $cg-text-primary: #082b5c;
 $cg-text-secondary: #64748b;
 $cg-text-muted: #94a3b8;
@@ -24,7 +38,8 @@ $font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
 $shadow-sm: 0 2px 8px rgba(8, 43, 92, 0.05);
 $shadow-md: 0 4px 16px rgba(8, 43, 92, 0.08);
 $shadow-lg: 0 10px 30px rgba(8, 43, 92, 0.12);
-$shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
+$shadow-search: 0 8px 30px rgba(3, 18, 48, 0.25), 0 2px 8px rgba(0, 102, 255, 0.15);
+$shadow-active-pill: 0 0 16px rgba(0, 180, 255, 0.5), 0 2px 8px rgba(0, 102, 255, 0.25);
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -36,7 +51,7 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 .homestay-page {
   font-family: $font-family;
   color: $cg-text-primary;
-  background-color: #f8fafc;
+  background-color: $cg-page-ice-bg;
   height: 100vh;
   height: 100dvh;
   width: 100%;
@@ -56,9 +71,9 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   max-width: 100%;
   min-width: 0;
   z-index: 50;
-  background: $cg-white;
-  border-bottom: 1px solid $cg-border;
-  box-shadow: $shadow-sm;
+  background: $cg-navy-navbar;
+  border-bottom: none;
+  box-shadow: 0 4px 20px rgba(3, 18, 48, 0.2);
   display: flex;
   flex-direction: column;
 }
@@ -74,16 +89,16 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
-  background-color: #f8fafc;
+  background-color: $cg-page-ice-bg;
 }
 
 // -----------------------------------------------------------------------------
-// 1. TOP NAVIGATION (Clean White Bar matching reference)
+// 1. TOP NAVIGATION (Deep Navy-to-Royal-Blue Gradient matching reference)
 // -----------------------------------------------------------------------------
 .cg-navbar {
   width: 100%;
-  background: $cg-white;
-  border-bottom: 1px solid $cg-border-light;
+  background: linear-gradient(90deg, #061838 0%, #082452 50%, #0c3370 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   z-index: 60;
 }
@@ -115,11 +130,11 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   line-height: 1;
 
   .brand-ceylon {
-    color: $cg-deep-navy;
+    color: #ffffff;
   }
 
   .brand-go {
-    color: $cg-primary-blue;
+    color: $cg-cyan-glow;
   }
 }
 
@@ -138,24 +153,25 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 .nav-item {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 9999px;
   font-size: 13.5px;
   font-weight: 500;
-  color: $cg-text-secondary;
+  color: rgba(255, 255, 255, 0.88);
   text-decoration: none;
   white-space: nowrap;
   transition: all 0.15s ease;
 
   &:hover {
-    color: $cg-primary-blue;
-    background-color: $cg-light-blue;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.12);
   }
 
   &.active {
-    color: $cg-primary-blue;
-    background-color: $cg-light-blue;
+    color: #ffffff;
+    background-color: $cg-primary-blue;
     font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 102, 255, 0.4);
   }
 }
 
@@ -174,14 +190,15 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   height: 36px;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid $cg-border;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
   cursor: pointer;
   position: relative;
   transition: all 0.15s ease;
 
   &:hover {
-    background-color: $cg-light-blue;
-    border-color: $cg-primary-blue;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.5);
   }
 }
 
@@ -199,7 +216,7 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid $cg-white;
+  border: 2px solid $cg-navy-navbar;
 }
 
 .notif-dot {
@@ -209,8 +226,8 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: $cg-primary-blue;
-  border: 1.5px solid $cg-white;
+  background-color: $cg-cyan-glow;
+  border: 1.5px solid $cg-navy-navbar;
 }
 
 // Traveler avatar & dropdown
@@ -225,7 +242,7 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   user-select: none;
 
   &:hover .avatar-circle {
-    box-shadow: 0 0 0 2px $cg-primary-blue;
+    box-shadow: 0 0 0 2px $cg-cyan-glow;
   }
 }
 
@@ -233,7 +250,8 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background-color: $cg-deep-navy;
+  background-color: #0d3575;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   color: $cg-white;
   display: flex;
   align-items: center;
@@ -374,9 +392,10 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 // -----------------------------------------------------------------------------
 .hero-header-section {
   width: 100%;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-  padding: 12px 24px 10px 24px;
-  border-bottom: 1px solid $cg-border-light;
+  background: #071c42 url('/images/sigiriya-hero-panorama.png') no-repeat right center / cover;
+  padding: 16px 24px 14px 24px;
+  border-bottom: none;
+  position: relative;
 }
 
 .hero-container {
@@ -387,32 +406,37 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
 .hero-text-block {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 
   .hero-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: $cg-deep-navy;
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
     margin: 0;
     line-height: 1.25;
     letter-spacing: -0.3px;
 
+    .highlight-cyan {
+      color: $cg-cyan-highlight;
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+    }
+
     @media (max-width: 640px) {
-      font-size: 18px;
+      font-size: 19px;
     }
   }
 
   .hero-subtitle {
-    font-size: 13px;
-    color: $cg-text-secondary;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.92);
     margin: 0;
     line-height: 1.35;
   }
@@ -700,14 +724,16 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 }
 
 // -----------------------------------------------------------------------------
-// 4. EIGHT CATEGORY BUTTONS (Exact Labels, Pale Blue, Selected Blue Border)
+// 4. EIGHT CATEGORY BUTTONS (Exact Deep-Blue Section & Glowing Active Pill)
 // -----------------------------------------------------------------------------
 .categories-bar-section {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  background: $cg-white;
-  padding: 6px 24px 10px 24px;
+  background: $cg-category-bar-bg;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 8px 24px 10px 24px;
   overflow: hidden;
 }
 
@@ -736,11 +762,11 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   align-items: center;
   gap: 7px;
   height: 36px;
-  padding: 0 14px;
+  padding: 0 15px;
   border-radius: 9999px;
-  background-color: $cg-light-blue; // Pale-blue background matching reference
-  border: 1.5px solid transparent;
-  color: $cg-deep-navy;
+  background-color: $cg-category-pill-bg;
+  border: 1px solid $cg-category-pill-border;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -750,7 +776,7 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 
   .cat-svg {
     flex-shrink: 0;
-    color: $cg-primary-blue;
+    color: #ffffff;
   }
 
   .cat-label {
@@ -758,17 +784,17 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   }
 
   &:hover {
-    background-color: $cg-light-blue-hover;
-    border-color: rgba(0, 102, 255, 0.4);
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
   }
 
-  // Selected blue border appearance (matching reference screenshot)
+  // Selected All Homestays pill: white with glowing blue edges
   &.active {
     background-color: $cg-white;
-    border: 2px solid $cg-primary-blue;
-    color: $cg-primary-blue;
+    border: 1.5px solid $cg-primary-blue;
+    color: $cg-deep-navy;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.15);
+    box-shadow: $shadow-active-pill;
 
     .cat-svg {
       color: $cg-primary-blue;
@@ -918,17 +944,12 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   gap: 20px;
   width: 100%;
   min-width: 0;
-  // Four columns on sufficiently wide desktop screens
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-
-  @media (max-width: 1399px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
+  // Three columns on desktop matching reference
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   @media (max-width: 1023px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 16px;
   }
 
   @media (max-width: 679px) {
@@ -941,9 +962,9 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 .homestay-card {
   background: $cg-white;
   border-radius: 16px;
-  border: 1px solid $cg-border;
+  border: 1px solid $cg-card-border;
   overflow: hidden;
-  box-shadow: $shadow-sm;
+  box-shadow: 0 4px 18px rgba(8, 43, 92, 0.06);
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -951,15 +972,15 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: $shadow-md;
-    border-color: rgba(0, 102, 255, 0.3);
+    box-shadow: 0 10px 28px rgba(0, 102, 255, 0.12);
+    border-color: rgba(0, 102, 255, 0.25);
   }
 }
 
 .card-media {
   position: relative;
   width: 100%;
-  height: 185px;
+  height: 200px;
   overflow: hidden;
   background-color: #e2e8f0;
 
@@ -981,13 +1002,13 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
   position: absolute;
   bottom: 10px;
   left: 10px;
-  background: rgba(8, 43, 92, 0.85);
-  backdrop-filter: blur(6px);
+  background: rgba(8, 43, 92, 0.88);
+  backdrop-filter: blur(4px);
   color: $cg-white;
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
   z-index: 2;
 }
 
@@ -1093,19 +1114,36 @@ $shadow-search: 0 4px 20px rgba(0, 102, 255, 0.08);
 }
 
 .btn-card-book {
-  padding: 5px 14px;
-  border-radius: 6px;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+  padding: 6px 16px;
+  border-radius: 8px;
   background-color: $cg-primary-blue;
   color: $cg-white;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.28);
   transition: all 0.15s ease;
+
+  .btn-arrow {
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
 
   &:hover {
     background-color: $cg-primary-blue-hover;
     transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4);
+
+    .btn-arrow {
+      transform: translateX(2px);
+    }
   }
 }
 

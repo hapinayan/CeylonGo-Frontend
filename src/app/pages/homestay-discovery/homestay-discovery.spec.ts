@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -190,5 +190,91 @@ describe('HomestayDiscovery', () => {
     expect(scrollRegion?.querySelector('.results-toolbar-section')).toBeTruthy();
     expect(scrollRegion?.querySelector('.listings-main-section')).toBeTruthy();
     expect(scrollRegion?.querySelector('.cg-footer')).toBeTruthy();
+  });
+
+  it('should bind Book button and title link to the property-specific route /homestays/:id', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const firstCard = compiled.querySelector('.homestay-card');
+    expect(firstCard).toBeTruthy();
+
+    const bookBtn = firstCard?.querySelector('.btn-card-book');
+    expect(bookBtn).toBeTruthy();
+
+    const titleLink = firstCard?.querySelector('.title-link');
+    expect(titleLink).toBeTruthy();
+
+    const firstHomestay = component.homestays()[0];
+    expect(component.getBookingQueryParams()).toBeDefined();
+  });
+
+  it('should navigate to /homestays/:id when Book button is clicked on a homestay card', () => {
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate');
+
+    component.checkInDate.set('2026-12-01');
+    component.checkOutDate.set('2026-12-05');
+    component.adultsCount.set(2);
+    component.childrenCount.set(1);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('.homestay-card');
+    expect(cards.length).toBeGreaterThan(1);
+
+    const firstHomestay = component.homestays()[0];
+    const secondHomestay = component.homestays()[1];
+    expect(firstHomestay).toBeDefined();
+    expect(secondHomestay).toBeDefined();
+
+    // Click Book on first homestay card
+    const firstBookBtn = cards[0].querySelector('.btn-card-book') as HTMLButtonElement;
+    expect(firstBookBtn).toBeTruthy();
+    firstBookBtn.click();
+    fixture.detectChanges();
+
+    expect(navSpy).toHaveBeenCalledWith(
+      ['/homestays', firstHomestay.id],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          check_in: '2026-12-01',
+          check_out: '2026-12-05',
+          adults: 2,
+          children: 1,
+        }),
+      })
+    );
+
+    // Click Book on second homestay card
+    const secondBookBtn = cards[1].querySelector('.btn-card-book') as HTMLButtonElement;
+    expect(secondBookBtn).toBeTruthy();
+    secondBookBtn.click();
+    fixture.detectChanges();
+
+    expect(navSpy).toHaveBeenCalledWith(
+      ['/homestays', secondHomestay.id],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          check_in: '2026-12-01',
+          check_out: '2026-12-05',
+          adults: 2,
+          children: 1,
+        }),
+      })
+    );
+  });
+
+  it('should not trigger booking navigation when clicking wishlist heart', () => {
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const firstCard = compiled.querySelector('.homestay-card');
+    const wishlistBtn = firstCard?.querySelector('.btn-card-wishlist') as HTMLButtonElement;
+    expect(wishlistBtn).toBeTruthy();
+
+    wishlistBtn.click();
+    fixture.detectChanges();
+
+    expect(navSpy).not.toHaveBeenCalled();
   });
 });

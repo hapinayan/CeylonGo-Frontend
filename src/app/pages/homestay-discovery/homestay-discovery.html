@@ -33,7 +33,7 @@
             aria-label="Wishlist"
             [attr.title]="'Saved homestays (' + getWishlistCount() + ')'"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
             @if (getWishlistCount() > 0) {
@@ -49,7 +49,7 @@
             aria-label="Notifications"
             title="Notifications"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
@@ -63,7 +63,7 @@
             <div class="avatar-circle" aria-label="Traveler profile menu" role="button" tabindex="0">
               <span class="avatar-initials">CG</span>
             </div>
-            <svg class="avatar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" aria-hidden="true">
+            <svg class="avatar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" aria-hidden="true">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
 
@@ -91,7 +91,7 @@
             [attr.aria-expanded]="mobileMenuOpen()"
             aria-label="Toggle Navigation"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -121,7 +121,7 @@
       <div class="hero-container">
         <!-- Exact Heading & Subtitle -->
         <div class="hero-text-block">
-          <h1 class="hero-title">Find Comfortable Homestays in Sri Lanka</h1>
+          <h1 class="hero-title">Find Comfortable <span class="highlight-cyan">Homestays</span> in Sri Lanka</h1>
           <p class="hero-subtitle">Stay with friendly local hosts and experience the real Sri Lankan hospitality.</p>
         </div>
 
@@ -420,7 +420,7 @@
             @for (homestay of homestays(); track homestay.id) {
               <article class="homestay-card">
                 <!-- Image Wrapper with Rounded Corners & Badges -->
-                <div class="card-media">
+                <div class="card-media" (click)="bookHomestay(homestay, $event)" style="cursor: pointer;">
                   <img
                     [src]="homestay.image_url"
                     [alt]="homestay.name"
@@ -458,14 +458,19 @@
                 <div class="card-content">
                   <!-- Name -->
                   <h3 class="card-title">
-                    <a href="javascript:void(0)" class="title-link" (click)="showToast('Opening details for ' + homestay.name)">
+                    <a
+                      [routerLink]="['/homestays', homestay.id]"
+                      [queryParams]="getBookingQueryParams()"
+                      (click)="bookHomestay(homestay, $event)"
+                      class="title-link"
+                    >
                       {{ homestay.name }}
                     </a>
                   </h3>
 
                   <!-- Location -->
                   <div class="card-location">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
@@ -491,9 +496,16 @@
                     <button
                       type="button"
                       class="btn-card-book"
-                      (click)="showToast('Booking ' + homestay.name + ' - reserve flow starting...')"
+                      (click)="bookHomestay(homestay, $event)"
+                      [routerLink]="['/homestays', homestay.id]"
+                      [queryParams]="getBookingQueryParams()"
+                      aria-label="Book {{ homestay.name }}"
                     >
-                      Book
+                      <span>Book</span>
+                      <svg class="btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
                     </button>
                   </div>
                 </div>

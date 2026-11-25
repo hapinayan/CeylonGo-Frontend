@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import {
   HomestayCategory,
@@ -20,6 +20,7 @@ import { HomestayService } from '../../core/services/homestay.service';
 })
 export class HomestayDiscovery implements OnInit {
   private readonly homestayService = inject(HomestayService);
+  private readonly router = inject(Router);
 
   @ViewChild('scrollRegion') scrollRegion?: ElementRef<HTMLElement>;
 
@@ -257,6 +258,24 @@ export class HomestayDiscovery implements OnInit {
 
   getWishlistCount(): number {
     return this.homestayService.wishlistIds().length;
+  }
+
+  getBookingQueryParams(): Record<string, string | number> {
+    const params: Record<string, string | number> = {};
+    if (this.checkInDate()) params['check_in'] = this.checkInDate();
+    if (this.checkOutDate()) params['check_out'] = this.checkOutDate();
+    if (this.adultsCount()) params['adults'] = this.adultsCount();
+    if (this.childrenCount()) params['children'] = this.childrenCount();
+    return params;
+  }
+
+  bookHomestay(homestay: HomestaySummary, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const queryParams = this.getBookingQueryParams();
+    this.router.navigate(['/homestays', homestay.id], { queryParams });
   }
 
   toggleMobileMenu(): void {

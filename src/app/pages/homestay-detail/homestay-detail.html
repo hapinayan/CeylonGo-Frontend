@@ -1,0 +1,677 @@
+<div class="homestay-detail-page">
+  <!-- 1. TOP NAVIGATION BAR (Matching CeylonGo Brand Shell) -->
+  <header class="cg-navbar" role="banner">
+    <div class="nav-container">
+      <!-- Left: Logo & Back Link -->
+      <div class="nav-left">
+        <a routerLink="/homestays" class="btn-nav-back" aria-label="Back to homestay discovery">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>All Stays</span>
+        </a>
+
+        <a routerLink="/homestays" class="brand-link" aria-label="CeylonGo Home">
+          <span class="brand-text-logo">CeylonGo</span>
+        </a>
+      </div>
+
+      <!-- Center: Navigation Links -->
+      <nav class="nav-links" aria-label="Main Navigation">
+        <a routerLink="/homestays" class="nav-link active" aria-current="page">Stays</a>
+        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Experiences available in upcoming release')">Experiences</a>
+        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Tour Guides available in upcoming release')">Tour Guides</a>
+        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Bike Rentals available in upcoming release')">Bike Rentals</a>
+        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Community Forum available in upcoming release')">Community</a>
+        <a href="javascript:void(0)" class="nav-link" (click)="showToast('AI Trip Planner available in upcoming release')">AI Trip Planner</a>
+      </nav>
+
+      <!-- Right: Actions & Profile -->
+      <div class="nav-actions">
+        <!-- Wishlist Link -->
+        <a routerLink="/homestays" class="btn-nav-icon" aria-label="Wishlist">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          @if (wishlistCount() > 0) {
+            <span class="badge-count">{{ wishlistCount() }}</span>
+          }
+        </a>
+
+        <!-- Notifications -->
+        <button type="button" class="btn-nav-icon" aria-label="Notifications" (click)="showToast('You have 2 new notifications')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="badge-dot"></span>
+        </button>
+
+        <!-- Traveler Avatar -->
+        <div class="user-pill">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Traveler Profile" class="avatar-img" />
+          <span class="user-name">Traveler</span>
+        </div>
+
+        <!-- Mobile Menu Hamburger -->
+        <button type="button" class="btn-hamburger" (click)="toggleMobileMenu()" aria-label="Toggle navigation menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer -->
+    @if (mobileMenuOpen()) {
+      <div class="mobile-drawer">
+        <a routerLink="/homestays" class="mobile-link active" (click)="toggleMobileMenu()">Stays</a>
+        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Experiences available soon'); toggleMobileMenu()">Experiences</a>
+        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Tour Guides available soon'); toggleMobileMenu()">Tour Guides</a>
+        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Bike Rentals available soon'); toggleMobileMenu()">Bike Rentals</a>
+        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Community Forum available soon'); toggleMobileMenu()">Community</a>
+        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('AI Trip Planner available soon'); toggleMobileMenu()">AI Trip Planner</a>
+      </div>
+    }
+  </header>
+
+  <!-- DEMO / SIMULATION BANNER -->
+  <div class="demo-notice-bar" role="status">
+    <div class="demo-notice-content">
+      <span class="demo-tag">DEMO MODE</span>
+      <span>Frontend homestay details & booking preview. No live charges or real backend reservation requests.</span>
+    </div>
+  </div>
+
+  <!-- MAIN VIEWPORT CONTENT -->
+  <main class="detail-main-viewport">
+    @if (isLoading()) {
+      <!-- SKELETON LOADING STATE -->
+      <div class="detail-container skeleton-state" aria-busy="true" aria-label="Loading property details">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-gallery"></div>
+        <div class="skeleton-columns">
+          <div class="skeleton-left"></div>
+          <div class="skeleton-right"></div>
+        </div>
+      </div>
+    } @else if (isNotFound() || !homestay()) {
+      <!-- NOT FOUND STATE -->
+      <div class="not-found-state">
+        <div class="not-found-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <line x1="9" y1="12" x2="15" y2="18"></line>
+            <line x1="15" y1="12" x2="9" y2="18"></line>
+          </svg>
+        </div>
+        <h2 class="not-found-title">Homestay Not Found</h2>
+        <p class="not-found-text">
+          The requested homestay property (ID: {{ currentId() }}) does not exist in our system or may have been removed.
+        </p>
+        <a routerLink="/homestays" class="btn-back-home">
+          Browse Available Homestays
+        </a>
+      </div>
+    } @else {
+      <!-- LOADED HOMESTAY DETAILS -->
+      <div class="detail-container">
+        <!-- BREADCRUMB & HEADER -->
+        <div class="property-header">
+          <div class="breadcrumb-row">
+            <a routerLink="/homestays" class="breadcrumb-link">Homestays</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">{{ homestay()!.city }}</span>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current text-truncate">{{ homestay()!.name }}</span>
+          </div>
+
+          <h1 class="property-title">{{ homestay()!.name }}</h1>
+
+          <div class="property-meta-row">
+            <div class="meta-left">
+              <!-- Rating -->
+              <div class="rating-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span class="rating-val">{{ homestay()!.rating }}</span>
+                <span class="review-val">({{ homestay()!.review_count }} reviews)</span>
+              </div>
+
+              <!-- Superhost / Verified -->
+              @if (homestay()!.is_superhost) {
+                <span class="badge-superhost">Superhost</span>
+              }
+              @if (homestay()!.is_verified) {
+                <span class="badge-verified">Verified Stay</span>
+              }
+
+              <!-- Location -->
+              <span class="meta-location">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                {{ homestay()!.location }}
+              </span>
+            </div>
+
+            <div class="meta-right">
+              <!-- Share Button -->
+              <button type="button" class="btn-meta-action" (click)="copyShareLink()" aria-label="Share property link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                <span>Share</span>
+              </button>
+
+              <!-- Wishlist Button -->
+              <button
+                type="button"
+                class="btn-meta-action"
+                [class.active]="isWishlisted()"
+                (click)="toggleWishlist($event)"
+                [attr.aria-label]="isWishlisted() ? 'Remove from wishlist' : 'Save to wishlist'"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  [attr.fill]="isWishlisted() ? '#FF385C' : 'none'"
+                  [attr.stroke]="isWishlisted() ? '#FF385C' : 'currentColor'"
+                  stroke-width="2"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>{{ isWishlisted() ? 'Saved' : 'Save' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. PHOTO GALLERY (Desktop 5-Photo Grid with Lightbox Trigger) -->
+        <section class="gallery-section" aria-label="Photo Gallery">
+          <div class="gallery-grid">
+            <!-- Hero Image Left -->
+            <div class="gallery-hero" (click)="openGallery(0)">
+              <img [src]="homestay()!.images[0] || homestay()!.image_url" [alt]="homestay()!.name + ' hero image'" class="gallery-img" />
+            </div>
+
+            <!-- 4 Sub-Images Right -->
+            <div class="gallery-subgrid">
+              @for (img of (homestay()!.images.slice(1, 5)); track $index) {
+                <div class="gallery-subitem" (click)="openGallery($index + 1)">
+                  <img [src]="img" [alt]="homestay()!.name + ' photo ' + ($index + 2)" class="gallery-img" />
+                </div>
+              }
+              @if (homestay()!.images.length <= 1) {
+                <!-- Graceful placeholders if listing has fewer images -->
+                <div class="gallery-subitem" (click)="openGallery(0)">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 2'" class="gallery-img" />
+                </div>
+                <div class="gallery-subitem" (click)="openGallery(0)">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 3'" class="gallery-img" />
+                </div>
+                <div class="gallery-subitem" (click)="openGallery(0)">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 4'" class="gallery-img" />
+                </div>
+                <div class="gallery-subitem" (click)="openGallery(0)">
+                  <img [src]="homestay()!.image_url" [alt]="homestay()!.name + ' photo 5'" class="gallery-img" />
+                </div>
+              }
+            </div>
+
+            <!-- View All Photos Pill -->
+            <button type="button" class="btn-all-photos" (click)="openGallery(0)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span>View all {{ homestay()!.images.length }} photos</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 3. TWO-COLUMN LAYOUT: CONTENT LEFT & STICKY BOOKING PANEL RIGHT -->
+        <div class="property-layout-grid">
+          <!-- LEFT COLUMN: PROPERTY DETAILS -->
+          <div class="layout-left-content">
+            <!-- Host Overview Card -->
+            <section class="host-overview-card">
+              <div class="host-header">
+                <div class="host-text">
+                  <h2 class="host-title">
+                    Hosted by {{ homestay()!.host_name || 'Local CeylonGo Host' }}
+                  </h2>
+                  <p class="host-subtitle">
+                    {{ homestay()!.host_joined || 'Verified CeylonGo Host' }} · {{ homestay()!.host_response_rate || '100% response rate' }}
+                  </p>
+                </div>
+                <div class="host-avatar-wrap">
+                  <img
+                    [src]="homestay()!.host_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'"
+                    [alt]="homestay()!.host_name || 'Host avatar'"
+                    class="host-avatar-img"
+                  />
+                  @if (homestay()!.is_superhost) {
+                    <span class="host-super-badge" title="Superhost">★</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Property Capacity Bar -->
+              <div class="capacity-spec-bar">
+                <div class="spec-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <span>{{ homestay()!.max_guests }} Guests max</span>
+                </div>
+                <div class="spec-dot">•</div>
+                <div class="spec-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                  <span>{{ homestay()!.bedrooms }} Bedroom{{ homestay()!.bedrooms > 1 ? 's' : '' }}</span>
+                </div>
+                <div class="spec-dot">•</div>
+                <div class="spec-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                    <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path>
+                  </svg>
+                  <span>{{ homestay()!.beds }} Bed{{ homestay()!.beds > 1 ? 's' : '' }}</span>
+                </div>
+                <div class="spec-dot">•</div>
+                <div class="spec-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                    <path d="M9 6h6a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"></path>
+                    <path d="M4 14h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"></path>
+                  </svg>
+                  <span>{{ homestay()!.bathrooms }} Bath{{ homestay()!.bathrooms > 1 ? 's' : '' }}</span>
+                </div>
+              </div>
+
+              @if (homestay()!.host_bio) {
+                <p class="host-bio-text">{{ homestay()!.host_bio }}</p>
+              }
+            </section>
+
+            <!-- Key Highlights List -->
+            @if (homestay()!.highlights && homestay()!.highlights!.length > 0) {
+              <section class="highlights-section">
+                <h3 class="section-title">Property Highlights</h3>
+                <div class="highlights-list">
+                  @for (hl of homestay()!.highlights; track $index) {
+                    <div class="highlight-item">
+                      <div class="highlight-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </div>
+                      <div class="highlight-info">
+                        <h4 class="highlight-heading">{{ hl.title }}</h4>
+                        <p class="highlight-desc">{{ hl.desc }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+
+            <!-- Description Section -->
+            <section class="description-section">
+              <h3 class="section-title">About this Homestay</h3>
+              <p class="description-paragraph">{{ homestay()!.description }}</p>
+            </section>
+
+            <!-- Amenities Section -->
+            <section class="amenities-section">
+              <h3 class="section-title">What this place offers</h3>
+              <div class="amenities-grid">
+                @for (amenity of homestay()!.amenities; track $index) {
+                  <div class="amenity-pill">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>{{ amenity }}</span>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <!-- Property Rules & Check-in Info -->
+            <section class="rules-section">
+              <h3 class="section-title">Property Rules & Information</h3>
+              <div class="rules-card">
+                <div class="rules-row">
+                  <div class="rule-col">
+                    <span class="rule-label">Check-in</span>
+                    <span class="rule-val">{{ homestay()!.check_in_time || '2:00 PM' }}</span>
+                  </div>
+                  <div class="rule-col">
+                    <span class="rule-label">Check-out</span>
+                    <span class="rule-val">{{ homestay()!.check_out_time || '11:00 AM' }}</span>
+                  </div>
+                  <div class="rule-col">
+                    <span class="rule-label">Cancellation</span>
+                    <span class="rule-val text-green">{{ homestay()!.cancellation_policy }}</span>
+                  </div>
+                </div>
+
+                @if (homestay()!.house_rules && homestay()!.house_rules!.length > 0) {
+                  <div class="house-rules-list">
+                    <span class="house-rules-heading">House Rules:</span>
+                    <ul>
+                      @for (r of homestay()!.house_rules; track $index) {
+                        <li>{{ r }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <!-- Location Section -->
+            <section class="location-section">
+              <h3 class="section-title">Where you'll be</h3>
+              <p class="location-sub">{{ homestay()!.neighborhood || homestay()!.location }}</p>
+              <div class="map-preview-card">
+                <div class="map-pin-circle">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#0066FF" stroke="#FFFFFF" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3" fill="#FFFFFF"></circle>
+                  </svg>
+                </div>
+                <div class="map-caption">
+                  <span class="caption-title">{{ homestay()!.name }}</span>
+                  <span class="caption-sub">{{ homestay()!.city }}, {{ homestay()!.district }}</span>
+                </div>
+              </div>
+
+              @if (homestay()!.landmarks && homestay()!.landmarks!.length > 0) {
+                <div class="landmarks-list">
+                  <span class="landmarks-title">Nearby Landmarks:</span>
+                  <ul>
+                    @for (lm of homestay()!.landmarks; track $index) {
+                      <li>{{ lm }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+
+            <!-- Guest Reviews Section -->
+            @if (homestay()!.reviews && homestay()!.reviews!.length > 0) {
+              <section class="reviews-section">
+                <div class="reviews-header">
+                  <h3 class="section-title">Guest Reviews</h3>
+                  <div class="reviews-summary-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>{{ homestay()!.rating }} · {{ homestay()!.review_count }} reviews</span>
+                  </div>
+                </div>
+
+                <div class="reviews-cards-grid">
+                  @for (rev of homestay()!.reviews; track rev.id) {
+                    <div class="review-card">
+                      <div class="review-author-row">
+                        <div class="author-avatar">{{ rev.author.charAt(0) }}</div>
+                        <div class="author-info">
+                          <span class="author-name">{{ rev.author }}</span>
+                          <span class="review-date">{{ rev.date }}</span>
+                        </div>
+                      </div>
+                      <p class="review-text">"{{ rev.comment }}"</p>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+
+          <!-- RIGHT COLUMN: STICKY BOOKING PANEL -->
+          <div class="layout-right-panel">
+            <aside class="sticky-booking-card" aria-label="Booking reservation panel">
+              <!-- Price Header -->
+              <div class="panel-price-header">
+                <div class="price-stack">
+                  <div class="price-main">
+                    <span class="currency">LKR</span>
+                    <span class="amount">{{ homestay()!.price_per_night | number }}</span>
+                    <span class="period">/ night</span>
+                  </div>
+                  @if (homestay()!.original_price_per_night) {
+                    <div class="price-strikethrough">
+                      <span>LKR {{ homestay()!.original_price_per_night | number }}</span>
+                      <span class="badge-discount">{{ homestay()!.discount_percent }}% OFF</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="panel-rating">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span class="rate-val">{{ homestay()!.rating }}</span>
+                  <span class="rev-val">({{ homestay()!.review_count }})</span>
+                </div>
+              </div>
+
+              <!-- Date Picker Box -->
+              <div class="booking-dates-box">
+                <div class="date-field">
+                  <label for="detail-check-in" class="date-label">CHECK-IN</label>
+                  <input
+                    id="detail-check-in"
+                    type="date"
+                    class="date-input"
+                    [min]="todayString()"
+                    [ngModel]="checkInDate()"
+                    (ngModelChange)="checkInDate.set($event); onDatesChanged()"
+                  />
+                </div>
+                <div class="date-sep"></div>
+                <div class="date-field">
+                  <label for="detail-check-out" class="date-label">CHECKOUT</label>
+                  <input
+                    id="detail-check-out"
+                    type="date"
+                    class="date-input"
+                    [min]="checkInDate() || todayString()"
+                    [ngModel]="checkOutDate()"
+                    (ngModelChange)="checkOutDate.set($event); onDatesChanged()"
+                  />
+                </div>
+              </div>
+
+              <!-- Guest Selector Box -->
+              <div class="booking-guests-box">
+                <div class="guests-summary-row">
+                  <span class="guests-label">GUESTS</span>
+                  <span class="guests-total">
+                    {{ totalGuests() }} Guest{{ totalGuests() > 1 ? 's' : '' }} (Max {{ homestay()!.max_guests }})
+                  </span>
+                </div>
+
+                <!-- Adults and Children Counters -->
+                <div class="guest-counter-row">
+                  <div class="counter-label-group">
+                    <span class="counter-title">Adults</span>
+                    <span class="counter-desc">Age 13+</span>
+                  </div>
+                  <div class="counter-btn-group">
+                    <button
+                      type="button"
+                      class="btn-counter"
+                      [disabled]="adultsCount() <= 1"
+                      (click)="updateAdults(-1)"
+                      aria-label="Decrease adults"
+                    >-</button>
+                    <span class="counter-number">{{ adultsCount() }}</span>
+                    <button
+                      type="button"
+                      class="btn-counter"
+                      [disabled]="totalGuests() >= homestay()!.max_guests"
+                      (click)="updateAdults(1)"
+                      aria-label="Increase adults"
+                    >+</button>
+                  </div>
+                </div>
+
+                <div class="guest-counter-row">
+                  <div class="counter-label-group">
+                    <span class="counter-title">Children</span>
+                    <span class="counter-desc">Ages 0–12</span>
+                  </div>
+                  <div class="counter-btn-group">
+                    <button
+                      type="button"
+                      class="btn-counter"
+                      [disabled]="childrenCount() <= 0"
+                      (click)="updateChildren(-1)"
+                      aria-label="Decrease children"
+                    >-</button>
+                    <span class="counter-number">{{ childrenCount() }}</span>
+                    <button
+                      type="button"
+                      class="btn-counter"
+                      [disabled]="totalGuests() >= homestay()!.max_guests"
+                      (click)="updateChildren(1)"
+                      aria-label="Increase children"
+                    >+</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Error Alerts -->
+              @if (dateErrorMessage()) {
+                <div class="alert-error" role="alert">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>{{ dateErrorMessage() }}</span>
+                </div>
+              }
+
+              @if (guestErrorMessage()) {
+                <div class="alert-error" role="alert">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>{{ guestErrorMessage() }}</span>
+                </div>
+              }
+
+              <!-- Pricing Calculation Breakdown -->
+              @if (nightsCount() > 0 && !dateErrorMessage()) {
+                <div class="price-breakdown-card">
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">
+                      LKR {{ homestay()!.price_per_night | number }} × {{ nightsCount() }} night{{ nightsCount() > 1 ? 's' : '' }}
+                    </span>
+                    <span class="breakdown-val">LKR {{ estimatedBasePrice() | number }}</span>
+                  </div>
+                  <div class="breakdown-row">
+                    <span class="breakdown-label text-muted">Demo Mode Estimate</span>
+                    <span class="breakdown-val text-green">LKR 0 (No Fees)</span>
+                  </div>
+                  <div class="breakdown-divider"></div>
+                  <div class="breakdown-row total-row">
+                    <span class="total-label">Total Booking Estimate</span>
+                    <span class="total-val">LKR {{ estimatedTotal() | number }}</span>
+                  </div>
+                </div>
+              } @else if (!dateErrorMessage()) {
+                <div class="select-dates-prompt">
+                  Select check-in and check-out dates to calculate total
+                </div>
+              }
+
+              <!-- Action Button: Continue to Booking -->
+              <button
+                type="button"
+                class="btn-booking-continue"
+                [disabled]="!canContinueToBooking()"
+                (click)="continueToBooking()"
+              >
+                Continue to Booking
+              </button>
+
+              <div class="panel-disclaimer">
+                <span>Frontend preview — You won't be charged yet</span>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- 4. PHOTO GALLERY LIGHTBOX MODAL -->
+  @if (isGalleryModalOpen() && homestay()) {
+    <div class="gallery-modal-backdrop" (click)="closeGallery()" role="dialog" aria-modal="true" aria-label="Photo Gallery Viewer">
+      <div class="gallery-modal-content" (click)="$event.stopPropagation()">
+        <!-- Modal Top Bar -->
+        <div class="modal-top-bar">
+          <span class="modal-photo-counter">
+            {{ activePhotoIndex() + 1 }} / {{ homestay()!.images.length || 1 }}
+          </span>
+          <button type="button" class="btn-modal-close" (click)="closeGallery()" aria-label="Close photo gallery">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Main Photo with Prev / Next Arrows -->
+        <div class="modal-photo-stage">
+          <button type="button" class="btn-modal-nav prev" (click)="prevPhoto()" aria-label="Previous photo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <img
+            [src]="homestay()!.images[activePhotoIndex()] || homestay()!.image_url"
+            [alt]="homestay()!.name + ' full photo ' + (activePhotoIndex() + 1)"
+            class="modal-stage-img"
+          />
+
+          <button type="button" class="btn-modal-nav next" (click)="nextPhoto()" aria-label="Next photo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-caption-bar">
+          <span>{{ homestay()!.name }} — {{ homestay()!.location }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TOAST NOTIFICATION -->
+  @if (toastMessage()) {
+    <div class="cg-toast" role="alert">
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>

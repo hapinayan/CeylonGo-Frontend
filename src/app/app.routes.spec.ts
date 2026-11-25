@@ -88,5 +88,29 @@ describe('App Routing Configuration', () => {
       expect(comp).toBe(HomestayDiscovery);
     }
   });
+
+  it('should register and lazily resolve HomestayDetail for "/homestays/:id"', async () => {
+    const detailRoute = routes.find((r) => r.path === 'homestays/:id');
+    expect(detailRoute).toBeDefined();
+    expect(detailRoute?.loadComponent).toBeDefined();
+
+    if (detailRoute?.loadComponent) {
+      const { HomestayDetail } = await import('./pages/homestay-detail/homestay-detail');
+      const comp = await (detailRoute.loadComponent as Function)();
+      expect(comp).toBe(HomestayDetail);
+    }
+  });
+
+  it('should register and lazily resolve HomestayBookingReview for "/homestays/:id/booking"', async () => {
+    const reviewRoute = routes.find((r) => r.path === 'homestays/:id/booking');
+    expect(reviewRoute).toBeDefined();
+    expect(reviewRoute?.loadComponent).toBeDefined();
+
+    if (reviewRoute?.loadComponent) {
+      const { HomestayBookingReview } = await import('./pages/homestay-booking-review/homestay-booking-review');
+      const comp = await (reviewRoute.loadComponent as Function)();
+      expect(comp).toBe(HomestayBookingReview);
+    }
+  });
 });
 

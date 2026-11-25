@@ -5,14 +5,18 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { DEMO_HOMESTAY_CATEGORIES, DEMO_HOMESTAYS } from '../data/demo-homestays.data';
 import {
+  BookingConfirmation,
+  BookingDraft,
   HomestayCategory,
   HomestayCategoryFilter,
+  HomestayDetail,
   HomestayListResponse,
   HomestaySearchParams,
   HomestaySummary,
 } from '../models/homestay.models';
 
 const WISHLIST_STORAGE_KEY = 'ceylongo_homestay_wishlist';
+const BOOKING_DRAFT_KEY = 'ceylongo_booking_draft';
 
 @Injectable({
   providedIn: 'root',
@@ -117,6 +121,130 @@ export class HomestayService {
 
   isWishlisted(homestayId: number): boolean {
     return this.wishlistSignal().includes(homestayId);
+  }
+
+  /**
+   * Retrieves full details for a specific homestay by numeric ID.
+   * Gracefully falls back to local demo properties for offline development.
+   */
+  getHomestayById(id: number | string): Observable<HomestayDetail | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId) || numericId <= 0) {
+      return of(null);
+    }
+
+    return this.http
+      .get<HomestayDetail>(`${this.apiBaseUrl}/homestays/${numericId}`)
+      .pipe(
+        map((homestay) => {
+          if (!homestay) return null;
+          return {
+            ...homestay,
+            is_wishlisted: this.isWishlisted(homestay.id),
+          };
+        }),
+        catchError(() => {
+          return of(this.findDemoHomestayById(numericId));
+        })
+      );
+  }
+
+  /**
+   * Finds a demo homestay by ID from the safe local dataset.
+   */
+  findDemoHomestayById(id: number | string): HomestayDetail | null {
+    const numericId = Number(id);
+    const item = DEMO_HOMESTAYS.find((h) => h.id === numericId);
+    if (!item) return null;
+
+    return {
+      ...item,
+      is_wishlisted: this.isWishlisted(item.id),
+    };
+  }
+
+  /**
+   * Saves active booking draft safely in client memory / sessionStorage for cross-page navigation.
+   */
+  setBookingDraft(draft: BookingDraft): void {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
+      }
+    } catch {
+      // Ignore sessionStorage exceptions in test/SSR contexts
+    }
+  }
+
+  /**
+   * Retrieves active booking draft from sessionStorage.
+   */
+  getBookingDraft(): BookingDraft | null {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const raw = sessionStorage.getItem(BOOKING_DRAFT_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  }
+
+  /**
+   * Clears any stored booking draft.
+   */
+  clearBookingDraft(): void {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  /**
+   * Calculates night count between two date strings (YYYY-MM-DD).
+   * Returns 0 if dates are invalid or check-out is before check-in.
+   */
+  calculateNights(checkIn: string, checkOut: string): number {
+    if (!checkIn || !checkOut) return 0;
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+
+    const diffMs = end.getTime() - start.getTime();
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  }
+
+  /**
+   * Calculates estimated price based on nightly rate and nights.
+   */
+  calculateEstimatedPrice(nightlyRate: number, nights: number): number {
+    if (nightlyRate <= 0 || nights <= 0) return 0;
+    return nightlyRate * nights;
+  }
+
+  /**
+   * Simulates reservation request confirmation in demo mode.
+   */
+  simulateBookingConfirmation(draft: BookingDraft): BookingConfirmation {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const ref = `CG-HS-${draft.homestayId}-${randomSuffix}`;
+    return {
+      bookingReference: ref,
+      homestayId: draft.homestayId,
+      homestayName: draft.homestayName,
+      checkIn: draft.checkIn,
+      checkOut: draft.checkOut,
+      totalGuests: draft.totalGuests,
+      nights: draft.nights,
+      estimatedTotal: draft.estimatedTotal,
+      hostName: 'Local Host',
+      confirmedAt: new Date().toISOString(),
+    };
   }
 
   /**

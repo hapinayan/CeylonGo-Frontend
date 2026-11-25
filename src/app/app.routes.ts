@@ -14,12 +14,24 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // HOMESTAY DISCOVERY & BOOKING - TRAVELER FRONTEND (PHASE 1)
+  // HOMESTAY DISCOVERY & BOOKING - TRAVELER FRONTEND (PHASE 1 & PHASE 2)
   {
     path: 'homestays',
     loadComponent: () =>
       import('./pages/homestay-discovery/homestay-discovery')
         .then(m => m.HomestayDiscovery)
+  },
+  {
+    path: 'homestays/:id/booking',
+    loadComponent: () =>
+      import('./pages/homestay-booking-review/homestay-booking-review')
+        .then(m => m.HomestayBookingReview)
+  },
+  {
+    path: 'homestays/:id',
+    loadComponent: () =>
+      import('./pages/homestay-detail/homestay-detail')
+        .then(m => m.HomestayDetail)
   },
   {
     path: 'homestay',
