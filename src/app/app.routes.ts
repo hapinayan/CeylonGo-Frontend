@@ -24,6 +24,36 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
+  // HOMESTAY DISCOVERY & BOOKING
+  {
+    path: 'homestays',
+    loadComponent: () =>
+      import('./pages/homestay-discovery/homestay-discovery')
+        .then(m => m.HomestayDiscovery)
+  },
+  {
+    path: 'homestays/:id/booking',
+    loadComponent: () =>
+      import('./pages/homestay-booking-review/homestay-booking-review')
+        .then(m => m.HomestayBookingReview)
+  },
+  {
+    path: 'homestays/:id',
+    loadComponent: () =>
+      import('./pages/homestay-detail/homestay-detail')
+        .then(m => m.HomestayDetail)
+  },
+  {
+    path: 'homestay',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+  {
+    path: 'explore',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+
   // LEGACY TRAVELER HOMEPAGE REDIRECT
   {
     path: 'traveler/home',
@@ -169,7 +199,7 @@ export const routes: Routes = [
         .then(m => m.ProviderResetPassword)
   },
 
-  // PROVIDER DASHBOARD (AUTHENTICATED PLACEHOLDER)
+  // PROVIDER DASHBOARD (AUTHENTICATED)
   {
     path: 'provider/dashboard',
     canActivate: [providerAuthGuard],
@@ -178,15 +208,18 @@ export const routes: Routes = [
         .then(m => m.ProviderDashboard)
   },
 
+  // EXPERIENCES MODULE
   {
     path: 'experiences',
-    loadChildren: () => import('./experiences/experiences.routes').then(m => m.experiencesRoutes)
+    loadChildren: () =>
+      import('./experiences/experiences.routes')
+        .then(m => m.experiencesRoutes)
   },
 
-  // UNKNOWN URL - GO TO FIRST PAGE
+  // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',
-    redirectTo: 'auth'
+    redirectTo: 'homestays'
   }
 
 ];

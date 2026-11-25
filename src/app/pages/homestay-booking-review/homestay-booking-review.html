@@ -1,0 +1,316 @@
+<div class="booking-review-page">
+  <!-- TOP NAVBAR -->
+  <header class="cg-navbar" role="banner">
+    <div class="nav-container">
+      <div class="nav-left">
+        @if (homestay()) {
+          <a [routerLink]="['/homestays', homestay()!.id]" class="btn-nav-back" aria-label="Back to homestay details">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Back to Property</span>
+          </a>
+        } @else {
+          <a routerLink="/homestays" class="btn-nav-back" aria-label="Back to homestays">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>All Stays</span>
+          </a>
+        }
+
+        <a routerLink="/homestays" class="brand-link" aria-label="CeylonGo Home">
+          <span class="brand-text-logo">CeylonGo</span>
+        </a>
+      </div>
+
+      <div class="nav-center-step">
+        <span class="step-badge">Step 2 of 2: Review & Request</span>
+      </div>
+
+      <div class="nav-right">
+        <span class="secure-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Safe Simulation
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- DEMO NOTICE BAR -->
+  <div class="demo-notice-bar" role="status">
+    <div class="demo-notice-content">
+      <span class="demo-tag">DEMO PREVIEW</span>
+      <span>Simulated reservation flow. No real payment, live database write, or live API request is executed.</span>
+    </div>
+  </div>
+
+  <main class="review-main-viewport">
+    @if (isLoading()) {
+      <div class="review-container skeleton-state" aria-busy="true" aria-label="Loading booking review">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-col"></div>
+          <div class="skeleton-col"></div>
+        </div>
+      </div>
+    } @else if (isNotFound() || !homestay() || !draft()) {
+      <div class="not-found-state">
+        <h2 class="not-found-title">Booking Details Unavailable</h2>
+        <p class="not-found-text">
+          We could not load booking details for this homestay. Please select a property to start a reservation.
+        </p>
+        <a routerLink="/homestays" class="btn-back-home">Return to Homestays</a>
+      </div>
+    } @else if (isConfirmed() && confirmationData()) {
+      <!-- 5. CONFIRMED SIMULATED SUCCESS STATE -->
+      <div class="confirmation-success-card">
+        <div class="success-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+
+        <span class="confirmation-badge">RESERVATION REQUEST SUBMITTED (DEMO)</span>
+        <h1 class="success-title">Your Stay is Requested!</h1>
+        <p class="success-subtitle">
+          Host {{ homestay()!.host_name || 'Kamal' }} will review your stay dates. In production mode, you would receive confirmation via email and SMS.
+        </p>
+
+        <!-- Booking Code Box -->
+        <div class="booking-code-box">
+          <span class="code-label">Simulated Booking Reference:</span>
+          <span class="code-val">{{ confirmationData()!.bookingReference }}</span>
+        </div>
+
+        <!-- Summary Recap -->
+        <div class="confirmation-summary-grid">
+          <div class="summary-col">
+            <span class="summary-head">Property</span>
+            <span class="summary-bold">{{ homestay()!.name }}</span>
+            <span class="summary-muted">{{ homestay()!.location }}</span>
+          </div>
+          <div class="summary-col">
+            <span class="summary-head">Dates & Guests</span>
+            <span class="summary-bold">{{ formattedCheckIn() }} – {{ formattedCheckOut() }}</span>
+            <span class="summary-muted">{{ draft()!.nights }} nights · {{ draft()!.totalGuests }} guests</span>
+          </div>
+          <div class="summary-col">
+            <span class="summary-head">Estimated Total</span>
+            <span class="summary-bold text-blue">LKR {{ draft()!.estimatedTotal | number }}</span>
+            <span class="summary-muted">No live charges incurred</span>
+          </div>
+        </div>
+
+        <div class="confirmation-actions-row">
+          <a routerLink="/homestays" class="btn-action-primary">
+            Explore More Homestays
+          </a>
+          <a [routerLink]="['/homestays', homestay()!.id]" class="btn-action-secondary">
+            View Property Page
+          </a>
+        </div>
+      </div>
+    } @else {
+      <!-- 4. ACTIVE BOOKING REVIEW -->
+      <div class="review-container">
+        <div class="review-heading-wrap">
+          <h1 class="review-title">Review Your Reservation Request</h1>
+          <p class="review-subtitle">
+            Verify your trip dates, guest count, and property details before submitting your demo request.
+          </p>
+        </div>
+
+        <div class="review-layout-grid">
+          <!-- LEFT COLUMN: TRIP DETAILS & TRAVELER FORM -->
+          <div class="review-left-col">
+            <!-- Property Preview Card -->
+            <section class="card-section property-preview-card">
+              <img [src]="draft()!.homestayImage" [alt]="draft()!.homestayName" class="preview-img" />
+              <div class="preview-info">
+                <span class="preview-cat">{{ homestay()!.category_name }}</span>
+                <h2 class="preview-name">{{ draft()!.homestayName }}</h2>
+                <span class="preview-loc">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {{ draft()!.homestayLocation }}
+                </span>
+                <div class="preview-rating">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span>{{ homestay()!.rating }} ({{ homestay()!.review_count }} reviews)</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Trip Specs Card with Edit Button -->
+            <section class="card-section trip-specs-card">
+              <div class="specs-header">
+                <h3 class="card-heading">Your Trip Details</h3>
+                <button type="button" class="btn-edit-details" (click)="editBookingDetails()">
+                  Edit Details
+                </button>
+              </div>
+
+              <div class="specs-grid">
+                <div class="spec-cell">
+                  <span class="spec-label">DATES</span>
+                  <span class="spec-main">{{ formattedCheckIn() }} – {{ formattedCheckOut() }}</span>
+                  <span class="spec-sub">{{ draft()!.nights }} night{{ draft()!.nights > 1 ? 's' : '' }}</span>
+                </div>
+                <div class="spec-cell">
+                  <span class="spec-label">GUESTS</span>
+                  <span class="spec-main">
+                    {{ draft()!.totalGuests }} Guest{{ draft()!.totalGuests > 1 ? 's' : '' }}
+                  </span>
+                  <span class="spec-sub">
+                    {{ draft()!.adults }} Adult{{ draft()!.adults > 1 ? 's' : '' }}
+                    @if (draft()!.children > 0) {
+                      , {{ draft()!.children }} Child{{ draft()!.children > 1 ? 'ren' : '' }}
+                    }
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Traveler Information Inputs -->
+            <section class="card-section traveler-info-card">
+              <h3 class="card-heading">Traveler Information</h3>
+              <p class="card-subheading">Host will receive these details with your reservation.</p>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="review-guest-name" class="form-label">Full Name *</label>
+                  <input
+                    id="review-guest-name"
+                    type="text"
+                    class="form-input"
+                    [ngModel]="travelerName()"
+                    (ngModelChange)="travelerName.set($event)"
+                    placeholder="e.g. Alex Morgan"
+                  />
+                </div>
+
+                <div class="form-field">
+                  <label for="review-guest-email" class="form-label">Email Address *</label>
+                  <input
+                    id="review-guest-email"
+                    type="email"
+                    class="form-input"
+                    [ngModel]="travelerEmail()"
+                    (ngModelChange)="travelerEmail.set($event)"
+                    placeholder="e.g. alex@example.com"
+                  />
+                </div>
+
+                <div class="form-field full-width">
+                  <label for="review-guest-phone" class="form-label">Phone Number</label>
+                  <input
+                    id="review-guest-phone"
+                    type="tel"
+                    class="form-input"
+                    [ngModel]="travelerPhone()"
+                    (ngModelChange)="travelerPhone.set($event)"
+                    placeholder="+94 77 123 4567"
+                  />
+                </div>
+
+                <div class="form-field full-width">
+                  <label for="review-special-req" class="form-label">Message or Special Requests (Optional)</label>
+                  <textarea
+                    id="review-special-req"
+                    rows="3"
+                    class="form-textarea"
+                    [ngModel]="specialRequests()"
+                    (ngModelChange)="specialRequests.set($event)"
+                    placeholder="Arriving around 3 PM by train, looking forward to staying with your family!"
+                  ></textarea>
+                </div>
+              </div>
+            </section>
+
+            <!-- Ground Rules & Policies -->
+            <section class="card-section policies-card">
+              <h3 class="card-heading">Ground Rules & Cancellation</h3>
+              <ul class="policies-list">
+                <li><strong>Cancellation Policy:</strong> {{ homestay()!.cancellation_policy }}</li>
+                <li><strong>Check-in:</strong> {{ homestay()!.check_in_time || '2:00 PM' }} · <strong>Check-out:</strong> {{ homestay()!.check_out_time || '11:00 AM' }}</li>
+                <li>Follow house rules and treat the host family home with respect.</li>
+              </ul>
+            </section>
+          </div>
+
+          <!-- RIGHT COLUMN: PRICE BREAKDOWN & SUBMIT -->
+          <div class="review-right-col">
+            <aside class="sticky-price-card" aria-label="Reservation pricing summary">
+              <h3 class="summary-heading">Price Summary</h3>
+
+              <div class="summary-breakdown">
+                <div class="summary-row">
+                  <span class="row-label">
+                    LKR {{ draft()!.nightlyRate | number }} × {{ draft()!.nights }} night{{ draft()!.nights > 1 ? 's' : '' }}
+                  </span>
+                  <span class="row-val">LKR {{ draft()!.basePrice | number }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="row-label text-muted">Service & Platform Fee</span>
+                  <span class="row-val text-green">LKR 0 (Demo Mode)</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row total-row">
+                  <span class="total-label">Total Booking Estimate</span>
+                  <span class="total-val">LKR {{ draft()!.estimatedTotal | number }}</span>
+                </div>
+              </div>
+
+              <!-- Demo Guarantee Notice -->
+              <div class="demo-guarantee-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div class="guarantee-text">
+                  <strong>Demo Mode Simulation:</strong>
+                  <span>No credit card or banking information is requested or persisted.</span>
+                </div>
+              </div>
+
+              <!-- Submit Reservation Button -->
+              <button
+                type="button"
+                class="btn-confirm-booking"
+                (click)="confirmReservation()"
+              >
+                Confirm Reservation (Demo)
+              </button>
+
+              <button
+                type="button"
+                class="btn-back-link"
+                (click)="editBookingDetails()"
+              >
+                Back to Homestay
+              </button>
+            </aside>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  @if (toastMessage()) {
+    <div class="cg-toast" role="alert">
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>
+
