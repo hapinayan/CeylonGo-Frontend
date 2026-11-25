@@ -1,0 +1,122 @@
+<header class="navbar-container">
+  <div class="navbar-inner">
+    <!-- BRAND LOGO -->
+    <a routerLink="/artisans" class="navbar-brand" (click)="closeMenus()" aria-label="CeylonGo Home">
+      <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="brand-logo-img" />
+    </a>
+
+    <!-- DESKTOP NAVIGATION LINKS -->
+    <nav class="navbar-nav" aria-label="Main Navigation">
+      <a routerLink="/stays" routerLinkActive="active" class="nav-link" (click)="closeMenus()">Stays</a>
+      <a routerLink="/experiences" routerLinkActive="active" class="nav-link" (click)="closeMenus()">Experiences</a>
+      <a routerLink="/tour-guides" routerLinkActive="active" class="nav-link" (click)="closeMenus()">Tour Guides</a>
+      <a routerLink="/bike-rentals" routerLinkActive="active" class="nav-link" (click)="closeMenus()">Bike Rentals</a>
+      <a routerLink="/artisans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-link nav-link-artisan" (click)="closeMenus()">
+        Artisans
+      </a>
+      <a routerLink="/community" routerLinkActive="active" class="nav-link" (click)="closeMenus()">Community</a>
+      <a routerLink="/ai-planner" routerLinkActive="active" class="nav-link" (click)="closeMenus()">AI Trip Planner</a>
+    </nav>
+
+    <!-- RIGHT UTILITIES -->
+    <div class="navbar-actions">
+      <!-- FAVORITES (HEART) -->
+      <a routerLink="/artisans/favorites" [queryParams]="queryParams()" class="action-btn" aria-label="View My Favorites" (click)="closeMenus()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+        </svg>
+        @if (favoriteCount() > 0) {
+          <span class="badge-count">{{ favoriteCount() }}</span>
+        }
+      </a>
+
+      <!-- NOTIFICATIONS (BELL) -->
+      <button type="button" class="action-btn" aria-label="Notifications" title="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+      </button>
+
+      <!-- USER PROFILE DROPDOWN / SIGN IN -->
+      @if (isAuthenticated()) {
+        <div class="profile-wrapper">
+          <button type="button" class="profile-btn" (click)="toggleProfileMenu()" [attr.aria-expanded]="isProfileMenuOpen()" aria-label="User profile menu">
+            <span class="avatar-circle">
+              {{ (currentUser()?.full_name || 'T').charAt(0).toUpperCase() }}
+            </span>
+            <span class="profile-name">{{ currentUser()?.full_name?.split(' ')?.[0] || 'Traveler' }}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+
+          @if (isProfileMenuOpen()) {
+            <div class="dropdown-menu">
+              <div class="dropdown-header">
+                <span class="user-name">{{ currentUser()?.full_name }}</span>
+                <span class="user-email">{{ currentUser()?.email }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a routerLink="/artisans/favorites" class="dropdown-item" (click)="closeMenus()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+                My Favorites
+              </a>
+              <div class="dropdown-divider"></div>
+              <button type="button" class="dropdown-item logout-item" (click)="logout()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <a routerLink="/auth" class="signin-pill-btn" (click)="closeMenus()">
+          Sign In
+        </a>
+      }
+
+      <!-- MOBILE HAMBURGER -->
+      <button type="button" class="mobile-toggle-btn" (click)="toggleMenu()" aria-label="Toggle navigation">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          @if (!isMenuOpen()) {
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          } @else {
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          }
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- MOBILE NAVIGATION DRAWER -->
+  @if (isMenuOpen()) {
+    <div class="mobile-nav-drawer">
+      <a routerLink="/stays" class="mobile-nav-link" (click)="closeMenus()">Stays</a>
+      <a routerLink="/experiences" class="mobile-nav-link" (click)="closeMenus()">Experiences</a>
+      <a routerLink="/tour-guides" class="mobile-nav-link" (click)="closeMenus()">Tour Guides</a>
+      <a routerLink="/bike-rentals" class="mobile-nav-link" (click)="closeMenus()">Bike Rentals</a>
+      <a routerLink="/artisans" class="mobile-nav-link active" (click)="closeMenus()">Artisans</a>
+      <a routerLink="/community" class="mobile-nav-link" (click)="closeMenus()">Community</a>
+      <a routerLink="/ai-planner" class="mobile-nav-link" (click)="closeMenus()">AI Trip Planner</a>
+      <div class="mobile-nav-divider"></div>
+      <a routerLink="/artisans/favorites" class="mobile-nav-link" (click)="closeMenus()">
+        Favorites @if (favoriteCount() > 0) { ({{ favoriteCount() }}) }
+      </a>
+      @if (isAuthenticated()) {
+        <button type="button" class="mobile-nav-link logout-btn" (click)="logout()">Sign Out</button>
+      } @else {
+        <a routerLink="/auth" class="mobile-nav-link signin-link" (click)="closeMenus()">Sign In / Register</a>
+      }
+    </div>
+  }
+</header>

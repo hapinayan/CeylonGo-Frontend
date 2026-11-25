@@ -1,0 +1,47 @@
+<div class="category-pills-bar" role="tablist" aria-label="Artisan Categories">
+  @for (cat of primaryCategories; track cat.id) {
+    <button
+      type="button"
+      role="tab"
+      class="category-pill"
+      [class.active]="isSelected(cat.id)"
+      [attr.aria-selected]="isSelected(cat.id)"
+      (click)="select(cat.id)"
+    >
+      {{ cat.label }}
+    </button>
+  }
+
+  @if (extraCategories().length > 0) {
+    <div class="more-dropdown-wrapper">
+      <button
+        type="button"
+        class="category-pill more-btn"
+        [class.active]="isMoreActive()"
+        [attr.aria-expanded]="showMoreDropdown()"
+        (click)="toggleMoreDropdown($event)"
+      >
+        <span>{{ moreButtonLabel() }}</span>
+        <svg class="dropdown-chevron" [class.open]="showMoreDropdown()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      @if (showMoreDropdown()) {
+        <div class="dropdown-menu" role="menu">
+          @for (extra of extraCategories(); track extra) {
+            <button
+              type="button"
+              role="menuitem"
+              class="dropdown-item"
+              [class.active]="isSelected(extra)"
+              (click)="selectFromMore(extra)"
+            >
+              {{ extra }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
