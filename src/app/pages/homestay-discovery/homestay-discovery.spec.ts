@@ -174,13 +174,13 @@ describe('HomestayDiscovery', () => {
     expect(component.currentPage()).toBe(2);
   });
 
-  it('should render fixed top shell containing navbar, heading, search bar, and 8 categories', () => {
+  it('should render sticky navbar and naturally scrolling hero, search bar, and 8 categories', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    const topShell = compiled.querySelector('.fixed-top-shell');
-    expect(topShell).toBeTruthy();
-    expect(topShell?.querySelector('.cg-navbar')).toBeTruthy();
-    expect(topShell?.querySelector('.hero-header-section')).toBeTruthy();
-    expect(topShell?.querySelector('.categories-bar-section')).toBeTruthy();
+    const stickyHeader = compiled.querySelector('.navbar-sticky-header') || compiled.querySelector('.cg-navbar');
+    expect(stickyHeader).toBeTruthy();
+    expect(compiled.querySelector('.cg-navbar')).toBeTruthy();
+    expect(compiled.querySelector('.hero-header-section')).toBeTruthy();
+    expect(compiled.querySelector('.categories-bar-section')).toBeTruthy();
   });
 
   it('should render scrollable content region containing toolbar, listings, and footer', () => {

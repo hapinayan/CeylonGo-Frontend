@@ -1,8 +1,8 @@
 <div class="homestay-page" (click)="closeGuestDropdown()">
   <!-- =========================================================================
-       FIXED TOP SHELL (Pinned at top: Top Navbar + Hero Heading + Search + 8 Categories)
+       1. TOP NAVIGATION (The ONLY sticky element pinned at top: 0)
        ========================================================================= -->
-  <header class="fixed-top-shell">
+  <header class="navbar-sticky-header">
     <!-- 1. TOP NAVIGATION -->
     <nav class="cg-navbar" aria-label="Main Navigation">
       <div class="navbar-container">
@@ -115,9 +115,12 @@
         </div>
       }
     </nav>
+  </header>
 
-    <!-- 2. HEADING & 3. SEARCH BAR SECTION -->
-    <section class="hero-header-section">
+  <!-- =========================================================================
+       2. HEADING & 3. SEARCH BAR SECTION (Scrolls naturally with page)
+       ========================================================================= -->
+  <section class="hero-header-section">
       <div class="hero-container">
         <!-- Exact Heading & Subtitle -->
         <div class="hero-text-block">
@@ -317,14 +320,13 @@
         </div>
       </div>
     </section>
-  </header>
 
   <!-- =========================================================================
-       SCROLLABLE HOMESTAY LISTINGS AREA (Only this region scrolls vertically)
+       5. HOMESTAY LISTINGS CONTENT REGION (Scrolls naturally with page)
        ========================================================================= -->
   <div class="scrollable-content-region" #scrollRegion>
     <!-- 5. RESULTS TOOLBAR -->
-    <section class="results-toolbar-section">
+    <section class="results-toolbar-section" id="resultsToolbar" #resultsToolbar>
       <div class="toolbar-container">
         <!-- Results Heading: "312 Homestays in Sri Lanka" (labeled design preview / true filtered count) -->
         <div class="toolbar-heading-group">
