@@ -1,0 +1,70 @@
+<footer class="traveler-footer">
+  <div class="footer-container">
+    <div class="footer-top">
+
+      <!-- BRAND IDENTITY -->
+      <div class="footer-col brand-col">
+        <div class="footer-logo">
+          <span class="logo-ceylon">Ceylon</span><span class="logo-go">Go</span>
+        </div>
+        <p class="brand-tagline">
+          Sri Lanka's trusted travel ecosystem. Discover certified local guides, unique homestays, and authentic island experiences.
+        </p>
+        <div class="trust-badge">
+          <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>SLTDA Certified Local Guides & Safe Travel</span>
+        </div>
+      </div>
+
+      <!-- EXPLORE LINKS -->
+      <div class="footer-col">
+        <h4 class="col-title">Explore Sri Lanka</h4>
+        <ul class="col-links">
+          <li><a routerLink="/tour-guides">Local Tour Guides</a></li>
+          <li><a routerLink="/stays">Homestays & Villas</a></li>
+          <li><a routerLink="/experiences">Cultural Experiences</a></li>
+          <li><a routerLink="/bike-rentals">Bike & Scooter Rentals</a></li>
+          <li><a routerLink="/ai-trip-planner">AI Trip Planner</a></li>
+        </ul>
+      </div>
+
+      <!-- POPULAR DESTINATIONS -->
+      <div class="footer-col">
+        <h4 class="col-title">Popular Hubs</h4>
+        <ul class="col-links">
+          <li><a routerLink="/tour-guides" [queryParams]="{ location: 'Kandy' }">Kandy & Knuckles</a></li>
+          <li><a routerLink="/tour-guides" [queryParams]="{ location: 'Ella' }">Ella & Badulla</a></li>
+          <li><a routerLink="/tour-guides" [queryParams]="{ location: 'Galle' }">Galle Fort & Coast</a></li>
+          <li><a routerLink="/tour-guides" [queryParams]="{ location: 'Sigiriya' }">Sigiriya Rock Fortress</a></li>
+          <li><a routerLink="/tour-guides" [queryParams]="{ location: 'Yala' }">Yala Wildlife Safaris</a></li>
+        </ul>
+      </div>
+
+      <!-- SERVICE PROVIDERS & SUPPORT -->
+      <div class="footer-col">
+        <h4 class="col-title">Service Providers</h4>
+        <ul class="col-links">
+          <li><a routerLink="/provider">Provider Portal</a></li>
+          <li><a routerLink="/provider/register">Register as a Guide</a></li>
+          <li><a routerLink="/terms">Terms & Conditions</a></li>
+          <li><a routerLink="/privacy">Privacy Policy</a></li>
+          <li><a routerLink="/provider/welcome">Support & Safety Center</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p class="copyright">
+        &copy; {{ currentYear }} CeylonGo (Pvt) Ltd. All rights reserved. Made with love in Sri Lanka.
+      </p>
+      <div class="bottom-links">
+        <span>Inter-island Certified Platform</span>
+        <span>•</span>
+        <span>LKR Currency (Sri Lankan Rupee)</span>
+      </div>
+    </div>
+  </div>
+</footer>

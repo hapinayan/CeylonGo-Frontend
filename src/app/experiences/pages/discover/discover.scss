@@ -1,0 +1,337 @@
+.experiences-shell {
+  --experience-blue: #0066ff;
+  --experience-navy: #082b5c;
+  --experience-light: #eaf5ff;
+  --experience-white: #fff;
+  --experience-border: #d8e8f8;
+  --experience-muted: #64748b;
+  --experience-shadow: 0 2px 5px rgb(8 43 92 / 9%);
+  --experience-search-shadow: 0 3px 6px rgb(8 43 92 / 16%);
+
+  min-height: 100vh;
+  background: var(--experience-white);
+  color: var(--experience-navy);
+  font-family: var(--cg-font, Inter, sans-serif);
+
+  [hidden] { display: none !important; }
+  :is(a, button, input, select):focus-visible {
+    outline: 2px solid var(--experience-blue);
+    outline-offset: 3px;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { color: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  input, select { color: inherit; min-width: 0; }
+
+  .traveler-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 66px;
+    padding: .55rem max(clamp(1rem, 4vw, 3.5rem), calc((100% - 1536px) / 2));
+    border-bottom: 1px solid var(--experience-border);
+
+    nav, .traveler-actions { display: flex; align-items: center; gap: clamp(.25rem, .85vw, .8rem); }
+    nav { justify-content: center; }
+    nav a, nav button, .traveler-actions > * {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      padding: .45rem .65rem;
+      white-space: nowrap;
+      font-size: .85rem;
+      font-weight: 650;
+    }
+    nav a.active, .traveler-actions a.active { background: var(--experience-light); color: #004ec7; }
+    nav button:disabled { opacity: .78; }
+    .traveler-actions > * { min-width: 36px; min-height: 36px; justify-content: center; padding: .35rem; }
+    .traveler-actions app-experience-icon { font-size: 1.45rem; }
+    .traveler-actions .traveler-profile { gap: .5rem; }
+    .traveler-profile app-experience-icon { padding: .35rem; width: 2.15rem; height: 2.15rem; border-radius: 50%; background: var(--experience-light); }
+    .traveler-actions span { max-width: 7rem; overflow: hidden; text-overflow: ellipsis; }
+  }
+
+  .traveler-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: 1.95rem;
+    font-weight: 800;
+    letter-spacing: -.045em;
+    white-space: nowrap;
+  }
+
+  .discover { max-width: 1660px; margin: auto; padding: 3rem clamp(1rem, 3.1vw, 3.25rem) 3rem; }
+  .discover-intro {
+    text-align: center;
+    h1 { margin: 0 0 .4rem; font-size: clamp(2rem, 3.65vw, 3.2rem); font-weight: 800; letter-spacing: -.045em; line-height: 1.1; }
+    p { max-width: 65ch; margin-block: 0; margin-inline: auto; line-height: 1.45; font-size: clamp(1rem, 1.55vw, 1.2rem); }
+    .preview-note { max-width: 110ch; margin-top: .45rem; color: var(--experience-muted); font-size: .75rem; line-height: 1.35; }
+  }
+
+  .experience-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1.52fr) minmax(0, 1fr) minmax(0, .86fr) auto;
+    align-items: center;
+    gap: .65rem;
+    margin: .9rem auto 2.65rem;
+    width: 92%;
+    max-width: 1320px;
+    min-height: 74px;
+    padding: .6rem .8rem;
+    border: 1px solid var(--experience-border);
+    border-radius: 999px;
+    box-shadow: var(--experience-search-shadow);
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      min-width: 0;
+      padding: .05rem 1.05rem;
+      font-size: .88rem;
+      font-weight: 700;
+      app-experience-icon { color: var(--experience-blue); font-size: 1.85rem; }
+      span { flex: 1; min-width: 0; }
+      .search-field-value { display: block; position: relative; }
+      .search-field-hint { display: block; color: var(--experience-muted); font-size: .9rem; font-weight: 400; }
+      .search-field-value .search-field-hint { position: absolute; inset: 0; pointer-events: none; }
+      .search-field-value:focus-within .search-field-hint { visibility: hidden; }
+      .search-field-value:has(.search-field-hint):not(:focus-within) input { color: transparent; }
+      .search-field-value input::-webkit-calendar-picker-indicator { opacity: .7; }
+      .search-field-value:has(.search-field-hint):not(:focus-within) input::-webkit-calendar-picker-indicator { opacity: 0; }
+      input { display: block; width: 100%; margin-top: .15rem; border: 0; background: transparent; font-weight: 400; font-size: .9rem; }
+      input::placeholder { color: var(--experience-muted); }
+    }
+    label + label { position: relative; }
+    label + label::before { content: ''; position: absolute; inset-block: 25%; inset-inline-start: 0; width: 1px; background: var(--experience-border); }
+  }
+
+  .search-submit, .outline-control, .sort-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    border: 1px solid var(--experience-border);
+    border-radius: 999px;
+    padding: .6rem .95rem;
+    background: var(--experience-white);
+    font-weight: 700;
+    box-shadow: var(--experience-shadow);
+  }
+  .search-submit { min-height: 50px; padding: .65rem clamp(1.15rem, 2.25vw, 1.8rem); background: var(--experience-blue); color: white; border-color: transparent; box-shadow: none; }
+  .search-submit app-experience-icon, .outline-control app-experience-icon { font-size: 1.2em; }
+  .form-error { color: #a31526; }
+  .search-note { color: var(--experience-muted); font-size: .86rem; }
+
+  .category-nav {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: .35rem;
+    margin: 0 clamp(0rem, .85vw, .8rem) 2.85rem;
+
+    button {
+      display: grid;
+      justify-items: center;
+      align-content: start;
+      gap: .45rem;
+      min-height: 100px;
+      padding: .4rem .2rem;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      background: transparent;
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    button[aria-pressed='true'] {
+      background: var(--experience-light);
+      border-color: var(--experience-blue);
+      box-shadow: var(--experience-shadow);
+    }
+    .category-icon {
+      display: grid;
+      place-items: center;
+      width: min(92px, 100%);
+      height: 56px;
+      background: var(--experience-light);
+      color: var(--experience-blue);
+      border-radius: 18px;
+      font-size: 2.15rem;
+    }
+  }
+
+  .results-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 .3rem 2rem;
+    h2 { margin: 0; font-size: clamp(1.25rem, 2vw, 1.65rem); letter-spacing: -.03em; }
+  }
+  .results-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; }
+  .sort-control { gap: .3rem; white-space: nowrap; }
+  .sort-control select { field-sizing: content; border: 0; background: white; font-weight: 700; max-width: 10rem; padding-inline-end: .5rem; }
+  .filter-panel {
+    margin: 0 0 1.2rem;
+    padding: .85rem 1rem 1rem;
+    min-width: 0;
+    border: 1px solid var(--experience-border);
+    border-radius: 14px;
+    legend { font-weight: 700; }
+    label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: 0 .85rem .6rem 0; }
+    select { padding: .4rem; border: 1px solid var(--experience-border); border-radius: 6px; background: white; }
+  }
+
+  .eco-range-filters {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin: .55rem 0 1rem;
+    input { max-width: 8rem; padding: .3rem; border: 1px solid var(--experience-border); border-radius: 6px; }
+  }
+
+  .experience-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.8rem clamp(.8rem, 1.35vw, 1.35rem); }
+  .experience-card {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--experience-border);
+    border-radius: 15px;
+    box-shadow: var(--experience-shadow);
+    background: var(--experience-white);
+  }
+  .experience-card--linked { transition: transform 220ms ease, box-shadow 220ms ease; }
+  .card-title-link::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 15px; }
+  .card-title-link:focus-visible::after { outline: 2px solid var(--experience-blue); outline-offset: 3px; }
+  .experience-card--linked .card-media img { transition: transform 220ms ease; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .experience-card--linked:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgb(8 43 92 / 14%); }
+    .experience-card--linked:hover .card-media img { transform: scale(1.03); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .experience-card--linked, .experience-card--linked .card-media img { transition: none; }
+  }
+  .card-media {
+    position: relative;
+    aspect-ratio: 1.6;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 13px;
+    background: var(--experience-light);
+    color: #2562a9;
+    &[data-category='wildlife'], &[data-category='eco'] { background: #e2f2e5; color: #267146; }
+    &[data-category='culture'], &[data-category='food'] { background: #f5eddd; color: #875b28; }
+    img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+    .placeholder { font-size: clamp(3rem, 6vw, 5rem); opacity: .7; }
+  }
+  .card-save { position: absolute; z-index: 2; top: .5rem; right: .5rem; }
+  .card-save .outline-control { border-radius: 50%; padding: .45rem; color: var(--experience-navy); }
+  .card-save button[aria-pressed='true'] svg { fill: #0066ff; color: #0066ff; }
+  .favorite {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    top: .5rem;
+    right: .5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--experience-navy);
+    border-radius: 50%;
+    border: 1px solid var(--experience-border);
+    background: white;
+    font-size: 1.25rem;
+    &[aria-pressed='true'] { color: #0051c9; }
+    &[aria-pressed='true'] svg { fill: currentColor; }
+    &:focus-visible { outline-offset: 1px; }
+  }
+  .category-badge {
+    position: absolute;
+    left: .65rem;
+    bottom: .25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: 999px;
+    padding: .32rem .62rem;
+    background: var(--experience-light);
+    color: #004bb7;
+    font-size: .76rem;
+    font-weight: 700;
+  }
+  [data-category='eco'] .category-badge, [data-category='wildlife'] .category-badge { color: #146536; background: #e7faeb; }
+  .card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: .8rem .85rem .9rem;
+    h3 { margin: 0; font-size: clamp(.97rem, 1.35vw, 1.12rem); font-weight: 770; letter-spacing: -.025em; }
+  }
+  .card-location, .card-rating { display: flex; align-items: center; gap: .25rem; }
+  .card-location { margin: .38rem 0 .65rem; font-size: .83rem; color: var(--experience-muted); }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-top: auto;
+    font-size: .86rem;
+    small { color: var(--experience-muted); }
+  }
+  .card-rating app-experience-icon { color: #e59b00; font-size: 1.12rem; }
+  .card-rating svg { fill: #ffb400; }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin-top: 2.5rem;
+    button { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border: 1px solid var(--experience-border); border-radius: 50%; background: #f4f7fb; font-weight: 700; }
+    button[aria-current='page'] { background: var(--experience-blue); color: white; }
+  }
+  .empty-results { padding: 1.75rem; border: 1px solid var(--experience-border); border-radius: 14px; text-align: center; }
+  .empty-results h3 { margin-top: 0; }
+
+  @media (max-width: 1020px) {
+    .traveler-header { flex-wrap: wrap; }
+    .traveler-header nav { order: 3; justify-content: flex-start; flex: 1 1 100%; overflow-x: auto; padding: .25rem; }
+    .experience-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .experience-search { width: 100%; }
+    .experience-search label { padding-inline: .55rem; gap: .45rem; }
+    .category-nav { grid-template-columns: repeat(8, minmax(105px, 1fr)); overflow-x: auto; padding: .25rem; }
+  }
+
+  @media (max-width: 620px) {
+    .discover { padding-top: 1.8rem; }
+    .traveler-header { gap: .5rem; }
+    .traveler-header .traveler-actions { gap: 0; }
+    .traveler-header .traveler-actions > *, .traveler-header nav > * { min-height: 44px; }
+    .traveler-header .traveler-actions > * { min-width: 44px; padding: .28rem; }
+    .traveler-header .traveler-actions .traveler-profile { gap: .25rem; }
+    .traveler-header .traveler-actions app-experience-icon { font-size: 1.2rem; }
+    .traveler-header .traveler-profile app-experience-icon { width: 1.6rem; height: 1.6rem; padding: .25rem; }
+    .traveler-header .traveler-actions span { max-width: 3.4rem; }
+    .pagination button { min-width: 44px; min-height: 44px; }
+    .favorite, .card-save .outline-control { min-width: 44px; min-height: 44px; }
+    .outline-control { min-height: 44px; }
+    .traveler-brand { font-size: 1.35rem; }
+    .experience-search { grid-template-columns: minmax(0, 1fr); border-radius: 18px; padding: .75rem; margin-bottom: 1.3rem; }
+    .experience-search label { padding: .55rem .4rem; }
+    .experience-search label + label { border-top: 1px solid var(--experience-border); }
+    .experience-search label + label::before { display: none; }
+    .category-nav { margin-bottom: 1.5rem; }
+    .results-bar { align-items: flex-start; flex-direction: column; }
+    .experience-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 350px) {
+    .traveler-header .traveler-profile span { display: none; }
+  }
+}

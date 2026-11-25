@@ -1,0 +1,24 @@
+@use './rental-ui';
+.vehicle-details { padding-block: 1.5rem 4rem; }
+.details-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.5rem; margin-top: 1.25rem; }
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; align-content: start; }
+.gallery app-rental-image { border-radius: .9rem; overflow: hidden; }
+.gallery app-rental-image:first-child { grid-column: 1 / -1; }
+.specifications, .reviews { border: 1px solid #d8e8f8; border-radius: 1rem; padding: 1.1rem; overflow-wrap: anywhere; }
+.title-line { display: flex; gap: .5rem; align-items: start; justify-content: space-between; }
+.title-line h1 { margin: 0; font-size: clamp(1.75rem, 3vw, 2.65rem); letter-spacing: -.03em; }
+dl { display: grid; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr); gap: .65rem; }
+dt { font-weight: 700; }
+dd { margin: 0; color: #475569; }
+.booking-notice { padding: .75rem; background: #eaf5ff; border-radius: .65rem; margin-bottom: 0; }
+.reviews { margin-top: 1rem; }
+.reviews h2 { margin-top: 0; }
+.reviews article { border-top: 1px solid #d8e8f8; }
+@media (max-width: 740px) { .details-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.rental-summary { border: 1px solid #d8e8f8; border-radius: 1rem; padding: 1.1rem; background: #fff; align-self: start; }
+.rental-summary h2 { margin-top: 0; }
+.preview-booking { margin-top: .85rem; }
+.share-url { display: block; width: 100%; }
+.details-sidebar { display: grid; gap: 1rem; align-content: start; }
+@media (min-width: 741px) { .details-sidebar { position: sticky; top: 5rem; align-self: start; } }

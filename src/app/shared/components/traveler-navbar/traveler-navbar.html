@@ -1,0 +1,402 @@
+<header class="navbar-header" [class.is-scrolled]="isScrolled()" [class.rental-nav]="isRentalRoute()">
+  <div class="navbar-container">
+
+    <!-- BRAND LOGO -->
+    <a routerLink="/traveler/home" class="navbar-brand" (click)="onNavClick('home', $event)" aria-label="CeylonGo Traveler Homepage">
+      <img
+        src="/images/ceylongo-blue-logo.png"
+        alt="CeylonGo"
+        class="brand-logo-img"
+        width="130"
+        height="48"
+      />
+    </a>
+
+    <!-- CENTER NAVIGATION LINKS (6 OPTIONS) -->
+    <nav class="desktop-nav" aria-label="Traveler Primary Navigation">
+      <ul class="nav-list">
+        <li>
+          <a
+            href="#home"
+            (click)="onNavClick('home', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'home'"
+          >
+            Home
+          </a>
+        </li>
+        <li>
+          <a
+            href="/experiences"
+            (click)="onNavClick('experiences', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'experiences'"
+          >
+            Experiences
+          </a>
+        </li>
+        @if (isRentalRoute()) {
+          <li><a routerLink="/bicycles" queryParamsHandling="preserve" class="nav-link active" aria-current="location">Rentals</a></li>
+        }
+        <li>
+          <a
+            href="#community"
+            (click)="onNavClick('community', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'community'"
+          >
+            Community
+          </a>
+        </li>
+        <li>
+          <a
+            href="#ai-planner"
+            (click)="onNavClick('ai-planner', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'ai-planner'"
+          >
+            AI Trip Planner
+          </a>
+        </li>
+        <li>
+          <a
+            href="#contact"
+            (click)="onNavClick('contact', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'contact'"
+          >
+            Contact Us
+          </a>
+        </li>
+        <li>
+          <a
+            href="#about"
+            (click)="onNavClick('about', $event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'about'"
+          >
+            About
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- RIGHT ACTION CONTROLS (AUTHENTICATED VS GUEST) -->
+    <div class="nav-actions">
+
+      @if (isAuthenticated) {
+        <!-- 1. BECOME A HOST BUTTON -->
+        <button
+          type="button"
+          class="btn-become-host"
+          (click)="navigateToBecomeAHost()"
+          aria-label="Become A Host on CeylonGo"
+        >
+          <svg class="host-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span>Become A Host</span>
+        </button>
+
+        <!-- 2. NOTIFICATION ICON & DROPDOWN -->
+        <div class="notification-wrapper">
+        <button
+          type="button"
+          class="btn-icon btn-notification"
+          [class.has-dropdown]="isNotificationsOpen()"
+          (click)="toggleNotifications($event)"
+          aria-label="Traveler Notifications"
+          [attr.aria-expanded]="isNotificationsOpen()"
+        >
+          <svg class="bell-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          </svg>
+          @if (unreadCount() > 0) {
+            <span class="notification-badge" aria-label="Unread notifications count">{{ unreadCount() }}</span>
+          }
+        </button>
+
+        @if (isNotificationsOpen()) {
+          <div class="dropdown-menu notification-dropdown" role="menu" aria-label="Notifications List">
+            <div class="dropdown-header">
+              <span class="dropdown-title">Notifications</span>
+              <span class="dropdown-badge-counter">{{ unreadCount() }} unread</span>
+            </div>
+
+            <div class="dropdown-content">
+              @if (isNotificationsLoading()) {
+                <div class="dropdown-state-loading">
+                  <div class="spinner-small" aria-hidden="true"></div>
+                  <span>Checking notifications...</span>
+                </div>
+              } @else if (notifications().length === 0) {
+                <!-- EMPTY STATE: YOU'RE ALL CAUGHT UP! -->
+                <div class="dropdown-state-empty">
+                  <div class="empty-icon-wrap" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                      <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                  </div>
+                  <h4 class="empty-title">You're all caught up!</h4>
+                  <p class="empty-desc">No new notifications right now.</p>
+                </div>
+              } @else {
+                <div class="notification-list">
+                  @for (notif of notifications(); track notif.id) {
+                    <div class="notification-item" [class.unread]="!notif.is_read">
+                      <div class="notif-dot" aria-hidden="true"></div>
+                      <div class="notif-body">
+                        <p class="notif-title">{{ notif.title }}</p>
+                        <p class="notif-message">{{ notif.message }}</p>
+                        <span class="notif-time">{{ notif.created_at | date:'shortTime' }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- 3. PROFILE ICON WITH TRAVELER NAME & DROPDOWN ARROW -->
+      <div class="profile-wrapper">
+        <button
+          type="button"
+          class="btn-profile"
+          [class.is-open]="isProfileMenuOpen()"
+          (click)="toggleProfileMenu($event)"
+          aria-label="Traveler Account Menu"
+          [attr.aria-expanded]="isProfileMenuOpen()"
+        >
+          <div class="profile-avatar">
+            <img
+              src="/images/avatars/default-traveler.png"
+              alt="Profile"
+              class="avatar-img"
+              (error)="$any($event.target).style.display='none'"
+            />
+            <span class="avatar-fallback">{{ travelerInitials }}</span>
+          </div>
+          <span class="traveler-name-label">{{ travelerName }}</span>
+          <svg class="chevron-icon" [class.rotate]="isProfileMenuOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        @if (isProfileMenuOpen()) {
+          <div class="dropdown-menu profile-dropdown" role="menu" aria-label="Traveler Profile Options">
+            <!-- HEADER: USER FULL NAME & EMAIL -->
+            <div class="profile-dropdown-header">
+              <div class="user-info">
+                <span class="user-fullname">{{ travelerName }}</span>
+                <span class="user-email">{{ travelerEmail }}</span>
+              </div>
+            </div>
+
+            <div class="dropdown-divider" role="separator"></div>
+
+            <!-- PROFILE MENU OPTIONS -->
+            <ul class="profile-menu-list">
+              <li>
+                <button type="button" class="profile-menu-item" (click)="onProfileMenuItemClick('profile')">
+                  <svg class="item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  <span>My Profile</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="profile-menu-item" (click)="onProfileMenuItemClick('bookings')">
+                  <svg class="item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span>My Bookings</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="profile-menu-item" (click)="onProfileMenuItemClick('wishlist')">
+                  <svg class="item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                  <span>Wishlist</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="profile-menu-item" (click)="onProfileMenuItemClick('settings')">
+                  <svg class="item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  <span>Settings</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="profile-menu-item" (click)="onProfileMenuItemClick('help')">
+                  <svg class="item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <span>Help & Support</span>
+                </button>
+              </li>
+            </ul>
+
+            <div class="dropdown-divider" role="separator"></div>
+
+            <!-- LOG OUT BUTTON -->
+            <div class="profile-dropdown-footer">
+              <button type="button" class="profile-menu-item logout-item" (click)="onProfileMenuItemClick('logout')">
+                <svg class="item-icon logout-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      } @else {
+        <!-- GUEST ACTIONS: EXACTLY TWO BUTTONS (BECOME A HOST & LOGIN / REGISTER) -->
+        <div class="guest-nav-actions">
+          <button
+            type="button"
+            class="btn-become-host btn-guest-host"
+            (click)="navigateToBecomeAHost()"
+            aria-label="Become A Host on CeylonGo"
+          >
+            <svg class="host-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Become a Host</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-login-register"
+            (click)="openAuthModal('login', $event)"
+            aria-label="Log in or register your account"
+          >
+            Login / Register
+          </button>
+        </div>
+      }
+
+      <!-- MOBILE HAMBURGER BUTTON -->
+      <button
+        type="button"
+        class="mobile-toggle-btn"
+        [attr.aria-expanded]="isMobileMenuOpen()"
+        aria-label="Toggle navigation menu"
+        (click)="toggleMobileMenu()"
+      >
+        <span class="hamburger-line" [class.open]="isMobileMenuOpen()"></span>
+        <span class="hamburger-line" [class.open]="isMobileMenuOpen()"></span>
+        <span class="hamburger-line" [class.open]="isMobileMenuOpen()"></span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  @if (infoToast()) {
+    <div class="navbar-toast" role="status" aria-live="polite">
+      <span>{{ infoToast() }}</span>
+    </div>
+  }
+
+  <!-- MOBILE NAVIGATION DRAWER -->
+  @if (isMobileMenuOpen()) {
+    <div class="mobile-drawer-backdrop" (click)="closeMobileMenu()"></div>
+    <div class="mobile-drawer" role="dialog" aria-label="Mobile Navigation Menu">
+      @if (isAuthenticated) {
+        <!-- USER PROFILE SUMMARY IN MOBILE DRAWER -->
+        <div class="mobile-user-card">
+          <div class="profile-avatar mobile-avatar">
+            <img
+              src="/images/avatars/default-traveler.png"
+              alt="Profile"
+              class="avatar-img"
+              (error)="$any($event.target).style.display='none'"
+            />
+            <span class="avatar-fallback">{{ travelerInitials }}</span>
+          </div>
+          <div class="mobile-user-details">
+            <span class="mobile-user-name">{{ travelerName }}</span>
+            <span class="mobile-user-email">{{ travelerEmail }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- MOBILE CENTER LINKS -->
+      <nav class="mobile-nav-links">
+        <a href="#home" class="mobile-link" [class.active]="activeSection() === 'home'" (click)="onNavClick('home', $event)">Home</a>
+        <a href="/experiences" class="mobile-link" [class.active]="activeSection() === 'experiences'" (click)="onNavClick('experiences', $event)">Experiences</a>
+        @if (isRentalRoute()) {
+          <a routerLink="/bicycles" queryParamsHandling="preserve" class="mobile-link active" aria-current="location" (click)="closeMobileMenu()">Rentals</a>
+        }
+        <a href="#community" class="mobile-link" [class.active]="activeSection() === 'community'" (click)="onNavClick('community', $event)">Community</a>
+        <a href="#ai-planner" class="mobile-link" [class.active]="activeSection() === 'ai-planner'" (click)="onNavClick('ai-planner', $event)">AI Trip Planner</a>
+        <a href="#contact" class="mobile-link" [class.active]="activeSection() === 'contact'" (click)="onNavClick('contact', $event)">Contact Us</a>
+        <a href="#about" class="mobile-link" [class.active]="activeSection() === 'about'" (click)="onNavClick('about', $event)">About</a>
+      </nav>
+
+      <div class="mobile-actions">
+        @if (isAuthenticated) {
+          <!-- BECOME A HOST IN MOBILE -->
+          <button type="button" class="btn-become-host mobile-btn-host" (click)="navigateToBecomeAHost()">
+            <svg class="host-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Become A Host</span>
+          </button>
+
+          <div class="mobile-profile-links">
+            <button type="button" class="mobile-sublink" (click)="onProfileMenuItemClick('profile')">My Profile</button>
+            <button type="button" class="mobile-sublink" (click)="onProfileMenuItemClick('bookings')">My Bookings</button>
+            <button type="button" class="mobile-sublink" (click)="onProfileMenuItemClick('wishlist')">Wishlist</button>
+            <button type="button" class="mobile-sublink" (click)="onProfileMenuItemClick('settings')">Settings</button>
+            <button type="button" class="mobile-sublink" (click)="onProfileMenuItemClick('help')">Help & Support</button>
+            <button type="button" class="mobile-sublink logout-sublink" (click)="logout()">Log out</button>
+          </div>
+        } @else {
+          <div class="mobile-guest-actions">
+            <button
+              type="button"
+              class="btn-become-host mobile-btn-host"
+              (click)="navigateToBecomeAHost()"
+              aria-label="Become a Host on CeylonGo"
+            >
+              <svg class="host-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>Become a Host</span>
+            </button>
+
+            <button
+              type="button"
+              (click)="openAuthModal('login', $event)"
+              class="btn btn-login-register btn-block"
+              aria-label="Log in or register your account"
+            >
+              Login / Register
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</header>

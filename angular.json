@@ -63,7 +63,37 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                },
+                {
+                  "glob": "*.webp",
+                  "input": "src/development-assets/experiences",
+                  "output": "/images/experiences/"
+                  },
+                  {
+                    "glob": "*.webp",
+                    "input": "src/development-assets/rental-preview",
+                    "output": "/assets/rental-preview/"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/app/experiences/services/catalog-provider.ts",
+                  "with": "src/app/experiences/services/catalog-provider.development.ts"
+                  },
+                  {
+                    "replace": "src/app/bike-rentals/rental-preview.ts",
+                    "with": "src/app/bike-rentals/rental-preview.development.ts"
+                  },
+                  {
+                    "replace": "src/app/bike-rentals/rental-booking-routes.ts",
+                    "with": "src/app/bike-rentals/rental-booking-routes.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

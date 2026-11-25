@@ -1,25 +1,49 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../services/auth.service';
 import { travelerAuthGuard } from './traveler-auth.guard';
+import { User } from '../models/auth.models';
 
 describe('travelerAuthGuard', () => {
-  let router: Router;
   let authServiceMock: {
     isAuthenticated: ReturnType<typeof vi.fn>;
+    currentUser: ReturnType<typeof vi.fn>;
   };
 
-  const executeGuard = (url: string = '/artisans/favorites') => {
+  const sampleTraveler: User = {
+    id: 1,
+    full_name: 'Test Traveler',
+    email: 'traveler@example.com',
+    role: 'traveler',
+    is_active: true,
+    created_at: '2026-11-20T10:00:00Z',
+  };
+
+  const executeGuard = (
+    url = '/artisans/favorites',
+    queryParams: Record<string, string> = {}
+  ) => {
     return TestBed.runInInjectionContext(() =>
-      travelerAuthGuard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot)
+      travelerAuthGuard(
+        { queryParams } as ActivatedRouteSnapshot,
+        { url } as RouterStateSnapshot
+      )
     );
   };
 
   beforeEach(() => {
     authServiceMock = {
       isAuthenticated: vi.fn(),
+      currentUser: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -28,35 +52,75 @@ describe('travelerAuthGuard', () => {
         { provide: AuthService, useValue: authServiceMock },
       ],
     });
-
-    router = TestBed.inject(Router);
   });
 
-  it('allows navigation when traveler is authenticated', () => {
+  it('allows authenticated travelers', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(sampleTraveler);
 
-    const result = executeGuard();
-    expect(result).toBe(true);
+    expect(executeGuard()).toBe(true);
   });
 
-  it('allows navigation when demo or preview query parameter is present', () => {
-    authServiceMock.isAuthenticated.mockReturnValue(false);
+  it('allows authenticated users while profile is loading', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(null);
 
-    const routeSnapshot = { queryParams: { demo: 'true' } } as unknown as ActivatedRouteSnapshot;
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard(routeSnapshot, { url: '/artisans/favorites' } as RouterStateSnapshot)
-    );
-    expect(result).toBe(true);
+    expect(executeGuard()).toBe(true);
   });
 
-  it('redirects unauthenticated traveler to /auth with returnUrl query parameter', () => {
+  it('redirects unauthenticated users with returnUrl', () => {
     authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
 
-    const routeSnapshot = { queryParams: {} } as unknown as ActivatedRouteSnapshot;
-    const result = TestBed.runInInjectionContext(() =>
-      travelerAuthGuard(routeSnapshot, { url: '/artisans/favorites' } as RouterStateSnapshot)
-    ) as UrlTree;
+    const result = executeGuard() as UrlTree;
+
     expect(result instanceof UrlTree).toBe(true);
-    expect(result.toString()).toContain('/auth?returnUrl=%2Fartisans%2Ffavorites');
+    expect(result.toString()).toBe(
+      '/auth?returnUrl=%2Fartisans%2Ffavorites'
+    );
+  });
+
+  it('redirects provider users to provider dashboard', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue({
+      ...sampleTraveler,
+      role: 'provider',
+    });
+
+    const result = executeGuard() as UrlTree;
+
+    expect(result.toString()).toBe('/provider/dashboard');
+  });
+
+  it('redirects admin users to homepage', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue({
+      ...sampleTraveler,
+      role: 'admin',
+    });
+
+    const result = executeGuard() as UrlTree;
+
+    expect(result.toString()).toBe('/');
+  });
+
+  it('prevents demo authentication bypass', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+
+    const result = executeGuard('/artisans/favorites', {
+      demo: 'true',
+    });
+
+    expect(result instanceof UrlTree).toBe(true);
+  });
+
+  it('prevents preview authentication bypass', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+
+    const result = executeGuard('/artisans/favorites', {
+      preview: 'true',
+    });
+
+    expect(result instanceof UrlTree).toBe(true);
   });
 });

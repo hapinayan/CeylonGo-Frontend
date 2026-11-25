@@ -1,0 +1,94 @@
+<main class="wrap vehicle-details">
+  <a class="outline" routerLink="../" queryParamsHandling="preserve">Back to rentals</a>
+  @let result = state();
+  @switch (result.kind) {
+    @case ('loading') { <p class="state" role="status">Loading vehicle details…</p> }
+    @case ('missing') { <h1>Vehicle unavailable</h1><p>This vehicle isn’t in the bike and bicycle catalog.</p> }
+    @case ('error') {
+      <div class="state" role="alert"><h1>Vehicle details couldn’t load</h1>
+        @if (result.status === 401 || result.status === 403) {
+          <p>The rental service denied access to these public details.</p>
+        }
+        <button class="primary" type="button" (click)="retry()">Try Again</button>
+      </div>
+    }
+    @case ('ready') {
+      @let vehicle = result.vehicle;
+      @if (result.preview) { <p class="state">Development preview · This sample listing cannot be reserved.</p> }
+      <div class="details-grid">
+        <section class="gallery" aria-label="Vehicle photos">
+          @if (vehicle.images?.length) {
+            @for (photo of vehicle.images; track photo.id) {
+              <app-rental-image [src]="photo.image_url" [alt]="photo.caption || vehicle.vehicle_name" />
+            }
+          } @else {
+            <app-rental-image [src]="vehicle.primary_image_url" [alt]="result.preview ? 'Illustrative photo for ' + vehicle.vehicle_name : vehicle.vehicle_name" />
+          }
+        </section>
+        <div class="details-sidebar">
+          <section class="specifications" aria-labelledby="vehicle-title">
+            <div class="title-line">
+              <h1 id="vehicle-title">{{ vehicle.vehicle_name }}</h1>
+              <app-rental-wishlist [id]="vehicle.id" [preview]="result.preview" />
+            </div>
+            <p>{{ category(vehicle) }} &middot; {{ vehicle.city || vehicle.district || 'Location unavailable' }}</p>
+            <p class="price">{{ vehicle.currency }} {{ vehicle.price_per_day | number:'1.0-2' }} <span>/ day</span></p>
+            @if (vehicle.description) { <p>{{ vehicle.description }}</p> }
+            <dl>
+              @if (vehicle.provider_business_name) {
+                <dt>Provider</dt><dd>{{ vehicle.provider_business_name }} @if (vehicle.is_provider_verified) { <span>· Verified provider</span> }</dd>
+              }
+              @if (vehicle.model_year) { <dt>Model year</dt><dd>{{ vehicle.model_year }}</dd> }
+              @if (vehicle.transmission) { <dt>Transmission</dt><dd>{{ vehicle.transmission }}</dd> }
+              @if (vehicle.helmets?.helmet_provided) { <dt>Equipment</dt><dd>Helmet provided</dd> }
+              @if (vehicle.cancellation_policy) { <dt>Cancellation</dt><dd>{{ vehicle.cancellation_policy }}</dd> }
+              @if (vehicle.location?.location_name) { <dt>Primary location</dt><dd>{{ vehicle.location?.location_name }}</dd> }
+              <dt>Pickup and return</dt><dd>Hub selection is unavailable.</dd>
+              <dt>Eligibility</dt><dd>{{ vehicle.helmets?.requires_helmet ? 'A helmet is required. ' : '' }} Confirm license and age requirements with the rental provider before renting.</dd>
+              <dt>Availability</dt><dd>
+                @if (result.available === true) { Available for the search dates when checked. }
+                @else if (result.available === false) { Unavailable for the search dates. }
+                @else if (result.requestedDates) { Availability couldn’t be checked. }
+                @else if (result.preview) { Sample listing. }
+                @else { Use the date checker below. }
+              </dd>
+            </dl>
+            <button type="button" class="outline" (click)="share(vehicle, result.preview)">Share vehicle</button>
+            @if (shareMessage()) { <p role="status">{{ shareMessage() }}</p> }
+            @if (shareUrl()) { <input aria-label="Vehicle link" class="share-url" readonly [value]="shareUrl()" /> }
+          </section>
+          <section class="rental-summary" aria-labelledby="rental-summary-title">
+            <h2 id="rental-summary-title">Rental dates and availability</h2>
+            @for (key of [vehicle.id + ':' + result.preview + ':' + search().get('pickup') + ':' + search().get('return')]; track key) {
+              <app-rental-date-picker [id]="vehicle.id" [preview]="result.preview"
+                [pickupDate]="search().get('pickup') ?? ''" [returnDate]="search().get('return') ?? ''"
+                (checked)="checked.set($event)" />
+            }
+            @if (result.preview) {
+              <a class="primary preview-booking" [routerLink]="['booking']" queryParamsHandling="preserve"
+                [state]="{ dates: checked()?.dates ?? null }">Start booking preview</a>
+            } @else {
+              <p class="booking-notice">Online reservations and payments are unavailable for rentals.</p>
+            }
+          </section>
+        </div>
+      </div>
+      <section class="reviews" aria-labelledby="review-title">
+        <h2 id="review-title">Reviews</h2>
+        @if (result.preview) {
+          <p>Sample rating {{ vehicle.rating | number:'1.1-1' }} from {{ vehicle.reviewCount }} illustrative reviews.</p>
+        } @else if (result.reviews; as reviews) {
+          @if (reviews.total) {
+            <p><span class="star" aria-hidden="true">★</span> {{ reviews.average_rating | number:'1.1-2' }} · {{ reviews.total }} {{ reviews.total === 1 ? 'review' : 'reviews' }}</p>
+            @for (review of reviews.items; track review.id) {
+              <article><h3>{{ review.title || review.reviewer_name || 'Traveler review' }}</h3>
+                <p>{{ review.rating | number:'1.1-2' }} / 5</p>
+                @if (review.comment) { <p>{{ review.comment }}</p> }
+              </article>
+            }
+          } @else { <p>No published reviews yet.</p> }
+        } @else { <p>Reviews couldn’t be loaded.</p><button type="button" class="outline" (click)="retry()">Retry</button> }
+      </section>
+    }
+  }
+</main>

@@ -101,7 +101,7 @@ describe('ProviderLoginPlaceholder Component', () => {
 
       const forgotLink = compiled.querySelector('.forgot-link') as HTMLAnchorElement;
       expect(forgotLink).not.toBeNull();
-      expect(forgotLink.getAttribute('href')).toBe('/forgot-password');
+      expect(forgotLink.getAttribute('href')).toBe('/provider/forgot-password');
 
       const registerBtn = compiled.querySelector('.btn-secondary-outline') as HTMLAnchorElement;
       expect(registerBtn).not.toBeNull();

@@ -1,0 +1,138 @@
+<app-navbar />
+
+<main class="homepage-main">
+  <!-- SECTION 02: AIRBNB-INSPIRED CENTERED HERO & SEARCH BAR -->
+  <section id="hero" class="airbnb-hero-section" aria-label="Stay, Explore and Experience Sri Lanka Like a Local">
+    <!-- DECORATIVE LIGHT-BLUE AMBIENT WAVES -->
+    <div class="ambient-waves" aria-hidden="true">
+      <div class="wave wave-top-left"></div>
+      <div class="wave wave-top-right"></div>
+    </div>
+
+    <div class="hero-container">
+      <!-- CENTERED HEADLINE & SUBTITLE -->
+      <div class="hero-header-content">
+        <h1 class="hero-title">
+          Stay, Explore and Experience Sri Lanka <span class="highlight-blue">Like a Local</span>
+        </h1>
+        <p class="hero-subtitle">
+          Book authentic homestays, join local experiences, and connect with welcoming communities across Sri Lanka.
+        </p>
+      </div>
+
+      <!-- EXPLORE NOW PRIMARY CTA BUTTON -->
+      <div class="hero-cta-wrapper">
+        <a href="#categories" class="btn-explore-now" (click)="onExploreNow($event)"
+          aria-label="Explore CeylonGo categories and experiences">
+          <span>Explore Now</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+
+        @if (searchFeedback(); as fb) {
+        <div class="search-feedback-toast" role="status">
+          <span class="feedback-dot"></span>
+          <span>{{ fb.message }}</span>
+        </div>
+        }
+      </div>
+
+      <!-- SECTION 03: CATEGORY SHORTCUTS (6 CATEGORIES) -->
+      <div id="categories" class="categories-container" role="region" aria-label="Category shortcuts">
+        <div class="categories-track">
+          @for (cat of categories; track cat.id) {
+          <app-category-shortcut [category]="cat" />
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 04: FEATURED HOMESTAYS IN SRI LANKA -->
+  <section id="homestays" class="homestays-section" aria-labelledby="homestays-heading">
+    <div class="section-container">
+      <div class="section-header-row">
+        <div class="section-heading-wrap">
+          <h2 id="homestays-heading" class="section-heading">Featured Homestays in Sri Lanka</h2>
+          <span class="section-badge-demo" title="Demonstration preview listings for UI evaluation">Demo Preview</span>
+        </div>
+        <a href="#homestays" class="btn-view-all" (click)="onViewAllHomestays($event)"
+          aria-label="View all featured homestays in Sri Lanka">
+          <span>View All Homestays</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+
+      <!-- HOMESTAY CARDS (4 Columns Desktop, Responsive Grid) -->
+      <div class="homestays-grid" role="region" aria-label="Featured homestay listings">
+        @for (item of featuredHomestays; track item.id) {
+        <app-homestay-card [homestay]="item" />
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 05: POPULAR LOCAL EXPERIENCES -->
+  <section id="experiences" class="experiences-section" aria-labelledby="experiences-heading">
+    <div class="section-container">
+      <div class="section-header-row">
+        <div class="section-heading-wrap">
+          <h2 id="experiences-heading" class="section-heading">Popular Local Experiences</h2>
+          <span class="section-badge-demo" title="Demonstration preview listings for UI evaluation">Demo Preview</span>
+        </div>
+        <a href="#experiences" class="btn-view-all" (click)="onViewAllExperiences($event)"
+          aria-label="View all popular local experiences in Sri Lanka">
+          <span>View All Experiences</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+
+      <!-- EXPERIENCE CARDS (4 Columns Desktop, Responsive Grid) -->
+      <div class="experiences-grid" role="region" aria-label="Popular local experience listings">
+        @for (item of featuredExperiences; track item.id) {
+          <app-experience-card [experience]="item" />
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 06: WHY CHOOSE CEYLONGO? -->
+  <app-why-choose-ceylongo />
+
+  <!-- SECTION 07: PROMOTIONAL BANNERS ROW (AI TRIP PLANNER & COMMUNITY) -->
+  <section class="promo-banners-section" aria-label="CeylonGo Trip Planning and Community">
+    <div class="section-container">
+      <div class="banners-grid">
+        <!-- AI TRIP PLANNER BANNER -->
+        <div id="ai-planner" class="banner-wrapper">
+          <app-ai-planner-banner (actionClick)="onTryAiPlanner()" />
+        </div>
+
+        <!-- COMMUNITY BANNER -->
+        <div class="banner-wrapper">
+          <app-community-banner (actionClick)="onJoinCommunity()" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLACEHOLDER SECTIONS FOR REMAINING ANCHORS -->
+  <section id="tour-guides" class="section-anchor"></section>
+  <section id="bike-rentals" class="section-anchor"></section>
+</main>
+
+<app-footer />
+
+<!-- UNIFIED TRAVELER AUTHENTICATION POPUP -->
+<app-traveler-auth-modal />

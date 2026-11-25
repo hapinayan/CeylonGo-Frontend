@@ -1,0 +1,216 @@
+<ng-template #icon let-name>
+  <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    @switch (name) {
+      @case ('pin') { <path d="M20 10c0 5-8 10-8 10s-8-5-8-10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/> }
+      @case ('calendar') { <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/> }
+      @case ('cycle') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-8 4 8H5m8 0 4-8m-9 0h9m0 0-1-3h3M7 7h4"/> }
+      @case ('price') { <path d="M20 13 13 20a2 2 0 0 1-3 0l-7-7V4h9l8 6a2 2 0 0 1 0 3Z"/><circle cx="8" cy="9" r="1"/> }
+      @case ('star') { <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/> }
+      @case ('gear') { <circle cx="12" cy="12" r="4"/><path d="M12 3v5m0 8v5M3 12h5m8 0h5M5.6 5.6l3.6 3.6m5.6 5.6 3.6 3.6m0-12.8-3.6 3.6m-5.6 5.6-3.6 3.6"/> }
+      @case ('helmet') { <path d="M3 15v-2a9 9 0 1 1 18 0v5H9l-2-3H3Zm8-4h10m-10 0 2 4h8"/> }
+    }
+  </svg>
+</ng-template>
+
+<main>
+  <section class="hero" aria-labelledby="rental-heading">
+    <div class="wrap hero-layout">
+      <div class="hero-copy">
+        <h1 id="rental-heading">Bike &amp; Bicycle Rental</h1>
+        <p>Explore Sri Lanka at your own pace with our rental vehicles.</p>
+      </div>
+      <aside class="hero-panel" aria-label="Rental discovery features">
+        <ul>
+          <li><span aria-hidden="true">&#10003;</span> Compare vehicle types</li>
+          <li><span aria-hidden="true">&#10003;</span> Browse daily rates</li>
+          <li><span aria-hidden="true">&#10003;</span> Search by travel dates</li>
+          <li><span aria-hidden="true">&#10003;</span> Find rentals by city</li>
+        </ul>
+      </aside>
+      <form #searchForm class="search" (submit)="search($event, city.value, pickup.value, dropoff.value, type.value)">
+        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />Location</span>
+          <input #city type="search" placeholder="Select location" list="rental-cities" maxlength="100" [value]="query().city" />
+          <datalist id="rental-cities">
+            @for (place of cities; track place) { <option [value]="place"></option> }
+          </datalist>
+        </label>
+        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'calendar' }" />Pickup date</span>
+          <input #pickup type="date" [value]="query().pickup" [attr.aria-describedby]="dateError() ? 'date-error' : null" />
+        </label>
+        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'calendar' }" />Return date</span>
+          <input #dropoff type="date" [value]="query().dropoff" [attr.aria-describedby]="dateError() ? 'date-error' : null" />
+        </label>
+        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'cycle' }" />Vehicle type</span>
+          <select #type>
+            @for (category of categories(); track category.value) {
+              <option [value]="category.value" [selected]="query().category === category.value">{{ category.label }}</option>
+            }
+          </select>
+        </label>
+        <button class="primary" type="submit">Search Rentals</button>
+        @if (dateError()) { <p id="date-error" role="alert">{{ dateError() }}</p> }
+      </form>
+    </div>
+  </section>
+
+  <section class="wrap browse" aria-labelledby="browse-heading">
+    @if (previewEnabled) {
+      <div class="preview-notice">
+        @if (preview()) {
+          <p><strong>Development preview</strong> &middot; Sample listings, prices, ratings and photos. Live availability is not checked.</p>
+        } @else {
+          <p>Live catalog</p>
+        }
+        <div class="preview-actions">
+          @if (preview()) { <a class="text-button preview-link" routerLink="/bicycles/my-rentals" [queryParams]="{ preview: 1 }">My Rentals</a> }
+          <button type="button" class="text-button" (click)="changeMode()">{{ preview() ? 'Switch to live catalog' : 'Open development preview' }}</button>
+        </div>
+      </div>
+    }
+    <div class="section-heading">
+      <h2 id="browse-heading">Browse Rentals</h2>
+      <button type="button" class="mobile-filter" (click)="filterDrawer.showModal()">Filter Rentals</button>
+    </div>
+
+    <ng-template #filters>
+      <div class="filter-heading">
+        <strong>Filter Rentals</strong>
+        <button class="text-button" type="button" (click)="clear()">Clear All</button>
+      </div>
+      <details open>
+        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />Location</span></summary>
+        @for (place of moreCities() ? cities : cities.slice(0, 5); track place) {
+          <label class="check"><input type="checkbox" [checked]="query().city === place"
+            (change)="update({ city: query().city === place ? '' : place })" />{{ place }}</label>
+        }
+        <button class="text-button more" type="button" [attr.aria-expanded]="moreCities()" (click)="moreCities.update(value => !value)">{{ moreCities() ? 'Show Less' : 'Show More' }}</button>
+      </details>
+      <details open>
+        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'cycle' }" />Vehicle type</span></summary>
+        @for (category of categories().slice(1); track category.value) {
+          <label class="check"><input type="checkbox" [checked]="query().category === category.value"
+            (change)="update({ category: query().category === category.value ? '' : category.value })" />{{ category.label }}</label>
+        }
+      </details>
+      <details open>
+        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'price' }" />Daily price</span></summary>
+        @for (price of prices; track price.value) {
+          <label class="check"><input type="checkbox" [checked]="query().price === price.value"
+            (change)="update({ price: query().price === price.value ? '' : price.value })" />{{ price.label }}</label>
+        }
+      </details>
+      @if (preview()) {
+        <details open>
+          <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'star' }" />Rating</span></summary>
+          <label class="check"><input type="checkbox" [checked]="query().rating"
+            (change)="update({ rating: !query().rating })" /><span class="star" aria-hidden="true">★</span> 4.0 and above</label>
+        </details>
+      }
+      <button class="outline reset" type="button" (click)="clear()">Reset Filters</button>
+    </ng-template>
+
+    <dialog #filterDrawer aria-label="Rental filters" class="drawer">
+      <form method="dialog"><button class="outline" aria-label="Close filters">Close</button></form>
+      <ng-container [ngTemplateOutlet]="filters" />
+      <form method="dialog"><button class="primary reset">Show Results</button></form>
+    </dialog>
+
+    <div class="browse-layout">
+      <aside class="filters" aria-label="Rental filters"><ng-container [ngTemplateOutlet]="filters" /></aside>
+      <div class="inventory">
+        <div class="tools">
+          <div class="categories" role="group" aria-label="Vehicle categories">
+            @for (category of categories(); track category.value) {
+              <button type="button" [attr.aria-pressed]="query().category === category.value" (click)="update({ category: category.value })">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  @switch (category.icon) {
+                    @case ('all') { <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/> }
+                    @case ('electric') { <path d="m13 2-9 12h7l-1 8 10-13h-8l1-7Z"/> }
+                    @case ('motor') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-7h5l3 7m-9 0h6m2-12h3l2 8M6 9h4"/> }
+                    @default { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-8 4 8H5m8 0 4-8m-9 0h9m0 0-1-3h3M7 7h4"/> }
+                  }
+                </svg>{{ category.label }}
+              </button>
+            }
+          </div>
+          <label class="sort">Sort by
+            <select #sort (change)="sortBy(sort.value)">
+              <option value="newest" [selected]="query().sort === 'newest'">{{ preview() ? 'Featured' : 'Newest' }}</option>
+              @if (preview()) {
+                <option value="popular" [selected]="query().sort === 'popular'">Popular First</option>
+                <option value="rating" [selected]="query().sort === 'rating'">Top Rated</option>
+              }
+              <option value="price_asc" [selected]="query().sort === 'price_asc'">Price: Low to High</option>
+              <option value="price_desc" [selected]="query().sort === 'price_desc'">Price: High to Low</option>
+            </select>
+          </label>
+        </div>
+
+        @let result = results();
+        @if (result.kind === 'loading') {
+          <p class="count" role="status">Loading rentals…</p>
+          <div class="cards" aria-hidden="true">@for (placeholder of [1, 2, 3]; track placeholder) { <div class="skeleton"></div> }</div>
+        } @else if (result.kind === 'error') {
+          <div class="state" role="alert">
+            <h3>Rentals couldn&rsquo;t load</h3>
+            @if (result.status === 401 || result.status === 403) {
+              <p>The rental service denied access to the public catalog.</p>
+            } @else {
+              <p>Check your connection and try again.</p>
+            }
+            <button class="primary" type="button" (click)="retry()">Try Again</button>
+          </div>
+        } @else if (result.kind === 'ready') {
+          <p class="count" role="status">{{ result.page.total | number }} {{ result.page.total === 1 ? 'vehicle' : 'vehicles' }} found
+            @if (!preview()) { <span class="sponsor-note">Sponsored listings may appear first.</span> }
+          </p>
+          @if (!result.page.items.length) {
+            <div class="state">
+              @if (result.page.total) {
+                <h3>This page is out of range</h3>
+                <button type="button" class="primary" (click)="update({ page: 1 })">First Page</button>
+              } @else {
+                <h3>No matching rentals</h3><p>Try another location or clear your filters.</p>
+                <button type="button" class="outline" (click)="clear()">Reset Filters</button>
+              }
+            </div>
+          } @else {
+            <div class="cards">
+              @for (vehicle of result.page.items; track vehicle.id) {
+                <article class="card">
+                  <div class="photo">
+                    <app-rental-image [src]="vehicle.primary_image_url" [alt]="preview() ? 'Illustrative photo for ' + vehicle.vehicle_name : vehicle.vehicle_name" />
+                    @if (vehicle.is_provider_verified) { <span class="badge">✓ Verified provider</span> }
+                    <app-rental-wishlist [id]="vehicle.id" [preview]="preview()" />
+                  </div>
+                  <div class="card-body">
+                    <h3>{{ vehicle.vehicle_name }}</h3>
+                    <p class="card-location"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />{{ vehicle.city || vehicle.district || 'Location unavailable' }}</p>
+                    @if (vehicle.rating !== undefined) {
+                      <p class="card-rating"><span class="star" aria-hidden="true">&#9733;</span> <strong>{{ vehicle.rating | number:'1.1-1' }}</strong><span>({{ vehicle.reviewCount }} sample reviews)</span></p>
+                    }
+                    @if (vehicle.transmission || vehicle.helmets?.helmet_provided) {
+                      <ul class="features" aria-label="Vehicle features">
+                        @if (vehicle.transmission) { <li><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'gear' }" />{{ vehicle.transmission }}</li> }
+                        @if (vehicle.helmets?.helmet_provided) { <li><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'helmet' }" />Helmet provided</li> }
+                      </ul>
+                    }
+                    <p class="price">{{ vehicle.currency }} {{ vehicle.price_per_day | number:'1.0-2' }} <span>/ day</span></p>
+                    <a class="primary details-link" [routerLink]="[vehicle.id]" queryParamsHandling="preserve" (click)="rememberScroll()">View Details <span aria-hidden="true">→</span></a>
+                  </div>
+                </article>
+              }
+            </div>
+            @if (result.page.pages > 1) {
+              <nav class="pagination" aria-label="Rental result pages">
+                <button type="button" class="outline" [disabled]="query().page <= 1" (click)="update({ page: query().page - 1 })">Previous</button>
+                <span>Page {{ query().page }} of {{ result.page.pages }}</span>
+                <button type="button" class="outline" [disabled]="query().page >= result.page.pages" (click)="update({ page: query().page + 1 })">Next</button>
+              </nav>
+            }
+          }
+        }
+      </div>
+    </div>
+  </section>
+</main>

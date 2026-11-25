@@ -1,32 +1,61 @@
 
+@use './styles/tokens' as *;
+
 html,
 body {
   margin: 0;
   padding: 0;
   width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
-body {
-  font-family: Arial, sans-serif;
+html {
+  scroll-behavior: smooth;
 }
 
 * {
   box-sizing: border-box;
 }
 
-
-
-/* CEYLONGO GLOBAL UI POLISH */
-
+/* CEYLONGO GLOBAL UI POLISH & DESIGN TOKENS */
 :root {
   --cg-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --cg-navy: #082b5c;
-  --cg-blue: #1255b5;
+  --cg-primary-navy: #082b5c;
+  --cg-dark-navy: #041d40;
+  --cg-white: #ffffff;
+  --cg-light-blue-bg: #eaf5ff;
+  --cg-light-blue: #eaf5ff;
+  --cg-light-border: #d8e8f8;
+  --cg-royal-blue: #0066ff;
+  --cg-text-secondary: #64748b;
   --cg-orange: #ff9f1c;
-  --cg-green: #16a34a;
+  --cg-text-primary: #082b5c;
+  --cg-text-body: #475569;
   --cg-muted: #64748b;
-  --cg-border: #e2e8f0;
+  --cg-border: #d8e8f8;
+  --cg-radius-card: 20px;
+  --cg-radius-pill: 9999px;
+  --cg-shadow-card: 0 8px 24px rgba(8, 43, 92, 0.06);
+  --cg-shadow-floating: 0 12px 36px rgba(0, 102, 255, 0.09);
+
+  /* CeylonGo Tour Guide Design System */
+  --tg-primary-blue: #0066FF;
+  --tg-deep-navy: #082B5C;
+  --tg-light-blue: #EAF5FF;
+  --tg-bg: #FFFFFF;
+  --tg-border: #D8E8F8;
+  --tg-secondary-text: #64748B;
+  --tg-star-yellow: #F59E0B;
+  --tg-surface-subtle: #F8FAFC;
+  --tg-hover-blue: #0052CC;
+  --tg-shadow-sm: 0 2px 8px rgba(8, 43, 92, 0.04);
+  --tg-shadow-md: 0 6px 20px rgba(8, 43, 92, 0.08);
+  --tg-shadow-lg: 0 12px 32px rgba(8, 43, 92, 0.12);
+  --tg-radius-sm: 8px;
+  --tg-radius-md: 12px;
+  --tg-radius-lg: 16px;
+  --tg-radius-full: 9999px;
 }
 
 *,
@@ -35,15 +64,13 @@ body {
   box-sizing: border-box;
 }
 
-html,
-body {
-  min-height: 100%;
-}
-
 body {
   margin: 0;
   font-family: var(--cg-font);
   color: #0f172a;
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
@@ -55,9 +82,10 @@ textarea {
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(255, 121, 0, 0.5);
-  outline-offset: 3px;
+  outline: 3px solid rgba(0, 102, 255, 0.45);
+  outline-offset: 2px;
 }
 
 button:disabled {
@@ -66,6 +94,9 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {
