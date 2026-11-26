@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 
+import { ProviderPreviewService } from '../provider-preview.service';
+
 @Component({
   selector: 'app-provider-placeholder',
   standalone: true,
@@ -10,10 +12,15 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
     <div class="placeholder-shell">
       <div class="placeholder-card">
         <div class="icon-wrap">⚙️</div>
+        @if (isPreview()) {
+          <span class="preview-pill">Preview Mode · Sample View</span>
+        }
         <h2 class="title">{{ sectionTitle() }}</h2>
         <p class="subtitle">{{ sectionDescription() }}</p>
         <div class="actions">
-          <a routerLink="/provider/dashboard" class="btn-primary">Return to Dashboard</a>
+          <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="btn-primary">
+            Return to Dashboard
+          </a>
         </div>
       </div>
     </div>
@@ -40,6 +47,15 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
       }
       .icon-wrap {
         font-size: 2.5rem;
+      }
+      .preview-pill {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        color: #92400e;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
       }
       .title {
         font-size: 1.3rem;
@@ -73,7 +89,10 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 })
 export class ProviderPlaceholder implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly previewService = inject(ProviderPreviewService);
 
+  readonly isPreview = this.previewService.isPreview;
+  readonly previewQueryParams = this.previewService.queryParams;
   readonly sectionTitle = signal<string>('Provider Module');
   readonly sectionDescription = signal<string>(
     'This module is active in your provider workspace and will be populated with data as operations occur.'

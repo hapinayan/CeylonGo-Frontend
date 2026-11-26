@@ -1,61 +1,81 @@
-import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable, InjectionToken } from '@angular/core';
-import { EcoDetail } from '../models/eco';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ANONYMOUS_API_REQUEST } from '../../core/interceptors/auth.interceptor';
-import { CheckoutPreparation, BookingSlot, PaymentStatus, Reservation, ReservationRequest, SavedItem, SavedPage } from '../models/travel';
+import {
+  ActivityBookingCreateRequest,
+  ActivityBookingDetailResponse,
+  ActivityBookingResponse,
+  ActivityDetails,
+  ActivityPage,
+  ActivityPaymentResponse,
+  ActivitySlotDetails,
+  AtLocationPaymentRequest,
+  SimulatedPaymentRequest,
+  WishlistStateResponse,
+} from '../models/activity';
+import { ActivitiesApi } from './activities-api';
 
 export interface TravelSource {
-  saved(page: number, size: number, availableOnly?: boolean): Observable<SavedPage>;
-  save(id: number): Observable<SavedItem>;
-  unsave(id: number): Observable<void>;
-  slots(id: number, day: string, page: number): Observable<BookingSlot[]>;
-  reserve(request: ReservationRequest): Observable<Reservation>;
-  bookings(page: number, size: number): Observable<Reservation[]>;
-  booking(id: number): Observable<Reservation>;
-  cancel(id: number, reason: string): Observable<Reservation>;
-  payment(id: number): Observable<PaymentStatus>;
+  saved(limit: number, offset: number): Observable<ActivityPage>;
+  save(id: number): Observable<WishlistStateResponse>;
+  unsave(id: number): Observable<WishlistStateResponse>;
+  slots(id: number, date?: string, participants?: number, limit?: number, offset?: number): Observable<ActivitySlotDetails[]>;
+  reserve(request: ActivityBookingCreateRequest): Observable<ActivityBookingResponse>;
+  bookings(limit: number, beforeId?: number | null): Observable<ActivityBookingResponse[]>;
+  booking(id: number): Observable<ActivityBookingDetailResponse>;
+  cancel(id: number, reason?: string | null): Observable<ActivityBookingResponse>;
+  simulatePayment(request: SimulatedPaymentRequest): Observable<ActivityPaymentResponse>;
+  payAtLocation(request: AtLocationPaymentRequest): Observable<ActivityPaymentResponse>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TravelApi implements TravelSource {
-  private readonly http = inject(HttpClient);
-  private readonly base = environment.apiBaseUrl;
-  private readonly reservations = this.base + '/eco-reservations';
+  private readonly activities = inject(ActivitiesApi);
 
-  saved(page: number, size: number, availableOnly = false) {
-    return this.http.get<SavedPage>(this.base + '/wishlists/me', {
-      params: {page, page_size: size, available_only: availableOnly},
-    });
+  saved(limit = 20, offset = 0) {
+    return this.activities.wishlist(limit, offset);
   }
-  save(id: number) { return this.http.post<SavedItem>(this.base + '/wishlists/eco/' + id, null); }
-  unsave(id: number) { return this.http.delete<void>(this.base + '/wishlists/eco/' + id); }
-  slots(id: number, day: string, page: number) {
-    return this.http.get<BookingSlot[]>(this.base + '/eco-experiences/' + id + '/availability', {
-      params: new HttpParams().set('day', day).set('page', page).set('page_size', 10),
-      context: new HttpContext().set(ANONYMOUS_API_REQUEST, true),
-    });
+
+  save(id: number) {
+    return this.activities.saveToWishlist(id);
   }
-  reserve(request: ReservationRequest) { return this.http.post<Reservation>(this.reservations, request); }
-  bookings(page: number, size: number) {
-    return this.http.get<Reservation[]>(this.reservations + '/me', {params: {page, page_size: size}});
+
+  unsave(id: number) {
+    return this.activities.removeFromWishlist(id);
   }
-  booking(id: number) { return this.http.get<Reservation>(this.reservations + '/' + id); }
-  cancel(id: number, reason: string) {
-    return this.http.post<Reservation>(this.reservations + '/' + id + '/cancel', {reason: reason.trim() || null});
+
+  slots(id: number, date?: string, participants?: number, limit = 50, offset = 0) {
+    return this.activities.availability(id, { date, participants, limit, offset });
   }
-  payment(id: number) {
-    return this.http.get<PaymentStatus>(this.reservations + '/' + id + '/payments/status');
+
+  reserve(request: ActivityBookingCreateRequest) {
+    return this.activities.createBooking(request);
   }
-  prepareCheckout(id: number) {
-    return this.http.post<CheckoutPreparation>(this.reservations + '/' + id + '/payments/initiate', null);
+
+  bookings(limit = 20, beforeId?: number | null) {
+    return this.activities.myBookings(limit, beforeId);
+  }
+
+  booking(id: number) {
+    return this.activities.bookingDetail(id);
+  }
+
+  cancel(id: number, reason?: string | null) {
+    return this.activities.cancelBooking(id, reason);
+  }
+
+  simulatePayment(request: SimulatedPaymentRequest) {
+    return this.activities.simulatePayment(request);
+  }
+
+  payAtLocation(request: AtLocationPaymentRequest) {
+    return this.activities.payAtLocation(request);
   }
 }
 
-export const BOOKABLE_PREVIEW = new InjectionToken<(id: string) => EcoDetail | null>('Preview booking listing', {
-  factory: () => () => null,
-});
+export const BOOKABLE_PREVIEW = new InjectionToken<(id: string) => ActivityDetails | null>(
+  'Preview booking listing',
+  { factory: () => () => null },
+);
 
 export const TRAVEL_SOURCE = new InjectionToken<TravelSource>('Experience traveler API', {
   factory: () => inject(TravelApi),

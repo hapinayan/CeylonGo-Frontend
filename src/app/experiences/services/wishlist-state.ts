@@ -2,11 +2,12 @@ import { computed, effect, inject, Injectable, signal, untracked } from '@angula
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, expand, filter, Observable, reduce, Subscription } from 'rxjs';
 import { TravelSession } from './travel-session';
-import { TravelApi } from './travel-api';
+import { TRAVEL_SOURCE } from './travel-api';
+import { extractApiErrorMessage } from './activities-api';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class WishlistState {
-  private readonly api = inject(TravelApi);
+  private readonly api = inject(TRAVEL_SOURCE);
   private readonly session = inject(TravelSession);
   private owner = this.session.account();
   private readonly entries = signal(new Set<number>());
@@ -50,52 +51,92 @@ export class WishlistState {
     if (!account || this.loaded() || this.loading) return;
     this.loading = true;
     this.error.set('');
-    this.requests.add(this.api.saved(1, 100).pipe(
-      expand(page => page.page < page.total_pages ? this.api.saved(page.page + 1, 100) : EMPTY),
-      reduce((ids, page) => [...ids, ...page.items.map(item => item.eco_experience_id)], [] as number[]),
-      filter(() => this.session.account() === account),
-    ).subscribe({
-      next: ids => { this.entries.set(new Set(ids)); this.loaded.set(true); this.loading = false; },
-      error: () => {
-        if (this.session.account() !== account) return;
-        this.loading = false;
-        this.error.set('Could not load saved experiences.');
-      },
-    }));
+    this.requests.add(
+      this.api
+        .saved(100, 0)
+        .pipe(
+          expand((page) =>
+            page.next_offset != null ? this.api.saved(100, page.next_offset) : EMPTY,
+          ),
+          reduce(
+            (ids, page) => [...ids, ...page.items.map((item) => item.id)],
+            [] as number[],
+          ),
+          filter(() => this.session.account() === account),
+        )
+        .subscribe({
+          next: (ids) => {
+            this.entries.set(new Set(ids));
+            this.loaded.set(true);
+            this.loading = false;
+          },
+          error: (err: HttpErrorResponse) => {
+            if (this.session.account() !== account) return;
+            this.loading = false;
+            this.error.set(extractApiErrorMessage(err, 'Could not load saved experiences.'));
+          },
+        }),
+    );
   }
 
-  ready(): boolean { return this.session.account() === this.owner && this.loaded(); }
-  busy(id: number): boolean { return this.session.account() === this.owner && this.pending().has(id); }
-  togglePreview(id: string): void { this.previewIds.update(ids => this.withValue(ids, id, !ids.has(id))); }
+  ready(): boolean {
+    return this.session.account() === this.owner && this.loaded();
+  }
 
-  toggle(id: number): void { this.setSaved(id, !this.entries().has(id)); }
+  busy(id: number): boolean {
+    return this.session.account() === this.owner && this.pending().has(id);
+  }
 
-  remove(id: number): void { this.setSaved(id, false); }
+  togglePreview(id: string): void {
+    this.previewIds.update((ids) => this.withValue(ids, id, !ids.has(id)));
+  }
+
+  toggle(id: number): void {
+    this.setSaved(id, !this.entries().has(id));
+  }
+
+  save(id: number): void {
+    this.setSaved(id, true);
+  }
+
+  remove(id: number): void {
+    this.setSaved(id, false);
+  }
 
   private setSaved(id: number, saved: boolean): void {
     const account = this.session.account();
-    if (!account || !this.ready() || this.pending().has(id)) return;
+    if (!account || this.pending().has(id)) return;
     const previous = this.entries().has(id);
     this.error.set('');
-    this.pending.update(ids => this.withValue(ids, id, true));
-    this.entries.update(ids => this.withValue(ids, id, saved));
+    this.pending.update((ids) => this.withValue(ids, id, true));
+    this.entries.update((ids) => this.withValue(ids, id, saved));
     const request: Observable<unknown> = saved ? this.api.save(id) : this.api.unsave(id);
-    this.requests.add(request.subscribe({
-      next: () => this.finish(account, id, true, previous),
-      error: (error: HttpErrorResponse) => this.finish(account, id,
-        !saved ? error.status === 404 : error.status === 409 &&
-          error.error?.detail === 'Eco experience is already in your wishlist',
-        previous),
-    }));
+    this.requests.add(
+      request.subscribe({
+        next: () => this.finish(account, id, true, previous),
+        error: (error: HttpErrorResponse) =>
+          this.finish(account, id, !saved && error.status === 404, previous, error),
+      }),
+    );
   }
 
-  private finish(account: ReturnType<TravelSession['account']>, id: number, success: boolean, previous: boolean): void {
+  private finish(
+    account: ReturnType<TravelSession['account']>,
+    id: number,
+    success: boolean,
+    previous: boolean,
+    error?: HttpErrorResponse,
+  ): void {
     if (!account || this.session.account() !== account) return;
-    this.pending.update(ids => this.withValue(ids, id, false));
-    if (success) this.generation.update(value => value + 1);
-    else {
-      this.entries.update(ids => this.withValue(ids, id, previous));
-      this.error.set('Could not update your saved experiences. Try again.');
+    this.pending.update((ids) => this.withValue(ids, id, false));
+    if (success) {
+      this.loaded.set(true);
+      this.generation.update((value) => value + 1);
+    } else {
+      this.entries.update((ids) => this.withValue(ids, id, previous));
+      this.error.set(
+        extractApiErrorMessage(error, 'Could not update your saved experiences. Try again.'),
+      );
     }
   }
 

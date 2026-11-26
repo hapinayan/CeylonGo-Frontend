@@ -14,6 +14,7 @@ import {
   RoomUpdate,
 } from '../../../core/models/provider.models';
 import { ProviderService } from '../../../core/services/provider.service';
+import { ProviderPreviewService } from '../../provider-preview.service';
 import { LocationPickerComponent } from '../../../shared/components/location-picker/location-picker.component';
 import {
   ServiceVerificationComponent,
@@ -35,8 +36,11 @@ import {
 })
 export class HomestayWizard implements OnInit {
   private readonly providerService = inject(ProviderService);
+  private readonly previewService = inject(ProviderPreviewService);
   private readonly router = inject(Router);
 
+  readonly isPreview = this.previewService.isPreview;
+  readonly previewQueryParams = this.previewService.queryParams;
   readonly currentStep = signal<number>(1);
   readonly listingId = signal<number | null>(null);
   readonly isSubmitting = signal<boolean>(false);
@@ -166,6 +170,45 @@ export class HomestayWizard implements OnInit {
   hasDraft = signal<boolean>(false);
 
   ngOnInit(): void {
+    if (this.isPreview()) {
+      const sample = this.previewService.sampleListings.find(
+        (item) => item.listing.category === 'homestay'
+      );
+      if (sample) {
+        this.listingId.set(sample.listing.id);
+        this.title = sample.listing.title;
+        this.description = sample.listing.description;
+        this.province = String(sample.details?.['province'] || 'Uva');
+        this.district = sample.listing.district || 'Badulla';
+        this.locality = sample.listing.locality || 'Ella';
+        this.streetAddress = String(sample.details?.['address'] || '');
+        if (sample.listing.media?.length) {
+          this.photos.set(sample.listing.media);
+          this.coverPhotoId.set(sample.listing.media[0].id);
+        }
+        if (sample.rooms?.length) {
+          this.rooms.set(
+            sample.rooms.map((r) => ({
+              label: r.label,
+              capacity: r.capacity,
+              nightly_price: r.nightly_price || '9500.00',
+              room_type: r.room_type,
+              description: r.description,
+              photo_ids: r.photo_ids,
+            }))
+          );
+        }
+        if (sample.homestay_metadata?.amenities) {
+          this.selectedAmenities = [...sample.homestay_metadata.amenities];
+        }
+      } else {
+        this.listingId.set(9001);
+        this.title = 'Sample: Ella Misty Hills Villa';
+        this.description = 'Sample preview homestay listing.';
+      }
+      return;
+    }
+
     const draft = this.providerService.getDraft();
     if (draft && draft.basicInfo?.title) {
       this.hasDraft.set(true);
@@ -340,6 +383,10 @@ export class HomestayWizard implements OnInit {
 
   // Photo handlers: Real multipart upload
   onPhotoFileSelected(event: Event): void {
+    if (this.isPreview()) {
+      this.photoUploadError.set('Photo uploads are disabled in Preview Mode.');
+      return;
+    }
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
@@ -389,6 +436,7 @@ export class HomestayWizard implements OnInit {
   }
 
   setAsCover(photoId: number): void {
+    if (this.isPreview()) return;
     this.coverPhotoId.set(photoId);
     const id = this.listingId();
     if (id) {
@@ -398,6 +446,7 @@ export class HomestayWizard implements OnInit {
   }
 
   removePhoto(photoId: number): void {
+    if (this.isPreview()) return;
     const id = this.listingId();
     if (id) {
       this.providerService.deletePhoto(id, photoId).subscribe();
@@ -411,7 +460,7 @@ export class HomestayWizard implements OnInit {
 
   // Room handlers
   addRoom(): void {
-    if (!this.newRoomLabel.trim()) return;
+    if (this.isPreview() || !this.newRoomLabel.trim()) return;
 
     const newRoom: RoomUpdate = {
       label: this.newRoomLabel.trim(),
@@ -453,6 +502,7 @@ export class HomestayWizard implements OnInit {
   // Verification payload handler
   onVerificationChange(data: VerificationDataState): void {
     this.verificationData = data;
+    if (this.isPreview()) return;
     const id = this.listingId();
     if (id) {
       this.providerService.saveEvidence(id, data.evidence).subscribe();
@@ -462,6 +512,10 @@ export class HomestayWizard implements OnInit {
 
   // Final Submission to Real Backend using POST /submit
   submitListing(): void {
+    if (this.isPreview()) {
+      this.errorMessage.set('Listing submission is disabled in Preview Mode.');
+      return;
+    }
     if (!this.declarationAgreed) {
       this.errorMessage.set('Please agree to the host verification declaration before submitting.');
       return;

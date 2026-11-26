@@ -5,26 +5,50 @@ import { ExperienceIcon } from './icon';
   selector: 'app-experience-pagination',
   imports: [ExperienceIcon],
   template: `
-    @if (totalPages() > 1) {
+    @if (showPagination()) {
       <nav class="pagination" aria-label="Experience result pages">
-        <button type="button" aria-label="Previous page" [disabled]="page() === 1"
-          (click)="change.emit(page() - 1)"><app-experience-icon name="previous" /></button>
-        @for (number of pages(); track number) {
-          <button type="button" [attr.aria-label]="'Page ' + number" [attr.aria-current]="page() === number ? 'page' : null"
-            (click)="change.emit(number)">{{ number }}</button>
-        }
-        <button type="button" aria-label="Next page" [disabled]="page() === totalPages()"
-          (click)="change.emit(page() + 1)"><app-experience-icon name="next" /></button>
+        <button
+          type="button"
+          aria-label="Previous page"
+          [disabled]="page() <= 1"
+          (click)="change.emit(page() - 1)"
+        >
+          <app-experience-icon name="previous" />
+        </button>
+        <span class="pagination-current" aria-current="page">Page {{ page() }}</span>
+        <button
+          type="button"
+          aria-label="Next page"
+          [disabled]="!canGoNext()"
+          (click)="change.emit(page() + 1)"
+        >
+          <app-experience-icon name="next" />
+        </button>
       </nav>
+    }
+  `,
+  styles: `
+    .pagination-current {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 0.9rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #082b5c;
     }
   `,
 })
 export class Pagination {
   readonly page = input.required<number>();
-  readonly totalPages = input.required<number>();
+  readonly hasNext = input(false);
+  readonly totalPages = input<number | null>(null);
   readonly change = output<number>();
-  readonly pages = computed(() => {
-    const first = Math.max(1, Math.min(this.page() - 2, this.totalPages() - 4));
-    return Array.from({ length: Math.min(5, this.totalPages()) }, (_, index) => first + index);
+
+  readonly canGoNext = computed(() => {
+    const total = this.totalPages();
+    if (total != null) return this.page() < total;
+    return this.hasNext();
   });
+
+  readonly showPagination = computed(() => this.page() > 1 || this.canGoNext());
 }

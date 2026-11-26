@@ -93,7 +93,11 @@
                   {
                     "replace": "src/app/bike-rentals/rental-booking-routes.ts",
                     "with": "src/app/bike-rentals/rental-booking-routes.development.ts"
-                }
+                  },
+                  {
+                    "replace": "src/app/provider/provider-preview.ts",
+                    "with": "src/app/provider/provider-preview.development.ts"
+                  }
               ]
             }
           },

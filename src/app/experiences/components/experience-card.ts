@@ -1,7 +1,7 @@
 import { SaveControl } from './save-control';
 import { RouterLink } from '@angular/router';
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { categories, Experience } from '../models/catalog';
 import { ExperienceIcon } from './icon';
 
@@ -13,17 +13,13 @@ import { ExperienceIcon } from './icon';
     <article class="experience-card" [class.experience-card--linked]="detailLink()">
       <!-- Card Media Header -->
       <div class="card-media" [attr.data-category]="experience().category">
-        @if (experience().image; as image) {
+        @if (experience().image && !missingImage) {
           <img
-            [src]="image"
+            [src]="experience().image"
             [alt]="experience().imageAlt ?? experience().title"
             (error)="missingImage = true"
-            [hidden]="missingImage"
             loading="lazy"
           />
-          @if (missingImage) {
-            <app-experience-icon class="placeholder" [name]="category()?.icon ?? 'mountain'" />
-          }
         } @else {
           <app-experience-icon class="placeholder" [name]="category()?.icon ?? 'mountain'" />
         }
@@ -31,23 +27,12 @@ import { ExperienceIcon } from './icon';
         <!-- Category Badge Top-Left -->
         <span class="category-badge">
           <app-experience-icon [name]="category()?.icon ?? 'grid'" />
-          <span>{{ experience().categoryLabel ?? category()?.label }}</span>
+          <span>{{ experience().categoryLabel ?? category()?.label ?? 'Adventure Activity' }}</span>
         </span>
 
         <!-- Wishlist Button Top-Right -->
         @if (liveFavorite()) {
           <app-save-experience class="card-save" [id]="experience().id" [title]="experience().title" />
-        }
-        @if (preview()) {
-          <button
-            class="favorite"
-            type="button"
-            [attr.aria-label]="'Preview favorite: ' + experience().title"
-            [attr.aria-pressed]="favorite()"
-            (click)="toggleFavorite.emit()"
-          >
-            <app-experience-icon name="heart" />
-          </button>
         }
       </div>
 
@@ -68,40 +53,42 @@ import { ExperienceIcon } from './icon';
           <span>{{ experience().location }}</span>
         </p>
 
-        <!-- Rating & Reviews -->
-        <div class="card-rating-row">
-          @if (experience().rating != null && experience().reviews != null) {
+        <!-- Rating & Reviews (only shown when backend provides non-null rating and reviews) -->
+        @if (experience().rating != null && experience().reviews != null && (experience().reviews ?? 0) > 0) {
+          <div class="card-rating-row">
             <span class="card-rating" [attr.aria-label]="experience().rating + ' out of 5, ' + experience().reviews + ' reviews'">
               <span class="star-icons">
-                <app-experience-icon name="star" />
-                <app-experience-icon name="star" />
-                <app-experience-icon name="star" />
-                <app-experience-icon name="star" />
                 <app-experience-icon name="star" />
               </span>
               <strong class="rating-val">{{ experience().rating | number:'1.1-1' }}</strong>
               <span class="reviews-count">({{ experience().reviews | number }} reviews)</span>
             </span>
-          }
-        </div>
+          </div>
+        }
 
-        <!-- Activity Metadata: Duration & Capacity -->
-        <div class="card-activity-meta">
-          <span class="meta-item duration">
-            <app-experience-icon name="clock" />
-            <span>{{ experience().duration || '≈ 3 hours' }}</span>
-          </span>
-          <span class="meta-item capacity">
-            <app-experience-icon name="user" />
-            <span>{{ experience().maxParticipants ? 'Max ' + experience().maxParticipants + ' people' : 'Max 8 people' }}</span>
-          </span>
-        </div>
+        <!-- Activity Metadata: Duration & Capacity (from backend only) -->
+        @if (experience().duration || experience().maxParticipants) {
+          <div class="card-activity-meta">
+            @if (experience().duration) {
+              <span class="meta-item duration">
+                <app-experience-icon name="clock" />
+                <span>{{ experience().duration }}</span>
+              </span>
+            }
+            @if (experience().maxParticipants) {
+              <span class="meta-item capacity">
+                <app-experience-icon name="user" />
+                <span>Max {{ experience().maxParticipants }} people</span>
+              </span>
+            }
+          </div>
+        }
 
         <!-- Price & Action Footer -->
         <div class="card-footer-row">
           <div class="price-wrap">
             <div class="price-amount">
-              <strong>{{ experience().currency ?? 'LKR' }} {{ experience().price | number }}</strong>
+              <strong>{{ experience().currency ?? 'LKR' }} {{ experience().price | number:'1.2-2' }}</strong>
               <span class="price-unit"> / {{ experience().unit ?? 'person' }}</span>
             </div>
           </div>
@@ -119,11 +106,9 @@ import { ExperienceIcon } from './icon';
 })
 export class ExperienceCard {
   readonly experience = input.required<Experience>();
-  readonly favorite = input.required<boolean>();
-  readonly preview = input(false);
-  readonly liveFavorite = input(false);
-  readonly detailLink = input(false);
-  readonly toggleFavorite = output<void>();
+  readonly favorite = input(false);
+  readonly liveFavorite = input(true);
+  readonly detailLink = input(true);
   readonly category = computed(() => categories.find((c) => c.id === this.experience().category));
   missingImage = false;
 }

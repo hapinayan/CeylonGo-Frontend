@@ -33,9 +33,6 @@
             <div class="review-title-stepper-row">
               <div class="title-column">
                 <h1 class="page-title">Review your booking</h1>
-                @if (catalog.preview) {
-                  <span class="preview-badge">Development Preview · Sample Booking Data</span>
-                }
               </div>
 
               <!-- Compact 3-Step Booking Progress Indicator -->
@@ -58,16 +55,34 @@
             </div>
           </div>
 
-          <!-- Step 3: Booking Confirmation Screen -->
-          @if (confirmedReservation(); as conf) {
-            <section class="booking-confirmation-section" aria-label="Booking Confirmation">
-              <div class="confirmation-banner">
-                <div class="confirmation-icon-check">✓</div>
-                <h2>Reservation Request Confirmed!</h2>
-                <p class="confirmation-ref">Booking Reference: <strong>{{ conf.reference }}</strong></p>
+          @if (!l.activity) {
+            <div class="workflow-state-card error-card" role="alert">
+              <h1>Booking unavailable</h1>
+              <p>Online booking is unavailable because schedule configuration is incomplete for this activity.</p>
+              <div class="workflow-actions">
+                <a [routerLink]="['/experiences', routeId()]" class="outline-control">Back to Experience</a>
+              </div>
+            </div>
+          } @else if (confirmedBooking(); as conf) {
+            <!-- Step 3: Booking Submission / Confirmation Screen -->
+            <section class="booking-confirmation-section" aria-label="Booking Status">
+              <div
+                class="confirmation-banner"
+                [class.pending-banner]="conf.status !== 'confirmed'"
+              >
+                <div class="confirmation-icon-check">
+                  {{ conf.status === 'confirmed' ? '✓' : '⏳' }}
+                </div>
+                <h2>{{ confirmationHeading() }}</h2>
+                <p class="confirmation-ref">
+                  Booking Reference:
+                  <strong>{{ conf.booking_reference || ('ACT-' + conf.id) }}</strong>
+                </p>
                 <div class="confirmation-pills">
                   <span class="status-pill status-reservation">Status: {{ conf.status }}</span>
-                  <span class="status-pill status-payment">Payment: {{ conf.payment_status.replaceAll('_', ' ') }}</span>
+                  <span class="status-pill status-payment">
+                    Payment: {{ (confirmedPayment()?.status || 'unpaid').replaceAll('_', ' ') }}
+                  </span>
                 </div>
               </div>
 
@@ -80,27 +95,37 @@
                   </div>
                   <div class="conf-item">
                     <span class="conf-label">Scheduled Departure</span>
-                    <strong class="conf-val">{{ conf.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka Time)</strong>
+                    <strong class="conf-val">
+                      {{ conf.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka Time)
+                    </strong>
                   </div>
                   <div class="conf-item">
-                    <span class="conf-label">Travelers</span>
-                    <strong class="conf-val">{{ conf.participants }} {{ conf.participants === 1 ? 'person' : 'people' }}</strong>
+                    <span class="conf-label">Participants</span>
+                    <strong class="conf-val">
+                      {{ conf.quantity }} {{ conf.quantity === 1 ? 'person' : 'people' }}
+                    </strong>
                   </div>
                   <div class="conf-item">
                     <span class="conf-label">Payment Method</span>
                     <strong class="conf-val">
-                      {{ conf.payment_method === 'pay_at_location' ? 'Pay at Location (Cash on Arrival)' : 'Academic Demo Online Payment' }}
+                      {{
+                        confirmedPayment()?.method === 'simulated'
+                          ? 'Academic Demo Online Payment'
+                          : 'Pay at Location (Unpaid until arrival)'
+                      }}
                     </strong>
                   </div>
                   <div class="conf-item full-width">
                     <span class="conf-label">Total Amount</span>
-                    <strong class="conf-val total-confirmed">{{ conf.currency }} {{ conf.total | number:'1.2-2' }}</strong>
+                    <strong class="conf-val total-confirmed">
+                      {{ conf.currency }} {{ conf.total_amount | number:'1.2-2' }}
+                    </strong>
                   </div>
                 </div>
 
                 <div class="confirmation-actions-row">
                   <a [routerLink]="['/experiences/bookings', conf.id]" class="outline-control workflow-primary">
-                    View Reservation Details & Status
+                    View Booking Details & Status
                   </a>
                   <a routerLink="/experiences/bookings" class="outline-control">
                     My Experience Bookings
@@ -117,18 +142,27 @@
                 <section class="review-card" aria-label="Booking Details">
                   <div class="card-header-bar">
                     <h2>Booking Details</h2>
-                    @if (!isEditing()) {
-                      <button type="button" class="btn-action-text" (click)="startEditing()">
-                        <app-experience-icon name="edit" /> Edit
-                      </button>
-                    } @else {
-                      <button type="button" class="btn-action-text btn-save" (click)="saveEditing()">
-                        Done
-                      </button>
+                    @if (!createdBooking()) {
+                      @if (!isEditing()) {
+                        <button type="button" class="btn-action-text" (click)="startEditing()">
+                          <app-experience-icon name="edit" /> Edit
+                        </button>
+                      } @else {
+                        <button type="button" class="btn-action-text btn-save" (click)="saveEditing()">
+                          Done
+                        </button>
+                      }
                     }
                   </div>
 
-                  @if (!isEditing()) {
+                  @if (createdBooking(); as pendingBooking) {
+                    <p class="edit-feedback" role="status">
+                      Booking request <strong>{{ pendingBooking.booking_reference || ('ACT-' + pendingBooking.id) }}</strong>
+                      is reserved ({{ pendingBooking.status }}). Complete payment selection below without duplicating your booking.
+                    </p>
+                  }
+
+                  @if (!isEditing() || createdBooking()) {
                     <div class="booking-details-summary-grid">
                       <div class="summary-field">
                         <span class="field-label"><app-experience-icon name="calendar" /> Activity Date</span>
@@ -140,11 +174,13 @@
                       </div>
                       <div class="summary-field">
                         <span class="field-label"><app-experience-icon name="group" /> Participants</span>
-                        <strong class="field-value">{{ travelers() }} {{ travelers() === 1 ? 'traveler' : 'travelers' }}</strong>
+                        <strong class="field-value">
+                          {{ travelers() }} {{ travelers() === 1 ? 'traveler' : 'travelers' }}
+                        </strong>
                       </div>
                       <div class="summary-field">
                         <span class="field-label"><app-experience-icon name="clock" /> Activity Duration</span>
-                        <strong class="field-value">{{ l.duration_hours }} hours</strong>
+                        <strong class="field-value">{{ durationLabel() }}</strong>
                       </div>
                     </div>
                   } @else {
@@ -165,7 +201,7 @@
                       <div class="edit-field">
                         <label for="editSlot" class="edit-label">Available Time Slot</label>
                         @if (slotsLoading()) {
-                          <p class="edit-feedback" role="status">Loading open slots for selected date…</p>
+                          <p class="edit-feedback" role="status">Loading slots for selected date…</p>
                         } @else if (slotsError()) {
                           <div class="edit-feedback error-feedback" role="alert">
                             <span>Could not load slots.</span>
@@ -173,7 +209,7 @@
                           </div>
                         } @else if (!slots().length) {
                           <div class="edit-feedback" role="status">
-                            <span>No open time slots found for this date. Choose another date.</span>
+                            <span>No time slots found for this date. Choose another date.</span>
                           </div>
                         } @else {
                           <select
@@ -185,7 +221,8 @@
                             <option value="" disabled>Select a time slot</option>
                             @for (s of slots(); track s.id) {
                               <option [value]="s.id" [disabled]="!isSlotSelectable(s)">
-                                {{ s.starts_at | date:'shortTime':'GMT+0530' }} – {{ s.ends_at | date:'shortTime':'GMT+0530' }} ({{ s.available_places }} places available)
+                                {{ s.starts_at | date:'shortTime':'GMT+0530' }} – {{ s.ends_at | date:'shortTime':'GMT+0530' }}
+                                ({{ s.remaining_capacity }} places left · {{ s.currency }} {{ s.total_amount | number:'1.2-2' }})
                               </option>
                             }
                           </select>
@@ -194,14 +231,14 @@
 
                       <div class="edit-field">
                         <label class="edit-label">
-                          Number of Participants ({{ l.min_participants }}–{{ l.max_group_size }} travelers)
+                          Number of Participants ({{ minParticipants() }}–{{ maxParticipants() }} travelers)
                         </label>
                         <div class="quantity-stepper">
                           <button
                             type="button"
                             class="stepper-btn btn-minus"
                             (click)="decrementTravelers()"
-                            [disabled]="travelers() <= l.min_participants"
+                            [disabled]="travelers() <= minParticipants()"
                             aria-label="Decrease participants"
                           >−</button>
                           <input type="number" class="stepper-val" [value]="travelers()" readonly />
@@ -224,129 +261,95 @@
                   }
                 </section>
 
-                <!-- 2. Traveler Information Card -->
+                <!-- 2. Traveler Information Card (from authenticated profile) -->
                 <section class="review-card" aria-label="Traveler Information">
                   <div class="card-header-bar">
-                    <h2>Traveler Information</h2>
-                    @if (!authService.isAuthenticated()) {
+                    <h2>Traveler Contact Information</h2>
+                    @if (!session.account()) {
                       <button type="button" class="btn-action-text btn-signin" (click)="openAuthModal()">
                         Sign In / Register
                       </button>
                     }
                   </div>
 
-                  <div class="traveler-form-fields">
-                    <div class="form-row-two-col">
-                      <div class="input-group">
-                        <label for="travelerName">Full Name <span class="required-mark">*</span></label>
-                        <input
-                          id="travelerName"
-                          type="text"
-                          class="form-control"
-                          [value]="fullName()"
-                          (input)="fullName.set($any($event.target).value)"
-                          placeholder="e.g. Priyantha Silva"
-                          autocomplete="name"
-                        />
+                  @if (session.account() && travelerProfile(); as user) {
+                    <div class="booking-details-summary-grid">
+                      <div class="summary-field">
+                        <span class="field-label">Full Name</span>
+                        <strong class="field-value" id="travelerProfileName">{{ user.full_name }}</strong>
                       </div>
-
-                      <div class="input-group">
-                        <label for="travelerEmail">Email Address <span class="required-mark">*</span></label>
-                        <input
-                          id="travelerEmail"
-                          type="email"
-                          class="form-control"
-                          [value]="email()"
-                          (input)="email.set($any($event.target).value)"
-                          placeholder="e.g. traveler@example.com"
-                          autocomplete="email"
-                        />
+                      <div class="summary-field">
+                        <span class="field-label">Email Address</span>
+                        <strong class="field-value" id="travelerProfileEmail">{{ user.email }}</strong>
                       </div>
                     </div>
-
-                    <div class="form-row-two-col">
-                      <div class="input-group">
-                        <label for="travelerPhone">Phone Number (optional)</label>
-                        <input
-                          id="travelerPhone"
-                          type="tel"
-                          class="form-control"
-                          [value]="phone()"
-                          (input)="phone.set($any($event.target).value)"
-                          placeholder="+94 77 123 4567"
-                          autocomplete="tel"
-                        />
-                      </div>
-
-                      <div class="input-group">
-                        <label for="specialReqs">Special Requests (optional)</label>
-                        <input
-                          id="specialReqs"
-                          type="text"
-                          class="form-control"
-                          [value]="specialRequests()"
-                          (input)="specialRequests.set($any($event.target).value)"
-                          placeholder="Dietary, accessibility, or pickup notes..."
-                        />
-                      </div>
+                    <p class="edit-feedback" style="margin-top: 0.75rem;">
+                      Your booking uses your authenticated CeylonGo traveler profile contact information.
+                    </p>
+                  } @else {
+                    <div class="edit-feedback" role="status">
+                      <p style="margin: 0 0 0.75rem;">
+                        Sign in with your traveler account to use your profile contact information and submit this booking.
+                      </p>
+                      <button type="button" class="outline-control workflow-primary" (click)="openAuthModal()">
+                        Sign In as Traveler
+                      </button>
                     </div>
-                  </div>
+                  }
                 </section>
 
-                <!-- 3. Important Information Card -->
+                <!-- 3. Important Information & Safety Card -->
                 <section class="review-card" aria-label="Important Information">
                   <div class="card-header-bar">
-                    <h2>Important Information</h2>
+                    <h2>Important Safety & Activity Information</h2>
                   </div>
 
                   <div class="important-info-list">
-                    @if (l.min_age != null) {
+                    @if (l.activity.minimum_age != null) {
                       <div class="info-bullet-item">
                         <span class="bullet-dot">●</span>
-                        <span><strong>Minimum Age Requirement:</strong> {{ l.min_age }} years old.</span>
+                        <span><strong>Minimum Age Requirement:</strong> {{ l.activity.minimum_age }} years old.</span>
                       </div>
                     }
-                    @if (l.certified_guide_required) {
+                    @if (l.activity.safety_instructions) {
                       <div class="info-bullet-item">
                         <span class="bullet-dot">●</span>
-                        <span><strong>Certified Guide:</strong> A certified national guide is required and included for this tour.</span>
+                        <span><strong>Safety Instructions:</strong> {{ l.activity.safety_instructions }}</span>
                       </div>
                     }
-                    @if (l.protected_area_permit_required) {
+                    @if (l.activity.restrictions) {
                       <div class="info-bullet-item">
                         <span class="bullet-dot">●</span>
-                        <span><strong>Protected Area Permit:</strong> Required. {{ l.permit_details }}</span>
+                        <span><strong>Restrictions:</strong> {{ l.activity.restrictions }}</span>
                       </div>
                     }
-                    @if (l.wildlife_safety_summary) {
+                    @if (l.activity.equipment) {
                       <div class="info-bullet-item">
                         <span class="bullet-dot">●</span>
-                        <span><strong>Activity Safety Instruction:</strong> {{ l.wildlife_safety_summary }}</span>
+                        <span><strong>Equipment:</strong> {{ l.activity.equipment }}</span>
                       </div>
                     }
-                    @for (rule of l.safety_rules; track rule.id) {
-                      <div class="info-bullet-item">
-                        <span class="bullet-dot">●</span>
-                        <span><strong>{{ rule.title }}{{ rule.is_mandatory ? ' (Mandatory)' : '' }}:</strong> {{ rule.description }}</span>
-                      </div>
-                    }
-                    @if (l.meeting_point || l.city) {
+                    @if (l.activity.meeting_point || locationLabel()) {
                       <div class="info-bullet-item">
                         <span class="bullet-dot">●</span>
                         <span>
-                          <strong>Meeting Point:</strong> {{ l.meeting_point || 'Designated meeting point' }} ({{ l.city }}{{ l.district ? ', ' + l.district : '' }}). Please arrive 15 minutes before the departure time.
+                          <strong>Meeting Point:</strong> {{ l.activity.meeting_point || locationLabel() }} ({{ locationLabel() }}).
                         </span>
                       </div>
                     }
                     <div class="info-bullet-item">
                       <span class="bullet-dot">●</span>
                       <span>
-                        <strong>Cancellation Policy:</strong> Cancel up to 24 hours before the experience start time for a full refund. Cancellations under 24 hours are non-refundable.
+                        <strong>Booking Confirmation & Cancellation:</strong>
+                        {{
+                          l.activity.cancellation_policy ||
+                            'Your booking stays pending until confirmed by the provider. Pending or confirmed bookings can be cancelled in My Bookings.'
+                        }}
                       </span>
                     </div>
                   </div>
 
-                  @if (hasMandatorySafety()) {
+                  @if (hasSafetyConsentRequirement() && !createdBooking()) {
                     <div class="safety-agreement-box">
                       <label class="agreement-checkbox-label">
                         <input
@@ -355,7 +358,7 @@
                           [checked]="acceptSafetyRules()"
                           (change)="acceptSafetyRules.set($any($event.target).checked)"
                         />
-                        <span>I accept the mandatory safety rules, guidelines and activity terms.</span>
+                        <span>I have read and accept the safety instructions and activity requirements.</span>
                       </label>
                     </div>
                   }
@@ -365,44 +368,79 @@
                 <section class="review-card payment-options-card" aria-label="Payment Method Selection">
                   <div class="card-header-bar">
                     <h2>Payment Method</h2>
-                    <span class="prototype-tag">Academic Evaluation Build</span>
+                    <span class="prototype-tag">Academic MVP</span>
                   </div>
 
                   <div class="payment-method-radios">
                     <label
                       class="method-radio-card"
-                      [class.method-selected]="paymentMethod() === 'pay_at_location'"
+                      [class.method-selected]="paymentMethod() === 'at_location'"
                     >
                       <input
                         type="radio"
                         name="payMethod"
-                        value="pay_at_location"
-                        [checked]="paymentMethod() === 'pay_at_location'"
-                        (change)="paymentMethod.set('pay_at_location')"
+                        value="at_location"
+                        [checked]="paymentMethod() === 'at_location'"
+                        (change)="selectPaymentMethod('at_location')"
                       />
                       <div class="method-text">
-                        <strong>Pay at Location (Cash on Arrival)</strong>
-                        <p>Pay in cash (LKR) directly to your verified local host upon meeting at the activity location.</p>
+                        <strong>Pay at Location</strong>
+                        <p>Pay directly at the meeting location upon arrival. Payment status is recorded as unpaid.</p>
                       </div>
                     </label>
 
                     <label
                       class="method-radio-card"
-                      [class.method-selected]="paymentMethod() === 'online'"
+                      [class.method-selected]="paymentMethod() === 'simulated'"
                     >
                       <input
                         type="radio"
                         name="payMethod"
-                        value="online"
-                        [checked]="paymentMethod() === 'online'"
-                        (change)="paymentMethod.set('online')"
+                        value="simulated"
+                        [checked]="paymentMethod() === 'simulated'"
+                        (change)="selectPaymentMethod('simulated')"
                       />
                       <div class="method-text">
-                        <strong>Academic Demo Online Payment</strong>
-                        <p>Simulate instant online card checkout in LKR within the CeylonGo academic test sandbox.</p>
+                        <strong>Academic Demo Online Payment (Simulation)</strong>
+                        <p>Simulated online payment for Academic MVP testing. No card details are collected and no real charges occur.</p>
                       </div>
                     </label>
                   </div>
+
+                  @if (paymentMethod() === 'simulated') {
+                    <div class="sim-options-box" role="region" aria-label="Demo simulation options">
+                      <p class="sim-heading">Academic Demo Payment Simulation (No Card Details Collected)</p>
+                      <div class="sim-radios">
+                        <label class="sim-choice sim-success">
+                          <input
+                            type="radio"
+                            name="simulateOutcome"
+                            value="success"
+                            [checked]="simulateOutcome() === 'success'"
+                            (change)="setSimulateOutcome('success')"
+                          />
+                          Simulate Success (demo_succeeded)
+                        </label>
+                        <label class="sim-choice sim-failure">
+                          <input
+                            type="radio"
+                            name="simulateOutcome"
+                            value="failure"
+                            [checked]="simulateOutcome() === 'failure'"
+                            (change)="setSimulateOutcome('failure')"
+                          />
+                          Simulate Failure (demo_failed)
+                        </label>
+                      </div>
+                      <span class="sim-attempt">Current Payment Attempt: #{{ paymentAttemptNo() }}</span>
+                    </div>
+                  }
+
+                  @if (paymentError()) {
+                    <p class="summary-error-alert" style="margin-top: 0.85rem;" role="alert">
+                      {{ paymentError() }}
+                    </p>
+                  }
                 </section>
               </div>
 
@@ -411,7 +449,6 @@
                 <aside class="sticky-summary-card" aria-label="Booking Summary">
                   <h3 class="summary-heading">Booking Summary</h3>
 
-                  <!-- Experience Photo & Title Preview -->
                   <div class="summary-media-row">
                     @if (coverUrl(); as img) {
                       <img
@@ -429,12 +466,11 @@
                     <div class="summary-media-info">
                       <h4 class="media-title">{{ l.title }}</h4>
                       <p class="media-location">
-                        <app-experience-icon name="pin" /> {{ l.city }}{{ l.district ? ', ' + l.district : '' }}
+                        <app-experience-icon name="pin" /> {{ locationLabel() }}
                       </p>
                     </div>
                   </div>
 
-                  <!-- Schedule & Travelers Details -->
                   <div class="summary-schedule-box">
                     <div class="schedule-row">
                       <span class="sched-label">Activity Date</span>
@@ -448,44 +484,41 @@
                       <span class="sched-label">Participants</span>
                       <strong class="sched-val">{{ travelers() }} {{ travelers() === 1 ? 'traveler' : 'travelers' }}</strong>
                     </div>
+                    @if (selectedSlot(); as slot) {
+                      <div class="schedule-row">
+                        <span class="sched-label">Remaining Capacity</span>
+                        <strong class="sched-val">{{ slot.remaining_capacity }} places</strong>
+                      </div>
+                    }
                   </div>
 
                   <div class="summary-divider-line"></div>
 
-                  <!-- Price Breakdown -->
+                  <!-- Server-Calculated Price Breakdown -->
                   <div class="summary-price-box">
-                    @if (l.pricing_type === 'per_person') {
-                      <div class="price-breakdown-row">
-                        <span class="price-name">Price per person</span>
-                        <span class="price-amount">{{ l.currency }} {{ l.base_price | number:'1.2-2' }}</span>
-                      </div>
-                      <div class="price-breakdown-row">
-                        <span class="price-name">Number of participants</span>
-                        <span class="price-amount">× {{ travelers() }}</span>
-                      </div>
-                      <div class="price-breakdown-row subtotal-row">
-                        <span class="price-name">Subtotal</span>
-                        <span class="price-amount">{{ l.currency }} {{ subtotal() | number:'1.2-2' }}</span>
-                      </div>
-                    } @else {
-                      <div class="price-breakdown-row">
-                        <span class="price-name">Price per group (up to {{ l.max_group_size }} travelers)</span>
-                        <span class="price-amount">{{ l.currency }} {{ l.base_price | number:'1.2-2' }}</span>
-                      </div>
-                      <div class="price-breakdown-row subtotal-row">
-                        <span class="price-name">Subtotal</span>
-                        <span class="price-amount">{{ l.currency }} {{ subtotal() | number:'1.2-2' }}</span>
-                      </div>
-                    }
+                    <div class="price-breakdown-row">
+                      <span class="price-name">Price per participant</span>
+                      <span class="price-amount">{{ l.currency }} {{ l.price_per_participant | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="price-breakdown-row">
+                      <span class="price-name">Participants</span>
+                      <span class="price-amount">× {{ travelers() }}</span>
+                    </div>
 
                     <div class="price-breakdown-row total-row">
                       <strong class="total-label">Total Amount</strong>
-                      <strong class="total-value">{{ l.currency }} {{ total() | number:'1.2-2' }}</strong>
+                      @if (serverTotal(); as total) {
+                        <strong class="total-value">{{ l.currency }} {{ total | number:'1.2-2' }}</strong>
+                      } @else {
+                        <strong class="total-value" style="font-size: 0.95rem; color: #64748b;">
+                          Select an available slot
+                        </strong>
+                      }
                     </div>
                   </div>
 
                   <p class="summary-guarantee-note">
-                    Authoritative pricing calculated and confirmed by CeylonGo backend.
+                    Server-calculated LKR quote. Your booking stays pending until confirmed by the provider.
                   </p>
 
                   @if (error()) {
@@ -495,10 +528,16 @@
                   <button
                     type="button"
                     class="btn-continue-payment"
-                    [disabled]="submitting() || !isBookingValid()"
+                    [disabled]="submitting() || (!createdBooking() && !isBookingValid())"
                     (click)="continueToPayment()"
                   >
-                    {{ submitting() ? 'Processing Reservation…' : 'Continue to Payment' }}
+                    @if (submitting()) {
+                      Processing…
+                    } @else if (createdBooking()) {
+                      {{ paymentMethod() === 'simulated' ? 'Retry Demo Payment' : 'Confirm Pay at Location' }}
+                    } @else {
+                      Submit Booking Request
+                    }
                   </button>
                 </aside>
               </div>

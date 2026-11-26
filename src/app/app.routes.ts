@@ -261,6 +261,76 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'activities/new',
+        loadComponent: () =>
+          import('./provider/activities/wizard/adventure-wizard').then(
+            (m) => m.AdventureWizard
+          ),
+      },
+      {
+        path: 'activities/:id/edit',
+        loadComponent: () =>
+          import('./provider/activities/wizard/adventure-wizard').then(
+            (m) => m.AdventureWizard
+          ),
+      },
+      {
+        path: 'activities/availability',
+        loadComponent: () =>
+          import('./provider/activities/availability/activity-availability').then(
+            (m) => m.ActivityAvailability
+          ),
+      },
+      {
+        path: 'guides/new',
+        loadComponent: () =>
+          import('./provider/guides/wizard/tour-guide-wizard').then(
+            (m) => m.TourGuideWizard
+          ),
+      },
+      {
+        path: 'guides/:id/edit',
+        loadComponent: () =>
+          import('./provider/guides/wizard/tour-guide-wizard').then(
+            (m) => m.TourGuideWizard
+          ),
+      },
+      {
+        path: 'guides/packages',
+        loadComponent: () =>
+          import('./provider/guides/packages/tour-guide-packages').then(
+            (m) => m.TourGuidePackages
+          ),
+      },
+      {
+        path: 'guides/availability',
+        loadComponent: () =>
+          import('./provider/guides/availability/tour-guide-availability').then(
+            (m) => m.TourGuideAvailability
+          ),
+      },
+      {
+        path: 'rentals/new',
+        loadComponent: () =>
+          import('./provider/rentals/wizard/rental-wizard').then(
+            (m) => m.RentalWizard
+          ),
+      },
+      {
+        path: 'rentals/:id/edit',
+        loadComponent: () =>
+          import('./provider/rentals/wizard/rental-wizard').then(
+            (m) => m.RentalWizard
+          ),
+      },
+      {
+        path: 'rentals/availability',
+        loadComponent: () =>
+          import('./provider/rentals/availability/rental-availability').then(
+            (m) => m.RentalAvailability
+          ),
+      },
+      {
         path: 'listings',
         loadComponent: () =>
           import('./provider/listings/provider-listings').then(
@@ -354,17 +424,29 @@ export const routes: Routes = [
     ],
   },
 
-  // LOCAL TOUR GUIDES DISCOVER PAGE
+  // LOCAL TOUR GUIDES DISCOVER, PROFILE & BOOKING PAGES
+  {
+    path: 'tour-guides/:id/booking',
+    loadComponent: () =>
+      import('./pages/tour-guides/guide-booking/tour-guide-booking.component')
+        .then((m) => m.TourGuideBookingComponent),
+  },
+  {
+    path: 'tour-guides/:id',
+    loadComponent: () =>
+      import('./pages/tour-guides/guide-detail/tour-guide-detail.component')
+        .then((m) => m.TourGuideDetailComponent),
+  },
   {
     path: 'tour-guides',
     loadComponent: () =>
       import('./pages/tour-guides/tour-guides.component')
-        .then(m => m.TourGuidesComponent)
+        .then((m) => m.TourGuidesComponent),
   },
   {
     path: 'tour-guide',
     redirectTo: 'tour-guides',
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
 
   // EXPERIENCES MODULE

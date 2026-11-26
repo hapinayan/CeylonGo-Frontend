@@ -1,0 +1,924 @@
+<div class="wizard-container">
+  <!-- Header -->
+  <header class="wizard-header">
+    <div class="header-left">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        <span>Back to Categories</span>
+      </a>
+      <h1 class="wizard-title">Licensed Tour Guide Setup</h1>
+      <div class="draft-meta">
+        @if (isPreview()) {
+          <span class="draft-pill">Preview Mode · Sample #{{ listingId() }}</span>
+        } @else if (listingId()) {
+          <span class="draft-pill">Server Draft #{{ listingId() }}</span>
+        }
+        <span class="status-pill status-{{ verificationStatus() }}">
+          {{ verificationStatus() === 'more_evidence_required' ? 'More Evidence Required' : (verificationStatus() | titlecase) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (!isSubmitted() && !isLoading()) {
+        <button
+          type="button"
+          class="btn-save-draft"
+          (click)="saveDraftProgress()"
+          [disabled]="isSaving() || isSuspended() || isPreview()"
+        >
+          {{ isPreview() ? 'Preview Only' : (isSaving() ? 'Saving...' : 'Save Progress') }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (saveToast()) {
+    <div class="toast-banner">{{ saveToast() }}</div>
+  }
+
+  @if (decisionReason()) {
+    <div class="decision-banner">
+      <strong>Admin Feedback:</strong> {{ decisionReason() }}
+    </div>
+  }
+
+  @if (isSuspended()) {
+    <div class="error-banner">
+      This tour guide listing is currently suspended and cannot be edited or submitted.
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-card">
+      <p>Initializing server-side Tour Guide draft...</p>
+    </div>
+  } @else if (isSubmitted()) {
+    <!-- Submission Success Receipt -->
+    <div class="success-screen">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-linecap="round" stroke-linejoin="round" />
+          <polyline points="22 4 12 14.01 9 11.01" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 class="success-title">Tour Guide Profile Submitted for Approval</h2>
+      <p class="success-subtitle">
+        Your guide profile <strong>{{ guideName }}</strong> has been submitted for admin verification. Once approved, you can publish it from Manage Listings.
+      </p>
+
+      <div class="status-receipt-box">
+        <div class="receipt-row">
+          <span>Reference ID</span>
+          <strong>#{{ listingId() }}</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Active Tour Packages</span>
+          <strong>{{ activePackages.length }}</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Verification Status</span>
+          <strong class="text-warning">Pending Review</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Publication Status</span>
+          <strong>Unpublished (Awaiting Approval)</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="btn-primary">Go to Manage Listings</a>
+        <a
+          routerLink="/provider/guides/availability"
+          [queryParams]="isPreview() ? { listingId: listingId(), preview: 'true' } : { listingId: listingId() }"
+          class="btn-outline"
+        >
+          Manage Availability
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- 6-Step Progress Bar -->
+    <div class="wizard-stepper" role="tablist" aria-label="Tour Guide Creation Steps">
+      @for (s of steps; track s.num) {
+        <button
+          type="button"
+          class="step-item"
+          [class.active]="currentStep() === s.num"
+          [class.completed]="currentStep() > s.num"
+          (click)="goToStep(s.num)"
+        >
+          <span class="step-num">
+            @if (currentStep() > s.num) { ✓ } @else { {{ s.num }} }
+          </span>
+          <span class="step-label">{{ s.label }}</span>
+        </button>
+        @if (s.num < 6) {
+          <div class="stepper-line" [class.filled]="currentStep() > s.num"></div>
+        }
+      }
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span>{{ errorMessage() }}</span>
+        @if (!listingId()) {
+          <button type="button" class="btn-retry" (click)="retryDraftInitialization()">Retry</button>
+        }
+      </div>
+    }
+
+    <div class="step-card">
+      <!-- STEP 1: Personal & Professional Information -->
+      @if (currentStep() === 1) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 01 — Personal &amp; Professional Information</h2>
+          <p class="step-desc">
+            Present your name, profile photo, professional guiding credentials summary, and experience.
+          </p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="guideName" class="form-label">Guide Name / Display Title <span class="required">*</span></label>
+            <input
+              id="guideName"
+              type="text"
+              class="form-input"
+              [(ngModel)]="guideName"
+              placeholder="e.g., Nadee Fernando — Ella Highlands Guide"
+              maxlength="160"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="profTitle" class="form-label">Professional Title</label>
+            <input
+              id="profTitle"
+              type="text"
+              class="form-input"
+              [(ngModel)]="professionalTitle"
+              placeholder="e.g., SLTDA National Tourist Guide"
+              maxlength="120"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="expYears" class="form-label">Years of Experience <span class="required">*</span></label>
+            <input
+              id="expYears"
+              type="number"
+              class="form-input"
+              [(ngModel)]="yearsOfExperience"
+              min="0"
+              max="100"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="startingLkr" class="form-label">Indicative Starting Rate (LKR) <span class="required">*</span></label>
+            <input
+              id="startingLkr"
+              type="number"
+              class="form-input"
+              [(ngModel)]="startingPrice"
+              min="100"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="shortIntro" class="form-label">Short Introduction <span class="required">*</span></label>
+            <textarea
+              id="shortIntro"
+              rows="2"
+              class="form-input"
+              [(ngModel)]="shortIntro"
+              placeholder="Concise introduction displayed on discovery cards and your profile header..."
+              maxlength="300"
+            ></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="bioText" class="form-label">Detailed Biography</label>
+            <textarea
+              id="bioText"
+              rows="4"
+              class="form-input"
+              [(ngModel)]="biography"
+              placeholder="Share your guiding background, regional expertise, storytelling style, and training..."
+              maxlength="1600"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="subsection-block">
+          <div class="subsection-head">
+            <div>
+              <h3 class="subsection-title">Profile &amp; Tour Photographs <span class="required">*</span></h3>
+              <p class="subsection-desc">
+                Upload your profile photograph and destination showcase shots. Mark one photo as Primary Cover.
+              </p>
+            </div>
+            <label class="btn-upload-outline" [class.disabled]="isUploadingPhoto() || isPreview()">
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                multiple
+                (change)="onPhotoSelected($event)"
+                [disabled]="isUploadingPhoto() || isPreview()"
+                hidden
+              />
+              {{ isUploadingPhoto() ? 'Uploading...' : '+ Upload Photo' }}
+            </label>
+          </div>
+
+          @if (photos().length > 0) {
+            <div class="photos-grid">
+              @for (item of photos(); track item.media.id; let idx = $index) {
+                <div class="photo-tile" [class.is-cover]="idx === 0">
+                  @if (item.url) {
+                    <img [src]="item.url" [alt]="item.media.alt_text || 'Guide photograph'" />
+                  } @else {
+                    <div class="photo-loading">Loading photo...</div>
+                  }
+                  <div class="photo-tile-actions">
+                    @if (idx === 0) {
+                      <span class="cover-pill">Profile Cover</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="mini-btn"
+                        (click)="setCoverPhoto(item.media.id)"
+                        [disabled]="isPreview()"
+                      >
+                        Set Cover
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="mini-btn danger"
+                      (click)="deletePhoto(item.media.id)"
+                      [disabled]="isPreview()"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-box">No photos uploaded yet. Upload at least 1 photo to proceed.</div>
+          }
+        </div>
+      }
+
+      <!-- STEP 2: Location & Service Areas -->
+      @if (currentStep() === 2) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 02 — Location &amp; Service Areas</h2>
+          <p class="step-desc">
+            Set your base region, primary meeting point on the interactive Leaflet map, and additional covered districts.
+          </p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="guideProvince" class="form-label">Province <span class="required">*</span></label>
+            <select
+              id="guideProvince"
+              class="form-input"
+              [(ngModel)]="province"
+              (ngModelChange)="onProvinceChange()"
+            >
+              @for (p of provinces; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="guideDistrict" class="form-label">District <span class="required">*</span></label>
+            <select
+              id="guideDistrict"
+              class="form-input"
+              [(ngModel)]="district"
+              (ngModelChange)="onPrimaryLocationChange()"
+            >
+              @for (d of availableDistricts; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="guideLocality" class="form-label">Base Locality / Town <span class="required">*</span></label>
+            <input
+              id="guideLocality"
+              type="text"
+              class="form-input"
+              [(ngModel)]="locality"
+              (ngModelChange)="onPrimaryLocationChange()"
+              placeholder="e.g., Ella / Kandy City / Galle Fort"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="guideAddress" class="form-label">Street / Base Address</label>
+            <input
+              id="guideAddress"
+              type="text"
+              class="form-input"
+              [(ngModel)]="address"
+              placeholder="e.g., Station Road Junction, Ella"
+              maxlength="300"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="guideMeetingPoint" class="form-label">Default Meeting Point <span class="required">*</span></label>
+            <input
+              id="guideMeetingPoint"
+              type="text"
+              class="form-input"
+              [(ngModel)]="meetingPoint"
+              placeholder="e.g., Ella Railway Station Main Gate"
+              maxlength="500"
+            />
+          </div>
+        </div>
+
+        <div class="subsection-block">
+          <h3 class="subsection-title">Map Pin Location (Leaflet Picker)</h3>
+          <p class="subsection-desc">
+            Click on the map to set your exact meeting coordinates ({{ latitude() }}, {{ longitude() }}).
+          </p>
+          <app-location-picker
+            [latitude]="latitude()"
+            [longitude]="longitude()"
+            (coordinatesChange)="onCoordinatesChange($event)"
+          ></app-location-picker>
+        </div>
+
+        <div class="subsection-block">
+          <h3 class="subsection-title">Covered Service Areas</h3>
+          <div class="inline-builder-row">
+            <select
+              class="form-input"
+              [(ngModel)]="newAreaProvince"
+              (ngModelChange)="onNewAreaProvinceChange()"
+            >
+              @for (p of provinces; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+            <select class="form-input" [(ngModel)]="newAreaDistrict">
+              @for (d of newAreaDistricts; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="newAreaCity"
+              placeholder="Town / Area (e.g., Haputale)"
+            />
+            <button type="button" class="btn-outline-sm" (click)="addServiceArea()">
+              + Add Area
+            </button>
+          </div>
+
+          <div class="chips-list">
+            @for (area of serviceAreas; track $index) {
+              <div class="chip-pill" [class.primary]="area.is_primary">
+                <span>
+                  {{ area.city || area.district }}, {{ area.district }} ({{ area.province }})
+                  @if (area.is_primary) { · Primary }
+                </span>
+                @if (!area.is_primary) {
+                  <button type="button" class="chip-btn" (click)="setPrimaryServiceArea($index)">Make Primary</button>
+                  <button type="button" class="chip-btn danger" (click)="removeServiceArea($index)">✕</button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- STEP 3: Languages & Specializations -->
+      @if (currentStep() === 3) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 03 — Languages &amp; Specializations</h2>
+          <p class="step-desc">
+            Select guide categories mapped to backend-supported specializations and list spoken languages.
+          </p>
+        </div>
+
+        <div class="subsection-block">
+          <h3 class="subsection-title">Backend Guide Specializations (up to 4) <span class="required">*</span></h3>
+          <p class="subsection-desc">
+            Exact API slugs stored on your guide profile.
+          </p>
+          <div class="spec-grid">
+            @for (cat of backendCategories; track cat.slug) {
+              <button
+                type="button"
+                class="spec-card-btn"
+                [class.selected]="selectedBackendCategories.includes(cat.slug)"
+                (click)="toggleBackendCategory(cat.slug)"
+              >
+                <div class="spec-head">
+                  <strong>{{ cat.name }}</strong>
+                  <span class="spec-slug">{{ cat.slug }}</span>
+                </div>
+                <p class="spec-examples">{{ cat.examples }}</p>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="subsection-block">
+          <h3 class="subsection-title">Traveler Guide Categories Coverage</h3>
+          <p class="subsection-desc">
+            Existing traveler discovery categories automatically linked to your selected specializations:
+          </p>
+          <div class="chips-list">
+            @for (dcat of discoveryCategories; track dcat.id) {
+              <button
+                type="button"
+                class="chip-pill selectable"
+                [class.primary]="isDiscoverySelected(dcat.backendSlug)"
+                (click)="selectDiscoveryCategory(dcat.backendSlug)"
+              >
+                <span>{{ dcat.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="subsection-block">
+          <h3 class="subsection-title">Spoken Languages <span class="required">*</span></h3>
+          <div class="inline-builder-row">
+            <select class="form-input" [(ngModel)]="newLangCode" aria-label="Language">
+              @for (lang of languageOptions; track lang.code) {
+                <option [value]="lang.code">{{ lang.name }} ({{ lang.code }})</option>
+              }
+            </select>
+            <select class="form-input" [(ngModel)]="newLangProficiency" aria-label="Proficiency level">
+              @for (lvl of proficiencyLevels; track lvl) {
+                <option [value]="lvl">{{ lvl | titlecase }}</option>
+              }
+            </select>
+            <button type="button" class="btn-outline-sm" (click)="addLanguage()">
+              + Add Language
+            </button>
+          </div>
+
+          <div class="chips-list">
+            @for (lang of languages; track lang.language_code) {
+              <div class="chip-pill" [class.primary]="lang.is_primary">
+                <span>
+                  {{ lang.language_name }} · {{ lang.proficiency_level | titlecase }}
+                  @if (lang.is_primary) { · Primary }
+                </span>
+                @if (!lang.is_primary) {
+                  <button type="button" class="chip-btn" (click)="setPrimaryLanguage($index)">Set Primary</button>
+                  <button type="button" class="chip-btn danger" (click)="removeLanguage($index)">✕</button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="guideCancellation" class="form-label">General Cancellation Policy</label>
+          <textarea
+            id="guideCancellation"
+            rows="3"
+            class="form-input"
+            [(ngModel)]="cancellationPolicy"
+            maxlength="1000"
+            placeholder="e.g., Free cancellation up to 48 hours prior to scheduled tour..."
+          ></textarea>
+        </div>
+      }
+
+      <!-- STEP 4: Tour Packages & Pricing -->
+      @if (currentStep() === 4) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 04 — Tour Packages &amp; Pricing</h2>
+          <p class="step-desc">
+            Create scheduled tour packages in LKR. Direct unscheduled hourly or daily bookings are not part of the Academic MVP.
+          </p>
+        </div>
+
+        @if (packageErrorMessage()) {
+          <div class="error-banner" role="alert">{{ packageErrorMessage() }}</div>
+        }
+
+        <div class="package-editor-card">
+          <h3 class="subsection-title">
+            {{ editingPackageId !== null ? 'Edit Tour Package #' + editingPackageId : 'Add Scheduled Tour Package' }}
+          </h3>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="pkgTitle" class="form-label">Package Name <span class="required">*</span></label>
+              <input
+                id="pkgTitle"
+                type="text"
+                class="form-input"
+                [(ngModel)]="pkgTitle"
+                placeholder="e.g., Ella Full-Day Private Guided Tour"
+                maxlength="100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="pkgDuration" class="form-label">Duration (Hours) <span class="required">*</span></label>
+              <input
+                id="pkgDuration"
+                type="number"
+                class="form-input"
+                [(ngModel)]="pkgDurationHours"
+                min="0.5"
+                max="72"
+                step="0.5"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="pkgPrice" class="form-label">LKR Price <span class="required">*</span></label>
+              <input
+                id="pkgPrice"
+                type="number"
+                class="form-input"
+                [(ngModel)]="pkgPrice"
+                min="100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="pkgPricingUnit" class="form-label">Pricing Unit <span class="required">*</span></label>
+              <select id="pkgPricingUnit" class="form-input" [(ngModel)]="pkgPricingType">
+                <option value="per_person">Per Person (LKR / person)</option>
+                <option value="per_group">Per Group (Flat Group Rate)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="pkgMin" class="form-label">Min Travelers</label>
+              <input id="pkgMin" type="number" class="form-input" [(ngModel)]="pkgMinTravelers" min="1" max="100" />
+            </div>
+
+            <div class="form-group">
+              <label for="pkgMax" class="form-label">Max Travelers <span class="required">*</span></label>
+              <input id="pkgMax" type="number" class="form-input" [(ngModel)]="pkgMaxPeople" min="1" max="1000" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="pkgMeeting" class="form-label">Package Meeting Point <span class="required">*</span></label>
+              <input
+                id="pkgMeeting"
+                type="text"
+                class="form-input"
+                [(ngModel)]="pkgMeetingPoint"
+                placeholder="e.g., Ella Railway Station Main Gate"
+                maxlength="500"
+              />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="pkgDestinations" class="form-label">Destinations Covered / Itinerary</label>
+              <input
+                id="pkgDestinations"
+                type="text"
+                class="form-input"
+                [(ngModel)]="pkgDestinationsText"
+                placeholder="e.g., Nine Arch Bridge, Little Adam's Peak, Demodara Loop"
+              />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="pkgDesc" class="form-label">Package Description <span class="required">*</span></label>
+              <textarea
+                id="pkgDesc"
+                rows="3"
+                class="form-input"
+                [(ngModel)]="pkgDescription"
+                maxlength="4000"
+                placeholder="Describe the route, pace, and highlights travelers experience on this package..."
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="pkgIncluded" class="form-label">Included Services</label>
+              <textarea
+                id="pkgIncluded"
+                rows="2"
+                class="form-input"
+                [(ngModel)]="pkgIncludedServices"
+                placeholder="e.g., Licensed guide, bottled water, Ceylon tea break"
+                maxlength="2000"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="pkgExcluded" class="form-label">Excluded Services</label>
+              <textarea
+                id="pkgExcluded"
+                rows="2"
+                class="form-input"
+                [(ngModel)]="pkgExcludedServices"
+                placeholder="e.g., Monument entry tickets, private transport"
+                maxlength="2000"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="editor-actions">
+            <button
+              type="button"
+              class="btn-next"
+              (click)="savePackage()"
+              [disabled]="isSavingPackage() || isPreview()"
+            >
+              {{ isSavingPackage() ? 'Saving...' : (editingPackageId !== null ? 'Update Package' : 'Add Tour Package') }}
+            </button>
+            @if (editingPackageId !== null) {
+              <button type="button" class="btn-outline-sm" (click)="resetPackageForm()">Cancel Edit</button>
+            }
+          </div>
+        </div>
+
+        @if (packages().length > 0) {
+          <div class="packages-list">
+            @for (pkg of packages(); track pkg.id) {
+              <div class="pkg-summary-card" [class.inactive]="!pkg.is_active">
+                <div class="pkg-main">
+                  <div class="pkg-head-row">
+                    <strong>{{ pkg.title }}</strong>
+                    <span class="slot-badge" [class.open]="pkg.is_active" [class.blocked]="!pkg.is_active">
+                      {{ pkg.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+                  <p class="pkg-desc-text">{{ pkg.description }}</p>
+                  <div class="pkg-meta">
+                    <span>{{ pkg.duration_hours }} hrs</span>
+                    <span>Max {{ pkg.max_people }} travelers</span>
+                    <span>{{ pkg.meeting_point }}</span>
+                  </div>
+                </div>
+                <div class="pkg-right">
+                  <div class="pkg-price">
+                    LKR {{ pkg.price | number:'1.0-0' }}
+                    <small>{{ pkg.pricing_type === 'per_group' ? '/ group' : '/ person' }}</small>
+                  </div>
+                  <div class="pkg-actions">
+                    <button type="button" class="link-btn" (click)="startEditPackage(pkg)">Edit</button>
+                    <button
+                      type="button"
+                      class="link-btn"
+                      (click)="togglePackageActive(pkg)"
+                      [disabled]="isPreview()"
+                    >
+                      {{ pkg.is_active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-box">No tour packages created yet. Add at least one active package above.</div>
+        }
+      }
+
+      <!-- STEP 5: Availability Management -->
+      @if (currentStep() === 5) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 05 — Availability Management</h2>
+          <p class="step-desc">
+            Add scheduled departure slots for your active tour packages. Slot duration matches the selected package automatically.
+          </p>
+        </div>
+
+        @if (slotErrorMessage()) {
+          <div class="error-banner" role="alert">{{ slotErrorMessage() }}</div>
+        }
+
+        <div class="package-editor-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="slotPkg" class="form-label">Select Tour Package <span class="required">*</span></label>
+              <select
+                id="slotPkg"
+                class="form-input"
+                [(ngModel)]="selectedSlotPackageId"
+                (ngModelChange)="onSlotPackageOrStartChange()"
+              >
+                @for (pkg of activePackages; track pkg.id) {
+                  <option [ngValue]="pkg.id">{{ pkg.title }} ({{ pkg.duration_hours }} hrs)</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="slotDate" class="form-label">Date (Sri Lanka) <span class="required">*</span></label>
+              <input id="slotDate" type="date" class="form-input" [(ngModel)]="slotDate" />
+            </div>
+
+            <div class="form-group">
+              <label for="slotStart" class="form-label">Start Time <span class="required">*</span></label>
+              <input
+                id="slotStart"
+                type="time"
+                class="form-input"
+                [(ngModel)]="slotStartTime"
+                (ngModelChange)="onSlotPackageOrStartChange()"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="slotEnd" class="form-label">End Time (Auto from Package)</label>
+              <input id="slotEnd" type="time" class="form-input" [(ngModel)]="slotEndTime" readonly />
+            </div>
+
+            <div class="form-group">
+              <label for="slotCap" class="form-label">Max Group Capacity</label>
+              <input
+                id="slotCap"
+                type="number"
+                class="form-input"
+                [(ngModel)]="slotCapacity"
+                min="1"
+                [max]="selectedSlotPackage?.max_people || 100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Slot Status</label>
+              <label class="checkbox-inline">
+                <input type="checkbox" [(ngModel)]="slotIsOpen" />
+                <span>Open for Booking</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="editor-actions">
+            <button
+              type="button"
+              class="btn-next"
+              (click)="saveSlot()"
+              [disabled]="isSavingSlot() || isPreview() || activePackages.length === 0"
+            >
+              {{ isSavingSlot() ? 'Saving...' : (editingSlotId !== null ? 'Update Slot' : 'Add Slot') }}
+            </button>
+            @if (editingSlotId !== null) {
+              <button type="button" class="btn-outline-sm" (click)="cancelSlotEdit()">Cancel Edit</button>
+            }
+          </div>
+        </div>
+
+        @if (slots().length > 0) {
+          <div class="slots-table-wrap">
+            <table class="slots-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Schedule</th>
+                  <th>Capacity</th>
+                  <th>Status / Conflicts</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (slot of slots(); track slot.id) {
+                  <tr>
+                    <td>{{ packageTitleForSlot(slot.unit_id) }}</td>
+                    <td>{{ formatSlotDisplay(slot.starts_at) }} – {{ formatSlotDisplay(slot.ends_at) }}</td>
+                    <td>{{ slot.capacity }} pax</td>
+                    <td>
+                      <span class="slot-badge" [class.open]="slot.is_open" [class.blocked]="!slot.is_open">
+                        {{ slot.is_open ? 'Open' : 'Blocked' }}
+                      </span>
+                      @if (overlappingReservationForSlot(slot); as conflict) {
+                        <span class="conflict-tag">
+                          Booked ({{ conflict.booking_reference || '#' + conflict.id }})
+                        </span>
+                      }
+                    </td>
+                    <td class="slot-actions-cell">
+                      <button type="button" class="link-btn" (click)="startEditSlot(slot)" [disabled]="isPreview()">Edit</button>
+                      <button type="button" class="link-btn" (click)="toggleSlotOpen(slot)" [disabled]="isPreview()">
+                        {{ slot.is_open ? 'Block' : 'Unblock' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-box">No availability slots scheduled yet. Add dates above or manage them anytime in Guide Availability.</div>
+        }
+      }
+
+      <!-- STEP 6: Qualifications & Verification -->
+      @if (currentStep() === 6) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 06 — Qualifications &amp; Verification</h2>
+          <p class="step-desc">
+            Upload your SLTDA guide license, qualifications, certificates, and redacted feedback, then submit for admin review.
+          </p>
+        </div>
+
+        <app-service-verification
+          [listingId]="listingId()"
+          category="guide"
+          [initialData]="verificationInitialData()"
+          (verificationChange)="onVerificationChange($event)"
+        ></app-service-verification>
+
+        <div class="review-summary-card">
+          <h3 class="subsection-title">Final Guide Listing Review</h3>
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="review-label">Guide Name &amp; Title</span>
+              <strong>{{ guideName }} @if (professionalTitle) { · {{ professionalTitle }} }</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Location &amp; Meeting Point</span>
+              <strong>{{ locality }}, {{ district }} ({{ province }}) — {{ meetingPoint }}</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Specializations &amp; Experience</span>
+              <strong>{{ selectedCategoriesDisplay }} · {{ yearsOfExperience }} yrs</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Packages &amp; Starting Price</span>
+              <strong>{{ activePackages.length }} active package(s) · From LKR {{ minimumActivePackagePrice | number:'1.0-0' }}</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Photos &amp; Availability</span>
+              <strong>{{ photos().length }} photo(s) · {{ slots().length }} slot(s)</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Private Verification Docs</span>
+              <strong>{{ evidenceFiles().length }} file(s) · {{ evidenceLinks().length }} link(s)</strong>
+            </div>
+          </div>
+
+          @if (!hasQualificationEvidence) {
+            <div class="warning-inline">
+              Submission requires uploading at least one <strong>Guide License / Credentials</strong> document OR providing reviewer qualification notes above.
+            </div>
+          }
+
+          <label class="declaration-box">
+            <input type="checkbox" [(ngModel)]="declarationAccepted" />
+            <span>
+              I declare that my tour guide profile, qualifications, license details, and redacted customer feedback are accurate and comply with Sri Lankan tourism guidelines.
+            </span>
+          </label>
+        </div>
+      }
+
+      <!-- Navigation Footer -->
+      <div class="wizard-footer">
+        <button
+          type="button"
+          class="btn-prev"
+          (click)="prevStep()"
+          [disabled]="currentStep() === 1 || isSaving() || isSubmitting()"
+        >
+          Back
+        </button>
+
+        <div class="footer-right">
+          @if (currentStep() < 6) {
+            <button
+              type="button"
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="isSaving() || isUploadingPhoto()"
+            >
+              {{ isSaving() ? 'Saving...' : 'Save & Continue' }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-submit-listing"
+              (click)="submitForVerification()"
+              [disabled]="isSubmitting() || isSaving() || isSuspended() || isPreview()"
+            >
+              {{ isPreview() ? 'Submission Disabled in Preview Mode' : (isSubmitting() ? 'Submitting...' : 'Submit for Verification') }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

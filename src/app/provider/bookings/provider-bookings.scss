@@ -614,3 +614,84 @@
     }
   }
 }
+
+
+.filter-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.category-select {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  color: #082b5c;
+  background: #ffffff;
+}
+
+.btn-clear-listing {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #0066ff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ref-stack,
+.payment-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.l-ref,
+.t-contact,
+.pay-method-tag,
+.qty-unit {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.payment-badge.unpaid {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.btn-complete {
+  background: #0066ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel-booking {
+  background: #ffffff;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-left: 4px solid #ef4444;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.84rem;
+  margin-bottom: 0.75rem;
+}

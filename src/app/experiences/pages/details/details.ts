@@ -1,34 +1,66 @@
 import { DOCUMENT, DatePipe, DecimalPipe, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { afterNextRender, Component, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  inject,
+  Injector,
+  signal,
+  ViewEncapsulation,
+} from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, combineLatest, distinctUntilChanged, forkJoin, map, of, startWith, switchMap, tap } from 'rxjs';
-import { BookingPanel } from '../../components/booking-panel';
-import { SaveControl } from '../../components/save-control';
+import { catchError, combineLatest, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
 import { Footer } from '../../../shared/components/footer/footer';
-import { BOOKABLE_PREVIEW } from '../../services/travel-api';
-import { TravelerHeader } from '../../components/traveler-header';
+import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
+import { BookingPanel } from '../../components/booking-panel';
 import { ExperienceIcon } from '../../components/icon';
-import { categories, Category, Experience } from '../../models/catalog';
-import { EcoDetail, EcoReviews, EcoSlot } from '../../models/eco';
-import { EXPERIENCE_CATALOG } from '../../services/catalog';
-import { EcoApi, ecoImageUrl, toExperience } from '../../services/eco-api';
+import { SaveControl } from '../../components/save-control';
+import { TravelerHeader } from '../../components/traveler-header';
+import { ActivityDetails, ActivitySlotDetails } from '../../models/activity';
+import { Experience } from '../../models/catalog';
+import {
+  ActivitiesApi,
+  activityImageUrl,
+  extractApiErrorMessage,
+  formatDurationMinutes,
+  formatLocation,
+  toActivityCard,
+} from '../../services/activities-api';
 
-interface DetailImage { url: string; caption: string }
+interface DetailImage {
+  url: string;
+  caption: string;
+}
 
 interface Detail {
   card: Experience;
-  eco?: EcoDetail;
+  activity: ActivityDetails;
   images: DetailImage[];
-  reviews?: EcoReviews | null;
-  slots?: EcoSlot[] | null;
+  slots?: ActivitySlotDetails[] | null;
+  nextOpenSlot?: ActivitySlotDetails | null;
+  durationLabel?: string;
+  locationLabel: string;
 }
 
-type DetailState = { status: 'loading' | 'missing' | 'error' } | { status: 'ready'; detail: Detail };
+type DetailState =
+  | { status: 'loading' }
+  | { status: 'missing' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; detail: Detail };
 
 @Component({
-  imports: [RouterLink, DatePipe, DecimalPipe, TravelerHeader, ExperienceIcon, BookingPanel, SaveControl, Footer],
+  imports: [
+    RouterLink,
+    DatePipe,
+    DecimalPipe,
+    TravelerHeader,
+    ExperienceIcon,
+    BookingPanel,
+    SaveControl,
+    Footer,
+    TravelerAuthModal,
+  ],
   templateUrl: './details.html',
   styleUrls: ['../discover/discover.scss', './details.scss', '../traveler/traveler.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -38,62 +70,85 @@ export class ExperienceDetails {
   private readonly document = inject(DOCUMENT);
   private readonly viewport = inject(ViewportScroller);
   private readonly injector = inject(Injector);
+  private readonly api = inject(ActivitiesApi);
+
   readonly shareStatus = signal('');
   readonly shareUrl = signal('');
   readonly viewedImage = signal<DetailImage | null>(null);
   readonly failedImages = signal<ReadonlySet<string>>(new Set());
-  private readonly api = inject(EcoApi);
   private readonly reload = signal(0);
-  readonly catalog = inject(EXPERIENCE_CATALOG);
-  readonly sample = inject(BOOKABLE_PREVIEW);
 
-  readonly state = toSignal(combineLatest([
-    this.route.paramMap.pipe(map(params => params.get('id') ?? ''), distinctUntilChanged(), tap(() => {
-      this.failedImages.set(new Set());
-      this.shareStatus.set('');
-      this.shareUrl.set('');
-      this.viewedImage.set(null);
-      afterNextRender(() => this.viewport.scrollToPosition([0, 0], {behavior: 'instant'}), {injector: this.injector});
-    })),
-    toObservable(this.reload),
-  ]).pipe(switchMap(([id]) => {
-    if (this.catalog.preview) {
-      const card = this.catalog.experiences.find(item => item.id === id);
-      if (!card) return of<DetailState>({ status: 'missing' });
-      return of<DetailState>({ status: 'ready', detail: {
-        card, images: card.image ? [{ url: '/' + card.image, caption: card.imageAlt ?? '' }] : [],
-      } });
-    }
-    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
-      return of<DetailState>({ status: 'missing' });
-    }
-    const number = Number(id);
-    return this.api.detail(number).pipe(
-      switchMap(eco => forkJoin({
-        reviews: this.api.reviews(number).pipe(catchError(() => of(null))),
-        slots: this.api.availability(number).pipe(catchError(() => of(null))),
-      }).pipe(
-        startWith({ reviews: undefined, slots: undefined }),
-        map(({ reviews, slots }): DetailState => {
-          const images = [...(eco.images ?? [])]
-            .sort((left, right) => Number(right.is_primary) - Number(left.is_primary) || left.sort_order - right.sort_order)
-            .flatMap(image => {
-              const url = ecoImageUrl(image.image_url);
-              return url ? [{ url, caption: image.caption ?? '' }] : [];
-            });
-          return { status: 'ready', detail: { card: toExperience(eco), eco, images, reviews, slots } };
+  readonly state = toSignal(
+    combineLatest([
+      this.route.paramMap.pipe(
+        map((params) => params.get('id') ?? ''),
+        distinctUntilChanged(),
+        tap(() => {
+          this.failedImages.set(new Set());
+          this.shareStatus.set('');
+          this.shareUrl.set('');
+          this.viewedImage.set(null);
+          afterNextRender(
+            () => this.viewport.scrollToPosition([0, 0], { behavior: 'instant' }),
+            { injector: this.injector },
+          );
         }),
-      )),
-      startWith({ status: 'loading' } as DetailState),
-      catchError((error: HttpErrorResponse) => of<DetailState>({
-        status: error.status === 404 ? 'missing' : 'error',
-      })),
-    );
-  })), { initialValue: { status: 'loading' } as DetailState });
+      ),
+      toObservable(this.reload),
+    ]).pipe(
+      switchMap(([id]) => {
+        if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
+          return of<DetailState>({ status: 'missing' });
+        }
+        const listingId = Number(id);
+        return this.api.detail(listingId).pipe(
+          switchMap((activity) =>
+            this.api.availability(listingId, { limit: 50 }).pipe(
+              catchError(() => of<ActivitySlotDetails[] | null>(null)),
+              startWith(undefined as ActivitySlotDetails[] | null | undefined),
+              map((slots): DetailState => {
+                const images: DetailImage[] = (activity.photos ?? []).flatMap((photo) => {
+                  const url = activityImageUrl(photo.image_url);
+                  return url ? [{ url, caption: photo.alt_text ?? '' }] : [];
+                });
+                const nextOpenSlot = Array.isArray(slots)
+                  ? slots.find((slot) => slot.available) ?? null
+                  : undefined;
 
-  categoryName(category: Category): string {
-    return categories.find(item => item.id === category)?.label ?? '';
-  }
+                return {
+                  status: 'ready',
+                  detail: {
+                    card: toActivityCard(activity),
+                    activity,
+                    images,
+                    slots,
+                    nextOpenSlot: nextOpenSlot ?? null,
+                    durationLabel: formatDurationMinutes(activity.activity?.duration_minutes),
+                    locationLabel: formatLocation(activity.locality, activity.district),
+                  },
+                };
+              }),
+            ),
+          ),
+          startWith({ status: 'loading' } as DetailState),
+          catchError((error: HttpErrorResponse) =>
+            of<DetailState>(
+              error.status === 404
+                ? { status: 'missing' }
+                : {
+                    status: 'error',
+                    message: extractApiErrorMessage(
+                      error,
+                      'Could not load this experience. Please try again.',
+                    ),
+                  },
+            ),
+          ),
+        );
+      }),
+    ),
+    { initialValue: { status: 'loading' } as DetailState },
+  );
 
   openImage(image: DetailImage, dialog: HTMLDialogElement): void {
     this.viewedImage.set(image);
@@ -108,7 +163,7 @@ export class ExperienceDetails {
     this.shareUrl.set('');
     try {
       if (view.navigator.share) {
-        await view.navigator.share({title, url});
+        await view.navigator.share({ title, url });
         return;
       }
     } catch (error) {
@@ -124,8 +179,10 @@ export class ExperienceDetails {
   }
 
   imageFailed(url: string): void {
-    this.failedImages.update(images => new Set([...images, url]));
+    this.failedImages.update((images) => new Set([...images, url]));
   }
 
-  retry(): void { this.reload.update(value => value + 1); }
+  retry(): void {
+    this.reload.update((value) => value + 1);
+  }
 }

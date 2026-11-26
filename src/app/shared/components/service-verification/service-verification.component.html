@@ -59,7 +59,7 @@
         [(ngModel)]="newLinkUrl"
         placeholder="Enter listing URL (e.g. https://maps.app.goo.gl/...)"
       />
-      <button type="button" class="btn-add-link" (click)="addLink()" [disabled]="!newLinkUrl.trim()">
+      <button type="button" class="btn-add-link" (click)="addLink()" [disabled]="!newLinkUrl.trim() || isPreview()">
         Add Link
       </button>
     </div>
@@ -99,7 +99,13 @@
         <div class="field-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="isRedacted" />
-            <span>Mark as Redacted (Private Personal Data Protected)</span>
+            <span>
+              {{
+                selectedFileKind === 'customer_feedback'
+                  ? 'I confirm all customer personal information (names, phones, emails) has been redacted before upload'
+                  : 'Mark as Redacted (Private Personal Data Protected)'
+              }}
+            </span>
           </label>
         </div>
       </div>
@@ -111,7 +117,7 @@
           class="file-input-hidden"
           (change)="onFileUpload($event)"
           accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4"
-          [disabled]="isUploading"
+          [disabled]="isUploading || requiresRedactionConfirmation || isPreview()"
         />
         <label for="docFileInput" class="dropzone-label">
           <div class="drop-icon">
@@ -122,7 +128,11 @@
             </svg>
           </div>
           <span class="drop-prompt">
-            <strong>Click to upload</strong> or drag evidence document here
+            @if (requiresRedactionConfirmation) {
+              <strong>Confirm redaction above</strong> before uploading customer feedback screenshots
+            } @else {
+              <strong>Click to upload</strong> or drag evidence document here
+            }
           </span>
           <span class="drop-help">PDF (10MB), Images (5MB), MP4 (25MB)</span>
         </label>
@@ -154,6 +164,7 @@
                 type="button"
                 class="btn-remove-doc"
                 (click)="removeFile($index)"
+                [disabled]="isPreview()"
                 title="Remove file"
               >
                 ✕

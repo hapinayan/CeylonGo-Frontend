@@ -1,0 +1,267 @@
+<div class="availability-shell">
+  <header class="availability-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Manage Listings</span>
+        </a>
+        <span class="badge">Guide Schedule</span>
+        @if (isPreview()) {
+          <span class="badge preview">Preview Mode · Sample Data</span>
+        }
+      </div>
+      <h1 class="page-title">Guide Availability Management</h1>
+      <p class="page-subtitle">
+        Manage package departure slots, block/unblock dates, and review overlapping guide booking conflicts.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      @if (selectedListingId()) {
+        <a
+          routerLink="/provider/guides/packages"
+          [queryParams]="isPreview() ? { listingId: selectedListingId(), preview: 'true' } : { listingId: selectedListingId() }"
+          class="btn-outline"
+        >
+          Manage Packages
+        </a>
+      }
+      <a routerLink="/provider/guides/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Open Guide Wizard
+      </a>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="success-banner">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="state-card">Loading tour guide schedules...</div>
+  } @else if (guides().length === 0) {
+    <div class="state-card empty">
+      <h3>No Tour Guide Listings Found</h3>
+      <p>Create a Tour Guide profile and add an active package before scheduling availability.</p>
+      <a routerLink="/provider/guides/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Start Guide Wizard
+      </a>
+    </div>
+  } @else {
+    <div class="controls-card">
+      <div class="control-group">
+        <label for="guideListingSelect" class="field-label">Guide Listing</label>
+        <select
+          id="guideListingSelect"
+          class="form-input"
+          [ngModel]="selectedListingId()"
+          (ngModelChange)="selectListing($event)"
+        >
+          @for (g of guides(); track g.listing.id) {
+            <option [ngValue]="g.listing.id">
+              {{ g.listing.title || ('Guide #' + g.listing.id) }} ({{ g.verification_status }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="filterPkgSelect" class="field-label">Filter by Package</label>
+        <select
+          id="filterPkgSelect"
+          class="form-input"
+          [ngModel]="filterPackageId()"
+          (ngModelChange)="filterPackageId.set($event)"
+        >
+          <option value="all">All Packages ({{ packages().length }})</option>
+          @for (p of packages(); track p.id) {
+            <option [ngValue]="p.id">{{ p.title }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="filterDateInput" class="field-label">Filter by Date</label>
+        <input
+          id="filterDateInput"
+          type="date"
+          class="form-input"
+          [ngModel]="filterDate()"
+          (ngModelChange)="filterDate.set($event)"
+        />
+      </div>
+
+      @if (filterDate() || filterPackageId() !== 'all') {
+        <button
+          type="button"
+          class="btn-outline"
+          (click)="filterDate.set(''); filterPackageId.set('all')"
+        >
+          Reset Filters
+        </button>
+      }
+    </div>
+
+    <div class="layout-grid">
+      <!-- Add / Edit Slot Card -->
+      <div class="editor-card">
+        <h2 class="card-title">{{ editingSlotId !== null ? 'Edit Slot #' + editingSlotId : 'Add Scheduled Slot' }}</h2>
+
+        @if (activePackages().length === 0) {
+          <div class="warning-inline">
+            No active tour packages on this listing. Create or activate a package first.
+          </div>
+        } @else {
+          <div class="form-stack">
+            <div class="field">
+              <label for="editorPkg" class="field-label">Tour Package <span class="required">*</span></label>
+              <select
+                id="editorPkg"
+                class="form-input"
+                [(ngModel)]="editorPackageId"
+                (ngModelChange)="onPackageOrStartTimeChange()"
+                [disabled]="editingSlotId !== null"
+              >
+                @for (p of activePackages(); track p.id) {
+                  <option [ngValue]="p.id">{{ p.title }} ({{ p.duration_hours }} hrs)</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="slotDateInput" class="field-label">Date <span class="required">*</span></label>
+              <input id="slotDateInput" type="date" class="form-input" [(ngModel)]="slotDate" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="slotStartInput" class="field-label">Start Time <span class="required">*</span></label>
+                <input
+                  id="slotStartInput"
+                  type="time"
+                  class="form-input"
+                  [(ngModel)]="slotStartTime"
+                  (ngModelChange)="onPackageOrStartTimeChange()"
+                />
+              </div>
+              <div class="field">
+                <label for="slotEndInput" class="field-label">End Time (Auto)</label>
+                <input id="slotEndInput" type="time" class="form-input" [(ngModel)]="slotEndTime" readonly />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="slotCapInput" class="field-label">
+                Capacity (max {{ selectedEditorPackageMax() }})
+              </label>
+              <input
+                id="slotCapInput"
+                type="number"
+                class="form-input"
+                [(ngModel)]="slotCapacity"
+                min="1"
+                [max]="selectedEditorPackageMax()"
+              />
+            </div>
+
+            <label class="checkbox-inline">
+              <input type="checkbox" [(ngModel)]="slotIsOpen" />
+              <span>Open for Booking (uncheck to create blocked slot)</span>
+            </label>
+
+            <div class="editor-actions">
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="saveSlot()"
+                [disabled]="isSaving() || isPreview()"
+              >
+                {{ isPreview() ? 'Preview Only' : (isSaving() ? 'Saving...' : (editingSlotId !== null ? 'Update Slot' : 'Add Slot')) }}
+              </button>
+              @if (editingSlotId !== null) {
+                <button type="button" class="btn-outline" (click)="cancelEdit()">Cancel</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Slots & Booking Conflicts Table -->
+      <div class="table-card">
+        <div class="table-head">
+          <h2>Scheduled Guide Slots ({{ filteredSlots().length }})</h2>
+          <p>Server booking rule: a guide serves one group at a time across all packages.</p>
+        </div>
+
+        @if (isLoadingSlots()) {
+          <p class="muted-note">Loading schedule from server...</p>
+        } @else if (filteredSlots().length === 0) {
+          <div class="empty-inline">
+            No slots match the current filters. Add a future slot using the form.
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table class="slots-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Start / End (SLT)</th>
+                  <th>Capacity</th>
+                  <th>Status &amp; Conflicts</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (slot of filteredSlots(); track slot.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ packageTitle(slot.unit_id) }}</strong>
+                    </td>
+                    <td>
+                      <div>{{ formatDateTime(slot.starts_at) }}</div>
+                      <small class="muted">to {{ formatDateTime(slot.ends_at) }}</small>
+                    </td>
+                    <td>{{ slot.capacity }} pax</td>
+                    <td>
+                      <span class="slot-pill" [class.open]="slot.is_open" [class.blocked]="!slot.is_open">
+                        {{ slot.is_open ? 'Open' : 'Blocked' }}
+                      </span>
+                      @for (conflict of slotConflicts(slot); track conflict.id) {
+                        <div class="conflict-badge">
+                          ⚠ Reservation {{ conflict.booking_reference || '#' + conflict.id }} ({{ conflict.status }})
+                        </div>
+                      }
+                    </td>
+                    <td class="actions-cell">
+                      <button
+                        type="button"
+                        class="link-btn"
+                        (click)="startEditSlot(slot)"
+                        [disabled]="isPreview()"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        class="link-btn"
+                        (click)="toggleSlotOpen(slot)"
+                        [disabled]="isPreview() || isSaving()"
+                      >
+                        {{ slot.is_open ? 'Block' : 'Unblock' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

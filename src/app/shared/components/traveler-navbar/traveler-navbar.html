@@ -37,6 +37,17 @@
             </a>
           </li>
         }
+        @if (isTourGuideRoute()) {
+          <li>
+            <a
+              routerLink="/tour-guides"
+              class="nav-link active"
+              aria-current="page"
+            >
+              Tour Guides
+            </a>
+          </li>
+        }
         <li>
           <a
             href="/experiences"

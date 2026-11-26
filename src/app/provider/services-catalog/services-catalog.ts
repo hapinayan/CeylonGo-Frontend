@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+
+import { ProviderPreviewService } from '../provider-preview.service';
 
 interface ServiceOption {
   id: string;
@@ -21,6 +23,10 @@ interface ServiceOption {
   styleUrl: './services-catalog.scss',
 })
 export class ServicesCatalog {
+  private readonly previewService = inject(ProviderPreviewService);
+  readonly isPreview = this.previewService.isPreview;
+  readonly previewQueryParams = this.previewService.queryParams;
+
   readonly services: ServiceOption[] = [
     {
       id: 'homestay',
@@ -44,8 +50,8 @@ export class ServicesCatalog {
       title: 'Adventure & Experiences',
       description:
         'Offer guided hikes, surfing camps, wildlife safaris, scuba diving, and cultural workshops.',
-      route: '/experiences',
-      statusBadge: 'Explore Category',
+      route: '/provider/activities/new',
+      statusBadge: 'Ready to List',
       isAvailable: true,
       features: [
         'Guided Tour Packages',
@@ -58,14 +64,15 @@ export class ServicesCatalog {
       category: 'Guiding',
       title: 'Licensed Tour Guide',
       description:
-        'Offer your personal guiding services, multi-lingual expertise, and custom destination itineraries.',
-      route: '/tour-guides',
-      statusBadge: 'Explore Category',
+        'Offer your personal guiding services, multi-lingual expertise, and scheduled tour packages.',
+      route: '/provider/guides/new',
+      statusBadge: 'Ready to List',
       isAvailable: true,
       features: [
-        'SLTDA License Verification',
-        'Language Proficiency Profiling',
-        'Custom Itinerary Requests',
+        '6-Step Guided Setup & Draft Sync',
+        'SLTDA License & Credentials Verification',
+        'Multi-Language & Package Pricing',
+        'Time-Slot Availability Management',
       ],
     },
     {
@@ -73,14 +80,15 @@ export class ServicesCatalog {
       category: 'Transport',
       title: 'Bike & Bicycle Rental',
       description:
-        'Rent scooters, motorbikes, tuk-tuks, and touring bicycles to independent travelers exploring Sri Lanka.',
-      route: '/rentals',
-      statusBadge: 'Explore Category',
+        'List scooters, motorbikes, and touring or city bicycles for travelers with fleet unit tracking and daily availability.',
+      route: '/provider/rentals/new',
+      statusBadge: 'Ready to List',
       isAvailable: true,
       features: [
-        'Fleet Management & Rates',
-        'Insurance & Deposit Tracking',
-        'Flexible Pick-up Locations',
+        '6-Step Fleet & Listing Wizard',
+        'Scooters, Motorbikes & Bicycles',
+        'Individual Fleet Units & Date Blocking',
+        'Service Verification & Daily LKR Pricing',
       ],
     },
     {

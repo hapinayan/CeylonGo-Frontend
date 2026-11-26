@@ -481,15 +481,24 @@
         gap: 0.5rem;
         font-size: 0.85rem;
 
-        select {
+        select,
+        input {
           padding: 0.4rem 0.75rem;
           border: 1px solid var(--experience-border);
           border-radius: 0.5rem;
           background: #ffffff;
           font-size: 0.85rem;
+          width: 8rem;
         }
       }
 
+      .filter-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .outline-control,
       .btn-reset {
         border: 1px solid #cbd5e1;
         background: #ffffff;

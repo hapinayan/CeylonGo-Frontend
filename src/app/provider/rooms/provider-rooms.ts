@@ -11,6 +11,7 @@ import {
   RoomUpdate,
 } from '../../core/models/provider.models';
 import { ProviderService } from '../../core/services/provider.service';
+import { ProviderPreviewService } from '../provider-preview.service';
 
 @Component({
   selector: 'app-provider-rooms',
@@ -21,6 +22,10 @@ import { ProviderService } from '../../core/services/provider.service';
 })
 export class ProviderRooms implements OnInit {
   private readonly providerService = inject(ProviderService);
+  private readonly previewService = inject(ProviderPreviewService);
+
+  readonly isPreview = this.previewService.isPreview;
+  readonly previewQueryParams = this.previewService.queryParams;
 
   readonly isLoading = signal<boolean>(true);
   readonly listings = signal<ReviewListing[]>([]);
@@ -52,7 +57,9 @@ export class ProviderRooms implements OnInit {
   loadListings(): void {
     this.isLoading.set(true);
 
-    this.providerService.getProviderListings().subscribe({
+    this.providerService
+      .getProviderListings(100, 0, this.isPreview() ? 'homestay' : undefined)
+      .subscribe({
       next: (items) => {
         this.listings.set(items);
         if (items.length > 0) {
@@ -116,7 +123,7 @@ export class ProviderRooms implements OnInit {
   }
 
   submitAddRoom(): void {
-    if (!this.newRoomLabel.trim()) return;
+    if (this.isPreview() || !this.newRoomLabel.trim()) return;
 
     const listingId = this.selectedListingId() || 101;
     this.isAddingRoom = true;
@@ -171,7 +178,7 @@ export class ProviderRooms implements OnInit {
   }
 
   submitBlockDates(): void {
-    if (!this.selectedRoomForBlock || !this.blockStartDate || !this.blockEndDate) return;
+    if (this.isPreview() || !this.selectedRoomForBlock || !this.blockStartDate || !this.blockEndDate) return;
 
     const listingId = this.selectedListingId() || 101;
     this.isSavingBlock = true;

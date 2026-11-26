@@ -42,6 +42,7 @@ export class TravelerNavbar implements OnInit {
   readonly activeSection = signal('home');
   readonly isRentalRoute = signal(false);
   readonly isHomestayRoute = signal(false);
+  readonly isTourGuideRoute = signal(false);
 
   get isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
@@ -110,6 +111,13 @@ export class TravelerNavbar implements OnInit {
     this.isHomestayRoute.set(isHomestayRoute);
     if (isHomestayRoute) {
       this.activeSection.set('stays');
+      return;
+    }
+
+    const isTourGuideRoute = /^\/tour-guides?(?:[/?#]|$)/.test(this.router.url);
+    this.isTourGuideRoute.set(isTourGuideRoute);
+    if (isTourGuideRoute) {
+      this.activeSection.set('tour-guides');
       return;
     }
 

@@ -51,4 +51,39 @@ describe('ServiceVerificationComponent', () => {
     component.removeLink(initialLength - 1);
     expect(component.links().length).toBe(initialLength - 1);
   });
+
+  it('should expose adventure-specific link and file options', () => {
+    fixture.componentRef.setInput('category', 'adventure');
+    fixture.detectChanges();
+
+    expect(component.linkKindOptions.some((k) => k.kind === 'instagram')).toBe(true);
+    expect(component.fileKindOptions.some((k) => k.kind === 'safety')).toBe(true);
+    expect(component.fileKindOptions.some((k) => k.kind === 'activity_photo')).toBe(true);
+  });
+
+  it('should require explicit redaction confirmation before uploading customer_feedback', () => {
+    fixture.componentRef.setInput('listingId', 77);
+    fixture.componentRef.setInput('category', 'adventure');
+    component.onFileKindChange('customer_feedback');
+    component.isRedacted = false;
+    fixture.detectChanges();
+
+    providerServiceMock.uploadEvidenceFile.mockClear();
+
+    const file = new File(['dummy'], 'review.png', { type: 'image/png' });
+    const fakeEvent = { target: { files: [file], value: 'review.png' } } as unknown as Event;
+    component.onFileUpload(fakeEvent);
+
+    expect(component.uploadError()).toContain('explicitly confirm');
+    expect(providerServiceMock.uploadEvidenceFile).not.toHaveBeenCalled();
+
+    component.isRedacted = true;
+    component.onFileUpload(fakeEvent);
+    expect(providerServiceMock.uploadEvidenceFile).toHaveBeenCalledWith(
+      77,
+      file,
+      'customer_feedback',
+      true
+    );
+  });
 });

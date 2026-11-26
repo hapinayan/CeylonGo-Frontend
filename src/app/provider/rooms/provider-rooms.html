@@ -3,20 +3,23 @@
   <div class="rooms-header">
     <div class="header-left">
       <div class="header-pre">
-        <a routerLink="/provider/dashboard" class="back-link">
+        <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <span>Dashboard</span>
         </a>
         <span class="badge">Room & Availability APIs</span>
+        @if (isPreview()) {
+          <span class="badge">Preview Mode · Sample Data</span>
+        }
       </div>
       <h1 class="page-title">Rooms & Availability Management</h1>
       <p class="page-subtitle">Configure room units, guest capacities, and block maintenance or personal dates.</p>
     </div>
 
     <div class="header-right">
-      <button type="button" class="btn-primary" (click)="openAddRoomModal()">
+      <button type="button" class="btn-primary" (click)="openAddRoomModal()" [disabled]="isPreview()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 5v14M5 12h14" stroke-linecap="round" />
         </svg>
@@ -86,7 +89,7 @@
           <div class="availability-section">
             <div class="avail-header">
               <h4 class="avail-title">Availability Slots & Blocked Dates</h4>
-              <button type="button" class="btn-block-slot" (click)="openBlockModal(room)">
+              <button type="button" class="btn-block-slot" (click)="openBlockModal(room)" [disabled]="isPreview()">
                 + Set Availability / Block
               </button>
             </div>
@@ -169,7 +172,7 @@
             type="button"
             class="btn-primary"
             (click)="submitAddRoom()"
-            [disabled]="isAddingRoom || !newRoomLabel.trim()"
+            [disabled]="isAddingRoom || !newRoomLabel.trim() || isPreview()"
           >
             {{ isAddingRoom ? 'Adding...' : 'Save Room' }}
           </button>
@@ -211,7 +214,7 @@
             type="button"
             class="btn-primary"
             (click)="submitBlockDates()"
-            [disabled]="isSavingBlock || !blockStartDate || !blockEndDate"
+            [disabled]="isSavingBlock || !blockStartDate || !blockEndDate || isPreview()"
           >
             {{ isSavingBlock ? 'Saving...' : 'Apply Availability Slot' }}
           </button>

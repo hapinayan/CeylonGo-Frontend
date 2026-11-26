@@ -123,5 +123,35 @@ describe('App Routing Configuration', () => {
       expect(comp).toBe(HomestayBookingReview);
     }
   });
+
+  it('should register and resolve TourGuidesComponent, TourGuideDetailComponent, and TourGuideBookingComponent without redirecting to /homestays', async () => {
+    await router.navigateByUrl('/tour-guides');
+    expect(router.url).toBe('/tour-guides');
+
+    await router.navigateByUrl('/tour-guides/guide-1');
+    expect(router.url).toBe('/tour-guides/guide-1');
+
+    await router.navigateByUrl('/tour-guides/guide-1/booking');
+    expect(router.url).toBe('/tour-guides/guide-1/booking');
+
+    const listRoute = routes.find((r) => r.path === 'tour-guides');
+    const detailRoute = routes.find((r) => r.path === 'tour-guides/:id');
+    const bookingRoute = routes.find((r) => r.path === 'tour-guides/:id/booking');
+
+    expect(listRoute?.loadComponent).toBeDefined();
+    expect(detailRoute?.loadComponent).toBeDefined();
+    expect(bookingRoute?.loadComponent).toBeDefined();
+
+    const [{ TourGuidesComponent }, { TourGuideDetailComponent }, { TourGuideBookingComponent }] =
+      await Promise.all([
+        import('./pages/tour-guides/tour-guides.component'),
+        import('./pages/tour-guides/guide-detail/tour-guide-detail.component'),
+        import('./pages/tour-guides/guide-booking/tour-guide-booking.component'),
+      ]);
+
+    expect(await (listRoute!.loadComponent as Function)()).toBe(TourGuidesComponent);
+    expect(await (detailRoute!.loadComponent as Function)()).toBe(TourGuideDetailComponent);
+    expect(await (bookingRoute!.loadComponent as Function)()).toBe(TourGuideBookingComponent);
+  });
 });
 

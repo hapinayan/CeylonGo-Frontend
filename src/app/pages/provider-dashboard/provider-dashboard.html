@@ -8,6 +8,9 @@
           <span class="status-dot"></span>
           <span>Account: {{ user()?.approval_status || 'Approved' | titlecase }}</span>
         </div>
+        @if (isPreview()) {
+          <span class="preview-pill">Preview Mode · Sample Data</span>
+        }
       </div>
       <h1 class="title">Provider Dashboard</h1>
       <p class="subtitle">
@@ -16,14 +19,14 @@
     </div>
 
     <div class="header-actions">
-      <a routerLink="/provider/services/new" class="btn-primary">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 5v14M5 12h14" stroke-linecap="round" />
         </svg>
         <span>Add New Service</span>
       </a>
       <button (click)="onLogout()" class="btn-logout" type="button">
-        Sign Out
+        {{ isPreview() ? 'Exit Preview' : 'Sign Out' }}
       </button>
     </div>
   </div>
@@ -44,7 +47,7 @@
           You have {{ pendingListings().length }} service listing(s) awaiting verification or requiring additional documentation.
         </p>
       </div>
-      <a routerLink="/provider/listings" class="alert-action-btn">View Listings</a>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="alert-action-btn">View Listings</a>
     </div>
   }
 
@@ -130,7 +133,7 @@
     </div>
 
     <div class="actions-grid">
-      <a routerLink="/provider/services/new" class="action-card">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="action-card">
         <div class="action-icon blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -144,7 +147,7 @@
         <span class="action-arrow">→</span>
       </a>
 
-      <a routerLink="/provider/listings" class="action-card">
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="action-card">
         <div class="action-icon navy">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
@@ -159,7 +162,7 @@
         <span class="action-arrow">→</span>
       </a>
 
-      <a routerLink="/provider/rooms" class="action-card">
+      <a routerLink="/provider/rooms" [queryParams]="previewQueryParams()" class="action-card">
         <div class="action-icon cyan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
@@ -173,7 +176,7 @@
         <span class="action-arrow">→</span>
       </a>
 
-      <a routerLink="/provider/bookings" class="action-card">
+      <a routerLink="/provider/bookings" [queryParams]="previewQueryParams()" class="action-card">
         <div class="action-icon violet">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -188,6 +191,47 @@
         </div>
         <span class="action-arrow">→</span>
       </a>
+
+      <a routerLink="/provider/rentals/new" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5.5" cy="16.5" r="3.5" />
+            <circle cx="18.5" cy="16.5" r="3.5" />
+            <path d="M5.5 16.5h5.5l4-6.5H8.5z" />
+            <path d="M18.5 16.5L14.5 7h3" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Add Rental Vehicle</h4>
+          <p class="action-desc">List a scooter, motorbike, or bicycle fleet for rent.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/rentals/availability" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <path d="M3 10h18M9 16l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Fleet &amp; Availability</h4>
+          <p class="action-desc">Manage vehicle units, block rental dates, and adjust daily LKR rates.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Bike & Bicycle Rental Fleet Summary -->
+  <div class="section-block">
+    <div class="section-header">
+      <h3 class="section-title">Bike &amp; Bicycle Rental Fleet</h3>
+      <span class="section-desc">
+        {{ rentalStats().totalListings }} listing(s) · {{ rentalStats().publishedVehicles }} published vehicle(s) ·
+        {{ rentalStats().pendingVerification }} pending verification · {{ rentalStats().upcomingBookings }} upcoming booking(s)
+      </span>
     </div>
   </div>
 
@@ -198,9 +242,9 @@
       <div class="card-header">
         <div>
           <h3 class="card-title">Recent Bookings</h3>
-          <span class="card-subtitle">Real reservation data from backend</span>
+          <span class="card-subtitle">{{ isPreview() ? 'Sample reservation data (Preview Mode)' : 'Real reservation data from backend' }}</span>
         </div>
-        <a routerLink="/provider/bookings" class="card-link">View All</a>
+        <a routerLink="/provider/bookings" [queryParams]="previewQueryParams()" class="card-link">View All</a>
       </div>
 
       <div class="card-body">
@@ -258,7 +302,7 @@
     <div class="content-card profile-summary-card">
       <div class="card-header">
         <h3 class="card-title">Provider Profile</h3>
-        <a routerLink="/provider/profile" class="card-link">Edit</a>
+        <a routerLink="/provider/profile" [queryParams]="previewQueryParams()" class="card-link">Edit</a>
       </div>
 
       <div class="card-body">

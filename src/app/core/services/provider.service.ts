@@ -1,8 +1,9 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { ProviderPreviewService } from '../../provider/provider-preview.service';
 import {
   AvailabilitySlotCreate,
   AvailabilitySlotResponse,
@@ -10,6 +11,8 @@ import {
   EvidenceFileKind,
   EvidenceFileResponse,
   EvidenceUpdate,
+  GuidePackageDetails,
+  GuidePackagePayload,
   HomestayBookingDetails,
   HomestayDraftState,
   HomestayRoom,
@@ -17,6 +20,9 @@ import {
   ListingDraftUpdate,
   ListingMediaResponse,
   ProviderDashboardStats,
+  RentalUnitCreatePayload,
+  RentalUnitResponse,
+  RentalUnitUpdatePayload,
   ReviewListing,
   RoomUpdate,
 } from '../models/provider.models';
@@ -30,7 +36,19 @@ const DRAFT_STORAGE_KEY = 'ceylongo_provider_homestay_draft_v2';
 export class ProviderService {
   private readonly http = inject(HttpClient);
   private readonly providerAuth = inject(ProviderAuthService);
+  private readonly previewService = inject(ProviderPreviewService);
   private readonly baseUrl = environment.apiBaseUrl;
+
+  private isPreviewMode(): boolean {
+    return this.previewService?.isPreview?.() ?? false;
+  }
+
+  private previewActionBlocked<T>(): Observable<T> {
+    return throwError(() => ({
+      status: 403,
+      message: 'Uploads, submissions, publishing, and booking updates are disabled in Preview Mode.',
+    }));
+  }
 
   private getAuthHeaders(isMultipart = false): HttpHeaders {
     const token =
@@ -49,6 +67,10 @@ export class ProviderService {
    * Retrieves real dashboard statistics from backend listings and bookings.
    */
   getDashboardStats(): Observable<ProviderDashboardStats> {
+    if (this.isPreviewMode()) {
+      return of(this.previewService.dashboardStats);
+    }
+
     return forkJoin({
       listings: this.getProviderListings().pipe(catchError(() => of([] as ReviewListing[]))),
       bookings: this.getProviderBookings().pipe(
@@ -86,6 +108,9 @@ export class ProviderService {
    * Endpoint: POST /api/v1/provider/listings
    */
   createDraftListing(category: ListingCategory = 'homestay'): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<ReviewListing>(
       `${this.baseUrl}/provider/listings`,
       { category },
@@ -97,8 +122,22 @@ export class ProviderService {
    * Retrieve all listings registered by this provider.
    * Endpoint: GET /api/v1/provider/listings
    */
-  getProviderListings(limit = 100, offset = 0): Observable<ReviewListing[]> {
-    const url = `${this.baseUrl}/provider/listings?limit=${limit}&offset=${offset}`;
+  getProviderListings(
+    limit = 100,
+    offset = 0,
+    category?: ListingCategory
+  ): Observable<ReviewListing[]> {
+    if (this.isPreviewMode()) {
+      const items = this.previewService.sampleListings.filter(
+        (item) => !category || item.listing.category === category
+      );
+      return of(items.slice(offset, offset + limit));
+    }
+
+    let url = `${this.baseUrl}/provider/listings?limit=${limit}&offset=${offset}`;
+    if (category) {
+      url += `&category=${encodeURIComponent(category)}`;
+    }
     return this.http.get<ReviewListing[]>(url, { headers: this.getAuthHeaders() }).pipe(
       map((res) => (Array.isArray(res) ? res : [])),
       catchError((err) => {
@@ -113,6 +152,12 @@ export class ProviderService {
    * Endpoint: GET /api/v1/provider/listings/{listing_id}
    */
   getProviderListing(listingId: number): Observable<ReviewListing | null> {
+    if (this.isPreviewMode()) {
+      return of(
+        this.previewService.sampleListings.find((l) => l.listing.id === listingId) ?? null
+      );
+    }
+
     return this.http
       .get<ReviewListing>(`${this.baseUrl}/provider/listings/${listingId}`, {
         headers: this.getAuthHeaders(),
@@ -129,6 +174,9 @@ export class ProviderService {
     listingId: number,
     payload: ListingDraftUpdate
   ): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.patch<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}`,
       payload,
@@ -142,6 +190,9 @@ export class ProviderService {
    * Endpoint: POST /api/v1/provider/listings/{listing_id}/submit
    */
   submitListing(listingId: number): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}/submit`,
       {},
@@ -154,6 +205,9 @@ export class ProviderService {
    * Endpoint: POST /api/v1/provider/listings/{listing_id}/publish
    */
   publishListing(listingId: number): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}/publish`,
       {},
@@ -166,6 +220,9 @@ export class ProviderService {
    * Endpoint: POST /api/v1/provider/listings/{listing_id}/unpublish
    */
   unpublishListing(listingId: number): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}/unpublish`,
       {},
@@ -186,6 +243,9 @@ export class ProviderService {
     file: File,
     altText?: string
   ): Observable<ListingMediaResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     const formData = new FormData();
     formData.append('file', file);
     if (altText) {
@@ -203,6 +263,9 @@ export class ProviderService {
    * Endpoint: PUT /api/v1/provider/listings/{listing_id}/photos/{photo_id}/cover
    */
   setCoverPhoto(listingId: number, photoId: number): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.put<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}/photos/${photoId}/cover`,
       {},
@@ -215,6 +278,9 @@ export class ProviderService {
    * Endpoint: DELETE /api/v1/provider/listings/{listing_id}/photos/{photo_id}
    */
   deletePhoto(listingId: number, photoId: number): Observable<any> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.delete(
       `${this.baseUrl}/provider/listings/${listingId}/photos/${photoId}`,
       { headers: this.getAuthHeaders() }
@@ -226,6 +292,9 @@ export class ProviderService {
    * Endpoint: GET /api/v1/provider/listings/{listing_id}/photos/{photo_id}
    */
   getPhotoBlob(listingId: number, photoId: number): Observable<Blob> {
+    if (this.isPreviewMode()) {
+      return of(this.previewService.getSamplePhotoBlob());
+    }
     return this.http.get(
       `${this.baseUrl}/provider/listings/${listingId}/photos/${photoId}`,
       {
@@ -244,6 +313,9 @@ export class ProviderService {
    * Endpoint: PUT /api/v1/provider/listings/{listing_id}/evidence
    */
   saveEvidence(listingId: number, payload: EvidenceUpdate): Observable<ReviewListing> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.put<ReviewListing>(
       `${this.baseUrl}/provider/listings/${listingId}/evidence`,
       payload,
@@ -262,6 +334,9 @@ export class ProviderService {
     kind: EvidenceFileKind,
     redacted: boolean = false
   ): Observable<EvidenceFileResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('kind', kind);
@@ -279,6 +354,9 @@ export class ProviderService {
    * Endpoint: DELETE /api/v1/provider/listings/{listing_id}/evidence/files/{file_id}
    */
   deleteEvidenceFile(listingId: number, fileId: string): Observable<any> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.delete(
       `${this.baseUrl}/provider/listings/${listingId}/evidence/files/${fileId}`,
       { headers: this.getAuthHeaders() }
@@ -290,6 +368,9 @@ export class ProviderService {
    * Endpoint: GET /api/v1/provider/listings/{listing_id}/evidence/files/{file_id}
    */
   getEvidenceFileBlob(listingId: number, fileId: string): Observable<Blob> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.get(
       `${this.baseUrl}/provider/listings/${listingId}/evidence/files/${fileId}`,
       {
@@ -308,6 +389,9 @@ export class ProviderService {
    * Endpoint: POST /api/v1/provider/listings/{listing_id}/rooms
    */
   addRoom(listingId: number, room: RoomUpdate): Observable<HomestayRoom> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<HomestayRoom>(
       `${this.baseUrl}/provider/listings/${listingId}/rooms`,
       room,
@@ -325,6 +409,9 @@ export class ProviderService {
     roomId: number,
     room: Partial<RoomUpdate>
   ): Observable<HomestayRoom> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.patch<HomestayRoom>(
       `${this.baseUrl}/provider/listings/${listingId}/rooms/${roomId}`,
       room,
@@ -336,9 +423,17 @@ export class ProviderService {
    * Retrieve availability slots for a listing.
    * Endpoint: GET /api/v1/provider/listings/{listing_id}/availability
    */
-  getAvailabilitySlots(listingId: number): Observable<AvailabilitySlotResponse[]> {
+  getAvailabilitySlots(
+    listingId: number,
+    limit = 100,
+    offset = 0
+  ): Observable<AvailabilitySlotResponse[]> {
+    if (this.isPreviewMode()) {
+      const slots = this.previewService.sampleSlotsMap[listingId] ?? [];
+      return of(slots.slice(offset, offset + limit));
+    }
     return this.http.get<AvailabilitySlotResponse[]>(
-      `${this.baseUrl}/provider/listings/${listingId}/availability`,
+      `${this.baseUrl}/provider/listings/${listingId}/availability?limit=${limit}&offset=${offset}`,
       { headers: this.getAuthHeaders() }
     );
   }
@@ -351,6 +446,9 @@ export class ProviderService {
     listingId: number,
     slot: AvailabilitySlotCreate
   ): Observable<AvailabilitySlotResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.post<AvailabilitySlotResponse>(
       `${this.baseUrl}/provider/listings/${listingId}/availability`,
       slot,
@@ -365,11 +463,114 @@ export class ProviderService {
   updateAvailabilitySlot(
     listingId: number,
     slotId: number,
-    slot: Partial<AvailabilitySlotCreate>
+    slot: AvailabilitySlotCreate | Partial<AvailabilitySlotCreate>
   ): Observable<AvailabilitySlotResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.put<AvailabilitySlotResponse>(
       `${this.baseUrl}/provider/listings/${listingId}/availability/${slotId}`,
       slot,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // ==========================================
+  // TOUR GUIDE PACKAGE APIS
+  // ==========================================
+
+  /**
+   * Retrieve all tour packages (active + inactive) for an owned guide listing.
+   * Endpoint: GET /api/v1/provider/listings/{listing_id}/packages
+   */
+  getGuidePackages(listingId: number): Observable<GuidePackageDetails[]> {
+    if (this.isPreviewMode()) {
+      const sample = this.previewService.sampleListings.find(
+        (item) => item.listing.id === listingId && item.listing.category === 'guide'
+      );
+      const packages = sample?.details?.['packages'];
+      return of(Array.isArray(packages) ? (packages as GuidePackageDetails[]) : []);
+    }
+
+    return this.http
+      .get<GuidePackageDetails[]>(
+        `${this.baseUrl}/provider/listings/${listingId}/packages`,
+        { headers: this.getAuthHeaders() }
+      )
+      .pipe(map((res) => (Array.isArray(res) ? res : [])));
+  }
+
+  /**
+   * Create a scheduled tour package for an owned guide listing.
+   * Endpoint: POST /api/v1/provider/listings/{listing_id}/packages
+   */
+  createGuidePackage(
+    listingId: number,
+    payload: GuidePackagePayload
+  ): Observable<GuidePackageDetails> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.post<GuidePackageDetails>(
+      `${this.baseUrl}/provider/listings/${listingId}/packages`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Update or deactivate an owned guide tour package.
+   * Endpoint: PUT /api/v1/provider/listings/{listing_id}/packages/{package_id}
+   */
+  updateGuidePackage(
+    listingId: number,
+    packageId: number,
+    payload: GuidePackagePayload
+  ): Observable<GuidePackageDetails> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.put<GuidePackageDetails>(
+      `${this.baseUrl}/provider/listings/${listingId}/packages/${packageId}`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Create a physical fleet unit for an owned rental listing.
+   * Endpoint: POST /api/v1/provider/listings/{listing_id}/units
+   */
+  createRentalUnit(
+    listingId: number,
+    payload: RentalUnitCreatePayload
+  ): Observable<RentalUnitResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.post<RentalUnitResponse>(
+      `${this.baseUrl}/provider/listings/${listingId}/units`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Update label or active state of a physical rental fleet unit.
+   * Routine unit updates preserve admin approval.
+   * Endpoint: PATCH /api/v1/provider/listings/{listing_id}/units/{unit_id}
+   */
+  updateRentalUnit(
+    listingId: number,
+    unitId: number,
+    payload: RentalUnitUpdatePayload
+  ): Observable<RentalUnitResponse> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.patch<RentalUnitResponse>(
+      `${this.baseUrl}/provider/listings/${listingId}/units/${unitId}`,
+      payload,
       { headers: this.getAuthHeaders() }
     );
   }
@@ -382,11 +583,30 @@ export class ProviderService {
    * Retrieve reservations for this provider's listings.
    * Endpoint: GET /api/v1/provider/bookings
    */
-  getProviderBookings(status?: string): Observable<HomestayBookingDetails[]> {
-    let url = `${this.baseUrl}/provider/bookings`;
-    if (status) {
-      url += `?status=${encodeURIComponent(status)}`;
+  getProviderBookings(
+    status?: string,
+    category?: ListingCategory
+  ): Observable<HomestayBookingDetails[]> {
+    if (this.isPreviewMode()) {
+      const categoryByListing = new Map(
+        this.previewService.sampleListings.map((l) => [l.listing.id, l.listing.category])
+      );
+      const filtered = this.previewService.sampleBookings.filter((b) => {
+        if (status && b.status !== status) return false;
+        if (category && categoryByListing.get(b.listing_id) !== category) return false;
+        return true;
+      });
+      return of(filtered);
     }
+
+    const params: string[] = [];
+    if (status) {
+      params.push(`status=${encodeURIComponent(status)}`);
+    }
+    if (category) {
+      params.push(`category=${encodeURIComponent(category)}`);
+    }
+    const url = `${this.baseUrl}/provider/bookings${params.length ? '?' + params.join('&') : ''}`;
     return this.http.get<HomestayBookingDetails[]>(url, { headers: this.getAuthHeaders() }).pipe(
       map((res) => (Array.isArray(res) ? res : [])),
       catchError((err) => {
@@ -401,6 +621,11 @@ export class ProviderService {
    * Endpoint: GET /api/v1/provider/bookings/{booking_id}
    */
   getProviderBooking(bookingId: number): Observable<HomestayBookingDetails | null> {
+    if (this.isPreviewMode()) {
+      return of(
+        this.previewService.sampleBookings.find((b) => b.id === bookingId) ?? null
+      );
+    }
     return this.http
       .get<HomestayBookingDetails>(`${this.baseUrl}/provider/bookings/${bookingId}`, {
         headers: this.getAuthHeaders(),
@@ -416,6 +641,9 @@ export class ProviderService {
     bookingId: number,
     payload: BookingStatusUpdateRequest
   ): Observable<any> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
     return this.http.patch(
       `${this.baseUrl}/bookings/${bookingId}/status`,
       payload,
@@ -427,6 +655,9 @@ export class ProviderService {
    * Backward-compatible alias for provider bookings.
    */
   getMyBookings(): Observable<any[]> {
+    if (this.isPreviewMode()) {
+      return of(this.previewService.dashboardBookings);
+    }
     return this.getProviderBookings();
   }
 
@@ -442,7 +673,7 @@ export class ProviderService {
   // ==========================================
 
   saveDraft(draft: HomestayDraftState): void {
-    if (typeof localStorage === 'undefined') return;
+    if (this.isPreviewMode() || typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
     } catch {
@@ -451,7 +682,7 @@ export class ProviderService {
   }
 
   getDraft(): HomestayDraftState | null {
-    if (typeof localStorage === 'undefined') return null;
+    if (this.isPreviewMode() || typeof localStorage === 'undefined') return null;
     try {
       const data = localStorage.getItem(DRAFT_STORAGE_KEY);
       return data ? JSON.parse(data) : null;
@@ -461,7 +692,7 @@ export class ProviderService {
   }
 
   clearDraft(): void {
-    if (typeof localStorage === 'undefined') return;
+    if (this.isPreviewMode() || typeof localStorage === 'undefined') return;
     try {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {

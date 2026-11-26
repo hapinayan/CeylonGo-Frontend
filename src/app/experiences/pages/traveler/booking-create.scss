@@ -655,6 +655,50 @@
     }
   }
 
+  .sim-options-box {
+    margin-top: 0.85rem;
+    padding: 0.85rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+
+    .sim-heading {
+      margin: 0 0 0.5rem;
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #082b5c;
+    }
+
+    .sim-radios {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .sim-choice {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.825rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &.sim-success {
+        color: #15803d;
+      }
+
+      &.sim-failure {
+        color: #b91c1c;
+      }
+    }
+
+    .sim-attempt {
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+  }
+
   /* Step 3: Confirmation Screen */
   .booking-confirmation-section {
     max-width: 760px;
@@ -667,6 +711,27 @@
       border-radius: 16px;
       padding: 2.25rem 1.5rem;
       margin-bottom: 1.5rem;
+
+      &.pending-banner {
+        background: #fffbeb;
+        border-color: #fde68a;
+
+        .confirmation-icon-check {
+          background: #d97706;
+        }
+
+        h2 {
+          color: #92400e;
+        }
+
+        .confirmation-ref {
+          color: #92400e;
+
+          strong {
+            border-color: #fde68a;
+          }
+        }
+      }
 
       .confirmation-icon-check {
         width: 56px;

@@ -14,7 +14,6 @@ import { ExperienceIcon } from './icon';
           type="button"
           class="category-btn"
           [class.active]="selected() === category.id"
-          [disabled]="live() && category.id !== 'all' && category.id !== 'eco'"
           [attr.aria-pressed]="selected() === category.id"
           [attr.aria-label]="category.label"
           (click)="select.emit(category.id)"
@@ -47,7 +46,6 @@ import { ExperienceIcon } from './icon';
 })
 export class CategoryNav {
   readonly categories = categories;
-  readonly live = input(false);
   readonly selected = input.required<Category>();
   readonly select = output<Category>();
 }

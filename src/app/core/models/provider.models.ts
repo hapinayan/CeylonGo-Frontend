@@ -33,6 +33,197 @@ export type EvidenceLinkKind =
   | 'video'
   | 'other';
 
+export type ActivityCategorySlug =
+  | 'hiking-trekking'
+  | 'wildlife-safari'
+  | 'water-activities'
+  | 'adventure-sports'
+  | 'cycling'
+  | 'cultural-village'
+  | 'food-cooking'
+  | 'nature-eco';
+
+export const ACTIVITY_CATEGORIES: readonly { slug: ActivityCategorySlug; label: string }[] = [
+  { slug: 'hiking-trekking', label: 'Hiking & Trekking' },
+  { slug: 'wildlife-safari', label: 'Wildlife Safari' },
+  { slug: 'water-activities', label: 'Water Activities' },
+  { slug: 'adventure-sports', label: 'Adventure Sports' },
+  { slug: 'cycling', label: 'Cycling' },
+  { slug: 'cultural-village', label: 'Cultural & Village' },
+  { slug: 'food-cooking', label: 'Food & Cooking' },
+  { slug: 'nature-eco', label: 'Nature & Eco' },
+] as const;
+
+export type GuideCategorySlug =
+  | 'cultural_heritage'
+  | 'adventure_nature'
+  | 'city_village'
+  | 'wildlife_eco';
+
+export const GUIDE_BACKEND_CATEGORIES: readonly {
+  slug: GuideCategorySlug;
+  name: string;
+  examples: string;
+}[] = [
+  {
+    slug: 'cultural_heritage',
+    name: 'Cultural & Heritage',
+    examples: 'Historical sites, temples, museums and heritage tours',
+  },
+  {
+    slug: 'adventure_nature',
+    name: 'Adventure & Nature',
+    examples: 'Hiking, trekking, waterfalls and nature trails',
+  },
+  {
+    slug: 'city_village',
+    name: 'City & Village',
+    examples: 'City walks, markets, village visits and sightseeing',
+  },
+  {
+    slug: 'wildlife_eco',
+    name: 'Wildlife & Eco',
+    examples: 'Birdwatching, wildlife observation and eco guidance',
+  },
+] as const;
+
+export const GUIDE_DISCOVERY_CATEGORIES: readonly {
+  id: string;
+  label: string;
+  backendSlug: GuideCategorySlug;
+}[] = [
+  { id: 'nature-hiking', label: 'Nature & Hiking', backendSlug: 'adventure_nature' },
+  { id: 'culture-heritage', label: 'Culture & Heritage', backendSlug: 'cultural_heritage' },
+  { id: 'sightseeing', label: 'Sightseeing', backendSlug: 'city_village' },
+  { id: 'eco-tourism', label: 'Eco-Tourism', backendSlug: 'wildlife_eco' },
+  { id: 'beach-coastal', label: 'Beach & Coastal', backendSlug: 'adventure_nature' },
+  { id: 'adventure-tours', label: 'Adventure Tours', backendSlug: 'adventure_nature' },
+  { id: 'city-tours', label: 'City Tours', backendSlug: 'city_village' },
+] as const;
+
+export type GuideProficiencyLevel = 'basic' | 'conversational' | 'fluent' | 'native';
+
+export interface GuideLanguageOption {
+  code: string;
+  name: string;
+}
+
+export const GUIDE_LANGUAGE_OPTIONS: readonly GuideLanguageOption[] = [
+  { code: 'en', name: 'English' },
+  { code: 'si', name: 'Sinhala' },
+  { code: 'ta', name: 'Tamil' },
+  { code: 'de', name: 'German' },
+  { code: 'fr', name: 'French' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'it', name: 'Italian' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'zh', name: 'Chinese' },
+] as const;
+
+export interface GuideLanguagePayload {
+  language_code: string;
+  language_name: string;
+  proficiency_level: GuideProficiencyLevel;
+  is_primary: boolean;
+}
+
+export interface GuideServiceAreaPayload {
+  province: string;
+  district: string;
+  city: string;
+  is_primary: boolean;
+}
+
+export interface GuideProfileMetadataPayload {
+  years_of_experience: number;
+  categories: GuideCategorySlug[];
+  languages: GuideLanguagePayload[];
+  service_areas: GuideServiceAreaPayload[];
+  cancellation_policy: string | null;
+}
+
+export type GuidePackagePricingType = 'per_person' | 'per_group';
+
+export interface GuidePackagePayload {
+  title: string;
+  description: string;
+  itinerary: string | null;
+  duration_hours: string | number;
+  pricing_type: GuidePackagePricingType;
+  price: string | number;
+  currency: 'LKR';
+  max_people: number;
+  included_services: string | null;
+  excluded_services: string | null;
+  meeting_point: string;
+  meeting_latitude?: string | number | null;
+  meeting_longitude?: string | number | null;
+  is_active: boolean;
+}
+
+export interface GuidePackageDetails extends GuidePackagePayload {
+  id: number;
+}
+
+export interface ActivityMetadataPayload {
+  category: ActivityCategorySlug;
+  meeting_point: string;
+  duration_minutes: number;
+  min_participants: number;
+  max_participants: number;
+  minimum_age: number | null;
+  highlights: string[];
+  included: string[];
+  excluded: string[];
+  equipment: string | null;
+  facilities: string | null;
+  safety_instructions: string | null;
+  restrictions: string | null;
+  cancellation_policy: string | null;
+}
+
+export type RentalSubtype =
+  | 'motorcycle'
+  | 'scooter'
+  | 'city'
+  | 'mountain'
+  | 'road'
+  | 'hybrid';
+
+export type RentalTransmission = 'manual' | 'automatic' | 'single_speed';
+
+export interface RentalMetadataPayload {
+  subtype: RentalSubtype;
+  transmission?: RentalTransmission | null;
+  model_year?: number | null;
+  seating_capacity?: number | null;
+  fuel_type?: string | null;
+  specifications?: string | null;
+  pickup_name: string;
+  pickup_address?: string | null;
+  requirements?: string | null;
+  rental_terms?: string | null;
+  cancellation_policy?: string | null;
+}
+
+export interface RentalUnitCreatePayload {
+  label: string;
+  capacity: number;
+}
+
+export interface RentalUnitUpdatePayload {
+  label: string;
+  is_active: boolean;
+}
+
+export interface RentalUnitResponse {
+  id: number;
+  listing_id: number;
+  label: string;
+  capacity: number;
+  is_active: boolean;
+}
+
 export type EvidenceFileKind =
   | 'customer_feedback'
   | 'business_certificate'
@@ -43,6 +234,10 @@ export type EvidenceFileKind =
   | 'credentials'
   | 'license'
   | 'workshop'
+  | 'activity_photo'
+  | 'vehicle_registration'
+  | 'insurance'
+  | 'vehicle_photo'
   | 'other';
 
 export interface ListingCreateDraftRequest {
@@ -65,6 +260,9 @@ export interface ListingDraftUpdate {
   check_out_time?: string | null;
   contact?: string | null;
   metadata?: HomestayMetadataPayload | null;
+  activity?: ActivityMetadataPayload | null;
+  guide?: GuideProfileMetadataPayload | null;
+  rental?: RentalMetadataPayload | null;
 }
 
 export interface HomestayMetadataPayload {
@@ -131,6 +329,7 @@ export interface AvailabilitySlotCreate {
 export interface AvailabilitySlotResponse {
   id: number;
   unit_id: number;
+  listing_id?: number;
   starts_at: string;
   ends_at: string;
   capacity: number;
@@ -168,6 +367,12 @@ export interface ReviewListing {
   rooms: HomestayRoom[];
 }
 
+export interface TravelerContact {
+  full_name: string;
+  email: string;
+  phone: string | null;
+}
+
 export interface HomestayBookingDetails {
   id: number;
   listing_id: number;
@@ -180,9 +385,14 @@ export interface HomestayBookingDetails {
   currency: string;
   status: 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
   created_at: string;
+  booking_reference?: string | null;
+  slot_id?: number | null;
   room_ids: number[];
   payments: any[];
+  traveler_contact?: TravelerContact | null;
 }
+
+export type ProviderBookingDetails = HomestayBookingDetails;
 
 export interface BookingStatusUpdateRequest {
   to_status: 'confirmed' | 'rejected' | 'cancelled' | 'completed';
