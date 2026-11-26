@@ -437,6 +437,16 @@ export const routes: Routes = [
       import('./pages/tour-guides/guide-detail/tour-guide-detail.component')
         .then((m) => m.TourGuideDetailComponent),
   },
+
+  // ARTISAN TRAVELER MODULE
+  {
+    path: 'artisans',
+    loadChildren: () =>
+      import('./features/artisan/artisan.routes')
+        .then(m => m.artisanRoutes)
+  },
+
+  // LOCAL TOUR GUIDES DISCOVER PAGE
   {
     path: 'tour-guides',
     loadComponent: () =>
@@ -464,6 +474,10 @@ export const routes: Routes = [
       import('./bike-rentals/rental.routes')
         .then(module => module.rentalRoutes)
   },
+
+  { path: 'my-bookings', loadChildren: () => import('./traveler-bookings/booking.routes').then(module => module.travelerBookingRoutes) },
+
+  { path: 'wishlist', loadChildren: () => import('./traveler-wishlist/wishlist.routes').then(module => module.travelerWishlistRoutes) },
 
   // UNKNOWN URL - GO TO HOMEPAGE
   {

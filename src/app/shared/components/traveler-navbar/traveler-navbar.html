@@ -1,20 +1,40 @@
-<header class="navbar-header" [class.is-scrolled]="isScrolled()" [class.rental-nav]="isRentalRoute()">
+<header class="navbar-header" [class.is-scrolled]="isScrolled()" [class.rental-nav]="isRentalRoute()" [class.booking-nav]="variant() === 'bookings'">
   <div class="navbar-container">
 
     <!-- BRAND LOGO -->
     <a routerLink="/" class="navbar-brand" (click)="onNavClick('home', $event)" aria-label="CeylonGo Traveler Homepage">
-      <img
-        src="/images/ceylongo-blue-logo.png"
-        alt="CeylonGo"
-        class="brand-logo-img"
-        width="130"
-        height="48"
-      />
+      @if (variant() === 'bookings') {
+        <span class="booking-wordmark">Ceylon<span>Go</span></span>
+      } @else {
+        <img
+          src="/images/ceylongo-blue-logo.png"
+          alt="CeylonGo"
+          class="brand-logo-img"
+          width="130"
+          height="48"
+        />
+      }
     </a>
 
     <!-- CENTER NAVIGATION LINKS (6 OPTIONS) -->
     <nav class="desktop-nav" aria-label="Traveler Primary Navigation">
       <ul class="nav-list">
+        @if (variant() === 'bookings') {
+          <li>
+            <details #explore class="booking-explore" (keydown.escape)="explore.open = false; exploreSummary.focus()">
+              <summary #exploreSummary class="nav-link">Explore <span aria-hidden="true"></span></summary>
+              <div class="dropdown-menu booking-explore-menu">
+                <a routerLink="/explore">Explore Sri Lanka</a>
+                <a routerLink="/" fragment="community">Community</a>
+                <a routerLink="/" fragment="ai-planner">AI Trip Planner</a>
+                <button type="button" (click)="navigateToBecomeAHost()">Become a Host</button>
+              </div>
+            </details>
+          </li>
+          @for (service of serviceLinks; track service.path) {
+            <li><a class="nav-link" [routerLink]="service.path">{{ service.label }}</a></li>
+          }
+        } @else {
         <li>
           <a
             href="#home"
@@ -101,11 +121,17 @@
             About
           </a>
         </li>
+        }
       </ul>
     </nav>
 
     <!-- RIGHT ACTION CONTROLS (AUTHENTICATED VS GUEST) -->
     <div class="nav-actions">
+      @if (variant() === 'bookings') {
+        <button class="booking-nav-icon" type="button" aria-label="Focus booking search" (click)="bookingSearchRequested.emit()">
+          <app-experience-icon name="search" />
+        </button>
+      }
 
       @if (isAuthenticated) {
         <!-- 1. BECOME A HOST BUTTON -->
@@ -289,6 +315,13 @@
           </div>
         }
       </div>
+      } @else if (variant() === 'bookings') {
+        <button class="booking-nav-icon" type="button" aria-label="Sign in to view notifications" (click)="openAuthModal('login', $event)">
+          <app-experience-icon name="bell" />
+        </button>
+        <button class="booking-guest-avatar" type="button" aria-label="Log in or register your account" (click)="openAuthModal('login', $event)">
+          <app-experience-icon name="user" />
+        </button>
       } @else {
         <!-- GUEST ACTIONS: EXACTLY TWO BUTTONS (BECOME A HOST & LOGIN / REGISTER) -->
         <div class="guest-nav-actions">
@@ -364,6 +397,12 @@
 
       <!-- MOBILE CENTER LINKS -->
       <nav class="mobile-nav-links">
+        @if (variant() === 'bookings') {
+          <a routerLink="/explore" class="mobile-link" (click)="closeMobileMenu()">Explore</a>
+          @for (service of serviceLinks; track service.path) {
+            <a class="mobile-link" [routerLink]="service.path" (click)="closeMobileMenu()">{{ service.label }}</a>
+          }
+        } @else {
         <a href="#home" class="mobile-link" [class.active]="activeSection() === 'home'" (click)="onNavClick('home', $event)">Home</a>
         @if (isHomestayRoute()) {
           <a routerLink="/homestays" class="mobile-link active" aria-current="page" (click)="onNavClick('stays', $event)">Stays</a>
@@ -376,6 +415,7 @@
         <a href="#ai-planner" class="mobile-link" [class.active]="activeSection() === 'ai-planner'" (click)="onNavClick('ai-planner', $event)">AI Trip Planner</a>
         <a href="#contact" class="mobile-link" [class.active]="activeSection() === 'contact'" (click)="onNavClick('contact', $event)">Contact Us</a>
         <a href="#about" class="mobile-link" [class.active]="activeSection() === 'about'" (click)="onNavClick('about', $event)">About</a>
+        }
       </nav>
 
       <div class="mobile-actions">

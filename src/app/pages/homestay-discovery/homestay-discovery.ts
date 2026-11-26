@@ -341,7 +341,6 @@ export class HomestayDiscovery implements OnInit {
   toggleWishlist(homestay: HomestaySummary, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-
     if (!this.authService.isAuthenticated()) {
       this.showToast('Please sign in to save homestays to your wishlist');
       this.authModalService.open('login', undefined, {

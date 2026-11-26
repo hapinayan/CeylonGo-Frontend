@@ -43,6 +43,10 @@ export class HomestayService {
   readonly wishlistIds = this.wishlistSignal.asReadonly();
   readonly neutralPlaceholder = NEUTRAL_HOMESTAY_PLACEHOLDER;
 
+  changeWishlist(item: HomestaySummary): Observable<boolean> {
+    return this.toggleWishlist(item.id);
+  }
+
   /**
    * Retrieves homestays matching search & filter parameters from GET /api/v1/homestays.
    * Uses items and next_before_id for cursor pagination. Does not fabricate total counts.

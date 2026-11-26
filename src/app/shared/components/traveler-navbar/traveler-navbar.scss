@@ -780,3 +780,140 @@
   .rental-nav .desktop-nav { display: none; }
   .rental-nav .mobile-toggle-btn { display: flex; }
 }
+
+.booking-nav {
+  color: #fff;
+  background: #05234d;
+  border-bottom-color: #05234d;
+
+  .navbar-container {
+    max-width: none;
+    height: 77px;
+    padding-inline: clamp(12px, 2.65vw, 41px);
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .booking-wordmark {
+    color: #fff;
+    font-size: clamp(1.65rem, 2.6vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -.012em;
+    line-height: 1;
+
+    span { color: #ff9500; }
+  }
+
+  .desktop-nav { margin-inline-start: clamp(22px, 6.2vw, 96px); }
+  .nav-list { gap: clamp(12px, 2.5vw, 39px); }
+
+  .nav-link {
+    padding-inline: 0;
+    color: #fff;
+    font-size: clamp(.95rem, 1.3vw, 1.25rem);
+    font-weight: 700;
+    white-space: nowrap;
+
+    &:hover { color: #ffb34d; }
+  }
+
+  .booking-explore {
+    position: relative;
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      list-style: none;
+      cursor: pointer;
+
+      &::-webkit-details-marker { display: none; }
+
+      span {
+        width: 8px;
+        height: 8px;
+        border: solid currentColor;
+        border-width: 0 2px 2px 0;
+        transform: translateY(-2px) rotate(45deg);
+      }
+    }
+  }
+
+  .booking-explore-menu {
+    inset-inline: 0 auto;
+    min-width: 190px;
+    padding: 6px;
+  }
+
+  .booking-explore-menu :is(a, button) {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #081f49;
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover { background: #edf4ff; }
+  }
+
+  .nav-actions { margin-inline-start: auto; gap: clamp(4px, 1.2vw, 18px); }
+
+  .nav-actions > .btn-become-host { display: none; }
+
+  .booking-nav-icon, .btn-notification, .booking-guest-avatar {
+    display: grid;
+    place-items: center;
+    width: 45px;
+    height: 45px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-size: 1.85rem;
+    cursor: pointer;
+  }
+
+  .btn-notification .bell-icon { width: 30px; height: 30px; }
+  .btn-notification .notification-badge {
+    top: 2px;
+    right: 2px;
+    background: #ff9500;
+    color: #081f49;
+    border-color: #05234d;
+  }
+
+  .booking-guest-avatar, .btn-profile {
+    width: 47px;
+    height: 47px;
+    padding: 0;
+    justify-content: center;
+    background: #fff;
+    color: #081f49;
+  }
+
+  .booking-guest-avatar { font-size: 1.48rem; }
+  .btn-profile .profile-avatar { width: 100%; height: 100%; background: transparent; }
+  .btn-profile .avatar-fallback { color: #081f49; font-size: 1.2rem; }
+  .btn-profile :is(.avatar-img, .traveler-name-label, .chevron-icon) { display: none; }
+  .hamburger-line { background: #fff; }
+
+  :is(.booking-nav-icon, .booking-guest-avatar, .btn-notification, .btn-profile, .mobile-toggle-btn, .nav-link):focus-visible {
+    outline: 2px solid #ff9500;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 1099px) {
+    .desktop-nav { display: none; }
+    .mobile-toggle-btn { display: flex; }
+  }
+
+  @media (max-width: 430px) {
+    .booking-nav-icon, .btn-notification, .booking-guest-avatar, .btn-profile { width: 40px; height: 40px; }
+    .notification-dropdown { right: -80px; width: min(320px, calc(100vw - 24px)); }
+  }
+}

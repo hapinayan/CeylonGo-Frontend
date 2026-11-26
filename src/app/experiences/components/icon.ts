@@ -1,6 +1,12 @@
 import { Component, input } from '@angular/core';
 
 const paths: Record<string, string> = {
+  home: 'M3 11l9-8 9 8M6 9v12h4v-7h4v7h4V9',
+  bicycle: 'M9 16a4 4 0 1 1-8 0 4 4 0 1 1 8 0zm14 0a4 4 0 1 1-8 0 4 4 0 1 1 8 0zM5 16l5-8 3 8H5m8 0 4-11h3m-12 3h4',
+  settings: 'M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1 1-3z M15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0z',
+  logout: 'M11 3H4v18h7m-1-9h11m-4-4 4 4-4 4',
+  'check-circle': 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z M7 12l3 3 7-7',
+  'x-circle': 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z M8 8l8 8m0-8-8 8',
   share: 'M12 15V2m-4 4 4-4 4 4M6 9H4v12h16V9h-2',
   expand: 'M9 4H4v5m0-5 6 6m5-6h5v5m0-5-6 6M9 20H4v-5m0 5 6-6m5 6h5v-5m0 5-6-6',
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 6v6l4 2',

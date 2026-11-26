@@ -1,0 +1,220 @@
+<div class="product-page-wrapper">
+  <!-- TOP STICKY BAR -->
+  <header class="top-nav-bar">
+    <div class="bar-inner">
+      <div class="left-group">
+        <button type="button" class="back-btn" (click)="goBack()" aria-label="Go back to artisan profile">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+        <h1 class="page-header-title">Product Details</h1>
+      </div>
+
+      <div class="right-actions">
+        <!-- SHARE BUTTON -->
+        <button type="button" class="icon-btn" (click)="onShareClick()" aria-label="Share product">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+        </button>
+
+        <!-- FAVORITE TOGGLE -->
+        <button
+          type="button"
+          class="icon-btn"
+          [class.active]="isFavorite()"
+          (click)="toggleFavorite()"
+          [attr.aria-label]="isFavorite() ? 'Remove from favorites' : 'Save product'"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" [attr.fill]="isFavorite() ? '#1255B5' : 'none'" [attr.stroke]="isFavorite() ? '#1255B5' : '#334155'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST NOTIFICATION -->
+  @if (shareToastMessage()) {
+    <div class="toast-banner" role="status">
+      <span>{{ shareToastMessage() }}</span>
+    </div>
+  }
+
+  <!-- LOADING SKELETON -->
+  @if (isLoading()) {
+    <div class="content-container skeleton-layout" aria-busy="true">
+      <div class="skeleton-gallery"></div>
+      <div class="skeleton-details">
+        <div class="skeleton-bar title-bar"></div>
+        <div class="skeleton-bar price-bar"></div>
+        <div class="skeleton-bar desc-bar"></div>
+      </div>
+    </div>
+  }
+
+  <!-- ERROR STATE -->
+  @if (!isLoading() && hasError()) {
+    <div class="content-container state-card" role="alert">
+      <h2>Product Not Found</h2>
+      <p>We could not find the requested showcase product or service.</p>
+      <button type="button" class="primary-btn" (click)="goBack()">Back to Artisan</button>
+    </div>
+  }
+
+  <!-- LOADED PRODUCT CONTENT -->
+  @if (!isLoading() && !hasError() && product()) {
+    <main class="content-container product-main-grid">
+      <!-- LEFT COLUMN: IMAGE GALLERY -->
+      <section class="gallery-col">
+        <div class="main-image-container">
+          <img
+            [src]="activeImage()"
+            [alt]="product()!.title"
+            (error)="onImageError($event)"
+            class="main-product-img"
+          />
+        </div>
+
+        <!-- THUMBNAILS CAROUSEL -->
+        @if (galleryImages().length > 1) {
+          <div class="thumbnails-row">
+            @for (img of galleryImages(); track $index) {
+              <button
+                type="button"
+                class="thumb-btn"
+                [class.active]="activeImageIndex() === $index"
+                (click)="selectImage($index)"
+                [attr.aria-label]="'View product image ' + ($index + 1)"
+              >
+                <img [src]="img" [alt]="'Thumbnail ' + ($index + 1)" (error)="onImageError($event)" class="thumb-img" />
+              </button>
+            }
+            <button type="button" class="thumb-nav-btn next-thumb" (click)="nextImage()" aria-label="Next image">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- RIGHT COLUMN: PRODUCT DETAILS -->
+      <section class="details-col">
+        <h2 class="product-title">{{ product()!.title }}</h2>
+
+        <div class="price-box">
+          <span class="product-price">{{ product()!.price | lkrCurrency }}</span>
+        </div>
+
+        <div class="rating-row">
+          <app-rating-stars
+            [rating]="listing()?.average_rating || 4.9"
+            [reviewCount]="listing()?.total_reviews || 88"
+          />
+        </div>
+
+        <p class="product-description">
+          {{ product()!.description || 'Handcrafted traditional Sri Lankan artisan item made with authentic cultural techniques.' }}
+        </p>
+
+        <!-- PRODUCT ATTRIBUTES LIST -->
+        <div class="attributes-list">
+          <div class="attribute-item">
+            <svg class="attr-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+            </svg>
+            <span class="attr-text">Handmade</span>
+          </div>
+
+          @if (product()!.materials) {
+            <div class="attribute-item">
+              <svg class="attr-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span class="attr-text">{{ product()!.materials }}</span>
+            </div>
+          }
+
+          <div class="attribute-item">
+            <svg class="attr-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+              <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z" />
+              <path d="m14.5 12.5 2-2" />
+              <path d="m11.5 9.5 2-2" />
+              <path d="m8.5 6.5 2-2" />
+              <path d="m17.5 15.5 2-2" />
+            </svg>
+            <span class="attr-text">
+              {{ product()!.sku ? 'Code: ' + product()!.sku : 'Authentic Cultural Craft' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- AVAILABILITY STATUS -->
+        <div class="availability-row">
+          @if (product()!.is_available && product()!.stock_quantity > 0) {
+            <span class="stock-indicator in-stock">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>In Stock</span>
+            </span>
+          } @else if (product()!.is_custom_order_available) {
+            <span class="stock-indicator custom-order">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>Custom Order Available</span>
+            </span>
+          } @else {
+            <span class="stock-indicator out-of-stock">
+              <span>Made on Request</span>
+            </span>
+          }
+        </div>
+
+        <!-- ACTION ROW: QUANTITY SELECTOR & CONTACT ARTISAN CTA -->
+        <div class="cta-action-row">
+          <div class="qty-stepper" role="group" aria-label="Inquiry quantity selector">
+            <button
+              type="button"
+              class="stepper-btn"
+              (click)="decrementQuantity()"
+              [disabled]="inquiryQuantity() <= 1"
+              aria-label="Decrease inquiry quantity"
+            >
+              &minus;
+            </button>
+            <span class="qty-display" aria-live="polite">{{ inquiryQuantity() }}</span>
+            <button
+              type="button"
+              class="stepper-btn"
+              (click)="incrementQuantity()"
+              aria-label="Increase inquiry quantity"
+            >
+              &plus;
+            </button>
+          </div>
+
+          <button type="button" class="contact-artisan-btn" (click)="contactArtisan()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Contact Artisan</span>
+          </button>
+        </div>
+      </section>
+    </main>
+  }
+</div>
