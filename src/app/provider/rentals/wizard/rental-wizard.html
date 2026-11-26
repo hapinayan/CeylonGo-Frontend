@@ -1,0 +1,473 @@
+<div class="wizard-container rental-wizard">
+  <!-- Header -->
+  <div class="wizard-header">
+    <div>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">
+        &larr; Back to Manage Listings
+      </a>
+      <h1 class="wizard-title">
+        {{ listingId() ? 'Edit Rental Vehicle Listing' : 'Add Bike & Bicycle Rental' }}
+      </h1>
+      <div class="draft-meta">
+        <span class="status-badge" [class]="verificationStatus()">
+          Status: {{ verificationStatus() | titlecase }}
+        </span>
+        @if (isPreview()) {
+          <span class="preview-badge">Preview Mode · Demo Only</span>
+        }
+        @if (saveToast()) {
+          <span class="toast-pill">{{ saveToast() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-outline"
+        [disabled]="isSaving() || isPreview()"
+        (click)="ensureDraftAndSave()">
+        {{ isSaving() ? 'Saving…' : 'Save Draft' }}
+      </button>
+    </div>
+  </div>
+
+  @if (decisionReason()) {
+    <div class="feedback-banner" role="alert">
+      <strong>Admin Reviewer Feedback:</strong> {{ decisionReason() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <!-- 6-Step Progress Stepper -->
+  <nav class="stepper-nav" aria-label="Wizard steps">
+    @for (s of steps; track s.num) {
+      <button
+        type="button"
+        class="step-item"
+        [class.active]="currentStep() === s.num"
+        [class.completed]="currentStep() > s.num"
+        (click)="goToStep(s.num)">
+        <span class="step-num">{{ s.num }}</span>
+        <span class="step-label">{{ s.label }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (isLoading()) {
+    <div class="wizard-card loading-box">Loading vehicle draft from backend…</div>
+  } @else {
+    <!-- STEP 1: BASIC INFO -->
+    @if (currentStep() === 1) {
+      <section class="wizard-card">
+        <h2>Step 01 — Vehicle Basic Information</h2>
+        <p class="section-subtitle">Choose scooter, motorbike, or pedal bicycle and enter vehicle specifications.</p>
+
+        <div class="kind-selector-grid">
+          <button
+            type="button"
+            class="kind-card"
+            [class.active]="vehicleKind === 'scooter'"
+            [disabled]="!!listingId() && apiCategory !== 'bike'"
+            (click)="onVehicleKindChange('scooter')">
+            <div class="kind-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6.5" cy="17.5" r="2.5" />
+                <circle cx="18" cy="17.5" r="2.5" />
+                <path d="M9 17.5h4.5c1 0 1.8-.8 1.8-1.8V12l1.2-4.5H14" />
+                <path d="M16.5 7.5H19" />
+                <path d="M5 13h5.5l1.5 2.5" />
+                <path d="M15.3 13l2.7 4.5" />
+              </svg>
+            </div>
+            <strong>Scooter</strong>
+            <span>Automatic scooter (bike)</span>
+          </button>
+
+          <button
+            type="button"
+            class="kind-card"
+            [class.active]="vehicleKind === 'motorcycle'"
+            [disabled]="!!listingId() && apiCategory !== 'bike'"
+            (click)="onVehicleKindChange('motorcycle')">
+            <div class="kind-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5.5" cy="17" r="3" />
+                <circle cx="18.5" cy="17" r="3" />
+                <path d="M5.5 17l3.5-4.5h4.5l3-3.5" />
+                <path d="M15 6.5h2.5L18.5 17" />
+                <path d="M6.5 11.5h4l2-2.5h3" />
+              </svg>
+            </div>
+            <strong>Motorbike</strong>
+            <span>Manual or road motorcycle (bike)</span>
+          </button>
+
+          <button
+            type="button"
+            class="kind-card"
+            [class.active]="vehicleKind === 'bicycle'"
+            [disabled]="!!listingId() && apiCategory !== 'bicycle'"
+            (click)="onVehicleKindChange('bicycle')">
+            <div class="kind-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5.5" cy="16.5" r="3.5" />
+                <circle cx="18.5" cy="16.5" r="3.5" />
+                <path d="M5.5 16.5h5.5l4-6.5H8.5z" />
+                <path d="M18.5 16.5L14.5 7h3" />
+                <path d="M8.5 10L7.5 7h2.5" />
+              </svg>
+            </div>
+            <strong>Bicycle</strong>
+            <span>City, mountain, road or hybrid</span>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="field-group full">
+            <label for="rw-title">Vehicle Name / Listing Title *</label>
+            <input id="rw-title" type="text" maxlength="160" [(ngModel)]="title" placeholder="e.g. Ella Honda Dio Scooter Fleet" />
+          </div>
+
+          @if (vehicleKind === 'bicycle') {
+            <div class="field-group">
+              <label for="rw-subtype">Bicycle Type</label>
+              <select id="rw-subtype" [(ngModel)]="bicycleSubtype">
+                @for (sub of bicycleSubtypes; track sub.value) {
+                  <option [value]="sub.value">{{ sub.label }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="field-group">
+            <label for="rw-brand">Brand</label>
+            <input id="rw-brand" type="text" [(ngModel)]="brand" placeholder="e.g. Honda, Yamaha, Trek" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-model">Model</label>
+            <input id="rw-model" type="text" [(ngModel)]="model" placeholder="e.g. Dio 110, Marlin 5" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-transmission">Transmission</label>
+            <select id="rw-transmission" [(ngModel)]="transmission">
+              @if (isMotorized) {
+                <option value="automatic">Automatic</option>
+              }
+              <option value="manual">Manual</option>
+              <option value="single_speed">Single Speed</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="rw-year">Model Year</label>
+            <input id="rw-year" type="number" min="1900" max="2100" [(ngModel)]="modelYear" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-seats">Seating Capacity</label>
+            <input id="rw-seats" type="number" min="1" max="2" [(ngModel)]="seatingCapacity" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-fuel">Fuel / Power Type</label>
+            <input id="rw-fuel" type="text" maxlength="30" [(ngModel)]="fuelType" />
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-desc">Vehicle Description *</label>
+            <textarea id="rw-desc" rows="3" maxlength="2000" [(ngModel)]="description" placeholder="Highlight ride comfort, condition, terrain suitability…"></textarea>
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-specs">Supported Specifications Summary</label>
+            <textarea id="rw-specs" rows="2" maxlength="1200" [(ngModel)]="specifications" placeholder="e.g. 110cc EFI engine, disc brakes, front suspension"></textarea>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- STEP 2: LOCATION & PICKUP POINT -->
+    @if (currentStep() === 2) {
+      <section class="wizard-card">
+        <h2>Step 02 — Location &amp; Pickup Point</h2>
+        <p class="section-subtitle">Set pickup office location and interactive map pin.</p>
+
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="rw-province">Province</label>
+            <select id="rw-province" [(ngModel)]="province" (ngModelChange)="onProvinceChange()">
+              @for (p of provinces; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="rw-district">District *</label>
+            <select id="rw-district" [(ngModel)]="district">
+              @for (d of getAvailableDistricts(); track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="rw-locality">City or Locality *</label>
+            <input id="rw-locality" type="text" maxlength="100" [(ngModel)]="locality" placeholder="e.g. Ella, Unawatuna" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-pickup-name">Pickup Point Name *</label>
+            <input id="rw-pickup-name" type="text" maxlength="160" [(ngModel)]="pickupName" placeholder="e.g. Ella Railway Station Desk" />
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-pickup-address">Pickup Address</label>
+            <input id="rw-pickup-address" type="text" maxlength="300" [(ngModel)]="pickupAddress" placeholder="Street address or landmark" />
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-pickup-instr">Pickup Instructions</label>
+            <textarea id="rw-pickup-instr" rows="2" [(ngModel)]="pickupInstructions" placeholder="Bring original driving license and booking reference at pickup desk…"></textarea>
+          </div>
+
+          <div class="field-group full">
+            <label>Interactive Pickup Pin (Click map to update coordinates)</label>
+            <app-location-picker
+              [latitude]="latitude()"
+              [longitude]="longitude()"
+              (coordinatesChange)="onCoordinatesSelected($event)" />
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- STEP 3: PHOTOS & SPECIFICATIONS -->
+    @if (currentStep() === 3) {
+      <section class="wizard-card">
+        <h2>Step 03 — Vehicle Photos &amp; Equipment</h2>
+        <p class="section-subtitle">Upload clear vehicle photographs, set cover image, and detail included helmets/accessories.</p>
+
+        <div class="upload-zone">
+          <label class="upload-btn">
+            <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" [disabled]="isUploadingPhoto() || isPreview()" />
+            <span>{{ isUploadingPhoto() ? 'Uploading…' : 'Upload Vehicle Photo' }}</span>
+          </label>
+          <span class="helper-muted">JPEG, PNG, or WebP up to 5MB. First or selected cover appears in search.</span>
+        </div>
+
+        <div class="photos-grid">
+          @for (item of photos(); track item.media.id; let idx = $index) {
+            <div class="photo-card">
+              @if (item.url) {
+                <img [src]="item.url" [alt]="item.media.alt_text || 'Vehicle photo'" />
+              } @else {
+                <div class="photo-fallback">Loading preview…</div>
+              }
+              <div class="photo-actions">
+                <button type="button" class="mini-btn" [disabled]="idx === 0 || isPreview()" (click)="setCover(item.media.id)">
+                  {{ idx === 0 ? 'Cover Photo' : 'Set as Cover' }}
+                </button>
+                <button type="button" class="mini-btn danger" [disabled]="isPreview()" (click)="removePhoto(item.media.id)">
+                  Remove
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <p class="helper-muted">No vehicle photos uploaded yet. Upload at least one photo before submission.</p>
+          }
+        </div>
+
+        <div class="form-grid" style="margin-top: 1.25rem;">
+          <label class="checkbox-row full">
+            <input type="checkbox" [(ngModel)]="helmetsIncluded" />
+            <span>Safety helmet(s) included with rental</span>
+          </label>
+
+          <div class="field-group full">
+            <label for="rw-acc">Included Accessories &amp; Equipment</label>
+            <input id="rw-acc" type="text" [(ngModel)]="accessoriesSummary" placeholder="e.g. Lock, phone mount, rain poncho, basic tool kit" />
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- STEP 4: RENTAL PRICING & CONDITIONS -->
+    @if (currentStep() === 4) {
+      <section class="wizard-card">
+        <h2>Step 04 — Daily Rental Pricing &amp; Conditions</h2>
+        <p class="section-subtitle">Set daily rental pricing in LKR. Bicycles never require a motorized driving license.</p>
+
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="rw-price">Daily Rental Price (LKR) *</label>
+            <input id="rw-price" type="number" min="100" step="50" [(ngModel)]="pricePerDay" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-min-age">Minimum Rider Age</label>
+            <input id="rw-min-age" type="number" min="12" max="99" [(ngModel)]="minimumAge" />
+          </div>
+
+          <div class="field-group full">
+            <label>Driving License Rule (Derived from Category)</label>
+            <div class="rule-callout">
+              @if (isMotorized) {
+                <strong>Motorized Vehicle:</strong> Travelers must attest to a valid motorcycle driving license covering the return date and present the original license at pickup.
+              } @else {
+                <strong>Bicycle Rental:</strong> No motorized driving license required.
+              }
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-req">Rental Requirements &amp; Rider Conditions</label>
+            <textarea id="rw-req" rows="2" [(ngModel)]="requirementsText"></textarea>
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-terms">Rental Terms</label>
+            <textarea id="rw-terms" rows="2" [(ngModel)]="rentalTerms"></textarea>
+          </div>
+
+          <div class="field-group full">
+            <label for="rw-cancel">Cancellation Policy</label>
+            <textarea id="rw-cancel" rows="2" [(ngModel)]="cancellationPolicy"></textarea>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- STEP 5: FLEET INVENTORY & AVAILABILITY -->
+    @if (currentStep() === 5) {
+      <section class="wizard-card">
+        <h2>Step 05 — Physical Fleet Units &amp; Availability</h2>
+        <p class="section-subtitle">Add individual vehicles in your fleet and configure open or blocked rental windows.</p>
+
+        @if (fleetErrorMessage()) {
+          <div class="error-banner" role="alert">{{ fleetErrorMessage() }}</div>
+        }
+
+        <div class="fleet-add-row">
+          <input type="text" [(ngModel)]="newUnitLabel" placeholder="New vehicle unit label (e.g. Honda Dio #2 / WP BAA-1234)" maxlength="100" />
+          <button type="button" class="btn-primary" [disabled]="isSavingUnit() || isPreview()" (click)="addFleetUnit()">
+            {{ isSavingUnit() ? 'Adding…' : '+ Add Fleet Unit' }}
+          </button>
+        </div>
+
+        <div class="units-list">
+          @for (u of units(); track u.id) {
+            <div class="unit-row">
+              <div>
+                <strong>{{ u.label }}</strong>
+                <span class="unit-meta">Unit ID #{{ u.id }} · {{ u.is_active ? 'Active' : 'Inactive' }}</span>
+              </div>
+              <button type="button" class="btn-outline" [disabled]="isSavingUnit() || isPreview()" (click)="toggleUnitActive(u)">
+                {{ u.is_active ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+          } @empty {
+            <p class="helper-muted">No physical vehicle units registered yet. Add at least one unit to accept bookings.</p>
+          }
+        </div>
+
+        <hr class="divider" />
+
+        <h3>Configure Availability / Blocked Dates</h3>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="rw-slot-unit">Fleet Unit</label>
+            <select id="rw-slot-unit" [(ngModel)]="selectedUnitId">
+              @for (u of units(); track u.id) {
+                <option [ngValue]="u.id">{{ u.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="rw-slot-mode">Window Type</label>
+            <select id="rw-slot-mode" [(ngModel)]="slotIsOpen">
+              <option [ngValue]="true">Open (Available to book)</option>
+              <option [ngValue]="false">Blocked (Unavailable / Maintenance)</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="rw-slot-start">Start Date</label>
+            <input id="rw-slot-start" type="date" [(ngModel)]="slotStartDate" />
+          </div>
+
+          <div class="field-group">
+            <label for="rw-slot-end">End Date</label>
+            <input id="rw-slot-end" type="date" [(ngModel)]="slotEndDate" />
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" style="margin-top: 0.75rem;" [disabled]="isSavingSlot() || isPreview()" (click)="addAvailabilityWindow()">
+          {{ isSavingSlot() ? 'Saving Window…' : (slotIsOpen ? 'Add Open Window' : 'Block Dates') }}
+        </button>
+
+        <div class="slots-list">
+          @for (slot of slots(); track slot.id) {
+            <div class="slot-row" [class.blocked]="!slot.is_open">
+              <div>
+                <strong>{{ unitLabel(slot.unit_id) }}</strong>
+                <span> · {{ slot.starts_at | date:'mediumDate' }} → {{ slot.ends_at | date:'mediumDate' }}</span>
+                <span class="slot-badge" [class.open]="slot.is_open">
+                  {{ slot.is_open ? 'Open' : 'Blocked' }}
+                </span>
+              </div>
+              <button type="button" class="mini-btn" [disabled]="isSavingSlot() || isPreview()" (click)="toggleSlotOpen(slot)">
+                {{ slot.is_open ? 'Block' : 'Reopen' }}
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- STEP 6: DOCUMENTS & SERVICE VERIFICATION -->
+    @if (currentStep() === 6) {
+      <section class="wizard-card">
+        <h2>Step 06 — Documents &amp; Service Verification</h2>
+        <p class="section-subtitle">
+          Upload vehicle registration, ownership or insurance proof, and business links. Private documents stay protected from travelers.
+        </p>
+
+        <app-service-verification
+          [category]="apiCategory"
+          [listingId]="listingId()"
+          [initialData]="verificationInitialData()"
+          (verificationChange)="onVerificationChange($event)" />
+
+        <label class="checkbox-row" style="margin-top: 1.25rem;">
+          <input type="checkbox" [(ngModel)]="declarationAccepted" />
+          <span>I confirm the fleet details and uploaded verification records are accurate and belong to my business.</span>
+        </label>
+      </section>
+    }
+
+    <!-- Footer Navigation -->
+    <div class="wizard-footer">
+      <button type="button" class="btn-outline" [disabled]="currentStep() === 1" (click)="prevStep()">
+        &larr; Previous Step
+      </button>
+
+      @if (currentStep() < 6) {
+        <button type="button" class="btn-primary" [disabled]="isSaving()" (click)="nextStep()">
+          {{ isSaving() ? 'Saving…' : 'Save & Continue →' }}
+        </button>
+      } @else {
+        <button type="button" class="btn-primary" [disabled]="isSubmitting() || isPreview() || isSuspended()" (click)="submitForVerification()">
+          {{ isSubmitting() ? 'Submitting…' : 'Submit for Admin Approval' }}
+        </button>
+      }
+    </div>
+  }
+</div>

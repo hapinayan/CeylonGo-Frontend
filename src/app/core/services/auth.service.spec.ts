@@ -71,7 +71,11 @@ describe('AuthService', () => {
     };
 
     const mockResponse: RegisterResponse = {
-      message: 'Account registered successfully',
+      message: 'Verification code sent',
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-mock-123',
+      expires_in: 300,
+      resend_after: 60,
       user: {
         id: 1,
         full_name: 'Test Traveler',
@@ -83,8 +87,9 @@ describe('AuthService', () => {
     };
 
     service.register(payload).subscribe((res) => {
-      expect(res.message).toBe('Account registered successfully');
-      expect(res.user.email).toBe('traveler@ceylongo.lk');
+      expect(res.message).toBe('Verification code sent');
+      expect(res.registration_id).toBe('reg-mock-123');
+      expect(res.user?.email).toBe('traveler@ceylongo.lk');
     });
 
     const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/register`);
@@ -224,6 +229,47 @@ describe('AuthService', () => {
     const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/me`);
     expect(req.request.method).toBe('GET');
     req.flush(mockUser);
+  });
+
+  it('should verify email with registration_id and otp via /auth/verify-email', () => {
+    const payload = {
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-123',
+      otp: '012345',
+    };
+
+    service.verifyEmail(payload).subscribe((res) => {
+      expect(res.message).toBe('Email verified. You can now log in.');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/verify-email`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ message: 'Email verified. You can now log in.' });
+  });
+
+  it('should resend email OTP with registration_id via /auth/resend-email-otp', () => {
+    const payload = {
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-123',
+    };
+
+    service.resendEmailOtp(payload).subscribe((res) => {
+      expect(res.registration_id).toBe('reg-id-456');
+      expect(res.resend_after).toBe(60);
+      expect(res.expires_in).toBe(300);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/resend-email-otp`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({
+      message: 'Verification code sent',
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-456',
+      expires_in: 300,
+      resend_after: 60,
+    });
   });
 
   it('should clear token and user on logout', () => {

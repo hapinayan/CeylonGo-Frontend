@@ -50,7 +50,7 @@ export class TravelerWishlist {
   readonly sort = computed(() => this.query().get('sort') || 'recent');
   readonly kinds = wishlistKinds;
   readonly labels = wishlistLabels;
-  readonly icons = { homestay: 'home', eco: 'leaf', rental: 'bicycle', 'artisan-business': 'culture', 'artisan-product': 'culture' };
+  readonly icons = { homestay: 'home', eco: 'leaf', guide: 'group', rental: 'bicycle' };
   readonly key = listingKey;
   readonly samples = wishlistExamples;
 

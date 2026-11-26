@@ -8,7 +8,6 @@ import { of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../core/services/auth.service';
 import { TravelSession } from '../experiences/services/travel-session';
-import { FavoriteService } from '../features/artisan/services/favorite.service';
 import { environment } from '../../environments/environment';
 import { listingKey, displayListings, SavedListing, WishlistKind } from './wishlist-model';
 import { adaptWishlist, TravelerWishlistApi } from './wishlist-api';
@@ -17,41 +16,120 @@ import { travelerWishlistRoutes } from './wishlist.routes';
 @Component({ template: '<p>Auth stub</p>' })
 class AuthStub {}
 
-const stay: SavedListing = { kind: 'homestay', id: 1, title: 'Test Ella Stay', location: 'Ella',
-  savedAt: '2026-01-02', currency: 'LKR', price: 4000, detail: ['/homestays', 1] };
-const rental: SavedListing = { kind: 'rental', id: 1, title: 'Test Bicycle', location: 'Galle',
-  savedAt: '2026-01-01', currency: 'LKR', price: 2200 };
+const stay: SavedListing = {
+  kind: 'homestay',
+  id: 1,
+  title: 'Test Ella Stay',
+  location: 'Ella',
+  savedAt: '2026-01-02',
+  currency: 'LKR',
+  price: 4000,
+  detail: ['/homestays', 1],
+};
+const guide: SavedListing = {
+  kind: 'guide',
+  id: 7,
+  title: 'Nadee Fernando',
+  location: 'Ella, Badulla',
+  savedAt: '',
+  currency: 'LKR',
+  price: 7500,
+  detail: ['/tour-guides', 7],
+};
+const rental: SavedListing = {
+  kind: 'rental',
+  id: 1,
+  title: 'Test Bicycle',
+  location: 'Galle',
+  savedAt: '2026-01-01',
+  currency: 'LKR',
+  price: 2200,
+};
 
 describe('Traveler Wishlist', () => {
   it('uses distinct keys and combines normalized search, category, and sort', () => {
     expect(listingKey(stay)).not.toBe(listingKey(rental));
     expect(displayListings([stay, rental, stay], 'all', '', 'price')).toEqual([rental, stay]);
     expect(displayListings([rental, stay], 'homestay', '  ELLA   stay  ', 'name')).toEqual([stay]);
+    expect(displayListings([rental, stay, guide], 'guide', 'nadee', 'recent')).toEqual([guide]);
   });
 
-  it('maps only fields from the service contract', () => {
-    const mapped = adaptWishlist.homestay({ saved_at: '2026-01-02',
-      homestay: { id: 1, name: 'Test Ella Stay', location: 'Ella', price_per_night: '4000',
-        images: [], is_active: false, approval_status: 'approved' } });
-    expect(mapped).toMatchObject({ id: 1, title: 'Test Ella Stay', price: 4000, unit: 'night' });
-    expect(mapped.detail).toBeUndefined();
-    expect(mapped.rating).toBeUndefined();
+  it('maps fields accurately from Academic MVP Homestay, Guide, and Rental wishlist contracts', () => {
+    const mappedStay = adaptWishlist.homestay({
+      id: 1,
+      provider_id: 2,
+      category: 'homestay',
+      title: 'Test Ella Stay',
+      description: 'Cozy stay',
+      district: 'Badulla',
+      locality: 'Ella',
+      latitude: null,
+      longitude: null,
+      price: '4000.00',
+      currency: 'LKR',
+      approval_status: 'approved',
+      is_active: false,
+      media: [],
+      units: [],
+      created_at: '2026-01-02T00:00:00Z',
+      property_type: 'villa',
+      amenities: [],
+      host: { id: 2, business_name: 'Host' },
+    });
+    expect(mappedStay).toMatchObject({ id: 1, title: 'Test Ella Stay', price: 4000, unit: 'night' });
+    expect(mappedStay.detail).toBeUndefined();
+
+    const mappedGuide = adaptWishlist.guide({
+      listing: {
+        id: 7,
+        title: 'Nadee Fernando',
+        locality: 'Ella',
+        district: 'Badulla',
+        price: '7500',
+        currency: 'LKR',
+        is_active: true,
+        approval_status: 'approved',
+        media: [{ image_url: '/images/traveler-home/find-tour-guide.webp' }],
+      },
+      provider_name: 'Nadee',
+    });
+    expect(mappedGuide).toMatchObject({ kind: 'guide', id: 7, title: 'Nadee Fernando', price: 7500, detail: ['/tour-guides', 7] });
+
+    const mappedRental = adaptWishlist.rental({
+      id: 9,
+      vehicle_name: 'Coastal Scooter',
+      vehicle_type: 'bike',
+      city: 'Galle',
+      district: 'Galle',
+      location_name: 'Fort',
+      primary_image_url: null,
+      price_per_day: '2500',
+      currency: 'LKR',
+      status: 'available',
+    });
+    expect(mappedRental).toMatchObject({ kind: 'rental', id: 9, title: 'Coastal Scooter', price: 2500, detail: ['/bicycles', 9] });
   });
 
-  it('uses verified pages in order and performs the exact homestay remove request', () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
-      { provide: FavoriteService, useValue: {} }] });
+  it('uses cursor pagination on /homestays/wishlist and removes items via MVP wishlist endpoints', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     const api = TestBed.inject(TravelerWishlistApi);
     const http = TestBed.inject(HttpTestingController);
-    const base = environment.apiBaseUrl + '/wishlists/homestays';
+    const homestayBase = environment.apiBaseUrl + '/homestays';
+    const guideBase = environment.apiBaseUrl + '/tour-guides';
+
     const read = vi.fn();
     api.list('homestay').subscribe(read);
-    const page = (n: number) => http.expectOne(r => r.url === base && r.params.get('page') === String(n));
-    page(1).flush({ items: [], page: 1, page_size: 50, total: 51 });
-    page(2).flush({ items: [], page: 2, page_size: 50, total: 51 });
+    http.expectOne(r => r.url === homestayBase + '/wishlist' && !r.params.has('before_id'))
+      .flush({ items: [], next_before_id: 42 });
+    http.expectOne(r => r.url === homestayBase + '/wishlist' && r.params.get('before_id') === '42')
+      .flush({ items: [], next_before_id: null });
     expect(read).toHaveBeenCalledWith([]);
+
     api.remove(stay).subscribe();
-    http.expectOne({ method: 'DELETE', url: base + '/1' }).flush(null);
+    http.expectOne({ method: 'DELETE', url: homestayBase + '/1/wishlist' }).flush({ listing_id: 1, saved: false });
+
+    api.remove(guide).subscribe();
+    http.expectOne({ method: 'DELETE', url: guideBase + '/7/wishlist' }).flush({ listing_id: 7, saved: false });
     http.verify();
   });
 
@@ -64,7 +142,7 @@ describe('Traveler Wishlist', () => {
         rentalFails = false;
         return throwError(() => new Error('Unavailable'));
       }
-      return of(kind === 'homestay' ? [stay] : kind === 'rental' ? [rental] : []);
+      return of(kind === 'homestay' ? [stay] : kind === 'guide' ? [guide] : kind === 'rental' ? [rental] : []);
     });
     const api = { list, remove: vi.fn(() => remove) };
     TestBed.configureTestingModule({ providers: [
@@ -83,7 +161,8 @@ describe('Traveler Wishlist', () => {
     const find = (label: string) => [...harness.routeNativeElement!.querySelectorAll('button')]
       .find(node => node.textContent?.includes(label))!;
     expect(harness.routeNativeElement!.textContent).toContain(stay.title);
-    find('Retry Bike Rental').click();
+    expect(harness.routeNativeElement!.textContent).toContain(guide.title);
+    find('Retry Bike & Bicycle Rental').click();
     harness.detectChanges();
     expect(harness.routeNativeElement!.textContent).toContain(rental.title);
     expect(api.list.mock.calls.filter(([kind]) => kind === 'rental')).toHaveLength(2);

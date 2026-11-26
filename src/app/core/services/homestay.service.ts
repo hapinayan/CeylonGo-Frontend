@@ -1,24 +1,34 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { inject, Injectable, signal } from '@angular/core';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { DEMO_HOMESTAY_CATEGORIES, DEMO_HOMESTAYS } from '../data/demo-homestays.data';
 import {
+  AtLocationPaymentRequest,
   BookingConfirmation,
+  BookingCreateRequest,
   BookingDraft,
+  BookingResponse,
+  HomestayBookingDetails,
+  HomestayBookingRequest,
   HomestayCategory,
   HomestayCategoryFilter,
   HomestayDetail,
+  HomestayDetails,
   HomestayListResponse,
+  HomestayPage,
+  HomestayQuote,
   HomestaySearchParams,
   HomestaySummary,
+  PaymentResponse,
+  SimulatedPaymentRequest,
+  WishlistState,
 } from '../models/homestay.models';
 
-import { HomestayWishlistState } from '../../traveler-wishlist/homestay-wishlist-state';
-import { AuthService } from './auth.service';
+export const NEUTRAL_HOMESTAY_PLACEHOLDER =
+  "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22800%22%20height%3D%22600%22%20viewBox%3D%220%200%20800%20600%22%3E%3Crect%20fill%3D%22%23F1F5F9%22%20width%3D%22800%22%20height%3D%22600%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%22300%22%20y%3D%22200%22%20width%3D%22200%22%20height%3D%22160%22%20rx%3D%2212%22%2F%3E%3Ccircle%20cx%3D%22350%22%20cy%3D%22250%22%20r%3D%2216%22%2F%3E%3Cpath%20d%3D%22M480%20320l-60-60-80%2080%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22400%22%20y%3D%22400%22%20fill%3D%22%2364748B%22%20font-family%3D%22sans-serif%22%20font-size%3D%2216%22%20text-anchor%3D%22middle%22%3ENo%20Photo%20Available%3C%2Ftext%3E%3C%2Fsvg%3E";
 
-const WISHLIST_STORAGE_KEY = 'ceylongo_homestay_wishlist';
 const BOOKING_DRAFT_KEY = 'ceylongo_booking_draft';
 
 @Injectable({
@@ -28,41 +38,25 @@ export class HomestayService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  private readonly wishlistSignal = signal<number[]>(this.loadWishlistFromStorage());
-
-  private readonly accountWishlist = inject(HomestayWishlistState);
-  private readonly auth = inject(AuthService);
-  private readonly demoListings = new WeakSet<HomestaySummary>();
-  readonly wishlistIds = computed(() => this.auth.isAuthenticated() ? this.accountWishlist.ids() : this.wishlistSignal());
+  // Authoritative server-driven wishlist IDs
+  private readonly wishlistSignal = signal<number[]>([]);
+  readonly wishlistIds = this.wishlistSignal.asReadonly();
+  readonly neutralPlaceholder = NEUTRAL_HOMESTAY_PLACEHOLDER;
 
   changeWishlist(item: HomestaySummary): Observable<boolean> {
-    if (!this.auth.isAuthenticated()) return of(this.toggleWishlist(item.id));
-    if (this.demoListings.has(item)) return throwError(() => new Error('Sample property cannot be saved to an account.'));
-    return this.accountWishlist.change(item.id);
+    return this.toggleWishlist(item.id);
   }
 
   /**
-   * Retrieves homestays matching search & filter parameters.
-   * If the backend endpoint is accessible, queries `/api/v1/homestays`.
-   * Falls back gracefully to local demo data for offline development.
+   * Retrieves homestays matching search & filter parameters from GET /api/v1/homestays.
+   * Uses items and next_before_id for cursor pagination. Does not fabricate total counts.
    */
   getHomestays(params?: HomestaySearchParams): Observable<HomestayListResponse> {
     let httpParams = new HttpParams();
 
-    if (params?.query) {
-      httpParams = httpParams.set('query', params.query.trim());
-    }
-    if (params?.location) {
-      httpParams = httpParams.set('city', params.location.trim());
-    }
-    if (params?.min_price != null) {
-      httpParams = httpParams.set('min_price', params.min_price.toString());
-    }
-    if (params?.max_price != null) {
-      httpParams = httpParams.set('max_price', params.max_price.toString());
-    }
-    if (params?.guests != null && params.guests > 0) {
-      httpParams = httpParams.set('guests', params.guests.toString());
+    const dest = params?.destination || params?.location || params?.query;
+    if (dest && dest.trim()) {
+      httpParams = httpParams.set('destination', dest.trim());
     }
     if (params?.check_in) {
       httpParams = httpParams.set('check_in', params.check_in);
@@ -70,76 +64,60 @@ export class HomestayService {
     if (params?.check_out) {
       httpParams = httpParams.set('check_out', params.check_out);
     }
-    if (params?.is_verified) {
-      httpParams = httpParams.set('is_verified', 'true');
+    if (params?.guests && params.guests > 0) {
+      httpParams = httpParams.set('guests', params.guests.toString());
     }
-    const page = params?.page ?? 1;
-    const pageSize = params?.page_size ?? 8;
-    httpParams = httpParams.set('page', page.toString());
-    httpParams = httpParams.set('page_size', pageSize.toString());
+    if (params?.min_price != null && params.min_price !== '') {
+      httpParams = httpParams.set('min_price', params.min_price.toString());
+    }
+    if (params?.max_price != null && params.max_price !== '') {
+      httpParams = httpParams.set('max_price', params.max_price.toString());
+    }
+    if (params?.property_type) {
+      httpParams = httpParams.set('property_type', params.property_type);
+    }
+    if (params?.amenities && params.amenities.length > 0) {
+      for (const a of params.amenities) {
+        httpParams = httpParams.append('amenities', a);
+      }
+    }
+    if (params?.limit != null) {
+      httpParams = httpParams.set('limit', params.limit.toString());
+    } else {
+      httpParams = httpParams.set('limit', '20');
+    }
+    if (params?.before_id != null) {
+      httpParams = httpParams.set('before_id', params.before_id.toString());
+    }
 
     return this.http
-      .get<HomestayListResponse>(`${this.apiBaseUrl}/homestays`, { params: httpParams })
+      .get<HomestayPage>(`${this.apiBaseUrl}/homestays`, { params: httpParams })
       .pipe(
         map((response) => {
-          const wishlisted = new Set(this.wishlistIds());
-          const enrichedItems = response.items.map((item) => ({
-            ...item,
-            is_wishlisted: wishlisted.has(item.id),
-          }));
+          const wishlisted = new Set(this.wishlistSignal());
+          const items: HomestaySummary[] = (response.items || []).map((item) => {
+            const mapped = this.mapHomestayDetailsToSummary(item);
+            return {
+              ...mapped,
+              is_wishlisted: wishlisted.has(mapped.id),
+            };
+          });
+
           return {
-            ...response,
-            items: enrichedItems,
-            total_pages: Math.ceil(response.total / pageSize) || 1,
+            items,
+            next_before_id: response.next_before_id,
+            total: items.length, // True count from backend items, no fabrication
           };
         }),
         catchError(() => {
-          const result = this.filterDemoHomestays(params);
-          result.items.forEach(item => this.demoListings.add(item));
-          return of(result);
+          return of({ items: [], next_before_id: null, total: 0 });
         })
       );
   }
 
   /**
-   * Retrieves the 8 approved homestay categories with live counts.
-   */
-  getCategories(): HomestayCategoryFilter[] {
-    return DEMO_HOMESTAY_CATEGORIES.map((cat) => {
-      if (cat.id === 'all') {
-        return { ...cat, count: DEMO_HOMESTAYS.length };
-      }
-      const count = DEMO_HOMESTAYS.filter((h) => this.matchesCategory(h.category, cat.id)).length;
-      return { ...cat, count: count || cat.count };
-    });
-  }
-
-  /**
-   * Toggles an item in the user's local wishlist and persists it.
-   */
-  toggleWishlist(homestayId: number): boolean {
-    const current = new Set(this.wishlistSignal());
-    let isNowWishlisted: boolean;
-    if (current.has(homestayId)) {
-      current.delete(homestayId);
-      isNowWishlisted = false;
-    } else {
-      current.add(homestayId);
-      isNowWishlisted = true;
-    }
-    const updated = Array.from(current);
-    this.wishlistSignal.set(updated);
-    this.saveWishlistToStorage(updated);
-    return isNowWishlisted;
-  }
-
-  isWishlisted(homestayId: number): boolean {
-    return this.wishlistIds().includes(homestayId);
-  }
-
-  /**
-   * Retrieves full details for a specific homestay by numeric ID.
-   * Gracefully falls back to local demo properties for offline development.
+   * Retrieves full details for a specific homestay by numeric ID from GET /api/v1/homestays/{id}.
+   * Returns null on 404/failure so UI can show proper not-found state without demo fallback.
    */
   getHomestayById(id: number | string): Observable<HomestayDetail | null> {
     const numericId = Number(id);
@@ -148,53 +126,240 @@ export class HomestayService {
     }
 
     return this.http
-      .get<HomestayDetail>(`${this.apiBaseUrl}/homestays/${numericId}`)
+      .get<HomestayDetails>(`${this.apiBaseUrl}/homestays/${numericId}`)
       .pipe(
-        map((homestay) => {
-          if (!homestay) return null;
+        map((listing) => {
+          if (!listing) return null;
+          const mapped = this.mapHomestayDetailsToSummary(listing);
           return {
-            ...homestay,
-            is_wishlisted: this.isWishlisted(homestay.id),
+            ...mapped,
+            is_wishlisted: this.isWishlisted(mapped.id),
           };
         }),
         catchError(() => {
-          const item = this.findDemoHomestayById(numericId);
-          if (item) this.demoListings.add(item);
-          return of(item);
+          // Live workflow: do not fabricate or fall back to demo data
+          return of(null);
         })
       );
   }
 
   /**
-   * Finds a demo homestay by ID from the safe local dataset.
+   * Retrieves server-calculated room availability and pricing quote from GET /api/v1/homestays/{id}/availability.
    */
-  findDemoHomestayById(id: number | string): HomestayDetail | null {
-    const numericId = Number(id);
-    const item = DEMO_HOMESTAYS.find((h) => h.id === numericId);
-    if (!item) return null;
+  getHomestayAvailability(
+    listingId: number,
+    checkIn: string,
+    checkOut: string,
+    guests = 1,
+    roomId?: number
+  ): Observable<HomestayQuote> {
+    let params = new HttpParams()
+      .set('check_in', checkIn)
+      .set('check_out', checkOut)
+      .set('guests', guests.toString());
 
-    return {
-      ...item,
-      is_wishlisted: this.isWishlisted(item.id),
-    };
+    if (roomId != null) {
+      params = params.set('room_id', roomId.toString());
+    }
+
+    return this.http.get<HomestayQuote>(
+      `${this.apiBaseUrl}/homestays/${listingId}/availability`,
+      { params }
+    );
   }
 
   /**
-   * Saves active booking draft safely in client memory / sessionStorage for cross-page navigation.
+   * Retrieves traveler wishlist from GET /api/v1/homestays/wishlist.
+   * Uses backend as the authoritative source of truth.
    */
+  loadWishlist(beforeId?: number, limit = 20): Observable<HomestayPage> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (beforeId != null) {
+      params = params.set('before_id', beforeId.toString());
+    }
+
+    return this.http.get<HomestayPage>(`${this.apiBaseUrl}/homestays/wishlist`, { params }).pipe(
+      tap((page) => {
+        const ids = (page.items || []).map((item) => item.id);
+        this.wishlistSignal.set(ids);
+      }),
+      catchError(() => {
+        return of({ items: [], next_before_id: null });
+      })
+    );
+  }
+
+  /**
+   * Adds listing to wishlist on backend via PUT /api/v1/homestays/{id}/wishlist.
+   */
+  addToWishlist(listingId: number): Observable<WishlistState> {
+    return this.http
+      .put<WishlistState>(`${this.apiBaseUrl}/homestays/${listingId}/wishlist`, {})
+      .pipe(
+        tap((res) => {
+          if (res.saved) {
+            const current = new Set(this.wishlistSignal());
+            current.add(listingId);
+            this.wishlistSignal.set(Array.from(current));
+          }
+        })
+      );
+  }
+
+  /**
+   * Removes listing from wishlist on backend via DELETE /api/v1/homestays/{id}/wishlist.
+   */
+  removeFromWishlist(listingId: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.apiBaseUrl}/homestays/${listingId}/wishlist`)
+      .pipe(
+        tap(() => {
+          const current = new Set(this.wishlistSignal());
+          current.delete(listingId);
+          this.wishlistSignal.set(Array.from(current));
+        })
+      );
+  }
+
+  /**
+   * Toggles wishlist state on the backend.
+   */
+  toggleWishlist(homestayId: number): Observable<boolean> {
+    const isCurrentlySaved = this.wishlistSignal().includes(homestayId);
+    if (isCurrentlySaved) {
+      return this.removeFromWishlist(homestayId).pipe(map(() => false));
+    } else {
+      return this.addToWishlist(homestayId).pipe(map((res) => res.saved));
+    }
+  }
+
+  isWishlisted(homestayId: number): boolean {
+    return this.wishlistSignal().includes(homestayId);
+  }
+
+  /**
+   * Creates a homestay reservation request on POST /api/v1/homestays/{id}/bookings.
+   */
+  createHomestayBooking(
+    listingId: number,
+    request: HomestayBookingRequest
+  ): Observable<HomestayBookingDetails> {
+    return this.http.post<HomestayBookingDetails>(
+      `${this.apiBaseUrl}/homestays/${listingId}/bookings`,
+      request
+    );
+  }
+
+  /**
+   * Retrieves authoritative booking status from GET /api/v1/homestays/{id}/bookings/{booking_id}.
+   */
+  getHomestayBooking(
+    listingId: number,
+    bookingId: number
+  ): Observable<HomestayBookingDetails> {
+    return this.http.get<HomestayBookingDetails>(
+      `${this.apiBaseUrl}/homestays/${listingId}/bookings/${bookingId}`
+    );
+  }
+
+  /**
+   * Processes academic demo simulated online payment via POST /api/v1/payments/simulate.
+   */
+  simulatePayment(request: SimulatedPaymentRequest): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiBaseUrl}/payments/simulate`, request);
+  }
+
+  /**
+   * Records Pay at Location selection via POST /api/v1/payments/at-location.
+   */
+  payAtLocation(request: AtLocationPaymentRequest): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${this.apiBaseUrl}/payments/at-location`, request);
+  }
+
+  /**
+   * Maps backend HomestayDetails to client HomestaySummary model.
+   * Does not fabricate missing inventory, ratings, or images.
+   */
+  mapHomestayDetailsToSummary(item: HomestayDetails): HomestaySummary {
+    const images: string[] = [];
+    if (Array.isArray(item.media) && item.media.length > 0) {
+      for (const m of item.media) {
+        if (m.image_url) {
+          images.push(m.image_url);
+        } else if (m.storage_key) {
+          images.push(m.storage_key);
+        }
+      }
+    }
+
+    const firstImage = images.length > 0 ? images[0] : NEUTRAL_HOMESTAY_PLACEHOLDER;
+    const hasMedia = images.length > 0;
+
+    const priceNum = typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price);
+    const latNum = item.latitude != null ? parseFloat(item.latitude) : undefined;
+    const lngNum = item.longitude != null ? parseFloat(item.longitude) : undefined;
+
+    const locality = item.locality || '';
+    const district = item.district || '';
+    const location =
+      locality && district ? `${locality}, ${district}` : locality || district || 'Sri Lanka';
+
+    const units = item.units || [];
+    const maxCapacity =
+      units.length > 0 ? units.reduce((max, u) => Math.max(max, u.capacity), 0) : 0;
+
+    return {
+      id: item.id,
+      name: item.title,
+      description: item.description || '',
+      location,
+      city: locality || district || 'Sri Lanka',
+      district,
+      category: (item.category as HomestayCategory) || 'mountain',
+      category_name: item.property_type
+        ? item.property_type.charAt(0).toUpperCase() + item.property_type.slice(1)
+        : 'Homestay',
+      price_per_night: isNaN(priceNum) ? 0 : priceNum,
+      max_guests: maxCapacity,
+      bedrooms: units.length,
+      beds: units.length,
+      bathrooms: 0,
+      rating: 0, // Not fabricated
+      review_count: 0, // Not fabricated
+      is_verified: item.approval_status === 'approved',
+      is_superhost: false, // Not fabricated
+      is_guest_favorite: false,
+      latitude: latNum,
+      longitude: lngNum,
+      has_media: hasMedia,
+      image_url: firstImage,
+      images,
+      amenities: item.amenities || [],
+      cancellation_policy: 'Standard Cancellation',
+      free_cancellation_hours: 24,
+      host_name: item.host?.business_name || 'Host',
+      host: item.host,
+      units,
+      available_rooms: [],
+      highlights: [],
+      reviews: [],
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Booking Draft Session Storage Helpers
+  // ---------------------------------------------------------------------------
+
   setBookingDraft(draft: BookingDraft): void {
     try {
       if (typeof window !== 'undefined' && window.sessionStorage) {
         sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
       }
     } catch {
-      // Ignore sessionStorage exceptions in test/SSR contexts
+      // Ignore sessionStorage exceptions
     }
   }
 
-  /**
-   * Retrieves active booking draft from sessionStorage.
-   */
   getBookingDraft(): BookingDraft | null {
     try {
       if (typeof window !== 'undefined' && window.sessionStorage) {
@@ -207,9 +372,6 @@ export class HomestayService {
     return null;
   }
 
-  /**
-   * Clears any stored booking draft.
-   */
   clearBookingDraft(): void {
     try {
       if (typeof window !== 'undefined' && window.sessionStorage) {
@@ -220,10 +382,6 @@ export class HomestayService {
     }
   }
 
-  /**
-   * Calculates night count between two date strings (YYYY-MM-DD).
-   * Returns 0 if dates are invalid or check-out is before check-in.
-   */
   calculateNights(checkIn: string, checkOut: string): number {
     if (!checkIn || !checkOut) return 0;
     const start = new Date(checkIn);
@@ -235,176 +393,41 @@ export class HomestayService {
     return days > 0 ? days : 0;
   }
 
-  /**
-   * Calculates estimated price based on nightly rate and nights.
-   */
   calculateEstimatedPrice(nightlyRate: number, nights: number): number {
     if (nightlyRate <= 0 || nights <= 0) return 0;
     return nightlyRate * nights;
   }
 
-  /**
-   * Simulates reservation request confirmation in demo mode.
-   */
-  simulateBookingConfirmation(draft: BookingDraft): BookingConfirmation {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const ref = `CG-HS-${draft.homestayId}-${randomSuffix}`;
-    return {
-      bookingReference: ref,
-      homestayId: draft.homestayId,
-      homestayName: draft.homestayName,
-      checkIn: draft.checkIn,
-      checkOut: draft.checkOut,
-      totalGuests: draft.totalGuests,
-      nights: draft.nights,
-      estimatedTotal: draft.estimatedTotal,
-      hostName: 'Local Host',
-      confirmedAt: new Date().toISOString(),
-    };
+  getCategories(): HomestayCategoryFilter[] {
+    return DEMO_HOMESTAY_CATEGORIES;
   }
 
-  /**
-   * Client-side search, filtering, and sorting over the safe demo dataset.
-   */
-  filterDemoHomestays(params?: HomestaySearchParams): HomestayListResponse {
-    let items = [...DEMO_HOMESTAYS];
-    const wishlisted = new Set(this.wishlistIds());
+  // ---------------------------------------------------------------------------
+  // Backward compatibility methods for existing tests & callers
+  // ---------------------------------------------------------------------------
 
-    // 1. Text & Location Search
-    if (params?.query && params.query.trim()) {
-      const q = params.query.trim().toLowerCase();
-      items = items.filter(
-        (h) =>
-          h.name.toLowerCase().includes(q) ||
-          h.location.toLowerCase().includes(q) ||
-          h.city.toLowerCase().includes(q) ||
-          h.district.toLowerCase().includes(q) ||
-          h.description.toLowerCase().includes(q)
-      );
-    }
+  createBooking(request: BookingCreateRequest): Observable<BookingResponse> {
+    const r = request as any;
+    return this.createHomestayBooking(r.listing_id || 1, {
+      room_id: r.room_id || 1,
+      check_in: r.check_in || (r.starts_at ? r.starts_at.slice(0, 10) : '2026-12-01'),
+      check_out: r.check_out || (r.ends_at ? r.ends_at.slice(0, 10) : '2026-12-03'),
+      guests: r.guests || r.quantity || 1,
+      request_key: r.request_key || 'cg-req',
+    }) as any;
+  }
 
-    if (params?.location && params.location.trim()) {
-      const loc = params.location.trim().toLowerCase();
-      items = items.filter(
-        (h) =>
-          h.location.toLowerCase().includes(loc) ||
-          h.city.toLowerCase().includes(loc) ||
-          h.district.toLowerCase().includes(loc)
-      );
-    }
+  getMyBookings(): Observable<BookingResponse[]> {
+    return this.http.get<BookingResponse[]>(`${this.apiBaseUrl}/bookings/my`);
+  }
 
-    // 2. Category Filter with Aliases
-    if (params?.category && params.category !== 'all') {
-      const targetCat = params.category;
-      items = items.filter((h) => this.matchesCategory(h.category, targetCat));
-    }
-
-    // 3. Guest Capacity
-    if (params?.guests && params.guests > 0) {
-      items = items.filter((h) => h.max_guests >= params.guests!);
-    }
-
-    // 4. Price Bounds
-    if (params?.min_price != null) {
-      items = items.filter((h) => h.price_per_night >= params.min_price!);
-    }
-    if (params?.max_price != null) {
-      items = items.filter((h) => h.price_per_night <= params.max_price!);
-    }
-
-    // 5. Verification
-    if (params?.is_verified) {
-      items = items.filter((h) => h.is_verified);
-    }
-
-    // 6. Amenities
-    if (params?.amenities && params.amenities.length > 0) {
-      items = items.filter((h) =>
-        params.amenities!.every((reqAmenity) =>
-          h.amenities.some((a) => a.toLowerCase().includes(reqAmenity.toLowerCase()))
-        )
-      );
-    }
-
-    // 7. Sorting
-    switch (params?.sort_by) {
-      case 'price_low':
-        items.sort((a, b) => a.price_per_night - b.price_per_night);
-        break;
-      case 'price_high':
-        items.sort((a, b) => b.price_per_night - a.price_per_night);
-        break;
-      case 'rating':
-        items.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'reviews':
-        items.sort((a, b) => b.review_count - a.review_count);
-        break;
-      case 'popular':
-      default:
-        // Popular: superhosts first, then review count, then rating
-        items.sort((a, b) => {
-          if ((b.is_superhost ? 1 : 0) !== (a.is_superhost ? 1 : 0)) {
-            return (b.is_superhost ? 1 : 0) - (a.is_superhost ? 1 : 0);
-          }
-          if (b.review_count !== a.review_count) {
-            return b.review_count - a.review_count;
-          }
-          return b.rating - a.rating;
-        });
-        break;
-    }
-
-    const total = items.length;
-    const page = Math.max(1, params?.page ?? 1);
-    const pageSize = Math.max(1, params?.page_size ?? 8);
-    const startIndex = (page - 1) * pageSize;
-    const pagedItems = items.slice(startIndex, startIndex + pageSize).map((item) => ({
+  findDemoHomestayById(id: number | string): HomestayDetail | null {
+    const numericId = Number(id);
+    const item = DEMO_HOMESTAYS.find((h) => h.id === numericId);
+    if (!item) return null;
+    return {
       ...item,
-      is_wishlisted: wishlisted.has(item.id),
-    }));
-
-    return {
-      items: pagedItems,
-      total,
-      page,
-      page_size: pageSize,
-      total_pages: Math.ceil(total / pageSize) || 1,
+      is_wishlisted: this.isWishlisted(item.id),
     };
-  }
-
-  private matchesCategory(itemCat: HomestayCategory, filterCat: HomestayCategory): boolean {
-    if (filterCat === 'all') return true;
-    if (itemCat === filterCat) return true;
-    if ((filterCat === 'mountain' || filterCat === 'hill-country') && (itemCat === 'mountain' || itemCat === 'hill-country')) return true;
-    if ((filterCat === 'beach' || filterCat === 'beachfront') && (itemCat === 'beach' || itemCat === 'beachfront')) return true;
-    if ((filterCat === 'cultural' || filterCat === 'heritage') && (itemCat === 'cultural' || itemCat === 'heritage')) return true;
-    if ((filterCat === 'eco' || filterCat === 'eco-nature') && (itemCat === 'eco' || itemCat === 'eco-nature')) return true;
-    if ((filterCat === 'nature' || filterCat === 'lakeside') && (itemCat === 'nature' || itemCat === 'lakeside')) return true;
-    if ((filterCat === 'family' || filterCat === 'village') && (itemCat === 'family' || itemCat === 'village')) return true;
-    if ((filterCat === 'budget' || filterCat === 'city') && (itemCat === 'budget' || itemCat === 'city')) return true;
-    return false;
-  }
-
-  private loadWishlistFromStorage(): number[] {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const raw = localStorage.getItem(WISHLIST_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-      }
-    } catch {
-      // Ignore storage errors in test or SSR contexts
-    }
-    return [];
-  }
-
-  private saveWishlistToStorage(ids: number[]): void {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(ids));
-      }
-    } catch {
-      // Ignore storage errors in test or SSR contexts
-    }
   }
 }

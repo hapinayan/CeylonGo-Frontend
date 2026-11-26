@@ -1,102 +1,96 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Reservation } from '../experiences/models/travel';
-import { TravelApi } from '../experiences/services/travel-api';
-import { BookingContact, BookingRefund, BookingService, TravelerBooking } from './booking-model';
+import { BookingContact, BookingRefund, BookingService, TravelerBooking, serviceLabels } from './booking-model';
 
-interface Base {
+export interface SharedPaymentResponse {
   id: number;
-  total_price: string | number;
+  booking_id: number;
+  request_key: string;
+  attempt_no: number;
+  method: string;
+  status: string;
+  display_amount: string;
   currency: string;
-  payment_status?: string | null;
-  payment_method?: string;
-  cancellation_reason?: string | null;
-  cancelled_at?: string | null;
-  cancellation_policy_snapshot?: string | null;
-  free_cancellation_hours_snapshot?: number;
-}
-interface Homestay extends Base {
-  homestay_id: number; homestay_name?: string | null; status: string;
-  check_in: string; check_out: string; guests: number; nightly_rate_snapshot?: string | null;
-}
-interface Activity extends Base { activity_slot_id: number; booking_status: string; participants: number }
-interface Guide extends Base {
-  tour_guide_id: number; booking_reference?: string | null; booking_status: string;
-  guide_display_name: string; guide_base_city: string; package_title?: string | null;
-  pickup_location?: string | null; start_datetime: string; end_datetime: string; number_of_people: number;
-  refund_eligibility?: { eligible_refund_amount: string | number; currency: string; policy_note: string } | null;
-}
-interface Rental extends Base {
-  booking_reference?: string | null; status: string; vehicle_id: number; vehicle_name?: string;
-  pickup_at: string; return_at: string; pickup_location_name?: string | null; cover_image_url?: string | null;
-  daily_rate_snapshot?: string | null; security_deposit?: string | null; deposit_status?: string | null;
-}
-interface Artisan extends Base {
-  reservation_status: string; showcase_item_id: number; item_title?: string | null;
-  listing_title?: string | null; item_image_url?: string | null; pickup_date?: string | null; quantity: number;
-  provider_business_name?: string | null;
+  created_at: string;
+  resolved_at?: string | null;
 }
 
-const base = (row: Base) => ({
-  id: row.id, amount: row.total_price, currency: row.currency,
-  paymentStatus: row.payment_status, paymentMethod: row.payment_method,
-  cancellation: {
-    policy: row.cancellation_policy_snapshot, cutoffHours: row.free_cancellation_hours_snapshot,
-    reason: row.cancellation_reason, at: row.cancelled_at,
-  },
-});
+export interface SharedBookingResponse {
+  id: number;
+  listing_id: number;
+  traveler_id?: number;
+  request_key?: string;
+  starts_at: string;
+  ends_at: string;
+  quantity: number;
+  total_amount: string | number;
+  currency: string;
+  status: string;
+  created_at?: string;
+  booking_reference?: string | null;
+  slot_id?: number | null;
+  package_id?: number | null;
+  rental_unit_ids?: number[] | null;
+  payments?: SharedPaymentResponse[];
+}
+
 const people = (n: number) => n + (n === 1 ? ' traveler' : ' travelers');
-const moneyFact = (label: string, currency: string, value: string | null | undefined) =>
-  value == null ? [] : [{ label, value: currency + ' ' + value }];
+const latestPaymentOf = (payments?: SharedPaymentResponse[]) => {
+  if (!payments?.length) return null;
+  return [...payments].sort((a, b) => (b.attempt_no - a.attempt_no) || (b.id - a.id))[0];
+};
+
+const adaptShared = (service: BookingService, row: SharedBookingResponse): TravelerBooking => {
+  const latestPayment = latestPaymentOf(row.payments);
+  const datesLabel = service === 'homestay' ? 'Check-in and check-out'
+    : service === 'rental' ? 'Pickup and return'
+    : service === 'guide' ? 'Guide schedule'
+    : service === 'artisan' ? 'Reservation schedule'
+    : 'Activity schedule';
+  const quantityLabel = service === 'homestay' ? 'Guests'
+    : service === 'rental' ? 'Vehicles'
+    : service === 'artisan' ? 'Reserved items'
+    : 'Participants';
+  const quantity = service === 'rental'
+    ? row.quantity + (row.quantity === 1 ? ' vehicle' : ' vehicles')
+    : service === 'artisan'
+      ? row.quantity + (row.quantity === 1 ? ' item' : ' items')
+      : people(row.quantity);
+  const facts: { label: string; value: string | number }[] = [
+    { label: 'Listing', value: '#' + row.listing_id },
+  ];
+  if (row.slot_id != null) facts.push({ label: 'Reserved slot', value: '#' + row.slot_id });
+  if (row.package_id != null) facts.push({ label: 'Package', value: '#' + row.package_id });
+  if (row.rental_unit_ids?.length) facts.push({ label: 'Assigned units', value: row.rental_unit_ids.map(id => '#' + id).join(', ') });
+
+  return {
+    service,
+    id: row.id,
+    reference: row.booking_reference,
+    title: serviceLabels[service] + ' #' + row.listing_id,
+    status: row.status,
+    start: row.starts_at,
+    end: row.ends_at,
+    quantity,
+    datesLabel,
+    quantityLabel,
+    amount: row.total_amount,
+    currency: row.currency,
+    paymentStatus: latestPayment?.status ?? 'unpaid',
+    paymentMethod: latestPayment?.method ?? null,
+    facts,
+  };
+};
 
 export const adapt = {
-  homestay: (r: Homestay): TravelerBooking => ({
-    ...base(r), service: 'homestay', title: r.homestay_name || 'Homestay #' + r.homestay_id,
-    status: r.status, start: r.check_in, end: r.check_out, quantity: people(r.guests),
-    datesLabel: 'Check-in and check-out', quantityLabel: 'Guests', contactId: r.homestay_id,
-    facts: moneyFact('Booked nightly rate', r.currency, r.nightly_rate_snapshot),
-  }),
-  activity: (r: Activity): TravelerBooking => ({
-    ...base(r), service: 'activity', title: 'Activity slot #' + r.activity_slot_id,
-    status: r.booking_status, quantity: people(r.participants), quantityLabel: 'Participants',
-  }),
-  eco: (r: Reservation): TravelerBooking => ({
-    service: 'eco', id: r.id, reference: r.reference, title: 'Eco experience #' + r.experience_id,
-    status: r.status, start: r.starts_at, end: r.ends_at, quantity: people(r.participants),
-    datesLabel: 'Experience schedule', quantityLabel: 'Participants',
-    amount: r.total, currency: r.currency, paymentStatus: r.payment_status, paymentMethod: r.payment_method,
-    facts: [{ label: 'Reserved slot', value: '#' + r.slot_id }],
-  }),
-  guide: (r: Guide): TravelerBooking => ({
-    ...base(r), service: 'guide', reference: r.booking_reference, title: r.package_title || r.guide_display_name,
-    location: r.pickup_location || r.guide_base_city, start: r.start_datetime, end: r.end_datetime,
-    status: r.booking_status, quantity: people(r.number_of_people), datesLabel: 'Guide schedule',
-    quantityLabel: 'Party size', contactId: r.tour_guide_id,
-    facts: r.guide_display_name ? [{ label: 'Guide', value: r.guide_display_name }] : [],
-    refundEstimate: r.refund_eligibility ? {
-      amount: r.refund_eligibility.eligible_refund_amount, currency: r.refund_eligibility.currency,
-      note: r.refund_eligibility.policy_note,
-    } : undefined,
-  }),
-  rental: (r: Rental): TravelerBooking => ({
-    ...base(r), service: 'rental', reference: r.booking_reference, title: r.vehicle_name || 'Rental vehicle #' + r.vehicle_id,
-    location: r.pickup_location_name, image: r.cover_image_url, start: r.pickup_at, end: r.return_at,
-    status: r.status, quantity: '1 vehicle', datesLabel: 'Pickup and return', quantityLabel: 'Vehicles',
-    facts: [
-      ...moneyFact('Booked daily rate', r.currency, r.daily_rate_snapshot),
-      ...moneyFact('Recorded security deposit', r.currency, r.security_deposit),
-      ...(r.deposit_status ? [{ label: 'Deposit status', value: r.deposit_status.replaceAll('_', ' ') }] : []),
-    ],
-  }),
-  artisan: (r: Artisan): TravelerBooking => ({
-    ...base(r), service: 'artisan', title: r.item_title || r.listing_title || 'Showcase item #' + r.showcase_item_id,
-    image: r.item_image_url, start: r.pickup_date, status: r.reservation_status,
-    quantity: r.quantity + (r.quantity === 1 ? ' item' : ' items'),
-    datesLabel: 'Pickup date', quantityLabel: 'Reserved items',
-    facts: r.provider_business_name ? [{ label: 'Artisan', value: r.provider_business_name }] : [],
-  }),
+  shared: adaptShared,
+  homestay: (r: SharedBookingResponse): TravelerBooking => adaptShared('homestay', r),
+  activity: (r: SharedBookingResponse): TravelerBooking => adaptShared('activity', r),
+  guide: (r: SharedBookingResponse): TravelerBooking => adaptShared('guide', r),
+  rental: (r: SharedBookingResponse): TravelerBooking => adaptShared('rental', r),
+  artisan: (r: SharedBookingResponse): TravelerBooking => adaptShared('artisan', r),
 };
 
 export interface ServiceBookings { rows: TravelerBooking[]; limited: boolean }
@@ -105,61 +99,57 @@ export const bookingPageSize = 20;
 @Injectable({ providedIn: 'root' })
 export class TravelerBookingsApi {
   private readonly http = inject(HttpClient);
-  private readonly eco = inject(TravelApi);
   private readonly url = environment.apiBaseUrl;
 
   list(service: BookingService): Observable<ServiceBookings> {
-    const complete = (rows: TravelerBooking[]) => ({ rows, limited: false });
-    const page = { page: 1, page_size: bookingPageSize };
-    switch (service) {
-      case 'homestay': return this.get<Homestay[]>('/bookings/me').pipe(map(rows => complete(rows.map(adapt.homestay))));
-      case 'activity': return this.get<Activity[]>('/activity-bookings/me').pipe(map(rows => complete(rows.map(adapt.activity))));
-      case 'artisan': return this.get<Artisan[]>('/artisan-reservations/me').pipe(map(rows => complete(rows.map(adapt.artisan))));
-      case 'eco': return this.eco.bookings(1, bookingPageSize).pipe(map(rows => ({ rows: rows.map(adapt.eco), limited: rows.length === bookingPageSize })));
-      case 'guide': return this.get<{ items: Guide[]; total_pages: number }>('/tour-guide-bookings/me', page).pipe(map(result => ({ rows: result.items.map(adapt.guide), limited: result.total_pages > 1 })));
-      case 'rental': return this.get<{ items: Rental[]; pages: number }>('/rental-bookings/me', { page: 1, limit: bookingPageSize }).pipe(map(result => ({ rows: result.items.map(adapt.rental), limited: result.pages > 1 })));
+    if (service === 'rental') {
+      return forkJoin([
+        this.myBookings('bike').pipe(catchError(() => of([] as SharedBookingResponse[]))),
+        this.myBookings('bicycle').pipe(catchError(() => of([] as SharedBookingResponse[]))),
+      ]).pipe(map(([bikes, bicycles]) => {
+        const merged = new Map<number, SharedBookingResponse>();
+        for (const row of [...bikes, ...bicycles]) {
+          if (!merged.has(row.id)) merged.set(row.id, row);
+        }
+        const sorted = [...merged.values()].sort((a, b) => b.id - a.id);
+        return {
+          rows: sorted.map(row => adapt.rental(row)),
+          limited: bikes.length >= bookingPageSize || bicycles.length >= bookingPageSize,
+        };
+      }));
     }
+
+    const category = service === 'activity' || service === 'eco' ? 'adventure' : service;
+    return this.myBookings(category).pipe(
+      map(rows => ({
+        rows: rows.map(row => adapt.shared(service, row)),
+        limited: rows.length >= bookingPageSize,
+      })),
+    );
   }
 
   detail(service: BookingService, id: number): Observable<TravelerBooking | undefined> {
-    switch (service) {
-      case 'homestay': return this.get<Homestay>('/bookings/' + id).pipe(map(adapt.homestay));
-      case 'activity': return this.list('activity').pipe(map(result => result.rows.find(row => row.id === id)));
-      case 'eco': return this.eco.booking(id).pipe(map(adapt.eco));
-      case 'guide': return this.get<Guide>('/tour-guide-bookings/' + id).pipe(map(adapt.guide));
-      case 'rental': return this.get<Rental>('/rental-bookings/' + id).pipe(map(adapt.rental));
-      case 'artisan': return this.get<Artisan>('/artisan-reservations/' + id).pipe(map(adapt.artisan));
-    }
+    return this.get<SharedBookingResponse>('/bookings/' + id).pipe(
+      map(row => adapt.shared(service, row)),
+    );
   }
 
-  refundHistory(row: TravelerBooking): Observable<BookingRefund[]> | undefined {
-    if (row.service === 'eco') return this.get<BookingRefund[]>('/eco-reservations/' + row.id + '/payments/refunds');
-    if (row.service === 'guide') {
-      return this.get<{ booking_id: number; refunds: BookingRefund[] }>('/tour-guide-bookings/' + row.id + '/payment/status')
-        .pipe(map(result => {
-          if (result.booking_id !== row.id) throw new Error('Unexpected booking reference');
-          return result.refunds;
-        }));
-    }
+  refundHistory(_row: TravelerBooking): Observable<BookingRefund[]> | undefined {
     return undefined;
   }
 
-  contact(row: TravelerBooking): Observable<BookingContact | null> | undefined {
-    const id = row.contactId;
-    if (!id || !Number.isSafeInteger(id) || id < 1) return undefined;
-    if (row.service === 'homestay') {
-      return this.get<{ homestay_id: number; business_name: string; phone: string }>('/homestays/' + id + '/contact')
-        .pipe(map(data => data.homestay_id === id && data.phone ? { name: data.business_name, phone: data.phone } : null));
-    }
-    if (row.service === 'guide') {
-      return this.get<{ tour_guide_id: number; is_authenticated_view: boolean; business_name: string; phone: string }>('/tour-guides/' + id + '/contact')
-        .pipe(map(data => data.tour_guide_id === id && data.is_authenticated_view && data.phone
-          ? { name: data.business_name, phone: data.phone } : null));
-    }
+  contact(_row: TravelerBooking): Observable<BookingContact | null> | undefined {
     return undefined;
   }
 
-  private get<T>(path: string, params?: Record<string, number>): Observable<T> {
+  private myBookings(category: string): Observable<SharedBookingResponse[]> {
+    return this.get<SharedBookingResponse[]>('/bookings/my', {
+      category,
+      limit: bookingPageSize,
+    });
+  }
+
+  private get<T>(path: string, params?: Record<string, string | number>): Observable<T> {
     return this.http.get<T>(this.url + path, { params });
   }
 }

@@ -2,7 +2,7 @@
   <div class="header-container">
 
     <!-- BRAND LOGO -->
-    <a routerLink="/tour-guides" class="brand-link" aria-label="CeylonGo Home">
+    <a routerLink="/" class="brand-link" aria-label="CeylonGo Home">
       <div class="brand-logo-text">
         <span class="brand-ceylon">Ceylon</span><span class="brand-go">Go</span>
       </div>
@@ -12,7 +12,7 @@
     <nav class="traveler-nav" aria-label="Main Navigation">
       <ul class="nav-list">
         <li class="nav-item">
-          <a routerLink="/stays" routerLinkActive="active" class="nav-link">
+          <a routerLink="/homestays" routerLinkActive="active" class="nav-link">
             <span>Stays</span>
           </a>
         </li>
@@ -32,7 +32,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a routerLink="/bike-rentals" routerLinkActive="active" class="nav-link">
+          <a routerLink="/bicycles" routerLinkActive="active" class="nav-link">
             <span>Bike Rentals</span>
           </a>
         </li>
@@ -206,10 +206,10 @@
   @if (isMobileMenuOpen()) {
     <div class="mobile-drawer" (click)="closeMenus()">
       <nav class="mobile-nav" (click)="$event.stopPropagation()">
-        <a routerLink="/stays" (click)="closeMenus()" class="mobile-link">Stays</a>
+        <a routerLink="/homestays" (click)="closeMenus()" class="mobile-link">Stays</a>
         <a routerLink="/experiences" (click)="closeMenus()" class="mobile-link">Experiences</a>
         <a routerLink="/tour-guides" (click)="closeMenus()" class="mobile-link active">Tour Guides</a>
-        <a routerLink="/bike-rentals" (click)="closeMenus()" class="mobile-link">Bike Rentals</a>
+        <a routerLink="/bicycles" (click)="closeMenus()" class="mobile-link">Bike Rentals</a>
         <a routerLink="/community" (click)="closeMenus()" class="mobile-link">Community</a>
         <a routerLink="/ai-trip-planner" (click)="closeMenus()" class="mobile-link">AI Trip Planner</a>
       </nav>

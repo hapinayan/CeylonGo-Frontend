@@ -1,10 +1,10 @@
 export const serviceLabels = {
-  homestay: 'Homestay', activity: 'Activity', eco: 'Eco-Tourism',
+  homestay: 'Homestay', activity: 'Adventure', eco: 'Eco-Tourism',
   guide: 'Tour Guide', rental: 'Bike Rental', artisan: 'Artisan',
 } as const;
 
 export type BookingService = keyof typeof serviceLabels;
-export const bookingServices = Object.keys(serviceLabels) as BookingService[];
+export const bookingServices: BookingService[] = ['homestay', 'activity', 'guide', 'rental', 'artisan'];
 export const isBookingService = (value: string): value is BookingService => Object.hasOwn(serviceLabels, value);
 
 export interface TravelerBooking {

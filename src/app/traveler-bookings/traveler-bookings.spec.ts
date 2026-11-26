@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../core/services/auth.service';
 import { User } from '../core/models/auth.models';
-import { adapt } from './booking-api';
+import { adapt, SharedBookingResponse } from './booking-api';
 import { bookingGroup, bookingKey, matchesBooking, uniqueBookings } from './booking-model';
 import { canSimulateCancellation } from './booking-preview.development';
 import { travelerBookingRoutes } from './booking.routes';
@@ -20,88 +20,122 @@ const user = (id: number, role = 'traveler'): User => ({
   id, role, full_name: 'Test Traveler ' + id, email: 'synthetic@example.test', is_active: true, created_at: '',
 });
 const base = environment.apiBaseUrl;
-const homestay = {
-  id: 4, homestay_id: 15, homestay_name: 'Ella Guest House', total_price: '9000.50', currency: 'LKR',
-  status: 'confirmed', payment_status: 'unpaid', check_in: '2095-11-26', check_out: '2095-11-28', guests: 2,
+const homestayRow: SharedBookingResponse = {
+  id: 4,
+  listing_id: 15,
+  booking_reference: 'HS-4',
+  starts_at: '2095-11-26T14:00:00Z',
+  ends_at: '2095-11-28T11:00:00Z',
+  quantity: 2,
+  total_amount: '9000.50',
+  currency: 'LKR',
+  status: 'confirmed',
 };
-const rental = {
-  id: 4, vehicle_id: 12, booking_reference: 'RB-4', vehicle_name: 'Coastal Scooter', total_price: '2300', currency: 'LKR',
-  status: 'completed', payment_status: 'paid', pickup_at: '2020-11-25T09:00:00Z', return_at: '2020-11-26T09:00:00Z',
-  pickup_location_name: 'Galle',
+const rentalRow: SharedBookingResponse = {
+  id: 4,
+  listing_id: 12,
+  booking_reference: 'RB-4',
+  starts_at: '2020-11-25T09:00:00Z',
+  ends_at: '2020-11-26T09:00:00Z',
+  quantity: 1,
+  total_amount: '2300.00',
+  currency: 'LKR',
+  status: 'completed',
+  rental_unit_ids: [31],
+  payments: [
+    {
+      id: 9,
+      booking_id: 4,
+      request_key: 'req-4',
+      attempt_no: 1,
+      method: 'simulated',
+      status: 'demo_succeeded',
+      display_amount: '2300.00',
+      currency: 'LKR',
+      created_at: '2020-11-25T08:50:00Z',
+    },
+  ],
 };
-const endpoints = ['/bookings/me', '/activity-bookings/me', '/eco-reservations/me', '/tour-guide-bookings/me',
-  '/rental-bookings/me', '/artisan-reservations/me'];
+
+const sharedCategories = ['homestay', 'adventure', 'guide', 'bike', 'bicycle', 'artisan'];
 
 describe('Traveler Bookings', () => {
   const identity = signal<User | null>(null);
   let http: HttpTestingController;
   let harness: RouterTestingHarness;
-  const expectList = (path: string) => http.expectOne(request => request.url === base + path);
+  const expectShared = (category: string) =>
+    http.expectOne(r => r.url === base + '/bookings/my' && r.params.get('category') === category);
   const body = () => harness.routeNativeElement?.textContent ?? '';
 
   beforeEach(async () => {
     identity.set(null);
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(), provideHttpClientTesting(),
-      provideRouter([{ path: '', component: HomeStub }, { path: 'auth', component: HomeStub }, { path: 'provider/dashboard', component: HomeStub },
-        { path: 'my-bookings', children: travelerBookingRoutes }]),
+      provideRouter([
+        { path: '', component: HomeStub },
+        { path: 'auth', component: HomeStub },
+        { path: 'provider/dashboard', component: HomeStub },
+        { path: 'my-bookings', children: travelerBookingRoutes },
+      ]),
       { provide: AuthService, useValue: { currentUser: identity, isAuthenticated: () => !!identity() } },
     ] });
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
   });
 
-  it('adapts distinct IDs and preserves separate backend payment and lifecycle states', () => {
-    const stay = adapt.homestay(homestay), bike = adapt.rental(rental);
+  it('adapts distinct IDs and derives grouping and payment state from shared BookingResponse contracts', () => {
+    const stay = adapt.homestay(homestayRow);
+    const bike = adapt.rental(rentalRow);
     expect(bookingKey(stay)).toBe('homestay/4');
     expect(bookingKey(bike)).toBe('rental/4');
     expect([stay.status, stay.paymentStatus]).toEqual(['confirmed', 'unpaid']);
+    expect([bike.status, bike.paymentStatus, bike.paymentMethod]).toEqual(['completed', 'demo_succeeded', 'simulated']);
     expect(bookingGroup(stay, Date.parse('2100-01-01'))).toBe('all');
     expect(bookingGroup(stay, Date.parse('2095-01-01'))).toBe('upcoming');
     expect(bookingGroup(bike)).toBe('completed');
-    expect(matchesBooking(bike, 'RB-4 Galle bike')).toBe(true);
+    expect(matchesBooking(bike, 'RB-4 bike')).toBe(true);
   });
 
-  it('combines status and search, keeps loaded results when a service fails, and retries only that service', async () => {
+  it('uses shared GET /bookings/my categories, keeps loaded results on partial failure, and retries only that service', async () => {
     identity.set(user(1));
-    await harness.navigateByUrl('/my-bookings?status=completed&q=galle');
+    await harness.navigateByUrl('/my-bookings?status=completed&q=RB-4');
     expect(body()).toContain('Loading bookings');
-    expectList('/bookings/me').flush([homestay]);
-    expectList('/activity-bookings/me').flush([]);
-    expectList('/eco-reservations/me').flush([]);
-    expectList('/tour-guide-bookings/me').flush(null, {status: 503, statusText: 'Unavailable'});
-    expectList('/rental-bookings/me').flush({ items: [rental], pages: 2 });
-    expectList('/artisan-reservations/me').flush([]);
+    expectShared('homestay').flush([homestayRow]);
+    expectShared('adventure').flush([]);
+    expectShared('guide').flush(null, { status: 503, statusText: 'Unavailable' });
+    expectShared('bike').flush([rentalRow]);
+    expectShared('bicycle').flush([]);
+    expectShared('artisan').flush([]);
     harness.detectChanges();
-    expect(body()).toContain('Coastal Scooter');
-    expect(body()).not.toContain('Ella Guest House');
+    expect(body()).toContain('RB-4');
+    expect(body()).not.toContain('HS-4');
     expect(body()).toContain('Tour Guide bookings');
-    expect(body()).toContain('only loaded bookings');
-    expect([...harness.routeNativeElement!.querySelectorAll('.filters span')].map(node => node.textContent)).toEqual(['2','1','1','0']);
+    expect([...harness.routeNativeElement!.querySelectorAll('.filters span')].map(node => node.textContent)).toEqual(['2', '1', '1', '0']);
+
     harness.routeNativeElement!.querySelector<HTMLButtonElement>('.service-notices button')!.click();
-    expectList('/tour-guide-bookings/me').flush({ items: [], total_pages: 0 });
+    expectShared('guide').flush([]);
     harness.detectChanges();
-    expect(body()).toContain('Coastal Scooter');
+    expect(body()).toContain('RB-4');
     expect(body()).not.toContain('couldn’t load');
     http.verify();
   });
 
-  it('uses service-scoped detail navigation and keeps the dashboard query on the back link', async () => {
+  it('loads shared GET /bookings/{booking_id} detail with payment state and preserves dashboard query on the back link', async () => {
     identity.set(user(1));
-    await harness.navigateByUrl('/my-bookings?status=completed&q=galle');
-    for (const path of endpoints) {
-      expectList(path).flush(path.includes('rental') ? { items: [rental], pages: 1 } :
-        path.includes('tour-guide') ? { items: [], total_pages: 0 } : []);
+    await harness.navigateByUrl('/my-bookings?status=completed&q=RB-4');
+    for (const cat of sharedCategories) {
+      expectShared(cat).flush(cat === 'bike' ? [rentalRow] : []);
     }
     harness.detectChanges();
     const href = harness.routeNativeElement!.querySelector('.booking-actions a')!.getAttribute('href')!;
-    expect(href).toBe('/my-bookings/rental/4?status=completed&q=galle');
+    expect(href).toBe('/my-bookings/rental/4?status=completed&q=RB-4');
     await harness.navigateByUrl(href);
-    http.expectOne(base + '/rental-bookings/4').flush(rental);
+    http.expectOne(base + '/bookings/4').flush(rentalRow);
     harness.detectChanges();
     expect(body()).toContain('Booking Details');
-    expect(body()).toContain('Payment status');
-    expect(harness.routeNativeElement!.querySelector('.back')!.getAttribute('href')).toBe('/my-bookings?status=completed&q=galle');
+    expect(body()).toContain('demo succeeded');
+    expect(body()).toContain('simulated');
+    expect(harness.routeNativeElement!.querySelector('.back')!.getAttribute('href')).toBe('/my-bookings?status=completed&q=RB-4');
     http.verify();
   });
 
@@ -118,18 +152,18 @@ describe('Traveler Bookings', () => {
   it('clears previous data immediately and cancels in-flight history when the traveler changes', async () => {
     identity.set(user(1));
     await harness.navigateByUrl('/my-bookings');
-    expectList('/bookings/me').flush([homestay]);
-    const pending = endpoints.slice(1).map(expectList);
+    expectShared('homestay').flush([homestayRow]);
+    const pending = sharedCategories.slice(1).map(expectShared);
     harness.detectChanges();
-    expect(body()).toContain('Ella Guest House');
+    expect(body()).toContain('HS-4');
 
     identity.set(user(2));
     harness.detectChanges();
-    expect(body()).not.toContain('Ella Guest House');
+    expect(body()).not.toContain('HS-4');
     await harness.fixture.whenStable();
     expect(pending.every(request => request.cancelled)).toBe(true);
-    for (const path of endpoints) {
-      expectList(path).flush(path.includes('rental') ? {items: [], pages: 0} : path.includes('tour-guide') ? {items: [], total_pages: 0} : []);
+    for (const cat of sharedCategories) {
+      expectShared(cat).flush([]);
     }
     harness.detectChanges();
     expect(body()).toContain('No bookings are available');
@@ -137,87 +171,25 @@ describe('Traveler Bookings', () => {
   });
 
   it('deduplicates overlapping history rows by service and original ID', () => {
-    const first = adapt.homestay(homestay);
-    const bike = adapt.rental(rental);
+    const first = adapt.homestay(homestayRow);
+    const bike = adapt.rental(rentalRow);
     expect(uniqueBookings([first, { ...first, status: 'expired' }, bike])).toEqual([first, bike]);
   });
 
-  it('loads owner-scoped refund history with a GET and retries without replacing payment status', async () => {
-    identity.set(user(1));
-    await harness.navigateByUrl('/my-bookings/eco/4');
-    http.expectOne({ method: 'GET', url: base + '/eco-reservations/4' }).flush({
-      id: 4, reference: 'ECO-4', experience_id: 81, slot_id: 19, participants: 2,
-      starts_at: '2095-11-26T09:00:00Z', ends_at: '2095-11-26T11:00:00Z', status: 'cancelled',
-      payment_status: 'refund_pending', payment_method: 'online', total: '3000.00', currency: 'LKR',
-    });
-    harness.detectChanges();
-    expect(body()).toContain('Reserved slot');
-    const clickRefunds = () => [...harness.routeNativeElement!.querySelectorAll<HTMLButtonElement>('button')]
-      .find(button => button.textContent!.includes('refund history'))!.click();
-    clickRefunds();
-    http.expectOne({ method: 'GET', url: base + '/eco-reservations/4/payments/refunds' })
-      .flush(null, { status: 503, statusText: 'Unavailable' });
-    harness.detectChanges();
-    expect(body()).toContain('Refund history is unavailable');
-    expect(body()).toContain('refund pending');
-    clickRefunds();
-    http.expectOne({ method: 'GET', url: base + '/eco-reservations/4/payments/refunds' })
-      .flush([{ id: 8, amount: '2500', currency: 'LKR', refund_status: 'processing' }]);
-    harness.detectChanges();
-    expect(body()).toContain('LKR 2,500.00');
-    expect(body()).toContain('processing');
-    expect(body()).toContain('refund pending');
-    http.verify();
-  });
-
-  it('reads contact only after a successful owned detail and drops in-flight data on session change', async () => {
-    identity.set(user(1));
-    await harness.navigateByUrl('/my-bookings/homestay/4');
-    const detail = http.expectOne({ method: 'GET', url: base + '/bookings/4' });
-    http.expectNone(base + '/homestays/15/contact');
-    detail.flush({ ...homestay, nightly_rate_snapshot: '2000.50', free_cancellation_hours_snapshot: 0 });
-    harness.detectChanges();
-    expect(body()).toContain('Booked nightly rate');
-    expect(body()).toContain('0 hours');
-    const contact = [...harness.routeNativeElement!.querySelectorAll<HTMLButtonElement>('button')]
-      .find(button => button.textContent!.includes('View provider contact'))!;
-    contact.click();
-    const pending = http.expectOne({ method: 'GET', url: base + '/homestays/15/contact' });
-    identity.set(user(2));
-    harness.detectChanges();
-    expect(body()).not.toContain(homestay.homestay_name);
-    await harness.fixture.whenStable();
-    expect(pending.cancelled).toBe(true);
-    http.expectOne(base + '/bookings/4').flush(null, { status: 403, statusText: 'Forbidden' });
-    harness.detectChanges();
-    expect(body()).toContain('Your account cannot access this booking');
-    http.expectNone(base + '/homestays/15/contact');
-    http.verify();
-  });
-
-  it('distinguishes unauthorized details from forbidden details and sends no follow-up reads', async () => {
+  it('distinguishes unauthorized details from forbidden details via GET /bookings/{id}', async () => {
     identity.set(user(1));
     await harness.navigateByUrl('/my-bookings/guide/4');
-    http.expectOne(base + '/tour-guide-bookings/4').flush(null, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(base + '/bookings/4').flush(null, { status: 401, statusText: 'Unauthorized' });
     harness.detectChanges();
     expect(body()).toContain('Sign in again to view this booking');
     http.verify();
   });
 
   it('permits the demonstration only for selected future unpaid states', () => {
-    const row = adapt.homestay(homestay);
+    const row = adapt.homestay(homestayRow);
     expect(canSimulateCancellation(row)).toBe(true);
     expect(canSimulateCancellation({ ...row, paymentStatus: 'paid' })).toBe(false);
     expect(canSimulateCancellation({ ...row, status: 'completed' })).toBe(false);
     expect(canSimulateCancellation({ ...row, start: '2000-01-01' })).toBe(false);
-  });
-
-  it('uses only the traveler-owned list to resolve activity detail and does not guess an endpoint', async () => {
-    identity.set(user(1));
-    await harness.navigateByUrl('/my-bookings/activity/4');
-    expectList('/activity-bookings/me').flush([]);
-    harness.detectChanges();
-    expect(body()).toContain('This booking was not found');
-    http.verify();
   });
 });

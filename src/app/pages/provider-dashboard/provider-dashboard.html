@@ -1,42 +1,337 @@
-<div class="dashboard-container">
-  <div class="dashboard-card">
-    <div class="header">
-      <div class="badge">Provider Portal</div>
-      <button (click)="onLogout()" class="btn-logout" type="button">Sign Out</button>
-    </div>
-
-    <div class="welcome-section">
+<div class="dashboard-shell">
+  <!-- Top Welcome & Status Banner -->
+  <div class="welcome-header">
+    <div class="welcome-text">
+      <div class="header-pre">
+        <span class="badge">Provider Portal</span>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>Account: {{ user()?.approval_status || 'Approved' | titlecase }}</span>
+        </div>
+        @if (isPreview()) {
+          <span class="preview-pill">Preview Mode · Sample Data</span>
+        }
+      </div>
       <h1 class="title">Provider Dashboard</h1>
       <p class="subtitle">
-        Welcome, <strong>{{ user()?.business_name || user()?.full_name || 'Service Provider' }}</strong>!
+        Welcome back, <strong>{{ user()?.business_name || user()?.full_name || 'Service Provider' }}</strong>
       </p>
-      <div class="status-pill">
-        <span class="status-dot"></span>
-        <span>Account Status: {{ user()?.approval_status || 'Approved' | titlecase }}</span>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        <span>Add New Service</span>
+      </a>
+      <button (click)="onLogout()" class="btn-logout" type="button">
+        {{ isPreview() ? 'Exit Preview' : 'Sign Out' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Verification Alert (if any listings require action or are in review) -->
+  @if (pendingListings().length > 0) {
+    <div class="alert-banner">
+      <div class="alert-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div class="alert-content">
+        <h4 class="alert-title">Listing Verification in Progress</h4>
+        <p class="alert-text">
+          You have {{ pendingListings().length }} service listing(s) awaiting verification or requiring additional documentation.
+        </p>
+      </div>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="alert-action-btn">View Listings</a>
+    </div>
+  }
+
+  <!-- Real Statistics Metric Cards -->
+  <div class="stats-grid">
+    <!-- Total Listings -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Total Listings</span>
+        <div class="stat-icon-wrap blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <path d="m3.3 7 8.7 5 8.7-5" />
+            <path d="M12 22V12" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats().total_listings }}</span>
+        <span class="stat-sub">Registered services</span>
       </div>
     </div>
 
-    <div class="info-grid">
-      <div class="info-item">
-        <span class="info-label">Business Name</span>
-        <span class="info-value">{{ user()?.business_name || '—' }}</span>
+    <!-- Published Listings -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Published & Active</span>
+        <div class="stat-icon-wrap green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
       </div>
-      <div class="info-item">
-        <span class="info-label">Provider Type</span>
-        <span class="info-value">{{ user()?.provider_type || '—' | titlecase }}</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">District</span>
-        <span class="info-value">{{ user()?.district || '—' }}</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Registered Email</span>
-        <span class="info-value">{{ user()?.email || '—' }}</span>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats().published_listings }}</span>
+        <span class="stat-sub">Live on CeylonGo</span>
       </div>
     </div>
 
-    <div class="placeholder-notice">
-      <p>Your business account is active and verified. Comprehensive dashboard modules (Listings, Bookings, Analytics, and Workspace) are coming next.</p>
+    <!-- Pending Approvals -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Pending Approval</span>
+        <div class="stat-icon-wrap amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats().pending_approvals }}</span>
+        <span class="stat-sub">In verification</span>
+      </div>
+    </div>
+
+    <!-- Total Bookings -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <span class="stat-label">Total Bookings</span>
+        <div class="stat-icon-wrap navy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats().total_bookings }}</span>
+        <span class="stat-sub">Confirmed reservations</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Grid -->
+  <div class="section-block">
+    <div class="section-header">
+      <h3 class="section-title">Quick Actions</h3>
+      <span class="section-desc">Manage and expand your hospitality services</span>
+    </div>
+
+    <div class="actions-grid">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Add New Service</h4>
+          <p class="action-desc">List a homestay, tour guide service, or bike rental.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon navy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <path d="m3.3 7 8.7 5 8.7-5" />
+            <path d="M12 22V12" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Manage Listings</h4>
+          <p class="action-desc">Edit details, upload photos, or view admin feedback.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/rooms" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+            <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Rooms & Availability</h4>
+          <p class="action-desc">Configure inventory units, nightly rates, and block dates.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/bookings" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Guest Reservations</h4>
+          <p class="action-desc">Review incoming bookings and confirm traveler stays.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/rentals/new" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5.5" cy="16.5" r="3.5" />
+            <circle cx="18.5" cy="16.5" r="3.5" />
+            <path d="M5.5 16.5h5.5l4-6.5H8.5z" />
+            <path d="M18.5 16.5L14.5 7h3" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Add Rental Vehicle</h4>
+          <p class="action-desc">List a scooter, motorbike, or bicycle fleet for rent.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+
+      <a routerLink="/provider/rentals/availability" [queryParams]="previewQueryParams()" class="action-card">
+        <div class="action-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <path d="M3 10h18M9 16l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="action-text">
+          <h4 class="action-title">Fleet &amp; Availability</h4>
+          <p class="action-desc">Manage vehicle units, block rental dates, and adjust daily LKR rates.</p>
+        </div>
+        <span class="action-arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Bike & Bicycle Rental Fleet Summary -->
+  <div class="section-block">
+    <div class="section-header">
+      <h3 class="section-title">Bike &amp; Bicycle Rental Fleet</h3>
+      <span class="section-desc">
+        {{ rentalStats().totalListings }} listing(s) · {{ rentalStats().publishedVehicles }} published vehicle(s) ·
+        {{ rentalStats().pendingVerification }} pending verification · {{ rentalStats().upcomingBookings }} upcoming booking(s)
+      </span>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Recent Bookings & Business Profile Overview -->
+  <div class="bottom-grid">
+    <!-- Recent Bookings Table / Empty State -->
+    <div class="content-card bookings-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Recent Bookings</h3>
+          <span class="card-subtitle">{{ isPreview() ? 'Sample reservation data (Preview Mode)' : 'Real reservation data from backend' }}</span>
+        </div>
+        <a routerLink="/provider/bookings" [queryParams]="previewQueryParams()" class="card-link">View All</a>
+      </div>
+
+      <div class="card-body">
+        @if (recentBookings().length > 0) {
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Service</th>
+                  <th>Traveler</th>
+                  <th>Dates</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of recentBookings(); track b.id) {
+                  <tr>
+                    <td class="font-mono">#{{ b.id }}</td>
+                    <td class="font-semibold">{{ b.listing_title }}</td>
+                    <td>{{ b.traveler_name }}</td>
+                    <td class="text-sm text-slate">{{ b.check_in }} - {{ b.check_out }}</td>
+                    <td class="font-semibold">LKR {{ b.total_price | number }}</td>
+                    <td>
+                      <span class="status-badge" [class]="b.status">
+                        {{ b.status | titlecase }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <h4 class="empty-title">No bookings received yet</h4>
+            <p class="empty-desc">
+              When travelers book your published homestays or experiences, their reservations will appear here.
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Provider Account Profile Details -->
+    <div class="content-card profile-summary-card">
+      <div class="card-header">
+        <h3 class="card-title">Provider Profile</h3>
+        <a routerLink="/provider/profile" [queryParams]="previewQueryParams()" class="card-link">Edit</a>
+      </div>
+
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Business Name</span>
+            <span class="info-value">{{ user()?.business_name || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Provider Type</span>
+            <span class="info-value">{{ user()?.provider_type || '—' | titlecase }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">District</span>
+            <span class="info-value">{{ user()?.district || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Registered Email</span>
+            <span class="info-value">{{ user()?.email || '—' }}</span>
+          </div>
+        </div>
+
+        <div class="host-tip-box">
+          <div class="tip-icon">💡</div>
+          <p class="tip-text">
+            <strong>Host Tip:</strong> Complete your verification documents and add at least 3 high-resolution photos of your homestay rooms to speed up admin approval.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </div>

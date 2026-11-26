@@ -5,10 +5,10 @@ const year = new Date().getFullYear();
 const date = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 const examples: [BookingService, string, string, string, number, string, number, number][] = [
   ['homestay', 'Hill Country Homestay', 'Ella', '/images/traveler-home/find-homestays.webp', 18500, 'confirmed', 7, 10],
-  ['activity', 'Kelani River Rafting', 'Kitulgala', '/images/experiences/kitulgala-rafting.webp', 12000, 'confirmed', 14, 14],
-  ['eco', 'Bentota Mangrove Safari', 'Bentota', '/images/experiences/bentota-mangroves.webp', 8500, 'completed', -7, -7],
-  ['guide', 'Kandy Heritage Walk', 'Kandy', '/images/experiences/kandyan-performance.webp', 9000, 'pending', 21, 21],
-  ['rental', 'Coastal Scooter Rental', 'Colombo', '/assets/rental-preview/blue-scooter.webp', 3000, 'cancelled', 3, 5],
+  ['activity', 'Trincomalee Reef Snorkeling', 'Trincomalee', '/images/experiences/trincomalee-snorkeling.webp', 12000, 'confirmed', 14, 14],
+  ['activity', 'Yala Wildlife Safari', 'Yala', '/images/experiences/wildlife-safari.webp', 8500, 'completed', -7, -7],
+  ['guide', 'Kandy Cultural Heritage Walk', 'Kandy', '/images/experiences/cultural-village.webp', 9000, 'pending', 21, 21],
+  ['rental', 'Ella Bicycle Rental', 'Ella', '/images/traveler-home/rent-bicycle.webp', 3000, 'cancelled', 3, 5],
   ['artisan', 'Sri Lankan Artisan Showcase', 'Colombo', '/images/artisan/ruhunu_pottery.jpg', 7500, 'completed', -14, -14],
 ];
 

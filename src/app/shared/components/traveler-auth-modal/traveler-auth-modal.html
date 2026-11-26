@@ -55,6 +55,28 @@
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </button>
+      } @else if (authModalService.currentStep() === 'verify-email') {
+        <button
+          type="button"
+          class="modal-back-btn"
+          (click)="goToStep('register')"
+          aria-label="Back to registration"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
       } @else if (authModalService.currentStep() === 'forgot-password' || authModalService.currentStep() === 'reset-password') {
         <button
           type="button"
@@ -308,7 +330,7 @@
             <button
               type="button"
               class="forgot-link-btn"
-              (click)="goToStep('forgot-password')"
+              (click)="onForgotPasswordClick()"
             >
               Forgot password?
             </button>
@@ -543,6 +565,232 @@
             Log in
           </button>
         </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- EMAIL OTP VERIFICATION STEP                    -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'verify-email') {
+        <!-- BLUE EMAIL VERIFICATION ICON IN LIGHT-BLUE CIRCULAR BADGE -->
+        <div class="recovery-icon-badge badge-blue" aria-hidden="true">
+          <svg
+            width="38"
+            height="38"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+          </svg>
+        </div>
+
+        <div class="modal-header">
+          <h2 id="auth-modal-heading" class="modal-title">Verify your email</h2>
+          <p id="auth-modal-subtitle" class="modal-subtitle">
+            We've sent a 6-digit verification code to
+          </p>
+          <div class="otp-email-box">
+            <span class="otp-email-text">{{ authModalService.userEmail() }}</span>
+            <button
+              type="button"
+              class="change-email-btn"
+              (click)="onChangeEmail()"
+            >
+              Change
+            </button>
+          </div>
+        </div>
+
+        <!-- ERROR MESSAGE -->
+        @if (errorMessage()) {
+          <div class="modal-alert-error" role="alert">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- SUCCESS MESSAGE (e.g. Code resent) -->
+        @if (successMessage()) {
+          <div class="modal-alert-info" role="status">
+            <svg class="alert-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <!-- 6-DIGIT OTP INPUTS -->
+        <div class="otp-inputs-row" role="group" aria-label="6-digit verification code">
+          <input
+            #otp0
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            autocomplete="one-time-code"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[0]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 0)"
+            (keydown)="onOtpKeyDown($event, 0)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 1"
+          />
+          <input
+            #otp1
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[1]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 1)"
+            (keydown)="onOtpKeyDown($event, 1)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 2"
+          />
+          <input
+            #otp2
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[2]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 2)"
+            (keydown)="onOtpKeyDown($event, 2)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 3"
+          />
+          <input
+            #otp3
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[3]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 3)"
+            (keydown)="onOtpKeyDown($event, 3)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 4"
+          />
+          <input
+            #otp4
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[4]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 4)"
+            (keydown)="onOtpKeyDown($event, 4)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 5"
+          />
+          <input
+            #otp5
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-digit-input"
+            [class.is-filled]="otpDigits()[5]"
+            [disabled]="isLoading()"
+            (input)="onOtpInput($event, 5)"
+            (keydown)="onOtpKeyDown($event, 5)"
+            (paste)="onOtpPaste($event)"
+            aria-label="Digit 6"
+          />
+        </div>
+
+        <!-- PRIMARY BLUE BUTTON (#2563EB) -->
+        <button
+          type="button"
+          class="btn-primary-continue"
+          [disabled]="isLoading() || !isOtpComplete"
+          (click)="onVerifyOtpSubmit()"
+        >
+          @if (isLoading()) {
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span>Verifying...</span>
+          } @else {
+            <span>Verify Email &rarr;</span>
+          }
+        </button>
+
+        <!-- RESEND CODE WITH 60-SECOND COUNTDOWN -->
+        <div class="otp-resend-row">
+          <span>Didn't receive the code?</span>
+          @if (resendOtpCooldown() > 0) {
+            <span class="cooldown-text">Resend in {{ resendOtpCooldown() }}s</span>
+          } @else {
+            <button
+              type="button"
+              class="resend-active-btn"
+              [disabled]="isLoading()"
+              (click)="onResendOtp()"
+            >
+              Resend Code
+            </button>
+          }
+        </div>
+
+        @if (showRestartRegistration()) {
+          <div class="restart-registration-row">
+            <button
+              type="button"
+              class="btn-restart-registration"
+              (click)="restartRegistration()"
+            >
+              Restart Registration &rarr;
+            </button>
+          </div>
+        }
+      }
+
+      <!-- ============================================== -->
+      <!-- REGISTRATION SUCCESSFUL STEP                   -->
+      <!-- ============================================== -->
+      @if (authModalService.currentStep() === 'register-success') {
+        <div class="recovery-icon-badge badge-green" aria-hidden="true">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+
+        <div class="modal-header text-center">
+          <h2 id="auth-modal-heading" class="modal-title">Email verified successfully!</h2>
+          <p class="modal-success-description">
+            Your CeylonGo account is now active. Please sign in with your password to start exploring Sri Lanka.
+          </p>
+        </div>
+
+        @if (authModalService.userEmail()) {
+          <div class="otp-email-box">
+            <span class="otp-email-text">{{ authModalService.userEmail() }}</span>
+          </div>
+        }
+
+        <button
+          type="button"
+          class="btn-primary-continue mt-4"
+          (click)="onContinueToLoginAfterVerification()"
+        >
+          <span>Continue to Log In &rarr;</span>
+        </button>
       }
 
       <!-- ============================================== -->

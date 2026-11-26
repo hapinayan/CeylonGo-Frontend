@@ -1,0 +1,67 @@
+<div class="interactive-map-root" role="region" aria-label="Interactive Map of Sri Lanka Homestays">
+  <!-- LEAFLET MAP ELEMENT CONTAINER -->
+  <div #mapElement class="leaflet-map-canvas" id="homestay-leaflet-map"></div>
+
+  <!-- EMPTY COORDINATES STATUS OVERLAY -->
+  @if (validCoordinatesCount() === 0) {
+    <div class="map-status-pill empty-coords-notice" role="status">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>No map coordinates available for current listings</span>
+    </div>
+  }
+
+  <!-- TILE LOAD WARNING (Graceful offline/timeout state) -->
+  @if (tileLoadFailed()) {
+    <div class="map-status-pill tile-warning" role="alert">
+      <span>OpenStreetMap tiles loading slowly</span>
+    </div>
+  }
+
+  <!-- MAP NAVIGATION CONTROLS (Top Right) -->
+  <div class="map-controls" role="toolbar" aria-label="Map Navigation Controls" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      class="control-btn"
+      (click)="zoomIn($event)"
+      aria-label="Zoom In"
+      title="Zoom In"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    <div class="control-divider"></div>
+    <button
+      type="button"
+      class="control-btn"
+      (click)="zoomOut($event)"
+      aria-label="Zoom Out"
+      title="Zoom Out"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    <div class="control-divider"></div>
+    <button
+      type="button"
+      class="control-btn"
+      (click)="recenter($event)"
+      aria-label="Recenter Map"
+      title="Recenter Map on Listings"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="7"></circle>
+        <line x1="12" y1="1" x2="12" y2="4"></line>
+        <line x1="12" y1="20" x2="12" y2="23"></line>
+        <line x1="1" y1="12" x2="4" y2="12"></line>
+        <line x1="20" y1="12" x2="23" y2="12"></line>
+      </svg>
+    </button>
+  </div>
+</div>

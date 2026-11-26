@@ -1,0 +1,197 @@
+<div class="verification-container">
+  <!-- Privacy & Security Disclaimer Banner -->
+  <div class="privacy-notice">
+    <div class="shield-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <polyline points="9 12 11 14 15 10" />
+      </svg>
+    </div>
+    <div class="notice-content">
+      <h4 class="notice-title">Host Privacy & Verification Security</h4>
+      <p class="notice-text">
+        All verification evidence (identity documents, business registration, tax certificates, and review records) are strictly restricted to CeylonGo compliance officers for credential verification.
+        <strong>These private documents are never displayed to travelers on public listings.</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Section 1: Online Presence & Public Review Links -->
+  <div class="verification-section">
+    <div class="section-title-wrap">
+      <h3 class="section-heading">1. Online Presence & Guest Reputation</h3>
+      <p class="section-subheading">
+        Provide external links where your {{ category }} is reviewed (e.g. Google Maps, Airbnb, Booking.com, Instagram, TripAdvisor).
+      </p>
+    </div>
+
+    <!-- Existing Links List -->
+    <div class="links-list">
+      @for (link of links(); track $index) {
+        <div class="link-row">
+          <span class="link-platform-tag">{{ link.kind | titlecase }}</span>
+          <input
+            type="url"
+            class="input-field link-url-input"
+            [(ngModel)]="link.url"
+            (ngModelChange)="onNotesChange(notes())"
+            placeholder="https://..."
+          />
+          <button type="button" class="btn-remove-link" (click)="removeLink($index)" title="Remove link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Add New Link Row -->
+    <div class="add-link-box">
+      <select class="input-field select-platform" [(ngModel)]="newLinkKind">
+        @for (opt of linkKindOptions; track opt.kind) {
+          <option [value]="opt.kind">{{ opt.label }}</option>
+        }
+      </select>
+      <input
+        type="url"
+        class="input-field input-new-url"
+        [(ngModel)]="newLinkUrl"
+        placeholder="Enter listing URL (e.g. https://maps.app.goo.gl/...)"
+      />
+      <button type="button" class="btn-add-link" (click)="addLink()" [disabled]="!newLinkUrl.trim() || isPreview()">
+        Add Link
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 2: Official Documents & Certificates -->
+  <div class="verification-section">
+    <div class="section-title-wrap">
+      <h3 class="section-heading">2. Official Documents & Verification Proof</h3>
+      <p class="section-subheading">
+        Upload supporting documents (PDF up to 10MB, Images up to 5MB, MP4 Walkthroughs up to 25MB).
+      </p>
+    </div>
+
+    @if (uploadError()) {
+      <div class="error-alert">
+        {{ uploadError() }}
+      </div>
+    }
+
+    <!-- Upload Form -->
+    <div class="doc-upload-box">
+      <div class="upload-controls">
+        <div class="field-group">
+          <label class="field-label">Evidence Category</label>
+          <select
+            class="input-field"
+            [ngModel]="selectedFileKind"
+            (ngModelChange)="onFileKindChange($event)"
+          >
+            @for (f of fileKindOptions; track f.kind) {
+              <option [value]="f.kind">{{ f.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="isRedacted" />
+            <span>
+              {{
+                selectedFileKind === 'customer_feedback'
+                  ? 'I confirm all customer personal information (names, phones, emails) has been redacted before upload'
+                  : 'Mark as Redacted (Private Personal Data Protected)'
+              }}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="dropzone-area">
+        <input
+          type="file"
+          id="docFileInput"
+          class="file-input-hidden"
+          (change)="onFileUpload($event)"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4"
+          [disabled]="isUploading || requiresRedactionConfirmation || isPreview()"
+        />
+        <label for="docFileInput" class="dropzone-label">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <span class="drop-prompt">
+            @if (requiresRedactionConfirmation) {
+              <strong>Confirm redaction above</strong> before uploading customer feedback screenshots
+            } @else {
+              <strong>Click to upload</strong> or drag evidence document here
+            }
+          </span>
+          <span class="drop-help">PDF (10MB), Images (5MB), MP4 (25MB)</span>
+        </label>
+      </div>
+
+      <!-- Uploaded Documents List -->
+      @if (uploadedFiles().length > 0) {
+        <div class="uploaded-docs-list">
+          <h5 class="list-heading">Attached Verification Files ({{ uploadedFiles().length }})</h5>
+          @for (doc of uploadedFiles(); track $index) {
+            <div class="doc-item-row">
+              <div class="doc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+              </div>
+              <div class="doc-info">
+                <span class="doc-name">{{ doc.filename || doc.id }}</span>
+                <span class="doc-badge">{{ doc.kind | titlecase }}</span>
+                @if (doc.redacted) {
+                  <span class="doc-redacted-badge">🔒 Redacted</span>
+                }
+              </div>
+              <button
+                type="button"
+                class="btn-remove-doc"
+                (click)="removeFile($index)"
+                [disabled]="isPreview()"
+                title="Remove file"
+              >
+                ✕
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Section 3: Notes for Admin Reviewers -->
+  <div class="verification-section">
+    <div class="section-title-wrap">
+      <h3 class="section-heading">3. Additional Remarks for Reviewers (Optional)</h3>
+      <p class="section-subheading">
+        Share context about your property operation history and certifications (max 2500 characters).
+      </p>
+    </div>
+
+    <textarea
+      class="input-field notes-textarea"
+      rows="3"
+      maxlength="2500"
+      [ngModel]="notes()"
+      (ngModelChange)="onNotesChange($event)"
+      placeholder="e.g. Operating as a licensed family guesthouse in Ella since 2019 with over 200+ 5-star reviews on external platforms."
+    ></textarea>
+  </div>
+</div>

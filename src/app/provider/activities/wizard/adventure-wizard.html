@@ -1,0 +1,763 @@
+<div class="wizard-container">
+  <!-- Header -->
+  <header class="wizard-header">
+    <div class="header-left">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+        <span>Back to Categories</span>
+      </a>
+      <h1 class="wizard-title">Adventure &amp; Activities Setup</h1>
+      <div class="draft-meta">
+        @if (isPreview()) {
+          <span class="draft-pill">Preview Mode · Sample #{{ listingId() }}</span>
+        } @else if (listingId()) {
+          <span class="draft-pill">Server Draft #{{ listingId() }}</span>
+        }
+        <span class="status-pill status-{{ verificationStatus() }}">
+          {{ verificationStatus() === 'more_evidence_required' ? 'More Evidence Required' : (verificationStatus() | titlecase) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (!isSubmitted() && !isLoading()) {
+        <button
+          type="button"
+          class="btn-save-draft"
+          (click)="saveDraftProgress()"
+          [disabled]="isSaving() || isSuspended() || isPreview()"
+        >
+          {{ isPreview() ? 'Preview Only' : (isSaving() ? 'Saving...' : 'Save Progress') }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (saveToast()) {
+    <div class="toast-banner">{{ saveToast() }}</div>
+  }
+
+  @if (decisionReason()) {
+    <div class="decision-banner">
+      <strong>Admin Feedback:</strong> {{ decisionReason() }}
+    </div>
+  }
+
+  @if (isSuspended()) {
+    <div class="error-banner">
+      This listing is currently suspended and cannot be edited or submitted. Contact support if you need assistance.
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-card">
+      <p>Initializing server-side activity draft...</p>
+    </div>
+  } @else if (isSubmitted()) {
+    <!-- Success Screen -->
+    <div class="success-screen">
+      <div class="success-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-linecap="round" stroke-linejoin="round" />
+          <polyline points="22 4 12 14.01 9 11.01" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 class="success-title">Activity Submitted for Verification</h2>
+      <p class="success-subtitle">
+        Your activity <strong>{{ title }}</strong> has been submitted for admin review. Once approved, you can publish it live from Manage Listings.
+      </p>
+
+      <div class="status-receipt-box">
+        <div class="receipt-row">
+          <span>Reference ID</span>
+          <strong>#{{ listingId() }}</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Category</span>
+          <strong>{{ categoryLabel }}</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Verification Status</span>
+          <strong class="text-warning">Pending Review</strong>
+        </div>
+        <div class="receipt-row">
+          <span>Publication Status</span>
+          <strong>Unpublished (Draft / Pending)</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="btn-primary">Go to Manage Listings</a>
+        <a
+          routerLink="/provider/activities/availability"
+          [queryParams]="isPreview() ? { listingId: listingId(), preview: 'true' } : { listingId: listingId() }"
+          class="btn-outline"
+        >
+          Manage Availability Slots
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Stepper -->
+    <div class="wizard-stepper" role="tablist" aria-label="Activity Creation Steps">
+      @for (s of steps; track s.num) {
+        <button
+          type="button"
+          class="step-item"
+          [class.active]="currentStep() === s.num"
+          [class.completed]="currentStep() > s.num"
+          (click)="goToStep(s.num)"
+        >
+          <span class="step-num">
+            @if (currentStep() > s.num) { ✓ } @else { {{ s.num }} }
+          </span>
+          <span class="step-label">{{ s.label }}</span>
+        </button>
+        @if (s.num < 6) {
+          <div class="stepper-line" [class.filled]="currentStep() > s.num"></div>
+        }
+      }
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span>{{ errorMessage() }}</span>
+        @if (!listingId()) {
+          <button type="button" class="btn-retry" (click)="retryDraftInitialization()">Retry</button>
+        }
+      </div>
+    }
+
+    <!-- Step Content -->
+    <div class="step-card">
+      <!-- STEP 1: Basic Information -->
+      @if (currentStep() === 1) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 1 — Basic Information</h2>
+          <p class="step-desc">
+            Introduce your adventure or experience with clear highlights and duration.
+          </p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="actTitle" class="form-label">Activity Name <span class="required">*</span></label>
+            <input
+              id="actTitle"
+              type="text"
+              class="form-input"
+              [(ngModel)]="title"
+              placeholder="e.g., Knuckles Cloud Forest Sunrise Trek"
+              maxlength="120"
+            />
+            <span class="char-count">{{ title.length }} / 120</span>
+          </div>
+
+          <div class="form-group">
+            <label for="actCategory" class="form-label">Activity Category <span class="required">*</span></label>
+            <select id="actCategory" class="form-input" [(ngModel)]="activityCategory">
+              @for (cat of categories; track cat.slug) {
+                <option [value]="cat.slug">{{ cat.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="actDuration" class="form-label">Duration (minutes) <span class="required">*</span></label>
+            <input
+              id="actDuration"
+              type="number"
+              class="form-input"
+              [(ngModel)]="durationMinutes"
+              min="1"
+              max="10080"
+            />
+            <span class="helper-text">Formatted: {{ formattedDuration }}</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actShortDesc" class="form-label">Short Description <span class="required">*</span></label>
+            <textarea
+              id="actShortDesc"
+              rows="2"
+              class="form-input"
+              [(ngModel)]="shortDescription"
+              placeholder="A concise summary shown at the top of your activity listing..."
+              maxlength="300"
+            ></textarea>
+            <span class="char-count">{{ shortDescription.length }} / 300</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actDetailDesc" class="form-label">Detailed Description</label>
+            <textarea
+              id="actDetailDesc"
+              rows="5"
+              class="form-input"
+              [(ngModel)]="detailedDescription"
+              placeholder="Describe the itinerary, scenery, pace, and what travelers will experience..."
+              maxlength="2500"
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 2: Location & Meeting Point -->
+      @if (currentStep() === 2) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 2 — Location &amp; Meeting Point</h2>
+          <p class="step-desc">
+            Specify the destination and exact meeting location on the map.
+          </p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="actProvince" class="form-label">Province <span class="required">*</span></label>
+            <select
+              id="actProvince"
+              class="form-input"
+              [(ngModel)]="province"
+              (ngModelChange)="onProvinceChange()"
+            >
+              @for (p of provinces; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="actDistrict" class="form-label">District <span class="required">*</span></label>
+            <select id="actDistrict" class="form-input" [(ngModel)]="district">
+              @for (d of availableDistricts; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="actLocality" class="form-label">Activity Location / Town <span class="required">*</span></label>
+            <input
+              id="actLocality"
+              type="text"
+              class="form-input"
+              [(ngModel)]="locality"
+              placeholder="e.g., Bambarella / Ella"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="actAddress" class="form-label">Street / Trailhead Address</label>
+            <input
+              id="actAddress"
+              type="text"
+              class="form-input"
+              [(ngModel)]="address"
+              placeholder="e.g., Knuckles Conservation Entrance Road"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actMeetingPoint" class="form-label">Meeting Point <span class="required">*</span></label>
+            <input
+              id="actMeetingPoint"
+              type="text"
+              class="form-input"
+              [(ngModel)]="meetingPoint"
+              placeholder="e.g., Bambarella Base Camp Gate (look for guide in blue vest)"
+              maxlength="300"
+            />
+            <span class="helper-text">
+              Include exact landmarks or arrival cues travelers need to meet their guide on time.
+            </span>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Pin Exact Location on Map <span class="required">*</span></label>
+            <div class="map-box">
+              <app-location-picker
+                [latitude]="latitude()"
+                [longitude]="longitude()"
+                (coordinatesChange)="onCoordinatesChange($event)"
+              ></app-location-picker>
+            </div>
+            <div class="coords-readout">
+              <span>Latitude: <strong>{{ latitude() }}</strong></span>
+              <span>Longitude: <strong>{{ longitude() }}</strong></span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 3: Photos & Activity Information -->
+      @if (currentStep() === 3) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 3 — Photos &amp; Activity Information</h2>
+          <p class="step-desc">
+            Upload high-quality photos and outline highlights, inclusions, and equipment.
+          </p>
+        </div>
+
+        <div class="photos-block">
+          <div class="block-title-row">
+            <div>
+              <h3 class="block-heading">Activity Photographs <span class="required">*</span></h3>
+              <p class="block-sub">Upload at least 1 photo. Select the primary cover image shown in search results.</p>
+            </div>
+            <label class="btn-upload">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                (change)="onPhotoSelected($event)"
+                [disabled]="isUploadingPhoto() || isSuspended() || isPreview()"
+                hidden
+              />
+              <span>{{ isUploadingPhoto() ? 'Uploading...' : '+ Upload Photos' }}</span>
+            </label>
+          </div>
+
+          @if (photos().length > 0) {
+            <div class="photos-gallery">
+              @for (item of photos(); track item.media.id; let idx = $index) {
+                <div class="photo-card" [class.cover-selected]="idx === 0">
+                  @if (item.url) {
+                    <img [src]="item.url" [alt]="item.media.alt_text || 'Activity photograph'" />
+                  } @else {
+                    <div class="photo-placeholder">Photo #{{ item.media.id }}</div>
+                  }
+                  @if (idx === 0) {
+                    <span class="cover-tag">Cover Photo</span>
+                  }
+                  <div class="photo-actions">
+                    @if (idx !== 0) {
+                      <button type="button" class="photo-btn" (click)="setCoverPhoto(item.media.id)" [disabled]="isPreview()">
+                        Set Cover
+                      </button>
+                    } @else {
+                      <span></span>
+                    }
+                    <button type="button" class="photo-btn danger" (click)="deletePhoto(item.media.id)" [disabled]="isPreview()">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-box">No photographs uploaded yet.</div>
+          }
+        </div>
+
+        <!-- Highlights, Included, Excluded -->
+        <div class="lists-grid">
+          <div class="list-builder">
+            <label class="form-label">Activity Highlights</label>
+            <div class="inline-input-row">
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="newHighlight"
+                placeholder="e.g., Panoramic ridge viewpoint"
+                (keyup.enter)="addListItem('highlights', newHighlight)"
+              />
+              <button type="button" class="btn-add-chip" (click)="addListItem('highlights', newHighlight)">
+                Add
+              </button>
+            </div>
+            <ul class="chip-list">
+              @for (item of highlights; track item; let i = $index) {
+                <li class="chip">
+                  <span>{{ item }}</span>
+                  <button type="button" (click)="removeListItem('highlights', i)" aria-label="Remove highlight">×</button>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="list-builder">
+            <label class="form-label">Included Services</label>
+            <div class="inline-input-row">
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="newIncluded"
+                placeholder="e.g., Certified local guide & snacks"
+                (keyup.enter)="addListItem('included', newIncluded)"
+              />
+              <button type="button" class="btn-add-chip" (click)="addListItem('included', newIncluded)">
+                Add
+              </button>
+            </div>
+            <ul class="chip-list">
+              @for (item of included; track item; let i = $index) {
+                <li class="chip">
+                  <span>{{ item }}</span>
+                  <button type="button" (click)="removeListItem('included', i)" aria-label="Remove included item">×</button>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="list-builder">
+            <label class="form-label">Excluded Services</label>
+            <div class="inline-input-row">
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="newExcluded"
+                placeholder="e.g., Personal hotel transfer"
+                (keyup.enter)="addListItem('excluded', newExcluded)"
+              />
+              <button type="button" class="btn-add-chip" (click)="addListItem('excluded', newExcluded)">
+                Add
+              </button>
+            </div>
+            <ul class="chip-list">
+              @for (item of excluded; track item; let i = $index) {
+                <li class="chip">
+                  <span>{{ item }}</span>
+                  <button type="button" (click)="removeListItem('excluded', i)" aria-label="Remove excluded item">×</button>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="actEquipment" class="form-label">Equipment</label>
+            <textarea
+              id="actEquipment"
+              rows="3"
+              class="form-input"
+              [(ngModel)]="equipment"
+              placeholder="Provided gear or equipment travelers should bring..."
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="actFacilities" class="form-label">Facilities</label>
+            <textarea
+              id="actFacilities"
+              rows="3"
+              class="form-input"
+              [(ngModel)]="facilities"
+              placeholder="e.g., Base camp changing rooms, lockers, first-aid station..."
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 4: Pricing & Availability -->
+      @if (currentStep() === 4) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 4 — Pricing &amp; Availability</h2>
+          <p class="step-desc">
+            Set per-participant LKR pricing, group limits, and departure time slots.
+          </p>
+        </div>
+
+        <div class="form-grid three-col">
+          <div class="form-group">
+            <label for="actPrice" class="form-label">Price per Participant (LKR) <span class="required">*</span></label>
+            <input
+              id="actPrice"
+              type="number"
+              class="form-input"
+              [(ngModel)]="price"
+              min="1"
+              step="50"
+            />
+          </div>
+          <div class="form-group">
+            <label for="actMinPart" class="form-label">Min Participants <span class="required">*</span></label>
+            <input
+              id="actMinPart"
+              type="number"
+              class="form-input"
+              [(ngModel)]="minParticipants"
+              min="1"
+              max="100"
+            />
+          </div>
+          <div class="form-group">
+            <label for="actMaxPart" class="form-label">Max Participants <span class="required">*</span></label>
+            <input
+              id="actMaxPart"
+              type="number"
+              class="form-input"
+              [(ngModel)]="maxParticipants"
+              min="1"
+              max="100"
+            />
+          </div>
+        </div>
+
+        <div class="slots-panel">
+          <div class="slots-panel-header">
+            <div>
+              <h3 class="block-heading">Departure Time Slots</h3>
+              <p class="block-sub">Add future dates and time windows travelers can book. You can also manage slots later.</p>
+            </div>
+          </div>
+
+          @if (slotErrorMessage()) {
+            <div class="error-banner">{{ slotErrorMessage() }}</div>
+          }
+
+          <div class="slot-editor-grid">
+            <div class="form-group">
+              <label for="slotDate" class="form-label">Date</label>
+              <input id="slotDate" type="date" class="form-input" [(ngModel)]="slotDate" />
+            </div>
+            <div class="form-group">
+              <label for="slotStart" class="form-label">Start Time</label>
+              <input id="slotStart" type="time" class="form-input" [(ngModel)]="slotStartTime" />
+            </div>
+            <div class="form-group">
+              <label for="slotEnd" class="form-label">End Time</label>
+              <input id="slotEnd" type="time" class="form-input" [(ngModel)]="slotEndTime" />
+            </div>
+            <div class="form-group">
+              <label for="slotCap" class="form-label">Slot Capacity</label>
+              <input
+                id="slotCap"
+                type="number"
+                class="form-input"
+                [(ngModel)]="slotCapacity"
+                [min]="minParticipants"
+                [max]="maxParticipants"
+              />
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-inline">
+                <input type="checkbox" [(ngModel)]="slotIsOpen" />
+                <span>Open for booking</span>
+              </label>
+            </div>
+            <div class="slot-btn-group">
+              <button
+                type="button"
+                class="btn-primary-sm"
+                (click)="saveSlot()"
+                [disabled]="isSavingSlot() || isSuspended() || isPreview()"
+              >
+                {{ editingSlotId !== null ? 'Update Slot' : '+ Add Slot' }}
+              </button>
+              @if (editingSlotId !== null) {
+                <button type="button" class="btn-outline-sm" (click)="cancelSlotEdit()">Cancel</button>
+              }
+            </div>
+          </div>
+
+          @if (slots().length > 0) {
+            <div class="slots-table-wrap">
+              <table class="slots-table">
+                <thead>
+                  <tr>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Capacity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (slot of slots(); track slot.id) {
+                    <tr>
+                      <td>{{ formatSlotDisplay(slot.starts_at) }}</td>
+                      <td>{{ formatSlotDisplay(slot.ends_at) }}</td>
+                      <td>{{ slot.capacity }} pax</td>
+                      <td>
+                        <span class="slot-badge" [class.open]="slot.is_open" [class.blocked]="!slot.is_open">
+                          {{ slot.is_open ? 'Open' : 'Blocked' }}
+                        </span>
+                      </td>
+                      <td class="slot-actions-cell">
+                        <button type="button" class="link-btn" (click)="startEditSlot(slot)" [disabled]="isPreview()">Edit</button>
+                        <button type="button" class="link-btn" (click)="toggleSlotOpen(slot)" [disabled]="isPreview()">
+                          {{ slot.is_open ? 'Block' : 'Unblock' }}
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-box">No time slots added yet. Add a slot above or configure them after draft setup.</div>
+          }
+        </div>
+      }
+
+      <!-- STEP 5: Safety & Restrictions -->
+      @if (currentStep() === 5) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 5 — Safety &amp; Restrictions</h2>
+          <p class="step-desc">
+            Provide required safety guidance, participant requirements, and cancellation terms.
+          </p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="actMinAge" class="form-label">Minimum Age (optional)</label>
+            <input
+              id="actMinAge"
+              type="number"
+              class="form-input"
+              [(ngModel)]="minimumAge"
+              min="0"
+              max="99"
+              placeholder="Leave blank if all ages allowed"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="actReqEquipment" class="form-label">Required Equipment</label>
+            <input
+              id="actReqEquipment"
+              type="text"
+              class="form-input"
+              [(ngModel)]="equipment"
+              placeholder="e.g., Sturdy hiking boots, 2L water bottle"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actSafety" class="form-label">Safety Instructions <span class="required">*</span></label>
+            <textarea
+              id="actSafety"
+              rows="4"
+              class="form-input"
+              [(ngModel)]="safetyInstructions"
+              placeholder="Mandatory safety briefing, guide ratios, weather protocols, and emergency procedures..."
+              maxlength="1000"
+            ></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actRestrictions" class="form-label">Participant Restrictions</label>
+            <textarea
+              id="actRestrictions"
+              rows="3"
+              class="form-input"
+              [(ngModel)]="restrictions"
+              placeholder="e.g., Not recommended for guests with severe knee injuries or altitude sensitivity..."
+              maxlength="1000"
+            ></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="actCancel" class="form-label">Cancellation Policy</label>
+            <textarea
+              id="actCancel"
+              rows="3"
+              class="form-input"
+              [(ngModel)]="cancellationPolicy"
+              placeholder="e.g., Free cancellation up to 24 hours before departure..."
+              maxlength="1000"
+            ></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 6: Service Verification & Submission -->
+      @if (currentStep() === 6) {
+        <div class="step-card-header">
+          <h2 class="step-title">Step 6 — Service Verification &amp; Review</h2>
+          <p class="step-desc">
+            Add supporting links, upload safety &amp; qualification evidence, and submit your listing for admin review.
+          </p>
+        </div>
+
+        <app-service-verification
+          [listingId]="listingId()"
+          category="adventure"
+          [initialData]="verificationInitialData()"
+          (verificationChange)="onVerificationChange($event)"
+        ></app-service-verification>
+
+        <div class="review-summary-card">
+          <h3 class="block-heading">Final Listing Review</h3>
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="review-label">Activity Name</span>
+              <strong>{{ title }}</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Category &amp; Duration</span>
+              <strong>{{ categoryLabel }} · {{ formattedDuration }}</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Location</span>
+              <strong>{{ locality }}, {{ district }} ({{ province }})</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Meeting Point</span>
+              <strong>{{ meetingPoint }}</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Pricing &amp; Group Size</span>
+              <strong>LKR {{ price | number:'1.0-0' }} / participant · {{ minParticipants }}–{{ maxParticipants }} guests</strong>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Photos &amp; Slots</span>
+              <strong>{{ photos().length }} photo(s) · {{ slots().length }} time slot(s)</strong>
+            </div>
+          </div>
+
+          @if (!hasSafetyEvidence) {
+            <div class="warning-inline">
+              Submission requires at least one <strong>Safety Certificate</strong> file OR verification notes in the section above.
+            </div>
+          }
+
+          <label class="declaration-box">
+            <input type="checkbox" [(ngModel)]="declarationAccepted" />
+            <span>
+              I confirm that all activity details, safety instructions, and verification documents are accurate and comply with local safety regulations.
+            </span>
+          </label>
+        </div>
+      }
+
+      <!-- Navigation Footer -->
+      <div class="wizard-footer">
+        <button
+          type="button"
+          class="btn-prev"
+          (click)="prevStep()"
+          [disabled]="currentStep() === 1 || isSaving() || isSubmitting()"
+        >
+          Back
+        </button>
+
+        <div class="footer-right">
+          @if (currentStep() < 6) {
+            <button
+              type="button"
+              class="btn-next"
+              (click)="nextStep()"
+              [disabled]="isSaving() || isUploadingPhoto()"
+            >
+              {{ isSaving() ? 'Saving...' : 'Save & Continue' }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-submit-listing"
+              (click)="submitForVerification()"
+              [disabled]="isSubmitting() || isSaving() || isSuspended() || isPreview()"
+            >
+              {{ isPreview() ? 'Submission Disabled in Preview Mode' : (isSubmitting() ? 'Submitting...' : 'Submit for Verification') }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

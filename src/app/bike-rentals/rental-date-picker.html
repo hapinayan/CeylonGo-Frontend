@@ -6,6 +6,9 @@
     <label>Pickup time<input required #startTime type="time" [value]="pickupTime()" (input)="pickupTime.set(startTime.value); edited()" /></label>
     <label>Return date<input required #end type="date" [min]="pickup() || today" [value]="dropoff()" (input)="dropoff.set(end.value); edited()" /></label>
     <label>Return time<input required #endTime type="time" [value]="dropoffTime()" (input)="dropoffTime.set(endTime.value); edited()" /></label>
+    @if (showQuantity()) {
+      <label>Vehicles<input required #qty type="number" min="1" max="20" [value]="quantity()" (input)="quantity.set(+$any(qty).value || 1); edited()" /></label>
+    }
   </div>
   @if (duration().dates; as dates) {
     <p class="hint">Estimated duration: {{ duration().hours }} hours · {{ duration().days }} billable day(s).</p>

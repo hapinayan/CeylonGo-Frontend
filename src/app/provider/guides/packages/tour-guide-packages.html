@@ -1,0 +1,291 @@
+<div class="manager-shell">
+  <header class="manager-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Manage Listings</span>
+        </a>
+        <span class="badge">Tour Guide Packages</span>
+        @if (isPreview()) {
+          <span class="badge preview">Preview Mode · Sample Data</span>
+        }
+      </div>
+      <h1 class="page-title">Manage Tour Packages</h1>
+      <p class="page-subtitle">
+        Create, edit, price, and activate scheduled guide packages in LKR. Changes sync directly with your public guide profile.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      @if (selectedListingId()) {
+        <a
+          routerLink="/provider/guides/availability"
+          [queryParams]="isPreview() ? { listingId: selectedListingId(), preview: 'true' } : { listingId: selectedListingId() }"
+          class="btn-outline"
+        >
+          Manage Availability
+        </a>
+      }
+      <a routerLink="/provider/guides/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Open Guide Wizard
+      </a>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="success-banner">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="state-card">Loading tour guide listings...</div>
+  } @else if (guides().length === 0) {
+    <div class="state-card empty">
+      <h3>No Tour Guide Listings Yet</h3>
+      <p>Create a tour guide profile first before adding scheduled tour packages.</p>
+      <a routerLink="/provider/guides/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Start Tour Guide Wizard
+      </a>
+    </div>
+  } @else {
+    <!-- Guide Selector Bar -->
+    <div class="selector-card">
+      <div class="selector-field">
+        <label for="guideSelect" class="field-label">Select Tour Guide Listing</label>
+        <select
+          id="guideSelect"
+          class="form-input"
+          [ngModel]="selectedListingId()"
+          (ngModelChange)="selectListing($event)"
+        >
+          @for (g of guides(); track g.listing.id) {
+            <option [ngValue]="g.listing.id">
+              {{ g.listing.title || ('Guide Draft #' + g.listing.id) }} ({{ g.verification_status }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="status-pills">
+        <button type="button" class="tab-btn" [class.active]="statusFilter() === 'all'" (click)="statusFilter.set('all')">
+          All ({{ packages().length }})
+        </button>
+        <button type="button" class="tab-btn" [class.active]="statusFilter() === 'active'" (click)="statusFilter.set('active')">
+          Active
+        </button>
+        <button type="button" class="tab-btn" [class.active]="statusFilter() === 'inactive'" (click)="statusFilter.set('inactive')">
+          Inactive
+        </button>
+      </div>
+    </div>
+
+    <div class="manager-grid">
+      <!-- Left: Packages List + Photographs -->
+      <div class="list-column">
+        @if (isLoadingPackages()) {
+          <div class="state-card">Loading packages...</div>
+        } @else if (filteredPackages().length === 0) {
+          <div class="state-card empty">
+            <h4>No Tour Packages Found</h4>
+            <p>Use the editor to create your first scheduled LKR tour package.</p>
+          </div>
+        } @else {
+          @for (pkg of filteredPackages(); track pkg.id) {
+            <div class="pkg-card" [class.inactive]="!pkg.is_active">
+              <div class="pkg-card-head">
+                <div>
+                  <span class="status-pill" [class.active]="pkg.is_active">
+                    {{ pkg.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                  <h3 class="pkg-title">{{ pkg.title }}</h3>
+                </div>
+                <div class="pkg-price">
+                  <strong>LKR {{ pkg.price | number:'1.0-0' }}</strong>
+                  <span>{{ pkg.pricing_type === 'per_group' ? '/ group' : '/ person' }}</span>
+                </div>
+              </div>
+
+              <p class="pkg-desc">{{ pkg.description }}</p>
+
+              <div class="pkg-facts">
+                <span>⏱ {{ pkg.duration_hours }} hours</span>
+                <span>👥 Max {{ pkg.max_people }} travelers</span>
+                <span>📍 {{ pkg.meeting_point }}</span>
+              </div>
+
+              @if (pkg.included_services) {
+                <p class="pkg-extra"><strong>Included:</strong> {{ pkg.included_services }}</p>
+              }
+              @if (pkg.excluded_services) {
+                <p class="pkg-extra"><strong>Excluded:</strong> {{ pkg.excluded_services }}</p>
+              }
+
+              <div class="pkg-actions">
+                <button type="button" class="btn-outline-sm" (click)="startEdit(pkg)">Edit Package</button>
+                <button
+                  type="button"
+                  class="btn-outline-sm"
+                  (click)="togglePackageStatus(pkg)"
+                  [disabled]="isPreview() || isSaving()"
+                >
+                  {{ pkg.is_active ? 'Deactivate' : 'Activate' }}
+                </button>
+                <a
+                  routerLink="/provider/guides/availability"
+                  [queryParams]="isPreview() ? { listingId: selectedListingId(), packageId: pkg.id, preview: 'true' } : { listingId: selectedListingId(), packageId: pkg.id }"
+                  class="btn-outline-sm"
+                >
+                  Slots
+                </a>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Listing / Package Gallery Management -->
+        <div class="gallery-card">
+          <div class="gallery-head">
+            <div>
+              <h3>Guide &amp; Package Photographs</h3>
+              <p>Photos uploaded here appear on your public guide profile and package showcase.</p>
+            </div>
+            <label class="btn-outline-sm" [class.disabled]="isPreview() || isUploadingPhoto()">
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                multiple
+                (change)="onPhotoUpload($event)"
+                [disabled]="isPreview() || isUploadingPhoto()"
+                hidden
+              />
+              {{ isUploadingPhoto() ? 'Uploading...' : '+ Add Photo' }}
+            </label>
+          </div>
+
+          @if (gallery().length > 0) {
+            <div class="thumb-grid">
+              @for (item of gallery(); track item.media.id) {
+                <div class="thumb-item">
+                  @if (item.url) {
+                    <img [src]="item.url" [alt]="item.media.alt_text || 'Package photo'" />
+                  } @else {
+                    <div class="thumb-placeholder">Loading...</div>
+                  }
+                  <button
+                    type="button"
+                    class="thumb-del"
+                    (click)="deleteGalleryPhoto(item.media.id)"
+                    [disabled]="isPreview()"
+                  >
+                    ✕
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="muted-note">No showcase photos attached to this guide listing yet.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Right: Create / Edit Package Form -->
+      <div class="editor-column">
+        <div class="editor-card">
+          <h2 class="editor-title">
+            {{ editingPackageId !== null ? 'Edit Package #' + editingPackageId : 'Create Tour Package' }}
+          </h2>
+
+          <div class="form-stack">
+            <div class="field">
+              <label for="pkgName" class="field-label">Package Name <span class="required">*</span></label>
+              <input id="pkgName" type="text" class="form-input" [(ngModel)]="title" maxlength="100" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="pkgDur" class="field-label">Duration (hours) <span class="required">*</span></label>
+                <input id="pkgDur" type="number" class="form-input" [(ngModel)]="durationHours" min="0.5" step="0.5" />
+              </div>
+              <div class="field">
+                <label for="pkgCap" class="field-label">Max Travelers <span class="required">*</span></label>
+                <input id="pkgCap" type="number" class="form-input" [(ngModel)]="maxPeople" min="1" max="1000" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="pkgPriceInput" class="field-label">Price (LKR) <span class="required">*</span></label>
+                <input id="pkgPriceInput" type="number" class="form-input" [(ngModel)]="price" min="1" />
+              </div>
+              <div class="field">
+                <label for="pkgUnitSelect" class="field-label">Pricing Unit <span class="required">*</span></label>
+                <select id="pkgUnitSelect" class="form-input" [(ngModel)]="pricingType">
+                  <option value="per_person">Per Person</option>
+                  <option value="per_group">Per Group</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="pkgMeetInput" class="field-label">Meeting Point <span class="required">*</span></label>
+              <input id="pkgMeetInput" type="text" class="form-input" [(ngModel)]="meetingPoint" maxlength="500" />
+            </div>
+
+            <div class="field">
+              <label class="checkbox-inline">
+                <input type="checkbox" [(ngModel)]="useCustomCoordinates" />
+                <span>Set package-specific meeting coordinates</span>
+              </label>
+              @if (useCustomCoordinates) {
+                <app-location-picker
+                  [latitude]="meetingLat()"
+                  [longitude]="meetingLng()"
+                  (coordinatesChange)="onCoordinatesChange($event)"
+                ></app-location-picker>
+              }
+            </div>
+
+            <div class="field">
+              <label for="pkgDescInput" class="field-label">Description <span class="required">*</span></label>
+              <textarea id="pkgDescInput" rows="3" class="form-input" [(ngModel)]="description" maxlength="4000"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="pkgItinInput" class="field-label">Itinerary / Destinations Covered</label>
+              <textarea id="pkgItinInput" rows="2" class="form-input" [(ngModel)]="itinerary" maxlength="4000"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="pkgIncInput" class="field-label">Included Services</label>
+              <input id="pkgIncInput" type="text" class="form-input" [(ngModel)]="includedServices" maxlength="2000" />
+            </div>
+
+            <div class="field">
+              <label for="pkgExcInput" class="field-label">Excluded Services</label>
+              <input id="pkgExcInput" type="text" class="form-input" [(ngModel)]="excludedServices" maxlength="2000" />
+            </div>
+
+            <div class="editor-actions">
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="savePackage()"
+                [disabled]="isSaving() || isPreview()"
+              >
+                {{ isPreview() ? 'Preview Only' : (isSaving() ? 'Saving...' : (editingPackageId !== null ? 'Save Package Updates' : 'Create Package')) }}
+              </button>
+              @if (editingPackageId !== null) {
+                <button type="button" class="btn-outline" (click)="resetForm()">Cancel</button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

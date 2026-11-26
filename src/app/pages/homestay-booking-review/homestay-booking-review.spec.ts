@@ -5,7 +5,12 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BookingDraft } from '../../core/models/homestay.models';
+import {
+  BookingDraft,
+  HomestayBookingDetails,
+  PaymentResponse,
+} from '../../core/models/homestay.models';
+import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
 import { HomestayBookingReview } from './homestay-booking-review';
 
@@ -13,6 +18,7 @@ describe('HomestayBookingReview Component', () => {
   let component: HomestayBookingReview;
   let fixture: ComponentFixture<HomestayBookingReview>;
   let homestayService: HomestayService;
+  let authService: AuthService;
   let router: Router;
 
   const mockDraft: BookingDraft = {
@@ -29,6 +35,9 @@ describe('HomestayBookingReview Component', () => {
     nights: 3,
     basePrice: 19500,
     estimatedTotal: 19500,
+    selectedUnitId: 1,
+    selectedUnitLabel: 'Deluxe Suite',
+    selectedUnitCapacity: 3,
   };
 
   const mockActivatedRoute = {
@@ -39,6 +48,7 @@ describe('HomestayBookingReview Component', () => {
         check_out: '2027-02-13',
         adults: '2',
         children: '1',
+        unit_id: '1',
       }),
     },
   };
@@ -51,6 +61,7 @@ describe('HomestayBookingReview Component', () => {
       imports: [HomestayBookingReview],
       providers: [
         HomestayService,
+        AuthService,
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -66,13 +77,13 @@ describe('HomestayBookingReview Component', () => {
     fixture = TestBed.createComponent(HomestayBookingReview);
     component = fixture.componentInstance;
     homestayService = TestBed.inject(HomestayService);
+    authService = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
 
     vi.spyOn(homestayService, 'getHomestayById').mockImplementation((id) => {
       return of(homestayService.findDemoHomestayById(id));
     });
 
-    // Pre-populate service booking draft
     homestayService.setBookingDraft(mockDraft);
 
     fixture.detectChanges();
@@ -94,21 +105,6 @@ describe('HomestayBookingReview Component', () => {
     expect(compiled.querySelector('.total-val')?.textContent).toContain('19,500');
   });
 
-  it('should restore booking state from route query parameters if sessionStorage draft is missing', async () => {
-    homestayService.clearBookingDraft();
-
-    // Re-create component with empty service draft
-    const newFixture = TestBed.createComponent(HomestayBookingReview);
-    const newComp = newFixture.componentInstance;
-    newFixture.detectChanges();
-
-    expect(newComp.draft()).toBeTruthy();
-    expect(newComp.draft()?.homestayId).toBe(1);
-    expect(newComp.draft()?.checkIn).toBe('2027-02-10');
-    expect(newComp.draft()?.checkOut).toBe('2027-02-13');
-    expect(newComp.draft()?.totalGuests).toBe(3);
-  });
-
   it('should navigate back to homestay details with preserved query params when Edit Details is clicked', () => {
     component.editBookingDetails();
 
@@ -120,12 +116,13 @@ describe('HomestayBookingReview Component', () => {
           check_out: '2027-02-13',
           adults: 2,
           children: 1,
+          unit_id: 1,
         }),
       })
     );
   });
 
-  it('should validate traveler inputs before confirming simulated reservation', () => {
+  it('should validate traveler inputs before submitting booking request', () => {
     component.travelerName.set('');
     component.confirmReservation();
     expect(component.isConfirmed()).toBe(false);
@@ -136,7 +133,42 @@ describe('HomestayBookingReview Component', () => {
     expect(component.isConfirmed()).toBe(false);
   });
 
-  it('should simulate booking confirmation and display reference code when valid', () => {
+  it('should submit booking request and pay at location with real backend APIs', () => {
+    vi.spyOn(authService, 'isAuthenticated').mockReturnValue(true);
+
+    const mockBookingResponse: HomestayBookingDetails = {
+      id: 101,
+      listing_id: 1,
+      traveler_id: 5,
+      request_key: 'req-key-1',
+      starts_at: '2027-02-10T14:00:00Z',
+      ends_at: '2027-02-13T11:00:00Z',
+      quantity: 1,
+      total_amount: '19500.00',
+      currency: 'LKR',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      room_ids: [1],
+      payments: [],
+    };
+
+    const mockPayResponse: PaymentResponse = {
+      id: 501,
+      booking_id: 101,
+      request_key: 'pay-key-1',
+      attempt_no: 1,
+      method: 'at_location',
+      status: 'unpaid',
+      display_amount: '19500.00',
+      currency: 'LKR',
+      created_at: new Date().toISOString(),
+    };
+
+    vi.spyOn(homestayService, 'createHomestayBooking').mockReturnValue(of(mockBookingResponse));
+    vi.spyOn(homestayService, 'payAtLocation').mockReturnValue(of(mockPayResponse));
+    vi.spyOn(homestayService, 'getHomestayBooking').mockReturnValue(of(mockBookingResponse));
+
+    component.selectPaymentMethod('at_location');
     component.travelerName.set('Jane Doe');
     component.travelerEmail.set('jane@example.com');
     component.confirmReservation();
@@ -144,11 +176,58 @@ describe('HomestayBookingReview Component', () => {
 
     expect(component.isConfirmed()).toBe(true);
     expect(component.confirmationData()).toBeTruthy();
-    expect(component.confirmationData()?.bookingReference).toMatch(/^CG-HS-1-\d{4}$/);
+    expect(component.confirmationData()?.bookingReference).toBe('CG-HS-101');
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.confirmation-success-card')).toBeTruthy();
-    expect(compiled.querySelector('.code-val')?.textContent).toContain('CG-HS-1-');
-    expect(compiled.querySelector('.success-title')?.textContent).toContain('Your Stay is Requested!');
+    expect(compiled.querySelector('.code-val')?.textContent).toContain('CG-HS-101');
+    expect(compiled.querySelector('.success-title')?.textContent).toContain('Booking Request Submitted!');
+    expect(compiled.querySelector('.confirmation-badge')?.textContent).toContain('AWAITING HOST CONFIRMATION');
+  });
+
+  it('should handle academic demo payment simulation with demo_succeeded outcome', () => {
+    vi.spyOn(authService, 'isAuthenticated').mockReturnValue(true);
+
+    const mockBookingResponse: HomestayBookingDetails = {
+      id: 102,
+      listing_id: 1,
+      traveler_id: 5,
+      request_key: 'req-key-2',
+      starts_at: '2027-02-10T14:00:00Z',
+      ends_at: '2027-02-13T11:00:00Z',
+      quantity: 1,
+      total_amount: '19500.00',
+      currency: 'LKR',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      room_ids: [1],
+      payments: [],
+    };
+
+    const mockSimPayment: PaymentResponse = {
+      id: 502,
+      booking_id: 102,
+      request_key: 'sim-key-2',
+      attempt_no: 1,
+      method: 'academic_demo',
+      status: 'demo_succeeded',
+      display_amount: '19500.00',
+      currency: 'LKR',
+      created_at: new Date().toISOString(),
+    };
+
+    vi.spyOn(homestayService, 'createHomestayBooking').mockReturnValue(of(mockBookingResponse));
+    vi.spyOn(homestayService, 'simulatePayment').mockReturnValue(of(mockSimPayment));
+    vi.spyOn(homestayService, 'getHomestayBooking').mockReturnValue(of(mockBookingResponse));
+
+    component.selectPaymentMethod('online');
+    component.setSimulateOutcome('success');
+    component.travelerName.set('Jane Doe');
+    component.travelerEmail.set('jane@example.com');
+    component.confirmReservation();
+    fixture.detectChanges();
+
+    expect(component.isConfirmed()).toBe(true);
+    expect(component.confirmationData()?.paymentStatus).toBe('demo_succeeded');
   });
 });

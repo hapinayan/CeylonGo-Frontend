@@ -17,16 +17,34 @@ export interface RentalDateValidation extends RentalDates {
 
 export interface RentalQuote extends RentalDates {
   vehicle_id: number;
+  quantity?: number;
+  is_available?: boolean;
+  available_quantity?: number;
+  duration_days?: number;
+  duration_hours?: number;
+  rate?: string;
   currency: string;
   selected_plan_name: string;
   total_price: string;
+  requires_driving_license?: boolean;
   security_deposit: string | null;
 }
 
 export interface SavedRental {
-  saved_at: string; vehicle_id: number; vehicle_name: string; vehicle_type: string;
-  city: string | null; district: string | null; location_name: string | null; primary_image_url: string | null;
-  price_per_day: string | number; currency: string; is_available: boolean;
+  id?: number;
+  vehicle_id?: number;
+  saved_at?: string;
+  created_at?: string;
+  vehicle_name: string;
+  vehicle_type: string;
+  city: string | null;
+  district: string | null;
+  location_name: string | null;
+  primary_image_url: string | null;
+  price_per_day: string | number;
+  currency: string;
+  is_available?: boolean;
+  status?: string;
 }
 
 interface WishlistStatus {
@@ -39,6 +57,45 @@ interface WishlistAction extends WishlistStatus {
   wishlist_id: number | null;
 }
 
+export interface MvpBookingCreatePayload {
+  listing_id: number;
+  starts_at: string;
+  ends_at: string;
+  quantity: number;
+  expected_total?: string | null;
+  request_key: string;
+  motorcycle_license_confirmed?: boolean;
+  license_valid_until?: string | null;
+}
+
+export interface MvpBookingResponse {
+  id: number;
+  listing_id: number;
+  traveler_id: number;
+  request_key: string;
+  starts_at: string;
+  ends_at: string;
+  quantity: number;
+  total_amount: string;
+  currency: string;
+  status: string;
+  created_at: string;
+  booking_reference?: string | null;
+}
+
+export interface MvpPaymentResponse {
+  id: number;
+  booking_id: number;
+  request_key: string;
+  attempt_no: number;
+  method: string;
+  status: string;
+  display_amount: string;
+  currency: string;
+  created_at: string;
+  resolved_at: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RentalApi {
   private readonly http = inject(HttpClient);
@@ -48,14 +105,26 @@ export class RentalApi {
     const [min, max] = PRICE_RANGES[query.price] ?? [];
     let params = new HttpParams().set('sort_by', query.sort);
     if (query.city) params = params.set('city', query.city);
+    if (query.transmission) params = params.set('transmission', query.transmission.toLowerCase());
     if (min !== undefined) params = params.set('min_price', min);
     if (max !== undefined) params = params.set('max_price', max);
     if (query.pickup && query.dropoff) {
       params = params.set('pickup_at', query.pickup + 'T00:00:00+05:30')
         .set('return_at', query.dropoff + 'T00:00:00+05:30');
     }
-    if (query.category === 'bike' || query.category === 'bicycle') {
-      return this.pageOf(query.category, params, query.page, PAGE_SIZE);
+
+    if (
+      query.category === 'bike' ||
+      query.category === 'bicycle' ||
+      query.category === 'scooter' ||
+      query.category === 'motorcycle'
+    ) {
+      const apiType: RentalType = query.category === 'bicycle' ? 'bicycle' : 'bike';
+      let catParams = params;
+      if (query.category === 'scooter' || query.category === 'motorcycle') {
+        catParams = catParams.set('vehicle_subtype', query.category);
+      }
+      return this.pageOf(apiType, catParams, query.page, PAGE_SIZE);
     }
 
     const end = query.page * PAGE_SIZE;
@@ -64,8 +133,7 @@ export class RentalApi {
       bikes: this.prefix('bike', params, end, batchSize),
       bicycles: this.prefix('bicycle', params, end, batchSize),
     }).pipe(map(({ bikes, bicycles }) => {
-      const total = bikes.total + bicycles.total;
-      const items = [...bikes.items, ...bicycles.items].sort((left, right) => {
+      const merged = [...bikes.items, ...bicycles.items].sort((left, right) => {
         const sponsored = Number(!!right.is_sponsored) - Number(!!left.is_sponsored);
         if (sponsored) return sponsored;
         const price = Number(left.price_per_day) - Number(right.price_per_day);
@@ -73,7 +141,8 @@ export class RentalApi {
         if (query.sort === 'price_desc') return -price;
         return Date.parse(right.created_at) - Date.parse(left.created_at);
       });
-      return { items: items.slice(end - PAGE_SIZE, end), total, pages: Math.ceil(total / PAGE_SIZE) };
+      const total = bikes.total + bicycles.total;
+      return { items: merged.slice(end - PAGE_SIZE, end), total, pages: Math.ceil(total / PAGE_SIZE) };
     }));
   }
 
@@ -91,17 +160,44 @@ export class RentalApi {
     return this.publicGet<{is_available: boolean}>(this.vehicles + '/' + id + '/availability', params);
   }
 
-  validateDates(id: number, dates: RentalDates): Observable<RentalDateValidation> {
+  validateDates(id: number, dates: RentalDates, quantity = 1): Observable<RentalDateValidation> {
+    const body = quantity > 1 ? { vehicle_id: id, ...dates, quantity } : { vehicle_id: id, ...dates };
     return this.http.post<RentalDateValidation>(
       environment.apiBaseUrl + '/rental-bookings/validate-dates',
-      { vehicle_id: id, ...dates },
+      body,
       { context: new HttpContext().set(ANONYMOUS_API_REQUEST, true) },
     );
   }
 
-  quote(id: number, dates: RentalDates): Observable<RentalQuote> {
-    return this.http.post<RentalQuote>(this.vehicles + '/' + id + '/calculate-quote', dates, {
+  quote(id: number, dates: RentalDates, quantity = 1): Observable<RentalQuote> {
+    const body = quantity > 1 ? { ...dates, quantity } : dates;
+    return this.http.post<RentalQuote>(this.vehicles + '/' + id + '/calculate-quote', body, {
       context: new HttpContext().set(ANONYMOUS_API_REQUEST, true),
+    });
+  }
+
+  createMvpBooking(payload: MvpBookingCreatePayload): Observable<MvpBookingResponse> {
+    return this.http.post<MvpBookingResponse>(`${environment.apiBaseUrl}/bookings`, payload);
+  }
+
+  simulateMvpPayment(
+    bookingId: number,
+    requestKey: string,
+    attemptNo: number,
+    simulateOutcome: 'success' | 'failure'
+  ): Observable<MvpPaymentResponse> {
+    return this.http.post<MvpPaymentResponse>(`${environment.apiBaseUrl}/payments/simulate`, {
+      booking_id: bookingId,
+      request_key: requestKey,
+      attempt_no: attemptNo,
+      simulate_outcome: simulateOutcome,
+    });
+  }
+
+  payAtLocationMvp(bookingId: number, requestKey: string): Observable<MvpPaymentResponse> {
+    return this.http.post<MvpPaymentResponse>(`${environment.apiBaseUrl}/payments/at-location`, {
+      booking_id: bookingId,
+      request_key: requestKey,
     });
   }
 

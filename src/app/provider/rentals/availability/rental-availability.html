@@ -1,0 +1,217 @@
+<div class="availability-shell">
+  <div class="page-header">
+    <div>
+      <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
+        &larr; Back to Dashboard
+      </a>
+      <h1 class="page-title">Rental Fleet Inventory &amp; Availability</h1>
+      <p class="page-subtitle">
+        Manage individual physical vehicles, open or block rental dates, view booking conflicts, and update daily rates.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      @if (isPreview()) {
+        <span class="preview-badge">Preview Mode · Sample Fleet</span>
+      }
+      <a routerLink="/provider/rentals/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        + Add Vehicle Listing
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="success-banner" role="status">{{ successMessage() }}</div>
+  }
+
+  <!-- Category Tabs & Listing Selector -->
+  <div class="filter-bar">
+    <div class="cat-pills">
+      <button type="button" class="pill-btn" [class.active]="categoryFilter() === 'all'" (click)="onCategoryFilterChange('all')">
+        All Rentals
+      </button>
+      <button type="button" class="pill-btn" [class.active]="categoryFilter() === 'scooter'" (click)="onCategoryFilterChange('scooter')">
+        Scooters
+      </button>
+      <button type="button" class="pill-btn" [class.active]="categoryFilter() === 'motorcycle'" (click)="onCategoryFilterChange('motorcycle')">
+        Motorbikes
+      </button>
+      <button type="button" class="pill-btn" [class.active]="categoryFilter() === 'bicycle'" (click)="onCategoryFilterChange('bicycle')">
+        Bicycles
+      </button>
+    </div>
+
+    @if (filteredListings().length > 0) {
+      <select
+        class="listing-select"
+        aria-label="Select rental listing"
+        [ngModel]="selectedListingId()"
+        (ngModelChange)="selectListing($event)">
+        @for (item of filteredListings(); track item.listing.id) {
+          <option [ngValue]="item.listing.id">
+            {{ item.listing.title }} ({{ categoryDisplay(item) }}) — {{ item.verification_status | titlecase }}
+          </option>
+        }
+      </select>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="card-panel">Loading your rental listings and fleet…</div>
+  } @else if (filteredListings().length === 0) {
+    <div class="card-panel empty-state">
+      <h2>No rental listings found</h2>
+      <p>Create your first scooter, motorbike, or bicycle listing to manage fleet units and calendar windows.</p>
+      <a routerLink="/provider/rentals/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Start Rental Wizard
+      </a>
+    </div>
+  } @else if (selectedListing(); as listing) {
+    <div class="grid-layout">
+      <!-- Left Column: Routine Pricing + Fleet Units + Active Booking Conflicts -->
+      <div class="col-stack">
+        <section class="card-panel">
+          <div class="panel-head">
+            <h2>{{ listing.listing.title }}</h2>
+            <span class="status-pill">{{ listing.verification_status | titlecase }}</span>
+          </div>
+          <p class="muted">{{ categoryDisplay(listing) }} · {{ listing.listing.locality }}, {{ listing.listing.district }}</p>
+
+          <div class="price-update-row">
+            <label>
+              <span>Daily Rental Rate (LKR)</span>
+              <input type="number" min="100" step="50" [(ngModel)]="routinePrice" />
+            </label>
+            <button type="button" class="btn-primary" [disabled]="isSavingPrice() || isPreview()" (click)="saveRoutineDailyPrice()">
+              {{ isSavingPrice() ? 'Updating…' : 'Update Daily Rate' }}
+            </button>
+          </div>
+        </section>
+
+        <section class="card-panel">
+          <h2>Physical Fleet Units ({{ units().length }})</h2>
+          <div class="unit-add-bar">
+            <input type="text" [(ngModel)]="newUnitLabel" placeholder="New unit label (e.g. Dio #3)" maxlength="100" />
+            <button type="button" class="btn-primary" [disabled]="isSavingUnit() || isPreview()" (click)="addUnit()">
+              + Add Unit
+            </button>
+          </div>
+
+          <div class="unit-items">
+            @for (u of units(); track u.id) {
+              <div class="unit-card">
+                @if (editingUnitId === u.id) {
+                  <div class="unit-edit-row">
+                    <input type="text" [(ngModel)]="editingUnitLabel" maxlength="100" />
+                    <button type="button" class="btn-sm primary" (click)="saveUnitLabel(u)">Save</button>
+                    <button type="button" class="btn-sm" (click)="editingUnitId = null">Cancel</button>
+                  </div>
+                } @else {
+                  <div>
+                    <strong>{{ u.label }}</strong>
+                    <span class="unit-sub">ID #{{ u.id }} · {{ u.is_active ? 'Active' : 'Inactive' }}</span>
+                  </div>
+                  <div class="unit-actions">
+                    <button type="button" class="btn-sm" [disabled]="isPreview()" (click)="startEditUnit(u)">Rename</button>
+                    <button type="button" class="btn-sm" [disabled]="isSavingUnit() || isPreview()" (click)="toggleUnitActive(u)">
+                      {{ u.is_active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  </div>
+                }
+              </div>
+            } @empty {
+              <p class="muted">No physical fleet units registered yet.</p>
+            }
+          </div>
+        </section>
+
+        <section class="card-panel">
+          <h2>Active Booking Conflicts ({{ activeListingBookings().length }})</h2>
+          @for (b of activeListingBookings(); track b.id) {
+            <div class="conflict-row">
+              <div>
+                <strong>{{ b.booking_reference || ('#' + b.id) }}</strong>
+                <span> · {{ b.quantity }} vehicle(s) · {{ b.status | titlecase }}</span>
+              </div>
+              <span class="conflict-dates">{{ b.starts_at | date:'mediumDate' }} → {{ b.ends_at | date:'mediumDate' }}</span>
+            </div>
+          } @empty {
+            <p class="muted">No active or pending bookings on this listing.</p>
+          }
+        </section>
+      </div>
+
+      <!-- Right Column: Availability Windows & Date Blocking -->
+      <div class="col-stack">
+        <section class="card-panel">
+          <h2>Add Open Window or Block Dates</h2>
+          <div class="form-grid">
+            <label>
+              <span>Fleet Unit</span>
+              <select [(ngModel)]="slotUnitId">
+                @for (u of units(); track u.id) {
+                  <option [ngValue]="u.id">{{ u.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              <span>Window Mode</span>
+              <select [(ngModel)]="slotIsOpen">
+                <option [ngValue]="true">Open for Rental</option>
+                <option [ngValue]="false">Blocked / Maintenance</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Start Date</span>
+              <input type="date" [(ngModel)]="slotStartDate" />
+            </label>
+
+            <label>
+              <span>End Date</span>
+              <input type="date" [(ngModel)]="slotEndDate" />
+            </label>
+          </div>
+
+          <button type="button" class="btn-primary full-btn" [disabled]="isSaving() || isPreview()" (click)="saveAvailabilityWindow()">
+            {{ isSaving() ? 'Saving…' : (slotIsOpen ? 'Open Rental Window' : 'Block Dates') }}
+          </button>
+        </section>
+
+        <section class="card-panel">
+          <div class="panel-head">
+            <h2>Scheduled Windows ({{ filteredSlots().length }})</h2>
+            <input type="date" aria-label="Filter by date" [ngModel]="filterDate()" (ngModelChange)="filterDate.set($event)" />
+          </div>
+
+          @if (isLoadingSlots()) {
+            <p class="muted">Loading slots…</p>
+          } @else {
+            <div class="slots-stack">
+              @for (slot of filteredSlots(); track slot.id) {
+                <div class="slot-card" [class.blocked]="!slot.is_open">
+                  <div>
+                    <strong>{{ unitLabel(slot.unit_id) }}</strong>
+                    <div class="slot-dates">{{ slot.starts_at | date:'mediumDate' }} → {{ slot.ends_at | date:'mediumDate' }}</div>
+                  </div>
+                  <div class="slot-right">
+                    <span class="slot-state" [class.open]="slot.is_open">{{ slot.is_open ? 'Open' : 'Blocked' }}</span>
+                    <button type="button" class="btn-sm" [disabled]="isSaving() || isPreview()" (click)="toggleSlotBlock(slot)">
+                      {{ slot.is_open ? 'Block' : 'Unblock' }}
+                    </button>
+                  </div>
+                </div>
+              } @empty {
+                <p class="muted">No availability windows configured for this selection yet.</p>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</div>

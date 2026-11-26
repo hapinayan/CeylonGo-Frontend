@@ -4,6 +4,8 @@ export type AuthModalStep =
   | 'entry'
   | 'login'
   | 'register'
+  | 'verify-email'
+  | 'register-success'
   | 'phone'
   | 'forgot-password'
   | 'check-email'
@@ -26,6 +28,8 @@ export class AuthModalService {
   readonly currentStep = signal<AuthModalStep>('entry');
   readonly userEmail = signal('');
   readonly intentMode = signal<'login' | 'register'>('login');
+  readonly registeredFullName = signal('');
+  readonly registrationId = signal<string | null>(null);
   readonly resetToken = signal<string | null>(null);
   readonly pendingAction = signal<PendingAuthAction | null>(null);
 
@@ -73,6 +77,8 @@ export class AuthModalService {
     this.isOpen.set(false);
     this.currentStep.set('entry');
     this.userEmail.set('');
+    this.registeredFullName.set('');
+    this.registrationId.set(null);
     this.resetToken.set(null);
     this.pendingAction.set(null);
 

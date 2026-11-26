@@ -6,6 +6,7 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ForgotPassword } from './forgot-password';
 
@@ -16,6 +17,7 @@ describe('ForgotPassword', () => {
   let component: ForgotPassword;
   let fixture: ComponentFixture<ForgotPassword>;
   let authService: AuthService;
+  let authModalService: AuthModalService;
   let router: Router;
 
   beforeEach(async () => {
@@ -23,9 +25,11 @@ describe('ForgotPassword', () => {
       imports: [ForgotPassword],
       providers: [
         AuthService,
+        AuthModalService,
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
+          { path: '', component: DummyComponent },
           { path: 'login', component: DummyComponent },
           { path: 'check-email', component: DummyComponent },
           { path: 'auth', component: DummyComponent },
@@ -38,6 +42,7 @@ describe('ForgotPassword', () => {
                 get: (key: string) => (key === 'email' ? 'prefilled@ceylongo.com' : null),
               },
             },
+            queryParams: of({}),
           },
         },
       ],
@@ -46,6 +51,7 @@ describe('ForgotPassword', () => {
     fixture = TestBed.createComponent(ForgotPassword);
     component = fixture.componentInstance;
     authService = TestBed.inject(AuthService);
+    authModalService = TestBed.inject(AuthModalService);
     router = TestBed.inject(Router);
     fixture.detectChanges();
   });
@@ -75,6 +81,7 @@ describe('ForgotPassword', () => {
     expect(component.isLoading).toBe(false);
     expect(navSpy).toHaveBeenCalledWith(['/check-email'], {
       state: { email: 'traveler@ceylongo.com' },
+      queryParams: { email: 'traveler@ceylongo.com' },
     });
   });
 
@@ -102,18 +109,19 @@ describe('ForgotPassword', () => {
     expect(component.errorMessage).toContain('Cannot connect to backend server');
   });
 
-  it('should navigate to /login with email queryParam on goBack()', () => {
+  it('should open auth modal and navigate to / on goBack()', () => {
+    const modalSpy = vi.spyOn(authModalService, 'open');
     const navSpy = vi.spyOn(router, 'navigate');
     component.goBack();
-    expect(navSpy).toHaveBeenCalledWith(['/login'], {
-      queryParams: { email: 'prefilled@ceylongo.com' },
-    });
+    expect(modalSpy).toHaveBeenCalledWith('login');
+    expect(authModalService.userEmail()).toBe('prefilled@ceylongo.com');
+    expect(navSpy).toHaveBeenCalledWith(['/']);
   });
 
-  it('should navigate to /auth on closeModal()', () => {
+  it('should navigate to / on closeModal()', () => {
     const navSpy = vi.spyOn(router, 'navigate');
     component.closeModal();
-    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+    expect(navSpy).toHaveBeenCalledWith(['/']);
   });
 
   it('should handle backdrop clicks appropriately', () => {
@@ -123,7 +131,7 @@ describe('ForgotPassword', () => {
     } as unknown as MouseEvent;
 
     component.onBackdropClick(backdropEvent);
-    expect(navSpy).toHaveBeenCalledWith(['/auth']);
+    expect(navSpy).toHaveBeenCalledWith(['/']);
 
     navSpy.mockClear();
     const modalEvent = {

@@ -593,16 +593,9 @@ export class TravelerHome implements OnInit {
   }
 
   onExploreCardClick(card: ExploreMoreCard): void {
-    if (card.id === 'bicycles') {
-      void this.router.navigateByUrl(card.route);
-      return;
+    if (card.route) {
+      this.router.navigate([card.route]);
     }
-    this.showToast(`${card.title} discovery is coming soon in the next release!`);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { service: card.id },
-      queryParamsHandling: 'merge',
-    });
   }
 
   onExploreCommunity(): void {
@@ -614,7 +607,7 @@ export class TravelerHome implements OnInit {
     });
   }
 
-    scrollDestinations(direction: number): void {
+  scrollDestinations(direction: number): void {
     if (this.destinationsTrack?.nativeElement) {
       const scrollAmount = 340 * direction;
       const el = this.destinationsTrack.nativeElement;
@@ -628,12 +621,9 @@ export class TravelerHome implements OnInit {
 
   onDestinationClick(dest: PopularDestination): void {
     this.selectedDestination.set(dest.name);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { destination: dest.name },
-      queryParamsHandling: 'merge',
+    this.router.navigate(['/homestays'], {
+      queryParams: { location: dest.name },
     });
-    this.showToast(`Discovering ${dest.name} in ${dest.province}. Local experiences & stays coming soon!`);
   }
 
   selectPromotionCategory(catId: string): void {
@@ -645,6 +635,17 @@ export class TravelerHome implements OnInit {
       this.showToast(`Demo Offer: Special discount preview for ${promo.title} (${promo.location}). Live booking coming soon!`);
     } else {
       this.showToast(`Viewing offer: ${promo.title}`);
+    }
+    if (promo.category === 'homestays') {
+      this.router.navigate(['/homestays'], {
+        queryParams: { location: promo.location },
+      });
+    } else if (promo.category === 'rentals') {
+      this.router.navigate(['/bicycles'], {
+        queryParams: { city: promo.location },
+      });
+    } else if (promo.category === 'experiences') {
+      this.router.navigate(['/experiences']);
     }
   }
 

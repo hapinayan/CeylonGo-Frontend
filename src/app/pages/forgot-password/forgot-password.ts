@@ -8,12 +8,14 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
+import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TravelerHome } from '../traveler-home/traveler-home';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TravelerHome],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.scss',
 })
@@ -22,6 +24,7 @@ export class ForgotPassword implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
+  private readonly authModalService = inject(AuthModalService);
 
   errorMessage = '';
   isLoading = false;
@@ -71,6 +74,7 @@ export class ForgotPassword implements OnInit {
         next: () => {
           this.router.navigate(['/check-email'], {
             state: { email },
+            queryParams: { email },
           });
         },
         error: (err: HttpErrorResponse) => {
@@ -91,19 +95,20 @@ export class ForgotPassword implements OnInit {
 
   goBack(): void {
     const email = (this.forgotForm.value.email || '').trim().toLowerCase();
+    this.authModalService.open('login');
     if (email) {
-      this.router.navigate(['/login'], { queryParams: { email } });
-    } else {
-      this.router.navigate(['/login']);
+      this.authModalService.userEmail.set(email);
     }
+    this.router.navigate(['/']);
   }
 
   closeModal(): void {
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 
   onBackdropClick(event: MouseEvent): void {
-    if ((event.target as HTMLElement)?.classList.contains('forgot-page')) {
+    const target = event.target as HTMLElement;
+    if (target?.classList.contains('forgot-page') || target?.classList.contains('auth-modal-backdrop')) {
       this.closeModal();
     }
   }

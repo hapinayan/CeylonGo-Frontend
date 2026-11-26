@@ -1,0 +1,381 @@
+<div class="bookings-shell">
+  <!-- Header -->
+  <div class="bookings-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="badge">Guest Reservations</span>
+        @if (isPreview()) {
+          <span class="badge">Preview Mode · Sample Data</span>
+        }
+      </div>
+      <h1 class="page-title">Provider Booking Management</h1>
+      <p class="page-subtitle">
+        Review incoming reservation requests, participant schedules, traveler contacts, and payment statuses.
+      </p>
+    </div>
+
+    <div class="header-right">
+      <div class="academic-notice-pill">
+        <span class="notice-dot"></span>
+        <span>Academic MVP V1.1 Live Integration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="controls-bar">
+    <div class="filter-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'all'"
+        (click)="onFilterChange('all')"
+      >
+        All ({{ bookings().length }})
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'pending'"
+        (click)="onFilterChange('pending')"
+      >
+        Pending
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'confirmed'"
+        (click)="onFilterChange('confirmed')"
+      >
+        Confirmed
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'completed'"
+        (click)="onFilterChange('completed')"
+      >
+        Completed
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'rejected'"
+        (click)="onFilterChange('rejected')"
+      >
+        Rejected
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'cancelled'"
+        (click)="onFilterChange('cancelled')"
+      >
+        Cancelled
+      </button>
+    </div>
+
+    <div class="filter-controls-right">
+      <select
+        class="category-select"
+        aria-label="Filter bookings by category"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="onCategoryChange($event)"
+      >
+        <option value="all">All Categories</option>
+        <option value="homestay">Homestays</option>
+        <option value="adventure">Adventure &amp; Activities</option>
+        <option value="guide">Tour Guides</option>
+        <option value="rentals">Rentals (Bikes &amp; Bicycles)</option>
+        <option value="bike">Motorbikes &amp; Scooters</option>
+        <option value="bicycle">Bicycles</option>
+      </select>
+
+      @if (selectedListingId() !== null) {
+        <button type="button" class="btn-clear-listing" (click)="clearListingFilter()">
+          Listing #{{ selectedListingId() }} ×
+        </button>
+      }
+
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by ref, activity, traveler..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Error notification if any -->
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="btn-retry" (click)="loadBookings()">Retry</button>
+    </div>
+  }
+
+  <!-- Bookings Content -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Retrieving provider reservations from backend...</span>
+    </div>
+  } @else if (filteredBookings().length === 0) {
+    <div class="empty-bookings-card">
+      <div class="empty-icon">📅</div>
+      <h3 class="empty-title">No reservations found</h3>
+      <p class="empty-desc">
+        @if (selectedFilter() === 'all') {
+          When travelers book your homestays or experiences, their reservations and schedules will appear here.
+        } @else {
+          No reservations match the status "{{ selectedFilter() }}".
+        }
+      </p>
+    </div>
+  } @else {
+    <div class="bookings-table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Booking Ref</th>
+              <th>Listing / Activity</th>
+              <th>Traveler Contact</th>
+              <th>Schedule</th>
+              <th>Guests / Qty</th>
+              <th>Total Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of filteredBookings(); track b.id) {
+              <tr>
+                <td class="font-mono">
+                  <div class="ref-stack">
+                    <span>#{{ b.id }}</span>
+                    @if (b.booking_reference) {
+                      <span class="l-ref">{{ b.booking_reference }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="listing-cell">
+                    <span class="l-title">{{ listingTitle(b) }}</span>
+                    @if (isGuideBooking(b)) {
+                      <span class="l-room">Tour Package: {{ guidePackageLabel(b) }}</span>
+                    } @else if (isRentalBooking(b)) {
+                      <span class="l-room">Bike / Bicycle Rental · {{ rentalDurationDays(b) }} day(s)</span>
+                    } @else if (isAdventureBooking(b)) {
+                      <span class="l-room">Adventure Activity</span>
+                    } @else if (b.room_ids && b.room_ids.length > 0) {
+                      <span class="l-room">Room IDs: {{ b.room_ids.join(', ') }}</span>
+                    } @else {
+                      <span class="l-room">Standard Unit</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="traveler-cell">
+                    @if (b.traveler_contact) {
+                      <span class="t-name">{{ b.traveler_contact.full_name }}</span>
+                      <span class="t-contact">{{ b.traveler_contact.email }}</span>
+                      @if (b.traveler_contact.phone) {
+                        <span class="t-contact">{{ b.traveler_contact.phone }}</span>
+                      }
+                    } @else {
+                      <span class="t-name">Traveler #{{ b.traveler_id }}</span>
+                      <span class="t-email font-mono text-xs">Ref: {{ b.request_key.substring(0, 8) }}...</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="dates-cell">
+                    @if (isSlotScheduledBooking(b)) {
+                      <span class="d-range">{{ formatAdventureSchedule(b) }}</span>
+                    } @else if (isRentalBooking(b)) {
+                      <span class="d-range">{{ b.starts_at | date:'medium':'GMT+0530' }} → {{ b.ends_at | date:'medium':'GMT+0530' }}</span>
+                    } @else {
+                      <span class="d-range">{{ b.starts_at | date:'mediumDate' }} → {{ b.ends_at | date:'mediumDate' }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  {{ b.quantity }}
+                  @if (isSlotScheduledBooking(b)) {
+                    <span class="qty-unit">pax</span>
+                  } @else if (isRentalBooking(b)) {
+                    <span class="qty-unit">{{ b.quantity === 1 ? 'vehicle' : 'vehicles' }}</span>
+                  }
+                </td>
+                <td class="font-semibold text-blue">{{ b.currency }} {{ b.total_amount | number:'1.2-2' }}</td>
+                <td>
+                  <div class="payment-cell">
+                    <span class="payment-badge" [class]="paymentStatusValue(b)">
+                      {{ paymentStatusLabel(b) }}
+                    </span>
+                    @if (paymentMethodLabel(b)) {
+                      <span class="pay-method-tag">{{ paymentMethodLabel(b) }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span class="status-badge" [class]="b.status">
+                    {{ b.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-btn-group">
+                    @if (b.status === 'pending') {
+                      <button
+                        type="button"
+                        class="btn-confirm"
+                        (click)="promptAction(b, 'confirm')"
+                        [disabled]="isPreview()"
+                        title="Confirm Booking"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-reject"
+                        (click)="promptAction(b, 'reject')"
+                        [disabled]="isPreview()"
+                        title="Reject Booking"
+                      >
+                        Reject
+                      </button>
+                    } @else if (b.status === 'confirmed' && supportsCompletionOrCancellation(b)) {
+                      <button
+                        type="button"
+                        class="btn-complete"
+                        (click)="promptAction(b, 'complete')"
+                        [disabled]="isPreview()"
+                        title="Mark Completed"
+                      >
+                        Complete
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-cancel-booking"
+                        (click)="promptAction(b, 'cancel')"
+                        [disabled]="isPreview()"
+                        title="Cancel Booking"
+                      >
+                        Cancel
+                      </button>
+                    } @else {
+                      <span class="text-muted text-xs">—</span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Action Modal Dialog -->
+  @if (isActionModalOpen() && activeBooking(); as modalBooking) {
+    <div class="modal-backdrop" (click)="closeActionModal()">
+      <div class="modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">{{ modalTitle() }}</h3>
+          <button type="button" class="btn-close" (click)="closeActionModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (actionErrorMessage()) {
+            <div class="modal-error-banner" role="alert">{{ actionErrorMessage() }}</div>
+          }
+
+          <p class="modal-prompt">
+            Confirm status update to <strong>{{ actionType() }}</strong> for booking
+            <strong>{{ bookingReferenceLabel(modalBooking) }}</strong>?
+          </p>
+
+          <div class="booking-summary-box">
+            <div class="row">
+              <span class="label">Service:</span>
+              <span class="val">{{ listingTitle(modalBooking) }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Traveler:</span>
+              <span class="val">
+                {{ modalBooking.traveler_contact?.full_name || ('Traveler #' + modalBooking.traveler_id) }}
+                @if (modalBooking.traveler_contact?.email) {
+                  ({{ modalBooking.traveler_contact?.email }})
+                }
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">Schedule:</span>
+              <span class="val">
+                @if (isSlotScheduledBooking(modalBooking)) {
+                  {{ formatAdventureSchedule(modalBooking) }}
+                } @else {
+                  {{ modalBooking.starts_at | date:'mediumDate' }} → {{ modalBooking.ends_at | date:'mediumDate' }}
+                }
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">Guests / Qty:</span>
+              <span class="val">{{ modalBooking.quantity }}</span>
+            </div>
+            <div class="row">
+              <span class="label">Total Amount:</span>
+              <span class="val font-semibold">{{ modalBooking.currency }} {{ modalBooking.total_amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          @if (actionType() === 'reject' || actionType() === 'cancel') {
+            <div class="reject-reason-box">
+              <label for="rejectReason" class="reason-label">
+                {{ actionType() === 'reject' ? 'Decline Reason (Optional):' : 'Cancellation Reason (Optional):' }}
+              </label>
+              <textarea
+                id="rejectReason"
+                class="reason-textarea"
+                rows="3"
+                placeholder="Provide a reason for the traveler..."
+                [(ngModel)]="rejectReason"
+                maxlength="500"
+              ></textarea>
+              <span class="char-count">{{ rejectReason.length }}/500</span>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeActionModal()">Close</button>
+          <button
+            type="button"
+            class="btn-action-submit"
+            [class.btn-green]="actionType() === 'confirm' || actionType() === 'complete'"
+            [class.btn-red]="actionType() === 'reject' || actionType() === 'cancel'"
+            (click)="confirmAction()"
+            [disabled]="isUpdating || isPreview()"
+          >
+            {{ isPreview() ? 'Disabled in Preview Mode' : modalSubmitLabel() }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

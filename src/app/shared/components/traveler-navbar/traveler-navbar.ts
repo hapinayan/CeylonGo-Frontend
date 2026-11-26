@@ -58,6 +58,8 @@ export class TravelerNavbar implements OnInit {
   readonly isScrolled = signal(false);
   readonly activeSection = signal<string | null>('home');
   readonly isRentalRoute = signal(false);
+  readonly isHomestayRoute = signal(false);
+  readonly isTourGuideRoute = signal(false);
 
   get isAuthenticated(): boolean {
     return this.authService.isAuthenticated() && (this.variant() === 'default' ||
@@ -123,7 +125,21 @@ export class TravelerNavbar implements OnInit {
       return;
     }
 
-    if (/^\/my-bookings(?:[/?#]|$)/.test(this.router.url)) {
+    const isHomestayRoute = /^\/homestays(?:[/?#]|$)|^\/stays(?:[/?#]|$)/.test(this.router.url);
+    this.isHomestayRoute.set(isHomestayRoute);
+    if (isHomestayRoute) {
+      this.activeSection.set('stays');
+      return;
+    }
+
+    const isTourGuideRoute = /^\/tour-guides?(?:[/?#]|$)/.test(this.router.url);
+    this.isTourGuideRoute.set(isTourGuideRoute);
+    if (isTourGuideRoute) {
+      this.activeSection.set('tour-guides');
+      return;
+    }
+
+    if (/^\/my-bookings(?:[/?#]|$)|^\/wishlist(?:[/?#]|$)/.test(this.router.url)) {
       this.activeSection.set(null);
       return;
     }
@@ -223,7 +239,7 @@ export class TravelerNavbar implements OnInit {
 
   navigateToBecomeAHost(): void {
     this.closeMobileMenu();
-    this.router.navigate(['/provider/register']);
+    this.router.navigate(['/provider']);
   }
 
   onNavClick(sectionId: string, event?: Event): void {
@@ -231,6 +247,12 @@ export class TravelerNavbar implements OnInit {
       event.preventDefault();
     }
     this.closeMobileMenu();
+
+    if (sectionId === 'stays') {
+      this.activeSection.set('stays');
+      this.router.navigate(['/homestays']);
+      return;
+    }
 
     if (sectionId === 'experiences') {
       this.activeSection.set('experiences');
@@ -261,10 +283,11 @@ export class TravelerNavbar implements OnInit {
     }
 
     this.activeSection.set(sectionId);
-    if (this.router.url.startsWith('/experiences') || (this.router.url !== '/' && this.router.url !== '/traveler/home')) {
-      this.router.navigate(['/'], { fragment: sectionId });
+    const targetElementId = sectionId === 'community' ? 'travel-community' : sectionId;
+    if (this.router.url !== '/' && this.router.url !== '' && this.router.url !== '/traveler/home') {
+      this.router.navigate(['/'], { fragment: targetElementId });
     } else {
-      const element = document.getElementById(sectionId);
+      const element = document.getElementById(targetElementId);
       if (element && typeof element.scrollIntoView === 'function') {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }

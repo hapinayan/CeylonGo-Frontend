@@ -60,10 +60,24 @@ export class TravelerAuthModal implements OnDestroy {
   @ViewChild('loginPasswordInput') loginPasswordInputElement?: ElementRef<HTMLInputElement>;
   @ViewChild('registerFullNameInput') registerFullNameInputElement?: ElementRef<HTMLInputElement>;
   @ViewChild('resetNewPasswordInput') resetNewPasswordInputElement?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp0') otp0Input?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp1') otp1Input?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp2') otp2Input?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp3') otp3Input?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp4') otp4Input?: ElementRef<HTMLInputElement>;
+  @ViewChild('otp5') otp5Input?: ElementRef<HTMLInputElement>;
 
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+
+  // OTP Email Verification signals & state
+  readonly otpDigits = signal<string[]>(['', '', '', '', '', '']);
+  readonly resendOtpCooldown = signal(60);
+  readonly otpExpiresIn = signal(300);
+  readonly showRestartRegistration = signal(false);
+  private otpCooldownInterval: any = null;
+  private challengeExpirationInterval: any = null;
 
   // Independent Show/Hide password toggles
   readonly isLoginPasswordVisible = signal(false);
@@ -158,6 +172,8 @@ export class TravelerAuthModal implements OnDestroy {
           setTimeout(() => this.registerFullNameInputElement?.nativeElement?.focus(), 100);
         } else if (step === 'reset-password') {
           setTimeout(() => this.resetNewPasswordInputElement?.nativeElement?.focus(), 100);
+        } else if (step === 'verify-email') {
+          setTimeout(() => this.getOtpInputElement(0)?.focus(), 150);
         }
       }
     });
@@ -165,6 +181,8 @@ export class TravelerAuthModal implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCooldownTimer();
+    this.stopOtpCooldownTimer();
+    this.stopChallengeExpirationTimer();
   }
 
   get emailControl() {
@@ -216,7 +234,23 @@ export class TravelerAuthModal implements OnDestroy {
     this.clearSensitiveFormState();
     this.memoryResetToken = null;
     this.stopCooldownTimer();
+    this.stopOtpCooldownTimer();
+    this.stopChallengeExpirationTimer();
+    this.showRestartRegistration.set(false);
+    this.authModalService.registrationId.set(null);
     this.authModalService.close();
+  }
+
+  onForgotPasswordClick(): void {
+    const email = (this.authModalService.userEmail() || this.emailControl.value || '').trim().toLowerCase();
+    this.close();
+    if (email) {
+      this.router.navigate(['/forgot-password'], {
+        queryParams: { email },
+      });
+    } else {
+      this.router.navigate(['/forgot-password']);
+    }
   }
 
   goToStep(step: AuthModalStep): void {
@@ -234,6 +268,8 @@ export class TravelerAuthModal implements OnDestroy {
       setTimeout(() => this.registerFullNameInputElement?.nativeElement?.focus(), 100);
     } else if (step === 'reset-password') {
       setTimeout(() => this.resetNewPasswordInputElement?.nativeElement?.focus(), 100);
+    } else if (step === 'verify-email') {
+      setTimeout(() => this.getOtpInputElement(0)?.focus(), 150);
     }
   }
 
@@ -245,6 +281,12 @@ export class TravelerAuthModal implements OnDestroy {
     this.loginForm.reset();
     this.registerForm.reset();
     this.resetPasswordForm.reset();
+    this.otpDigits.set(['', '', '', '', '', '']);
+    this.showRestartRegistration.set(false);
+    for (let i = 0; i < 6; i++) {
+      const el = this.getOtpInputElement(i);
+      if (el) el.value = '';
+    }
     this.isLoginPasswordVisible.set(false);
     this.isRegisterPasswordVisible.set(false);
     this.isRegisterConfirmPasswordVisible.set(false);
@@ -344,12 +386,17 @@ export class TravelerAuthModal implements OnDestroy {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
+        const detail = (err.error?.detail || '').toString();
         if (err.status === 401) {
           this.errorMessage.set('Incorrect password. Please try again.');
         } else if (err.status === 403) {
-          this.errorMessage.set('Your account is inactive or suspended. Please contact CeylonGo support.');
+          this.errorMessage.set(
+            detail.toLowerCase().includes('inactive')
+              ? 'Your account is inactive or suspended. Please contact CeylonGo support.'
+              : detail || 'Your account is inactive or suspended. Please contact CeylonGo support.'
+          );
         } else {
-          this.errorMessage.set(err.error?.detail || 'Authentication failed. Please check your credentials.');
+          this.errorMessage.set(detail || 'Authentication failed. Please check your credentials.');
         }
       },
     });
@@ -357,6 +404,7 @@ export class TravelerAuthModal implements OnDestroy {
 
   onRegisterSubmit(): void {
     this.errorMessage.set(null);
+    this.showRestartRegistration.set(false);
     if (this.isLoading()) {
       return;
     }
@@ -372,27 +420,358 @@ export class TravelerAuthModal implements OnDestroy {
 
     this.isLoading.set(true);
     this.authService.register({ full_name: fullName, email, password }).subscribe({
-      next: () => {
-        this.authService.login({ email, password }).subscribe({
-          next: () => {
-            this.handleAuthenticationSuccess('Account created successfully! Welcome to CeylonGo.');
-          },
-          error: () => {
-            this.isLoading.set(false);
-            this.goToStep('login');
-            this.successMessage.set('Account created successfully! Please log in with your password.');
-          },
-        });
+      next: (response) => {
+        this.isLoading.set(false);
+        this.authModalService.registeredFullName.set(fullName);
+        this.authModalService.registrationId.set(response.registration_id);
+        this.authModalService.setStep('verify-email', email);
+
+        const resendAfter = typeof response.resend_after === 'number' ? response.resend_after : 60;
+        const expiresIn = typeof response.expires_in === 'number' ? response.expires_in : 300;
+
+        this.otpExpiresIn.set(expiresIn);
+        this.startOtpCooldown(resendAfter);
+        this.startChallengeExpirationTimer(expiresIn);
+        setTimeout(() => this.getOtpInputElement(0)?.focus(), 150);
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
         if (err.status === 409) {
           this.errorMessage.set('An account with this email address already exists. Please log in instead.');
+        } else if (err.status === 422) {
+          this.errorMessage.set('Please check your registration details (password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number).');
+        } else if (err.status === 429) {
+          const retryAfter = this.parseRetryAfter(err);
+          this.errorMessage.set(`Too many registration attempts. Please wait ${retryAfter ? retryAfter + ' seconds' : 'a moment'} before trying again.`);
+        } else if (err.status === 503) {
+          this.errorMessage.set('Registration service is temporarily unavailable. Please try again shortly.');
+        } else if (err.status === 0) {
+          this.errorMessage.set('Unable to connect to CeylonGo server. Please check your internet connection.');
         } else {
           this.errorMessage.set(err.error?.detail || 'Registration failed. Please check your details and try again.');
         }
       },
     });
+  }
+
+  // =========================================================================
+  // EMAIL OTP VERIFICATION METHODS
+  // =========================================================================
+
+  private getOtpInputElement(index: number): HTMLInputElement | null {
+    const inputs = [
+      this.otp0Input,
+      this.otp1Input,
+      this.otp2Input,
+      this.otp3Input,
+      this.otp4Input,
+      this.otp5Input,
+    ];
+    return inputs[index]?.nativeElement ?? null;
+  }
+
+  get isOtpComplete(): boolean {
+    const digits = this.otpDigits();
+    return digits.length === 6 && digits.every((d) => d.length === 1 && /^\d$/.test(d));
+  }
+
+  onOtpInput(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value || '';
+    const digitsOnly = raw.replace(/\D/g, '');
+
+    if (digitsOnly.length > 1) {
+      const current = [...this.otpDigits()];
+      for (let i = 0; i < digitsOnly.length && index + i < 6; i++) {
+        current[index + i] = digitsOnly[i];
+        const el = this.getOtpInputElement(index + i);
+        if (el) el.value = digitsOnly[i];
+      }
+      this.otpDigits.set(current);
+      const nextIndex = Math.min(index + digitsOnly.length, 5);
+      this.getOtpInputElement(nextIndex)?.focus();
+      return;
+    }
+
+    const digit = digitsOnly.slice(-1);
+    const current = [...this.otpDigits()];
+    current[index] = digit;
+    this.otpDigits.set(current);
+    input.value = digit;
+
+    if (digit && index < 5) {
+      this.getOtpInputElement(index + 1)?.focus();
+    }
+  }
+
+  onOtpKeyDown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'Backspace') {
+      const current = [...this.otpDigits()];
+      if (!current[index] && index > 0) {
+        event.preventDefault();
+        current[index - 1] = '';
+        this.otpDigits.set(current);
+        const prev = this.getOtpInputElement(index - 1);
+        if (prev) {
+          prev.value = '';
+          prev.focus();
+        }
+      } else if (current[index]) {
+        current[index] = '';
+        this.otpDigits.set(current);
+        const el = this.getOtpInputElement(index);
+        if (el) el.value = '';
+      }
+    } else if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      this.getOtpInputElement(index - 1)?.focus();
+    } else if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault();
+      this.getOtpInputElement(index + 1)?.focus();
+    } else if (event.key === 'Enter') {
+      if (this.isOtpComplete && !this.isLoading()) {
+        this.onVerifyOtpSubmit();
+      }
+    }
+  }
+
+  onOtpPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text') || '';
+    const digits = pasted.replace(/\D/g, '').slice(0, 6);
+
+    if (!digits) return;
+
+    const current = ['', '', '', '', '', ''];
+    for (let i = 0; i < digits.length; i++) {
+      current[i] = digits[i];
+      const el = this.getOtpInputElement(i);
+      if (el) el.value = digits[i];
+    }
+    this.otpDigits.set(current);
+
+    const targetIndex = Math.min(digits.length, 5);
+    this.getOtpInputElement(targetIndex)?.focus();
+  }
+
+  onVerifyOtpSubmit(): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    if (this.isLoading() || !this.isOtpComplete) {
+      return;
+    }
+
+    const email = this.authModalService.userEmail().trim().toLowerCase();
+    const registrationId = this.authModalService.registrationId() || '';
+    const otp = this.otpDigits().join('');
+
+    if (!registrationId) {
+      this.errorMessage.set('Registration session expired or missing. Please restart registration.');
+      this.showRestartRegistration.set(true);
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    this.authService.verifyEmail({ email, registration_id: registrationId, otp }).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.stopOtpCooldownTimer();
+        this.stopChallengeExpirationTimer();
+        this.authModalService.registrationId.set(null);
+        this.showRestartRegistration.set(false);
+        this.authModalService.setStep('register-success');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isLoading.set(false);
+        const detail = (err.error?.detail || '').toString();
+        const detailLower = detail.toLowerCase();
+
+        if (err.status === 400 || err.status === 404 || err.status === 410) {
+          if (
+            detailLower.includes('expired') ||
+            detailLower.includes('locked') ||
+            detailLower.includes('not found') ||
+            detailLower.includes('challenge') ||
+            detailLower.includes('restart') ||
+            detailLower.includes('consumed')
+          ) {
+            this.errorMessage.set(detail || 'Verification session has expired or is invalid. Please restart registration.');
+            this.showRestartRegistration.set(true);
+            return;
+          }
+          this.errorMessage.set(detail || 'Invalid or expired verification code. Please check and try again.');
+        } else if (err.status === 409) {
+          this.errorMessage.set('This email address is already verified. You can now log in.');
+          setTimeout(() => this.goToStep('login'), 1500);
+        } else if (err.status === 422) {
+          this.errorMessage.set('Invalid verification code format. Please enter all 6 numeric digits.');
+        } else if (err.status === 429) {
+          const retryAfter = this.parseRetryAfter(err);
+          if (retryAfter) {
+            this.startOtpCooldown(retryAfter);
+          }
+          this.errorMessage.set(`Too many verification attempts. Please wait ${retryAfter ? retryAfter + 's' : 'a moment'} before trying again.`);
+        } else if (err.status === 503) {
+          this.errorMessage.set('Verification service is temporarily unavailable. Please try again shortly.');
+        } else if (err.status === 0) {
+          this.errorMessage.set('Unable to connect to CeylonGo server. Please check your internet connection.');
+        } else {
+          this.errorMessage.set(detail || 'Verification failed. Please check the code and try again.');
+        }
+      },
+    });
+  }
+
+  onResendOtp(): void {
+    if (this.isLoading() || this.resendOtpCooldown() > 0) {
+      return;
+    }
+
+    const email = this.authModalService.userEmail().trim().toLowerCase();
+    const registrationId = this.authModalService.registrationId() || '';
+
+    if (!registrationId) {
+      this.errorMessage.set('Registration session not found. Please restart registration.');
+      this.showRestartRegistration.set(true);
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.authService.resendEmailOtp({ email, registration_id: registrationId }).subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        // Update stored registration_id from every successful resend response:
+        if (response.registration_id) {
+          this.authModalService.registrationId.set(response.registration_id);
+        }
+        const resendAfter = typeof response.resend_after === 'number' ? response.resend_after : 60;
+        const expiresIn = typeof response.expires_in === 'number' ? response.expires_in : 300;
+
+        this.otpExpiresIn.set(expiresIn);
+        this.startOtpCooldown(resendAfter);
+        this.startChallengeExpirationTimer(expiresIn);
+        this.successMessage.set('A new verification code has been sent to your email.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isLoading.set(false);
+        const detail = (err.error?.detail || '').toString();
+        const detailLower = detail.toLowerCase();
+
+        if (err.status === 429) {
+          const retryAfter = this.parseRetryAfter(err);
+          if (retryAfter) {
+            this.startOtpCooldown(retryAfter);
+          }
+          this.errorMessage.set(`Too many requests. Please wait ${retryAfter ? retryAfter + 's' : 'before requesting another code'}.`);
+        } else if (err.status === 400 || err.status === 404 || err.status === 410) {
+          if (
+            detailLower.includes('expired') ||
+            detailLower.includes('not found') ||
+            detailLower.includes('challenge') ||
+            detailLower.includes('locked')
+          ) {
+            this.errorMessage.set('Verification session has expired. Please restart registration.');
+            this.showRestartRegistration.set(true);
+            return;
+          }
+          this.errorMessage.set(detail || 'Unable to resend verification code. Please try again.');
+        } else if (err.status === 503) {
+          this.errorMessage.set('Service temporarily unavailable. Please try again shortly.');
+        } else {
+          this.errorMessage.set(detail || 'Unable to resend verification code. Please try again.');
+        }
+      },
+    });
+  }
+
+  startOtpCooldown(seconds: number = 60): void {
+    this.stopOtpCooldownTimer();
+    this.resendOtpCooldown.set(seconds);
+    this.otpCooldownInterval = setInterval(() => {
+      const current = this.resendOtpCooldown();
+      if (current <= 1) {
+        this.resendOtpCooldown.set(0);
+        this.stopOtpCooldownTimer();
+      } else {
+        this.resendOtpCooldown.set(current - 1);
+      }
+    }, 1000);
+  }
+
+  private stopOtpCooldownTimer(): void {
+    if (this.otpCooldownInterval) {
+      clearInterval(this.otpCooldownInterval);
+      this.otpCooldownInterval = null;
+    }
+  }
+
+  startChallengeExpirationTimer(seconds: number = 300): void {
+    this.stopChallengeExpirationTimer();
+    this.otpExpiresIn.set(seconds);
+    this.challengeExpirationInterval = setInterval(() => {
+      const current = this.otpExpiresIn();
+      if (current <= 1) {
+        this.otpExpiresIn.set(0);
+        this.stopChallengeExpirationTimer();
+        this.errorMessage.set('Verification code has expired. Please request a new code or restart registration.');
+        this.showRestartRegistration.set(true);
+      } else {
+        this.otpExpiresIn.set(current - 1);
+      }
+    }, 1000);
+  }
+
+  private stopChallengeExpirationTimer(): void {
+    if (this.challengeExpirationInterval) {
+      clearInterval(this.challengeExpirationInterval);
+      this.challengeExpirationInterval = null;
+    }
+  }
+
+  private parseRetryAfter(err: HttpErrorResponse): number | null {
+    try {
+      const header = err.headers?.get('Retry-After');
+      if (header) {
+        const parsed = parseInt(header, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
+  }
+
+  restartRegistration(): void {
+    this.authModalService.registrationId.set(null);
+    this.showRestartRegistration.set(false);
+    this.clearSensitiveFormState();
+    this.stopOtpCooldownTimer();
+    this.stopChallengeExpirationTimer();
+    this.goToStep('register');
+  }
+
+  onChangeEmail(): void {
+    this.authModalService.registrationId.set(null);
+    this.showRestartRegistration.set(false);
+    this.clearSensitiveFormState();
+    this.stopOtpCooldownTimer();
+    this.stopChallengeExpirationTimer();
+    this.goToStep('entry');
+  }
+
+  onContinueToLoginAfterVerification(): void {
+    const email = this.authModalService.userEmail();
+    this.goToStep('login');
+    if (email) {
+      this.authModalService.userEmail.set(email);
+    }
   }
 
   // =========================================================================

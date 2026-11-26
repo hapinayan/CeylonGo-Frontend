@@ -1,9 +1,8 @@
-export const wishlistKinds = ['homestay', 'eco', 'rental', 'artisan-business', 'artisan-product'] as const;
+export const wishlistKinds = ['homestay', 'eco', 'guide', 'rental'] as const;
 export type WishlistKind = typeof wishlistKinds[number];
 
 export const wishlistLabels = {
-  homestay: 'Homestays', eco: 'Eco & Experiences', rental: 'Bike Rental',
-  'artisan-business': 'Artisan Businesses', 'artisan-product': 'Artisan Products',
+  homestay: 'Homestays', eco: 'Adventure & Activities', guide: 'Tour Guides', rental: 'Bike & Bicycle Rental',
 } satisfies Record<WishlistKind, string>;
 
 export interface SavedListing {

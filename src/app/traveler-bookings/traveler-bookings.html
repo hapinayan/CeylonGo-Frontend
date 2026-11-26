@@ -60,22 +60,6 @@
                 <dt>Payment status</dt><dd class="status-text">{{ b.paymentStatus ? label(b.paymentStatus) : 'Unavailable' }}</dd>
                 @if (b.paymentMethod) { <dt>Payment method</dt><dd class="status-text">{{ label(b.paymentMethod) }}</dd> }
               </dl>
-              @if (!preview() && (b.service === 'eco' || b.service === 'guide')) {
-                @let refund = refunds.state();
-                @if (refund.kind === 'ready') {
-                  <h4>Refund history</h4>
-                  <ul class="refund-list">
-                    @for (row of refund.data; track row.id) {
-                      <li>{{ row.currency }} {{ row.amount | number:'1.2-2' }} <span class="status-text">{{ label(row.refund_status) }}</span></li>
-                    } @empty { <li>No refunds recorded.</li> }
-                  </ul>
-                } @else {
-                  @if (refund.kind === 'unavailable') { <p role="status">Refund history is unavailable.</p> }
-                  <button class="secondary-button" type="button" [disabled]="refund.kind === 'loading'" (click)="refunds.load()">
-                    {{ refund.kind === 'loading' ? 'Loading refund history' : refund.kind === 'unavailable' ? 'Retry refund history' : 'View refund history' }}
-                  </button>
-                }
-              }
             </section>
           </div>
           @if (b.cancellation?.policy || b.cancellation?.cutoffHours != null || b.cancellation?.reason || b.cancellation?.at || b.refundEstimate) {

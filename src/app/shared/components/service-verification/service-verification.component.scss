@@ -1,0 +1,383 @@
+.verification-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+
+  .shield-icon {
+    width: 28px;
+    height: 28px;
+    color: #16a34a;
+    flex-shrink: 0;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .notice-content {
+    .notice-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #14532d;
+      margin: 0;
+    }
+
+    .notice-text {
+      font-size: 0.85rem;
+      color: #166534;
+      margin: 0.25rem 0 0;
+      line-height: 1.5;
+
+      strong {
+        color: #14532d;
+      }
+    }
+  }
+}
+
+.error-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.4rem;
+}
+
+.checkbox-group {
+  justify-content: flex-end;
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #475569;
+    cursor: pointer;
+  }
+}
+
+.doc-redacted-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #fef3c7;
+  color: #b45309;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+}
+
+.verification-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .section-title-wrap {
+    .section-heading {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #082b5c;
+      margin: 0;
+    }
+
+    .section-subheading {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin: 0.25rem 0 0;
+    }
+  }
+}
+
+// Input styling helper
+.input-field {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: #0066ff;
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
+  }
+}
+
+// Links
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .link-platform-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #082b5c;
+    background: #f1f5f9;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.35rem;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  .link-url-input {
+    flex: 1;
+  }
+
+  .btn-remove-link {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 0.35rem;
+    display: flex;
+    align-items: center;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+  }
+}
+
+.add-link-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e2e8f0;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
+
+  .select-platform {
+    width: 180px;
+
+    @media (max-width: 640px) {
+      width: 100%;
+    }
+  }
+
+  .input-new-url {
+    flex: 1;
+  }
+
+  .btn-add-link {
+    background: #082b5c;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+
+    &:hover:not(:disabled) {
+      background: #0066ff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 640px) {
+      width: 100%;
+    }
+  }
+}
+
+// Documents
+.doc-upload-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.upload-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    .field-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+    }
+  }
+}
+
+.dropzone-area {
+  position: relative;
+
+  .file-input-hidden {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  .dropzone-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.75rem 1rem;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      border-color: #0066ff;
+      background: #eff6ff;
+    }
+
+    .drop-icon {
+      width: 36px;
+      height: 36px;
+      color: #0066ff;
+      margin-bottom: 0.5rem;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .drop-prompt {
+      font-size: 0.875rem;
+      color: #334155;
+
+      strong {
+        color: #0066ff;
+      }
+    }
+
+    .drop-help {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+    }
+  }
+}
+
+.uploaded-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .list-heading {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+  }
+
+  .doc-item-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.85rem;
+
+    .doc-icon {
+      width: 22px;
+      height: 22px;
+      color: #0066ff;
+      flex-shrink: 0;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .doc-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .doc-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #082b5c;
+      }
+
+      .doc-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.15rem 0.45rem;
+        border-radius: 0.25rem;
+        text-transform: uppercase;
+      }
+    }
+
+    .btn-remove-doc {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+
+      &:hover {
+        color: #ef4444;
+        background: #fee2e2;
+      }
+    }
+  }
+}
+
+.notes-textarea {
+  resize: vertical;
+  min-height: 80px;
+}

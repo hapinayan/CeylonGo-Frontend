@@ -25,3 +25,16 @@ export interface ProviderAuthError {
   status: number;
   message: string;
 }
+
+export interface ProviderResponse {
+  id: number;
+  user_id: number;
+  business_name: string;
+  phone: string;
+  district: string;
+  verification_status: string;
+  submitted_at?: string | null;
+  decided_at?: string | null;
+  decision_reason?: string | null;
+  created_at: string;
+}

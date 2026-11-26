@@ -4,13 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
-import { BookingDraft, HomestayDetail as HomestayDetailModel } from '../../core/models/homestay.models';
+import {
+  BookingDraft,
+  HomestayDetail as HomestayDetailModel,
+  HomestayQuote,
+  InventoryUnitResponse,
+} from '../../core/models/homestay.models';
+import { AuthModalService } from '../../core/services/auth-modal.service';
+import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
+import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
 
 @Component({
   selector: 'app-homestay-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TravelerAuthModal],
   templateUrl: './homestay-detail.html',
   styleUrl: './homestay-detail.scss',
 })
@@ -18,6 +26,8 @@ export class HomestayDetail implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly homestayService = inject(HomestayService);
+  readonly authService = inject(AuthService);
+  readonly authModalService = inject(AuthModalService);
 
   private routeSub?: Subscription;
 
@@ -36,14 +46,30 @@ export class HomestayDetail implements OnInit, OnDestroy {
   readonly checkOutDate = signal<string>('');
   readonly adultsCount = signal<number>(2);
   readonly childrenCount = signal<number>(0);
+  readonly selectedUnitId = signal<number | null>(null);
   readonly dateErrorMessage = signal<string | null>(null);
   readonly guestErrorMessage = signal<string | null>(null);
+
+  // Live Availability & Quote Signals
+  readonly quote = signal<HomestayQuote | null>(null);
+  readonly availableRooms = signal<InventoryUnitResponse[]>([]);
+  readonly isCheckingAvailability = signal<boolean>(false);
+  readonly availabilityError = signal<string | null>(null);
 
   // UI state signals
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly toastMessage = signal<string | null>(null);
 
   // Computed Values
+  readonly selectedUnit = computed(() => {
+    const unitId = this.selectedUnitId();
+    if (!unitId) return null;
+    const avail = this.availableRooms().find((u) => u.id === unitId);
+    if (avail) return avail;
+    const h = this.homestay();
+    return h?.units?.find((u) => u.id === unitId) || null;
+  });
+
   readonly todayString = computed(() => {
     const d = new Date();
     return this.formatDate(d);
@@ -56,6 +82,13 @@ export class HomestayDetail implements OnInit, OnDestroy {
   });
 
   readonly estimatedBasePrice = computed(() => {
+    const q = this.quote();
+    if (q && q.total_amount) {
+      const parsed = parseFloat(q.total_amount);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
     const h = this.homestay();
     if (!h) return 0;
     return this.homestayService.calculateEstimatedPrice(h.price_per_night, this.nightsCount());
@@ -73,6 +106,10 @@ export class HomestayDetail implements OnInit, OnDestroy {
   readonly isCapacityExceeded = computed(() => {
     const h = this.homestay();
     if (!h) return false;
+    const unit = this.selectedUnit();
+    if (unit) {
+      return this.totalGuests() > unit.capacity;
+    }
     return this.totalGuests() > h.max_guests;
   });
 
@@ -84,11 +121,19 @@ export class HomestayDetail implements OnInit, OnDestroy {
       this.nightsCount() > 0 &&
       !this.isCapacityExceeded() &&
       !this.dateErrorMessage() &&
-      !this.guestErrorMessage()
+      !this.guestErrorMessage() &&
+      !this.isCheckingAvailability() &&
+      this.quote() !== null &&
+      this.availableRooms().length > 0 &&
+      this.selectedUnitId() !== null
     );
   });
 
   ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.homestayService.loadWishlist().subscribe({ error: () => {} });
+    }
+
     this.routeSub = this.route.paramMap.subscribe((params) => {
       const idParam = params.get('id');
       if (idParam) {
@@ -126,6 +171,7 @@ export class HomestayDetail implements OnInit, OnDestroy {
           this.homestay.set(item);
           this.isNotFound.set(false);
           this.initializeBookingDates();
+          this.fetchAvailabilityQuote();
         }
         this.isLoading.set(false);
       },
@@ -142,6 +188,7 @@ export class HomestayDetail implements OnInit, OnDestroy {
     const qCheckOut = qp.get('check_out');
     const qAdults = qp.get('adults');
     const qChildren = qp.get('children');
+    const qUnitId = qp.get('unit_id');
 
     const today = new Date();
     const defaultCheckIn = new Date(today);
@@ -159,13 +206,87 @@ export class HomestayDetail implements OnInit, OnDestroy {
     if (qChildren && !isNaN(Number(qChildren)) && Number(qChildren) >= 0) {
       this.childrenCount.set(Number(qChildren));
     }
+    if (qUnitId && !isNaN(Number(qUnitId))) {
+      this.selectedUnitId.set(Number(qUnitId));
+    }
 
     this.validateDates();
     this.validateGuests();
   }
 
+  fetchAvailabilityQuote(): void {
+    const h = this.homestay();
+    if (!h) return;
+
+    const checkIn = this.checkInDate();
+    const checkOut = this.checkOutDate();
+    if (!checkIn || !checkOut || this.dateErrorMessage()) {
+      return;
+    }
+
+    this.isCheckingAvailability.set(true);
+    this.availabilityError.set(null);
+
+    this.homestayService
+      .getHomestayAvailability(
+        h.id,
+        checkIn,
+        checkOut,
+        this.totalGuests(),
+        this.selectedUnitId() || undefined
+      )
+      .subscribe({
+        next: (quoteRes) => {
+          this.quote.set(quoteRes);
+          const rooms = quoteRes.available_rooms || [];
+          this.availableRooms.set(rooms);
+
+          // If a unit was selected but is not in available rooms, or no unit is selected, handle selection
+          const currentUnitId = this.selectedUnitId();
+          if (currentUnitId) {
+            const stillAvailable = rooms.some((r) => r.id === currentUnitId);
+            if (!stillAvailable) {
+              this.selectedUnitId.set(rooms.length > 0 ? rooms[0].id : null);
+            }
+          } else if (rooms.length === 1) {
+            this.selectedUnitId.set(rooms[0].id);
+          }
+
+          this.isCheckingAvailability.set(false);
+          this.validateGuests();
+        },
+        error: (err) => {
+          this.quote.set(null);
+          this.availableRooms.set([]);
+          this.selectedUnitId.set(null);
+          const detail = err.error?.detail || 'Unable to check live availability for requested dates.';
+          this.availabilityError.set(typeof detail === 'string' ? detail : 'Availability check failed.');
+          this.isCheckingAvailability.set(false);
+        },
+      });
+  }
+
+  selectUnit(unitId: number): void {
+    const isAvail = this.availableRooms().some((u) => u.id === unitId);
+    if (!isAvail) {
+      this.showToast('This unit is not available for the selected dates');
+      return;
+    }
+
+    if (this.selectedUnitId() === unitId) {
+      this.selectedUnitId.set(null);
+    } else {
+      this.selectedUnitId.set(unitId);
+      this.fetchAvailabilityQuote();
+    }
+    this.validateGuests();
+  }
+
   onDatesChanged(): void {
     this.validateDates();
+    if (!this.dateErrorMessage()) {
+      this.fetchAvailabilityQuote();
+    }
   }
 
   validateDates(): void {
@@ -201,6 +322,9 @@ export class HomestayDetail implements OnInit, OnDestroy {
     if (next < 1) return;
     this.adultsCount.set(next);
     this.validateGuests();
+    if (!this.dateErrorMessage()) {
+      this.fetchAvailabilityQuote();
+    }
   }
 
   updateChildren(delta: number): void {
@@ -208,6 +332,9 @@ export class HomestayDetail implements OnInit, OnDestroy {
     if (next < 0) return;
     this.childrenCount.set(next);
     this.validateGuests();
+    if (!this.dateErrorMessage()) {
+      this.fetchAvailabilityQuote();
+    }
   }
 
   validateGuests(): void {
@@ -219,7 +346,15 @@ export class HomestayDetail implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.totalGuests() > h.max_guests) {
+    const unit = this.selectedUnit();
+    if (unit) {
+      if (this.totalGuests() > unit.capacity) {
+        this.guestErrorMessage.set(
+          `Selected room "${unit.label}" capacity is ${unit.capacity} guests (you selected ${this.totalGuests()})`
+        );
+        return;
+      }
+    } else if (this.totalGuests() > h.max_guests) {
       this.guestErrorMessage.set(`Maximum property capacity is ${h.max_guests} guests`);
       return;
     }
@@ -231,6 +366,7 @@ export class HomestayDetail implements OnInit, OnDestroy {
     const h = this.homestay();
     if (!h || !this.canContinueToBooking()) return;
 
+    const unit = this.selectedUnit();
     const draft: BookingDraft = {
       homestayId: h.id,
       homestayName: h.name,
@@ -245,6 +381,9 @@ export class HomestayDetail implements OnInit, OnDestroy {
       nights: this.nightsCount(),
       basePrice: this.estimatedBasePrice(),
       estimatedTotal: this.estimatedTotal(),
+      selectedUnitId: unit?.id,
+      selectedUnitLabel: unit?.label,
+      selectedUnitCapacity: unit?.capacity,
     };
 
     this.homestayService.setBookingDraft(draft);
@@ -255,6 +394,7 @@ export class HomestayDetail implements OnInit, OnDestroy {
         check_out: this.checkOutDate(),
         adults: this.adultsCount(),
         children: this.childrenCount(),
+        unit_id: unit?.id || undefined,
       },
     });
   }
@@ -267,12 +407,20 @@ export class HomestayDetail implements OnInit, OnDestroy {
     const h = this.homestay();
     if (!h) return;
 
-    this.homestayService.changeWishlist(h).subscribe({
-      next: added => {
-        h.is_wishlisted = added;
-        this.showToast(added ? 'Saved to wishlist' : 'Removed from wishlist');
+    if (!this.authService.isAuthenticated()) {
+      this.showToast('Please sign in to save this stay to your wishlist');
+      this.authModalService.open('login', undefined, { type: 'wishlist' });
+      return;
+    }
+
+    this.homestayService.toggleWishlist(h.id).subscribe({
+      next: (saved) => {
+        h.is_wishlisted = saved;
+        this.showToast(saved ? `Saved "${h.name}" to wishlist` : 'Removed from wishlist');
       },
-      error: () => this.showToast('Could not update the wishlist. Try again.'),
+      error: () => {
+        this.showToast('Could not update wishlist. Please try again.');
+      },
     });
   }
 
@@ -287,6 +435,8 @@ export class HomestayDetail implements OnInit, OnDestroy {
 
   // Gallery Modal Methods
   openGallery(index: number = 0): void {
+    const h = this.homestay();
+    if (!h || !h.images || h.images.length === 0) return;
     this.activePhotoIndex.set(index);
     this.isGalleryModalOpen.set(true);
   }
@@ -329,5 +479,3 @@ export class HomestayDetail implements OnInit, OnDestroy {
 }
 
 export default HomestayDetail;
-
-

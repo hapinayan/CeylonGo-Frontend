@@ -42,6 +42,7 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
 
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(TravelerHome);
     component = fixture.componentInstance;
@@ -249,16 +250,28 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     expect(provinces[5]).toBe('Northern Province');
   });
 
-  it('should update queryParams and show toast when destination card is clicked', () => {
+  it('should navigate to /homestays with location queryParam when destination card is clicked', () => {
     const jaffna = component.popularDestinations[0];
     component.onDestinationClick(jaffna);
     fixture.detectChanges();
 
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: expect.objectContaining({ destination: 'Jaffna' }),
-      queryParamsHandling: 'merge',
-    }));
-    expect(component.toastMessage()).toContain('Jaffna');
+    expect(router.navigate).toHaveBeenCalledWith(['/homestays'], {
+      queryParams: { location: 'Jaffna' },
+    });
+  });
+
+  it('should navigate to correct destination route when Stay, Discover & Ride card is clicked', () => {
+    const homestayCard = component.exploreCards[0];
+    component.onExploreCardClick(homestayCard);
+    expect(router.navigate).toHaveBeenCalledWith(['/homestays']);
+
+    const guideCard = component.exploreCards[1];
+    component.onExploreCardClick(guideCard);
+    expect(router.navigate).toHaveBeenCalledWith(['/tour-guides']);
+
+    const bikeCard = component.exploreCards[2];
+    component.onExploreCardClick(bikeCard);
+    expect(router.navigate).toHaveBeenCalledWith(['/bicycles']);
   });
 
   it('should scroll destinations track left and right', () => {

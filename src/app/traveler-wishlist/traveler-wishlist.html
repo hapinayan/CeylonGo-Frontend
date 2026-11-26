@@ -35,7 +35,6 @@
         </label>
       </div>
       <p class="count" aria-live="polite">{{ count() }} saved {{ count() === 1 ? 'item' : 'items' }} loaded@if (visible().length !== count()) { · {{ visible().length }} shown}</p>
-      <p class="coverage">Tour Guides and standalone Activities have no account wishlist on this backend. Eco experiences appear under Eco & Experiences.</p>
       @for (section of sections(); track section.kind) {
         @if (section.state === 'error') {
           <p class="notice" role="status">{{ labels[section.kind] }} could not load.

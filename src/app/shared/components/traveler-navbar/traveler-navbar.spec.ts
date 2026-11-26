@@ -89,14 +89,14 @@ describe('TravelerNavbar Component — Phase 10B Refinement', () => {
     expect(activeLink?.textContent?.trim()).toBe('Home');
   });
 
-  it('should render the Become A Host button and navigate to /provider/register on click for authenticated traveler', () => {
+  it('should render the Become A Host button and navigate to /provider on click for authenticated traveler', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const hostBtn = compiled.querySelector('.btn-become-host') as HTMLButtonElement;
     expect(hostBtn).toBeTruthy();
     expect(hostBtn.textContent).toContain('Become A Host');
 
     hostBtn.click();
-    expect(router.navigate).toHaveBeenCalledWith(['/provider/register']);
+    expect(router.navigate).toHaveBeenCalledWith(['/provider']);
   });
 
   it('should toggle notification dropdown on bell icon click', () => {
@@ -198,9 +198,9 @@ describe('TravelerNavbar Component — Phase 10B Refinement', () => {
     expect(compiled.querySelector('.btn-notification')).toBeNull();
     expect(compiled.querySelector('.btn-profile')).toBeNull();
 
-    // Clicking Become a Host navigates to /provider/register
+    // Clicking Become a Host navigates to /provider
     guestHostBtn.click();
-    expect(router.navigate).toHaveBeenCalledWith(['/provider/register']);
+    expect(router.navigate).toHaveBeenCalledWith(['/provider']);
 
     // Clicking Login / Register opens auth modal in login mode
     loginRegisterBtn.click();
