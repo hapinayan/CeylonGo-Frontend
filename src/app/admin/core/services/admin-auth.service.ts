@@ -175,6 +175,13 @@ export class AdminAuthService {
       try {
         sessionStorage.removeItem(ADMIN_TOKEN_KEY);
         sessionStorage.removeItem(ADMIN_USER_KEY);
+        sessionStorage.removeItem('ceylongo_preview_providers_state');
+        sessionStorage.removeItem('ceylongo_preview_travelers_state');
+        sessionStorage.removeItem('ceylongo_preview_traveler_history_state');
+        sessionStorage.removeItem('ceylongo_preview_homestays_state');
+        sessionStorage.removeItem('ceylongo_preview_activities_state');
+        sessionStorage.removeItem('ceylongo_preview_rentals_state');
+        sessionStorage.removeItem('ceylongo_preview_rental_documents_state');
       } catch {
         // Storage access fallback
       }

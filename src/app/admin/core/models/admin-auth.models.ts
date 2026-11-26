@@ -1,3 +1,5 @@
+export type AdminRole = string;
+
 export interface AdminLoginRequest {
   email: string;
   password: string;

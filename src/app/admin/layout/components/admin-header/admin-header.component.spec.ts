@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, provideRouter, Router } from '@angular/router';
+import { Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AdminUser } from '../../../core/models/admin-auth.models';
@@ -10,6 +12,8 @@ describe('AdminHeaderComponent', () => {
   let component: AdminHeaderComponent;
   let fixture: ComponentFixture<AdminHeaderComponent>;
   let logoutSpy: ReturnType<typeof vi.fn>;
+  let routerEvents$: Subject<any>;
+  let mockRouter: any;
 
   const mockUserSignal = signal<AdminUser | null>({
     id: 1,
@@ -24,10 +28,24 @@ describe('AdminHeaderComponent', () => {
 
   beforeEach(async () => {
     logoutSpy = vi.fn();
+    routerEvents$ = new Subject<any>();
+    mockRouter = {
+      url: '/admin/dashboard',
+      events: routerEvents$.asObservable(),
+      routerState: {
+        root: {
+          firstChild: null,
+          snapshot: { data: {} },
+        },
+      },
+      createUrlTree: vi.fn(),
+      serializeUrl: vi.fn().mockReturnValue('/admin/dashboard'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [AdminHeaderComponent],
       providers: [
+        provideRouter([]),
         {
           provide: AdminAuthService,
           useValue: {
@@ -36,6 +54,10 @@ describe('AdminHeaderComponent', () => {
             roleDisplayName: mockRoleNameSignal,
             logout: logoutSpy,
           },
+        },
+        {
+          provide: Router,
+          useValue: mockRouter,
         },
       ],
     }).compileComponents();
@@ -102,5 +124,63 @@ describe('AdminHeaderComponent', () => {
   it('should not contain desktop collapse button, preventing desktop control duplication', () => {
     const desktopCollapseBtn = fixture.nativeElement.querySelector('.desktop-collapse-btn');
     expect(desktopCollapseBtn).toBeNull();
+  });
+
+  it('should initialize with correct breadcrumb from router.url', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Dashboard');
+    expect(component.currentBreadcrumb()).toBe('Dashboard');
+  });
+
+  it('should render root breadcrumb as clickable link targeting /admin/dashboard', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const rootLink = compiled.querySelector('.crumb-parent.crumb-link') as HTMLAnchorElement;
+    expect(rootLink).toBeTruthy();
+    expect(rootLink.textContent).toContain('CeylonGo Administration');
+    expect(rootLink.getAttribute('href') || rootLink.getAttribute('ng-reflect-router-link')).toBeTruthy();
+  });
+
+  it('should dynamically update breadcrumb on NavigationEnd events for all admin routes', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // Travelers route
+    routerEvents$.next(new NavigationEnd(1, '/admin/travelers', '/admin/travelers'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Travelers');
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Travelers');
+
+    // Providers route
+    routerEvents$.next(new NavigationEnd(2, '/admin/providers', '/admin/providers'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Service Providers');
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Service Providers');
+
+    // Verifications route
+    routerEvents$.next(new NavigationEnd(3, '/admin/verifications', '/admin/verifications'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Verifications');
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Verifications');
+
+    // Homestays route
+    routerEvents$.next(new NavigationEnd(4, '/admin/homestays', '/admin/homestays'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Homestays');
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Homestays');
+
+    // Return to Dashboard
+    routerEvents$.next(new NavigationEnd(5, '/admin/dashboard', '/admin/dashboard'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Dashboard');
+    expect(compiled.querySelector('.crumb-current')?.textContent).toBe('Dashboard');
+  });
+
+  it('should strip query parameters and hash fragments when resolving breadcrumbs', () => {
+    routerEvents$.next(new NavigationEnd(1, '/admin/travelers?page=2&status=active#top', '/admin/travelers?page=2&status=active#top'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Travelers');
+
+    routerEvents$.next(new NavigationEnd(2, '/admin/verifications?category=tour_guide', '/admin/verifications?category=tour_guide'));
+    fixture.detectChanges();
+    expect(component.currentBreadcrumb()).toBe('Verifications');
   });
 });

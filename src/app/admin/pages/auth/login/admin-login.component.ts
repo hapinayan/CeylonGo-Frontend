@@ -36,6 +36,9 @@ export class AdminLoginComponent {
 
   private readonly ALLOWED_ADMIN_ROUTES: readonly string[] = [
     '/admin/dashboard',
+    '/admin/travelers',
+    '/admin/providers',
+    '/admin/verifications',
     '/admin/users',
     '/admin/homestays',
     '/admin/rentals',

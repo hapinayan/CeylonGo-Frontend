@@ -1,0 +1,120 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="bookingDetailTitle">
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="title-group">
+        <h2 id="bookingDetailTitle" class="title">Booking Dossier &bull; {{ booking.booking_reference }}</h2>
+        <span class="subtitle">Booked on {{ booking.created_at | date:'mediumDate' }}</span>
+      </div>
+      <div class="header-badges">
+        <span class="category-badge" [attr.data-cat]="booking.category">
+          {{ booking.category | uppercase }}
+        </span>
+        <span class="status-badge" [attr.data-status]="booking.booking_status">
+          {{ booking.booking_status | uppercase }}
+        </span>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close modal">&times;</button>
+    </header>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Top Service Banner -->
+      <div class="service-banner">
+        <div class="service-info">
+          <h3 class="service-title">{{ booking.service_title }}</h3>
+          <span class="provider-line">Provided by <strong>{{ booking.provider_business_name || booking.provider_name }}</strong></span>
+        </div>
+        <div class="amount-badge">
+          <span class="amount-currency">{{ booking.currency }}</span>
+          <span class="amount-val">{{ booking.amount | number }}</span>
+          <span class="payment-badge" [attr.data-pay]="booking.payment_status">
+            {{ booking.payment_status | uppercase }} &bull; {{ booking.payment_method }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Grid: Traveler & Provider -->
+      <div class="grid-2 mt-3">
+        <div class="info-card">
+          <h4>Traveler Profile</h4>
+          <div class="key-value">
+            <span class="label">Name:</span>
+            <span class="value">{{ booking.traveler_name }}</span>
+          </div>
+          <div class="key-value">
+            <span class="label">Email:</span>
+            <span class="value">{{ booking.traveler_email }}</span>
+          </div>
+          <div class="key-value" *ngIf="booking.traveler_phone">
+            <span class="label">Phone:</span>
+            <span class="value">{{ booking.traveler_phone }}</span>
+          </div>
+          <div class="key-value">
+            <span class="label">Guests / Participants:</span>
+            <span class="value">{{ booking.number_of_guests || 1 }} person(s)</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h4>Provider & Schedule</h4>
+          <div class="key-value">
+            <span class="label">Business:</span>
+            <span class="value">{{ booking.provider_business_name || 'N/A' }}</span>
+          </div>
+          <div class="key-value">
+            <span class="label">Host / Lead:</span>
+            <span class="value">{{ booking.provider_name }}</span>
+          </div>
+          <div class="key-value">
+            <span class="label">Start / Check-in:</span>
+            <span class="value font-mono">{{ booking.start_date | date:'medium' }}</span>
+          </div>
+          <div class="key-value" *ngIf="booking.end_date">
+            <span class="label">End / Check-out:</span>
+            <span class="value font-mono">{{ booking.end_date | date:'medium' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial & Policy Details -->
+      <div class="section mt-3">
+        <h4 class="section-title">Terms & Policy Snapshots</h4>
+        <div class="policy-box">
+          <p><strong>Cancellation Policy:</strong> {{ booking.cancellation_policy || 'Standard platform cancellation policy applies.' }}</p>
+          <p *ngIf="booking.security_deposit">
+            <strong>Security Deposit:</strong> LKR {{ booking.security_deposit | number }} (Pre-authorized)
+          </p>
+          <p *ngIf="booking.special_requests">
+            <strong>Special Requests:</strong> {{ booking.special_requests }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Audit History -->
+      <div class="section mt-3" *ngIf="booking.audit_history && booking.audit_history.length > 0">
+        <h4 class="section-title">Status Audit Trail</h4>
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let ev of booking.audit_history">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+              <span class="timeline-status">{{ ev.status | uppercase }}</span>
+              <span class="timeline-time">{{ ev.changed_at | date:'medium' }}</span>
+              <p class="timeline-notes" *ngIf="ev.notes">{{ ev.notes }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="modal-footer">
+      <div class="footer-left">
+        <span class="footer-notice">Platform Governance &bull; Read-only Audit Record</span>
+      </div>
+      <div class="footer-right">
+        <button type="button" class="btn-primary" (click)="onClose()">Close Dossier</button>
+      </div>
+    </footer>
+  </div>
+</div>

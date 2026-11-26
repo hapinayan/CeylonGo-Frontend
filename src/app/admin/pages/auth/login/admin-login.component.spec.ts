@@ -207,6 +207,8 @@ describe('AdminLoginComponent', () => {
   describe('returnUrl validation (FINDING-SEC-01)', () => {
     it('should accept valid internal admin routes', () => {
       expect(component.getSafeReturnUrl('/admin/dashboard')).toBe('/admin/dashboard');
+      expect(component.getSafeReturnUrl('/admin/travelers')).toBe('/admin/travelers');
+      expect(component.getSafeReturnUrl('/admin/providers')).toBe('/admin/providers');
       expect(component.getSafeReturnUrl('/admin/users')).toBe('/admin/users');
       expect(component.getSafeReturnUrl('/admin/homestays?page=2')).toBe('/admin/homestays?page=2');
       expect(component.getSafeReturnUrl('/admin/bookings/123')).toBe('/admin/bookings/123');

@@ -1,0 +1,215 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="artisanDetailTitle">
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="title-group">
+        <h2 id="artisanDetailTitle" class="title">{{ listing.title }}</h2>
+        <span class="subtitle">{{ listing.provider_business_name || 'Independent Artisan' }} &bull; {{ listing.city }}, {{ listing.district }}</span>
+      </div>
+      <div class="header-badges">
+        <span class="status-badge" [attr.data-status]="listing.approval_status">
+          {{ listing.approval_status | uppercase }}
+        </span>
+        <span class="badge-featured" *ngIf="listing.is_featured">Featured Guild</span>
+        <span class="badge-verified" *ngIf="listing.is_verified">Verified Craft</span>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close modal">&times;</button>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="modal-tabs">
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'details'" (click)="activeTab = 'details'">
+        Business Profile
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'products'" (click)="activeTab = 'products'">
+        Showcase Items ({{ products.length }})
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
+        Customer Reviews ({{ reviews.length }})
+      </button>
+    </nav>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Tab 1: Business Profile -->
+      <div *ngIf="activeTab === 'details'" class="tab-content">
+        <section class="section">
+          <h3 class="section-title">Craft Heritage & Description</h3>
+          <p class="desc-text">{{ listing.description || 'Authentic Sri Lankan handicraft and artisanal workshop.' }}</p>
+          <div class="meta-row">
+            <span class="chip-craft">Craft: {{ listing.craft_category | uppercase }}</span>
+            <span class="chip-status" [class.active]="listing.is_active">{{ listing.is_active ? 'Public Catalog: Active' : 'Public Catalog: Inactive' }}</span>
+          </div>
+        </section>
+
+        <section class="section grid-2">
+          <div class="info-card">
+            <h4>Location & Operations</h4>
+            <div class="key-value">
+              <span class="label">City:</span>
+              <span class="value">{{ listing.city }}</span>
+            </div>
+            <div class="key-value">
+              <span class="label">District:</span>
+              <span class="value">{{ listing.district }}</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Province:</span>
+              <span class="value">{{ listing.province || 'Sri Lanka' }}</span>
+            </div>
+            <div class="key-value" *ngIf="listing.phone">
+              <span class="label">Contact Phone:</span>
+              <span class="value">{{ listing.phone }}</span>
+            </div>
+            <div class="key-value" *ngIf="listing.email">
+              <span class="label">Email:</span>
+              <span class="value">{{ listing.email }}</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h4>Moderation Status</h4>
+            <div class="key-value">
+              <span class="label">Approval:</span>
+              <span class="value">{{ listing.approval_status | titlecase }}</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Verification:</span>
+              <span class="value">{{ listing.is_verified ? 'Verified' : 'Pending' }}</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Featured:</span>
+              <span class="value">{{ listing.is_featured ? 'Yes' : 'No' }}</span>
+            </div>
+            <div class="key-value" *ngIf="listing.rejection_reason">
+              <span class="label">Reason / Notes:</span>
+              <span class="value danger-text">{{ listing.rejection_reason }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 2: Showcase Items -->
+      <div *ngIf="activeTab === 'products'" class="tab-content">
+        <div class="products-grid" *ngIf="products.length > 0; else noProducts">
+          <div class="product-card" *ngFor="let p of products">
+            <div class="prod-header">
+              <div class="prod-title-group">
+                <h4 class="prod-title">{{ p.title }}</h4>
+                <span class="prod-type">{{ p.item_type }} &bull; SKU: {{ p.sku || 'N/A' }}</span>
+              </div>
+              <span class="prod-status" [attr.data-status]="p.approval_status">
+                {{ p.approval_status | uppercase }}
+              </span>
+            </div>
+            <div class="prod-meta">
+              <span class="prod-price">LKR {{ p.price | number }}</span>
+              <span class="prod-stock">Stock: {{ p.stock_quantity }} units</span>
+            </div>
+            <div class="prod-actions" *ngIf="canReview">
+              <button
+                *ngIf="p.approval_status !== 'approved'"
+                type="button"
+                class="btn-sm btn-approve"
+                (click)="onApproveProd(p.id)"
+              >
+                Approve Item
+              </button>
+              <button
+                *ngIf="p.approval_status !== 'rejected'"
+                type="button"
+                class="btn-sm btn-reject"
+                (click)="onRejectProd(p.id)"
+              >
+                Reject Item
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noProducts>
+          <div class="empty-state">
+            <p>No showcase items currently uploaded for this artisan listing.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Tab 3: Reviews -->
+      <div *ngIf="activeTab === 'reviews'" class="tab-content">
+        <div class="reviews-list" *ngIf="reviews.length > 0; else noReviews">
+          <div class="review-card" *ngFor="let r of reviews">
+            <div class="rev-header">
+              <div class="rev-rating">
+                <span class="stars">&#9733; {{ r.rating }}</span>
+                <span class="rev-title" *ngIf="r.title">{{ r.title }}</span>
+              </div>
+              <span class="rev-visibility" [class.published]="r.is_published">
+                {{ r.is_published ? 'Published' : 'Hidden' }}
+              </span>
+            </div>
+            <p class="rev-comment">{{ r.comment }}</p>
+            <div class="rev-footer">
+              <span class="verified-tag" *ngIf="r.is_verified_booking">&#10003; Verified Booking</span>
+              <button
+                *ngIf="canModerate"
+                type="button"
+                class="btn-toggle-publish"
+                (click)="onToggleRev(r)"
+              >
+                {{ r.is_published ? 'Hide Review' : 'Publish Review' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noReviews>
+          <div class="empty-state">
+            <p>No customer reviews logged for this artisan workshop.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <footer class="modal-footer">
+      <div class="footer-left" *ngIf="canReview">
+        <button
+          type="button"
+          class="btn-feature"
+          [disabled]="listing.approval_status !== 'approved' || !listing.is_active"
+          (click)="onToggleFeature()"
+        >
+          {{ listing.is_featured ? 'Remove Featured Status' : 'Mark as Featured Guild' }}
+        </button>
+      </div>
+      <div class="footer-right">
+        <button type="button" class="btn-secondary" (click)="onClose()">Close</button>
+        <button
+          *ngIf="canReview && listing.approval_status !== 'rejected'"
+          type="button"
+          class="btn-danger"
+          [disabled]="isProcessing"
+          (click)="onReject()"
+        >
+          Reject Listing
+        </button>
+        <button
+          *ngIf="canReview && listing.approval_status === 'approved'"
+          type="button"
+          class="btn-warning"
+          [disabled]="isProcessing"
+          (click)="onSuspend()"
+        >
+          Suspend Listing
+        </button>
+        <button
+          *ngIf="canReview && listing.approval_status !== 'approved'"
+          type="button"
+          class="btn-primary"
+          [disabled]="isProcessing"
+          (click)="onApprove()"
+        >
+          Approve Listing
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>

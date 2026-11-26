@@ -1,0 +1,261 @@
+<div class="modal-backdrop" (click)="onClose()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'vehicle-title-' + vehicle.id">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-titles">
+        <div class="type-badge-row">
+          <span class="badge-type" [ngClass]="'type-' + vehicle.vehicle_type">
+            {{ vehicle.vehicle_type === 'bike' ? 'Motorbike / Scooter' : (vehicle.vehicle_type === 'bicycle' ? 'Bicycle' : 'Tuk-Tuk') }}
+          </span>
+          <span class="badge-motorized" *ngIf="isMotorized(vehicle.vehicle_type)">Motorized Vehicle</span>
+          <span class="badge-non-motorized" *ngIf="!isMotorized(vehicle.vehicle_type)">Non-Motorized (No License Plate Required)</span>
+        </div>
+        <h2 [id]="'vehicle-title-' + vehicle.id" class="modal-title">{{ vehicle.vehicle_name }}</h2>
+        <p class="modal-subtitle">Provider: {{ vehicle.provider_business_name }} &bull; District: {{ vehicle.district }}</p>
+      </div>
+      <button type="button" class="btn-close" (click)="onClose()" aria-label="Close dialog">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Status Strip -->
+      <div class="status-strip">
+        <div class="strip-item">
+          <span class="strip-label">Approval Status</span>
+          <span class="badge-status" [ngClass]="'status-' + vehicle.approval_status">
+            {{ vehicle.approval_status | uppercase }}
+          </span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Verification</span>
+          <span class="badge-verify" [ngClass]="'verify-' + vehicle.verification_status">
+            {{ vehicle.verification_status | uppercase }}
+          </span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Fleet Status</span>
+          <span class="badge-avail" [ngClass]="'avail-' + vehicle.status">
+            {{ vehicle.status | titlecase }}
+          </span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Rate / Day</span>
+          <span class="strip-value font-price">LKR {{ vehicle.price_per_day | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <!-- Vehicle Specifications -->
+      <div class="detail-section">
+        <h4 class="section-title">Vehicle Specifications</h4>
+        <div class="specs-grid">
+          <div class="spec-item">
+            <span class="spec-label">License Plate</span>
+            <span class="spec-val font-mono">{{ vehicle.license_plate || 'Not Applicable (Bicycle)' }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Model Year</span>
+            <span class="spec-val">{{ vehicle.model_year || 'N/A' }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Transmission</span>
+            <span class="spec-val">{{ vehicle.transmission || 'Manual' }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Fuel / Power Type</span>
+            <span class="spec-val">{{ vehicle.fuel_type || 'N/A' }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Seating Capacity</span>
+            <span class="spec-val">{{ vehicle.seating_capacity || 1 }} Persons</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Depot Location</span>
+            <span class="spec-val">{{ vehicle.location_name || vehicle.city || vehicle.district }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Provider Contact Information -->
+      <div class="detail-section">
+        <h4 class="section-title">Rental Provider Information</h4>
+        <div class="specs-grid">
+          <div class="spec-item">
+            <span class="spec-label">Business Name</span>
+            <span class="spec-val">{{ vehicle.provider_business_name }}</span>
+          </div>
+          <div class="spec-item" *ngIf="vehicle.provider_name">
+            <span class="spec-label">Contact Person</span>
+            <span class="spec-val">{{ vehicle.provider_name }}</span>
+          </div>
+          <div class="spec-item" *ngIf="vehicle.provider_phone">
+            <span class="spec-label">Contact Phone</span>
+            <span class="spec-val">{{ vehicle.provider_phone }}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Cancellation Policy</span>
+            <span class="spec-val">{{ vehicle.cancellation_policy || 'Standard' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentation & Compliance Section -->
+      <div class="detail-section">
+        <div class="section-header-flex">
+          <h4 class="section-title">Fleet Documents & Compliance</h4>
+          <span class="doc-count-badge">
+            {{ vehicle.verified_documents_count }} / {{ vehicle.documents_count }} Verified
+          </span>
+        </div>
+
+        <!-- Bicycle Notice -->
+        <div class="bicycle-notice-box" *ngIf="!isMotorized(vehicle.vehicle_type)">
+          <div class="notice-icon">🚲</div>
+          <div class="notice-content">
+            <span class="notice-title">Ordinary Bicycle Compliance Rule</span>
+            <p class="notice-text">
+              In accordance with Sri Lankan transport regulations, non-motorized bicycles do not require Motor Traffic Department revenue licenses, road fitness certificates, or statutory motor vehicle insurance.
+            </p>
+          </div>
+        </div>
+
+        <!-- Motorized Requirements Notice -->
+        <div class="motorized-notice-box" *ngIf="isMotorized(vehicle.vehicle_type)">
+          <div class="notice-icon">🛡️</div>
+          <div class="notice-content">
+            <span class="notice-title">Motorized Fleet Requirement</span>
+            <p class="notice-text">
+              Motorbikes and Tuk-Tuks require verified <strong>Revenue License</strong> and <strong>Insurance Certificate</strong> before listing approval.
+            </p>
+          </div>
+        </div>
+
+        <!-- Document List -->
+        <div class="documents-list" *ngIf="documents.length > 0">
+          <div class="document-item-card" *ngFor="let doc of documents">
+            <div class="doc-icon">📄</div>
+            <div class="doc-info">
+              <span class="doc-title">{{ getDocName(doc.document_type) }}</span>
+              <span class="doc-meta" *ngIf="doc.expiry_date">Expires: {{ doc.expiry_date }}</span>
+              <span class="doc-notes" *ngIf="doc.verification_notes">{{ doc.verification_notes }}</span>
+            </div>
+            <div class="doc-status">
+              <span class="doc-badge" [class.badge-verified]="doc.is_verified" [class.badge-unverified]="!doc.is_verified">
+                {{ doc.is_verified ? 'Verified' : 'Pending Verification' }}
+              </span>
+            </div>
+            <div class="doc-actions">
+              <button
+                type="button"
+                class="btn-doc-view"
+                (click)="previewDoc(doc)"
+                title="Preview document file"
+              >
+                Inspect
+              </button>
+              <button
+                type="button"
+                *ngIf="canVerifyDocs"
+                class="btn-doc-toggle"
+                [class.btn-verify]="!doc.is_verified"
+                [class.btn-unverify]="doc.is_verified"
+                (click)="onToggleDocVerify(doc)"
+                [disabled]="isProcessing"
+              >
+                {{ doc.is_verified ? 'Mark Unverified' : 'Mark Verified' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-docs-box" *ngIf="documents.length === 0 && isMotorized(vehicle.vehicle_type)">
+          <span>No compliance documents have been submitted for this motorized vehicle.</span>
+        </div>
+      </div>
+
+      <!-- Rejection Notice -->
+      <div class="rejection-box" *ngIf="vehicle.approval_status === 'rejected' && vehicle.rejection_reason">
+        <h5 class="rejection-title">Listing Rejection Reason</h5>
+        <p class="rejection-text">{{ vehicle.rejection_reason }}</p>
+        <span class="rejection-time" *ngIf="vehicle.reviewed_at">Reviewed on {{ vehicle.reviewed_at | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Close</button>
+      <div class="action-buttons" *ngIf="canReview">
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="isProcessing || vehicle.approval_status === 'rejected'"
+          (click)="onReject()"
+        >
+          Reject Listing
+        </button>
+        <button
+          type="button"
+          class="btn btn-warning"
+          [disabled]="isProcessing || vehicle.approval_status === 'suspended'"
+          (click)="onSuspend()"
+        >
+          Suspend
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="isProcessing || vehicle.approval_status === 'approved'"
+          (click)="onApprove()"
+        >
+          {{ isProcessing ? 'Processing...' : 'Approve Vehicle' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Preview Sub-Modal -->
+  <div class="sub-modal-backdrop" *ngIf="selectedDocumentForPreview" (click)="closeDocPreview()">
+    <div class="sub-modal-card" (click)="$event.stopPropagation()">
+      <div class="sub-modal-header">
+        <h4>{{ getDocName(selectedDocumentForPreview.document_type) }}</h4>
+        <button type="button" class="btn-close" (click)="closeDocPreview()">&times;</button>
+      </div>
+      <div class="sub-modal-body">
+        <div class="doc-preview-viewer">
+          <svg viewBox="0 0 320 220" width="100%" height="220" class="doc-mock-svg">
+            <rect width="320" height="220" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+            <text x="20" y="35" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0369a1">
+              DEMOCRATIC SOCIALIST REPUBLIC OF SRI LANKA
+            </text>
+            <text x="20" y="60" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">
+              {{ getDocName(selectedDocumentForPreview.document_type) | uppercase }}
+            </text>
+            <line x1="20" y1="70" x2="300" y2="70" stroke="#0284c7" stroke-width="1.5"/>
+            <text x="20" y="95" font-family="monospace" font-size="11" fill="#334155">
+              Registration No: {{ vehicle.license_plate || 'WP-BIKE-2026' }}
+            </text>
+            <text x="20" y="115" font-family="sans-serif" font-size="11" fill="#334155">
+              Vehicle: {{ vehicle.vehicle_name }}
+            </text>
+            <text x="20" y="135" font-family="sans-serif" font-size="11" fill="#334155">
+              Registered Owner: {{ vehicle.provider_business_name }}
+            </text>
+            <text x="20" y="155" font-family="sans-serif" font-size="11" fill="#334155">
+              Valid Period: 2026-01-01 to 2026-12-31
+            </text>
+            <rect x="20" y="175" width="90" height="26" rx="4" [attr.fill]="selectedDocumentForPreview.is_verified ? '#dcfce7' : '#fef3c7'"/>
+            <text x="28" y="192" font-family="sans-serif" font-size="10" font-weight="bold" [attr.fill]="selectedDocumentForPreview.is_verified ? '#166534' : '#92400e'">
+              {{ selectedDocumentForPreview.is_verified ? 'OFFICIALLY VERIFIED' : 'PENDING AUDIT' }}
+            </text>
+          </svg>
+        </div>
+      </div>
+      <div class="sub-modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDocPreview()">Close Preview</button>
+      </div>
+    </div>
+  </div>
+</div>

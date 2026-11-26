@@ -1,0 +1,112 @@
+<div class="dialog-backdrop" (click)="onCancel()">
+  <div class="dialog-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="review-dialog-title">
+    <div class="dialog-header">
+      <h3 id="review-dialog-title" class="dialog-title">Review Rental Vehicle Listing</h3>
+      <button type="button" class="btn-close" (click)="onCancel()" aria-label="Close dialog">&times;</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="vehicle-summary-banner">
+        <span class="vehicle-name">{{ vehicle.vehicle_name }}</span>
+        <span class="vehicle-meta">
+          {{ vehicle.provider_business_name }} &bull;
+          {{ vehicle.vehicle_type === 'bicycle' ? 'Bicycle' : (vehicle.license_plate || 'Motorized') }}
+        </span>
+      </div>
+
+      <!-- Decision Selector -->
+      <div class="form-group">
+        <label class="form-label">Review Decision <span class="required">*</span></label>
+        <div class="decision-toggle-group">
+          <button
+            type="button"
+            class="decision-btn btn-opt-approve"
+            [class.active]="decision === 'approved'"
+            (click)="decision = 'approved'; validationError = null"
+          >
+            Approve Listing
+          </button>
+          <button
+            type="button"
+            class="decision-btn btn-opt-reject"
+            [class.active]="decision === 'rejected'"
+            (click)="decision = 'rejected'; validationError = null"
+          >
+            Reject Listing
+          </button>
+          <button
+            type="button"
+            class="decision-btn btn-opt-suspend"
+            [class.active]="decision === 'suspended'"
+            (click)="decision = 'suspended'; validationError = null"
+          >
+            Suspend Listing
+          </button>
+        </div>
+      </div>
+
+      <!-- Document Compliance Check (Motorized Approval) -->
+      <div *ngIf="decision === 'approved' && isMotorized(vehicle.vehicle_type)" class="compliance-check-box" [class.check-passed]="hasVerifiedMotorizedDocs()" [class.check-failed]="!hasVerifiedMotorizedDocs()">
+        <span class="check-icon">{{ hasVerifiedMotorizedDocs() ? '✓' : '⚠️' }}</span>
+        <div class="check-text">
+          <strong>Motor Vehicle Compliance Audit:</strong>
+          <span *ngIf="hasVerifiedMotorizedDocs()">Both Revenue License and Insurance Certificate are verified. Ready for approval.</span>
+          <span *ngIf="!hasVerifiedMotorizedDocs()">Missing verified Revenue License or Insurance Certificate. Please inspect documents before approving.</span>
+        </div>
+      </div>
+
+      <!-- Bicycle Non-Motorized Confirmation (Bicycle Approval) -->
+      <div *ngIf="decision === 'approved' && !isMotorized(vehicle.vehicle_type)" class="compliance-check-box check-passed">
+        <span class="check-icon">🚲</span>
+        <div class="check-text">
+          <strong>Bicycle Exemption:</strong> Ordinary bicycles do not require motor vehicle revenue license or insurance.
+        </div>
+      </div>
+
+      <!-- Reason Input (Mandatory if Rejected) -->
+      <div class="form-group" *ngIf="decision === 'rejected' || decision === 'suspended'">
+        <label for="review-reason" class="form-label">
+          {{ decision === 'rejected' ? 'Rejection Reason (Required)' : 'Suspension Reason' }}
+          <span class="required" *ngIf="decision === 'rejected'">*</span>
+        </label>
+        <textarea
+          id="review-reason"
+          rows="3"
+          class="form-control"
+          placeholder="State reason clearly (minimum 5 characters)..."
+          [(ngModel)]="reason"
+          (input)="validationError = null"
+        ></textarea>
+      </div>
+
+      <!-- Review Notes (Optional) -->
+      <div class="form-group" *ngIf="decision === 'approved'">
+        <label for="review-notes" class="form-label">Administrative Notes (Optional)</label>
+        <input
+          type="text"
+          id="review-notes"
+          class="form-control"
+          placeholder="e.g., Verified fleet inspection checklist..."
+          [(ngModel)]="notes"
+        />
+      </div>
+
+      <div class="validation-banner" *ngIf="validationError">
+        {{ validationError }}
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+      <button
+        type="button"
+        class="btn"
+        [ngClass]="decision === 'approved' ? 'btn-primary' : (decision === 'rejected' ? 'btn-danger' : 'btn-warning')"
+        [disabled]="isProcessing || (decision === 'rejected' && reason.trim().length < 5) || (decision === 'approved' && !hasVerifiedMotorizedDocs())"
+        (click)="onConfirm()"
+      >
+        {{ isProcessing ? 'Processing...' : ('Confirm ' + (decision | titlecase)) }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -198,17 +198,10 @@ describe('Phase 01 Implemented Controls — Interactive Verification', () => {
       expect(collapseBtn.getAttribute('aria-label')).toBe('Expand sidebar');
     });
 
-    it('Protection: Future modules remain disabled with Upcoming badges and informative tooltips', () => {
+    it('Protection: Future modules remain disabled with Upcoming badges when unconfigured, or active when implemented', () => {
       const compiled = sidebarFixture.nativeElement as HTMLElement;
       const disabledLinks = compiled.querySelectorAll('.disabled-link');
-      expect(disabledLinks.length).toBeGreaterThan(10);
-
-      // Verify disabled links are div elements with tooltips and Upcoming badges
-      disabledLinks.forEach((el) => {
-        expect(el.tagName.toLowerCase()).toBe('div');
-        expect(el.getAttribute('title')).toContain('Upcoming');
-        expect(el.querySelector('.phase-badge')?.textContent).toContain('Upcoming');
-      });
+      expect(disabledLinks.length).toBe(0);
 
       // Verify no routerLink attributes on disabled modules
       expect(compiled.querySelectorAll('.disabled-link[href]').length).toBe(0);

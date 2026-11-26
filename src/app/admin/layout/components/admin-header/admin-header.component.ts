@@ -1,19 +1,43 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, inject, output, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, inject, OnInit, output, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { environment } from '../../../../../environments/environment';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
+const ROUTE_BREADCRUMB_MAP: Record<string, string> = {
+  '/admin/dashboard': 'Dashboard',
+  '/admin/travelers': 'Travelers',
+  '/admin/providers': 'Service Providers',
+  '/admin/verifications': 'Verifications',
+  '/admin/homestays': 'Homestays',
+  '/admin/adventures': 'Adventures',
+  '/admin/rentals': 'Bike & Bicycles',
+  '/admin/guides': 'Tour Guides',
+  '/admin/artisans': 'Artisans',
+  '/admin/bookings': 'Bookings',
+  '/admin/payments': 'Payments & Refunds',
+  '/admin/community': 'Community Moderation',
+  '/admin/reports': 'Reports & Analytics',
+  '/admin/profile': 'Profile & Preferences',
+  '/admin/admins': 'Admin Accounts',
+  '/admin/audit-logs': 'Audit Logs',
+  '/admin/settings': 'System Settings',
+};
+
 @Component({
   selector: 'app-admin-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './admin-header.component.html',
   styleUrl: './admin-header.component.scss',
 })
-export class AdminHeaderComponent {
+export class AdminHeaderComponent implements OnInit {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly elementRef = inject(ElementRef);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly openMobileDrawer = output<void>();
 
@@ -23,6 +47,40 @@ export class AdminHeaderComponent {
   readonly isDemoPreview = signal<boolean>(!environment.production && !!environment.features?.adminPreviewMode);
 
   readonly isMenuOpen = signal<boolean>(false);
+  readonly currentBreadcrumb = signal<string>('Dashboard');
+
+  ngOnInit(): void {
+    this.updateBreadcrumbFromUrl(this.router.url);
+
+    const sub = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.updateBreadcrumbFromUrl(event.urlAfterRedirects || event.url);
+      });
+
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private updateBreadcrumbFromUrl(url: string): void {
+    const cleanUrl = url.split('?')[0].split('#')[0];
+
+    // Direct match against known mapping
+    if (ROUTE_BREADCRUMB_MAP[cleanUrl]) {
+      this.currentBreadcrumb.set(ROUTE_BREADCRUMB_MAP[cleanUrl]);
+      return;
+    }
+
+    // Secondary resolution via active route snapshot data
+    let route = this.router.routerState.root;
+    let breadcrumb = 'Dashboard';
+    while (route.firstChild) {
+      route = route.firstChild;
+      if (route.snapshot.data['breadcrumb']) {
+        breadcrumb = route.snapshot.data['breadcrumb'];
+      }
+    }
+    this.currentBreadcrumb.set(breadcrumb);
+  }
 
   toggleProfileMenu(): void {
     this.isMenuOpen.update((val) => !val);

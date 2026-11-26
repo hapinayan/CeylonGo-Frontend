@@ -18,9 +18,9 @@
 
     <!-- Page Breadcrumb -->
     <div class="header-breadcrumb">
-      <span class="crumb-parent">CeylonGo Administration</span>
+      <a routerLink="/admin/dashboard" class="crumb-parent crumb-link" title="Navigate to Dashboard">CeylonGo Administration</a>
       <span class="crumb-separator">/</span>
-      <span class="crumb-current">Dashboard</span>
+      <span class="crumb-current">{{ currentBreadcrumb() }}</span>
     </div>
   </div>
 
@@ -88,6 +88,21 @@
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-actions">
+            <a
+              routerLink="/admin/profile"
+              class="dropdown-action-btn profile-action"
+              (click)="isMenuOpen.set(false)"
+              role="menuitem"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Profile & Settings</span>
+            </a>
             <button
               type="button"
               class="dropdown-action-btn logout-action"

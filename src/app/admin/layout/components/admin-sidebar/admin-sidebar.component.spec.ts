@@ -43,13 +43,36 @@ describe('AdminSidebarComponent', () => {
     expect(dashboardLink?.textContent).toContain('Dashboard');
   });
 
-  it('should render future phase modules as disabled with upcoming badges', () => {
+  it('should render Travelers and Service Providers as active implemented routes', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const travelersLink = compiled.querySelector('a.nav-link[href="/admin/travelers"]');
+    expect(travelersLink).toBeTruthy();
+    expect(travelersLink?.textContent).toContain('Travelers');
+
+    const providersLink = compiled.querySelector('a.nav-link[href="/admin/providers"]');
+    expect(providersLink).toBeTruthy();
+    expect(providersLink?.textContent).toContain('Service Providers');
+
+    // Confirm Verifications and Homestays are active
+    const verificationsLink = compiled.querySelector('a.nav-link[href="/admin/verifications"]');
+    expect(verificationsLink).toBeTruthy();
+    expect(verificationsLink?.textContent).toContain('Verifications');
+
+    const homestaysLink = compiled.querySelector('a.nav-link[href="/admin/homestays"]');
+    expect(homestaysLink).toBeTruthy();
+    expect(homestaysLink?.textContent).toContain('Homestays');
+  });
+
+  it('should render all modules as active and implemented routes across all phases', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const disabledLinks = compiled.querySelectorAll('.disabled-link');
-    expect(disabledLinks.length).toBeGreaterThan(5);
+    expect(disabledLinks.length).toBe(0);
 
-    const firstBadge = compiled.querySelector('.phase-badge');
-    expect(firstBadge?.textContent).toContain('Upcoming');
+    const activeBadges = compiled.querySelectorAll('.active-badge');
+    expect(activeBadges.length).toBeGreaterThan(0);
+    activeBadges.forEach((badge) => {
+      expect(badge.textContent).toContain('Active');
+    });
   });
 
   it('should hide Super Admin administration group when user is not super admin', () => {

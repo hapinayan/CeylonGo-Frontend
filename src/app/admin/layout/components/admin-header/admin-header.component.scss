@@ -49,6 +49,17 @@
     .crumb-parent {
       color: #64748b;
       font-weight: 500;
+      text-decoration: none;
+      transition: color 0.15s ease;
+
+      &.crumb-link {
+        cursor: pointer;
+
+        &:hover {
+          color: #0284c7;
+          text-decoration: underline;
+        }
+      }
     }
 
     .crumb-separator {
