@@ -1,10 +1,36 @@
+export type AuthMethod = 'google' | 'password';
+
 export interface User {
   id: number;
   full_name: string;
   email: string;
+  phone?: string | null;
+  country?: string | null;
+  avatar_url?: string | null;
+  email_verified?: boolean;
+  authentication_method?: AuthMethod | null;
   role: string;
   is_active: boolean;
+  auth_version?: number;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface ProfilePatchRequest {
+  full_name?: string;
+  phone?: string | null;
+  country?: string | null;
+}
+
+export interface PasswordChangeRequest {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface PasswordChangeResponse {
+  message: string;
+  login_required: boolean;
 }
 
 export interface CheckEmailRequest {

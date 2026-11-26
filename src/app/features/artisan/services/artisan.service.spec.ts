@@ -10,7 +10,8 @@ import { ArtisanService } from './artisan.service';
 describe('ArtisanService', () => {
   let service: ArtisanService;
   let httpMock: HttpTestingController;
-  const baseUrl = `${environment.apiBaseUrl}/artisan-listings`;
+  const listingsUrl = `${environment.apiBaseUrl}/artisan-listings`;
+  const backendOrigin = new URL(environment.apiBaseUrl).origin;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -25,103 +26,156 @@ describe('ArtisanService', () => {
     httpMock.verify();
   });
 
-  it('should retrieve active artisan listings with search and filter parameters', () => {
-    const mockPagination: ArtisanListingPagination = {
+  it('retrieves artisan listings from dedicated GET /artisan-listings and maps real media URLs', () => {
+    const raw: ArtisanListingPagination = {
       items: [
         {
-          id: 1,
-          provider_profile_id: 10,
-          title: 'Kandy Heritage Crafts',
-          craft_category: 'Woodcarving & Masks',
-          district: 'Kandy',
-          city: 'Kandy',
-          latitude: 7.2906,
-          longitude: 80.6337,
-          cover_image_url: '/images/s2.jpeg',
+          id: 121,
+          provider_profile_id: 9,
+          title: 'Vavuniya Hand-finished Clay Planter',
+          description: 'Sample craft showcase in terracotta.',
+          craft_category: 'Pottery & Ceramics',
+          district: 'Vavuniya',
+          city: 'Vavuniya',
+          latitude: 8.7514,
+          longitude: 80.4971,
+          price: 2200,
+          currency: 'LKR',
+          cover_image_url: '/api/v1/listings/121/photos/120',
           is_active: true,
           is_verified: true,
-          is_featured: true,
+          is_featured: false,
           approval_status: 'approved',
-          average_rating: 4.9,
-          total_reviews: 186,
+          average_rating: null,
+          total_reviews: 0,
         },
       ],
       total: 1,
       page: 1,
       page_size: 12,
+      total_pages: 1,
     };
 
     service
-      .getListings({ search: 'Kandy', category: 'Woodcarving & Masks', page: 1, page_size: 12 })
+      .getListings({
+        search: 'Clay',
+        category: 'Pottery & Ceramics',
+        district: 'Vavuniya',
+        sort_by: 'newest',
+        page: 1,
+        page_size: 12,
+      })
       .subscribe((res) => {
         expect(res.total).toBe(1);
         expect(res.items.length).toBe(1);
-        expect(res.items[0].title).toBe('Kandy Heritage Crafts');
+        expect(res.items[0].title).toBe('Vavuniya Hand-finished Clay Planter');
+        expect(res.items[0].craft_category).toBe('Pottery & Ceramics');
         expect(res.items[0].is_verified).toBe(true);
+        expect(res.items[0].cover_image_url).toBe(`${backendOrigin}/api/v1/listings/121/photos/120`);
+        expect(res.items[0].average_rating).toBeNull();
       });
 
     const req = httpMock.expectOne(
       (r) =>
-        r.url === baseUrl &&
-        r.params.get('search') === 'Kandy' &&
-        r.params.get('category') === 'Woodcarving & Masks' &&
+        r.url === listingsUrl &&
+        r.params.get('search') === 'Clay' &&
+        r.params.get('category') === 'Pottery & Ceramics' &&
+        r.params.get('district') === 'Vavuniya' &&
+        r.params.get('sort_by') === 'newest' &&
         r.params.get('page') === '1' &&
-        r.params.get('page_size') === '12'
+        r.params.get('page_size') === '12',
     );
     expect(req.request.method).toBe('GET');
-    req.flush(mockPagination);
+    req.flush(raw);
   });
 
-  it('should fetch craft categories and return string list', () => {
-    const mockCategories = ['Handicrafts', 'Pottery & Ceramics', 'Batik & Textiles'];
-
+  it('fetches backend craft categories and districts', () => {
     service.getCategories().subscribe((cats) => {
-      expect(cats).toEqual(mockCategories);
+      expect(cats).toEqual(['Pottery & Ceramics', 'Batik & Textiles']);
     });
+    const catReq = httpMock.expectOne(`${listingsUrl}/categories`);
+    expect(catReq.request.method).toBe('GET');
+    catReq.flush(['Pottery & Ceramics', 'Batik & Textiles']);
 
-    const req = httpMock.expectOne(`${baseUrl}/categories`);
-    expect(req.request.method).toBe('GET');
-    req.flush(mockCategories);
+    service.getDistricts().subscribe((dists) => {
+      expect(dists).toEqual(['Kandy', 'Vavuniya']);
+    });
+    const distReq = httpMock.expectOne(`${listingsUrl}/districts`);
+    expect(distReq.request.method).toBe('GET');
+    distReq.flush(['Kandy', 'Vavuniya']);
   });
 
-  it('should fetch single artisan listing by ID', () => {
-    const mockListing: ArtisanListingResponse = {
-      id: 5,
-      provider_profile_id: 12,
+  it('fetches single artisan listing detail and business hours by ID', () => {
+    const raw: ArtisanListingResponse = {
+      id: 121,
+      provider_profile_id: 9,
       title: 'Lanka Batik Creations',
       craft_category: 'Batik & Textiles',
+      business_type: 'Batik & Handloom Studio',
+      business_background: 'Family workshop established in 1998.',
+      artisan_information: 'Led by master batik artisan Nimali.',
       description: 'Handcrafted batik fabrics in Galle Fort.',
       district: 'Galle',
-      city: 'Galle',
-      address: '42 Church Street, Galle Fort',
+      city: 'Galle Fort',
+      address: 'No. 10, Pedlar Street',
       latitude: 6.0328,
       longitude: 80.2168,
-      phone: '+94912234567',
+      phone: '+94 91 223 4455',
+      whatsapp_number: '+94771234567',
       email: 'info@lankabatik.lk',
       website_url: 'https://lankabatik.lk',
-      opening_hours: 'Daily: 9:00 AM - 6:00 PM',
-      cover_image_url: '/images/s2.jpeg',
+      social_links: { instagram: 'https://instagram.com/lankabatik' },
+      opening_hours: 'Mon-Sat 09:00-17:30',
+      cover_image_url: '/api/v1/listings/121/photos/12',
+      price: 3500,
+      currency: 'LKR',
       is_active: true,
       is_verified: true,
       is_featured: false,
       approval_status: 'approved',
-      average_rating: 4.8,
-      total_reviews: 201,
-      images: [],
+      average_rating: null,
+      total_reviews: 0,
+      images: [
+        {
+          id: 12,
+          artisan_listing_id: 121,
+          image_url: '/api/v1/listings/121/photos/12',
+          caption: null,
+          display_order: 0,
+          is_cover: true,
+          created_at: '',
+        },
+      ],
       business_images: [],
-      business_hours: [],
-      created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-01-01T00:00:00Z',
+      business_hours: [{ day_of_week: 0, is_closed: false, open_time: '09:00', close_time: '17:30' }],
+      created_at: '',
+      updated_at: '',
     };
 
-    service.getListingById(5).subscribe((data) => {
-      expect(data.id).toBe(5);
-      expect(data.title).toBe('Lanka Batik Creations');
-      expect(data.district).toBe('Galle');
+    service.getListingById(121).subscribe((res) => {
+      expect(res.id).toBe(121);
+      expect(res.title).toBe('Lanka Batik Creations');
+      expect(res.craft_category).toBe('Batik & Textiles');
+      expect(res.business_type).toBe('Batik & Handloom Studio');
+      expect(res.city).toBe('Galle Fort');
+      expect(res.is_verified).toBe(true);
+      expect(res.cover_image_url).toBe(`${backendOrigin}/api/v1/listings/121/photos/12`);
+      expect(res.business_images.length).toBe(1);
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/5`);
+    const req = httpMock.expectOne(`${listingsUrl}/121`);
     expect(req.request.method).toBe('GET');
-    req.flush(mockListing);
+    req.flush(raw);
+
+    service.getBusinessHours(121).subscribe((hours) => {
+      expect(hours.length).toBe(2);
+      expect(hours[0].day_of_week).toBe(0);
+    });
+    const hoursReq = httpMock.expectOne(`${listingsUrl}/121/business-hours`);
+    expect(hoursReq.request.method).toBe('GET');
+    hoursReq.flush([
+      { day_of_week: 2, is_closed: false, open_time: '09:00', close_time: '17:00' },
+      { day_of_week: 0, is_closed: false, open_time: '09:00', close_time: '17:30' },
+    ]);
   });
 });

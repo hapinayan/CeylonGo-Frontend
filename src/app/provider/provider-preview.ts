@@ -1,4 +1,5 @@
 import { ProviderUser } from '../core/models/provider-auth.models';
+import { CommunityPostDetails } from '../features/community/models/community.models';
 import {
   AvailabilitySlotResponse,
   HomestayBookingDetails,
@@ -22,6 +23,7 @@ export const PREVIEW_LISTINGS: ReviewListing[] = [];
 export const PREVIEW_SLOTS: Record<number, AvailabilitySlotResponse[]> = {};
 export const PREVIEW_BOOKINGS: HomestayBookingDetails[] = [];
 export const PREVIEW_DASHBOARD_BOOKINGS: ProviderBookingItem[] = [];
+export const PREVIEW_COMMUNITY_POSTS: CommunityPostDetails[] = [];
 
 export function createPreviewPhotoBlob(): Blob {
   return new Blob([], { type: 'image/svg+xml' });

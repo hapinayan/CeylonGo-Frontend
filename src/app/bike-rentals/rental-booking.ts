@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, firstValueFrom, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { AuthModalService } from '../core/services/auth-modal.service';
 import { AuthService } from '../core/services/auth.service';
+import { TravelerBackNavigationService } from '../core/services/traveler-back-navigation.service';
 import { MvpBookingResponse, MvpPaymentResponse, RentalApi } from './rental-api';
 import { CheckedRentalDates, RentalDatePicker } from './rental-date-picker';
 import { previewEstimate, RentalBookingPreviewStore } from './rental-booking-preview.store';
@@ -84,6 +85,10 @@ export class RentalBooking {
   );
 
   readonly step = signal<WizardStep>('review');
+  private readonly backNav = inject(TravelerBackNavigationService, { optional: true });
+  private readonly cleanupBackConfirmation = inject(DestroyRef).onDestroy(() =>
+    this.backNav?.clearBookingConfirmed('/bicycles'),
+  );
   readonly editingDates = signal(false);
   readonly selectedDates = signal<CheckedRentalDates | null>(null);
 
@@ -351,6 +356,7 @@ export class RentalBooking {
         resolved_at: nowIso,
       });
       this.step.set('confirmation');
+      this.backNav?.markBookingConfirmed('/bicycles');
       return;
     }
 
@@ -407,6 +413,7 @@ export class RentalBooking {
       }
 
       this.step.set('confirmation');
+      this.backNav?.markBookingConfirmed('/bicycles');
     } catch (err: unknown) {
       const httpErr = err as { status?: number; error?: { detail?: string | Array<{ msg?: string }> } };
       const rawDetail = httpErr?.error?.detail;

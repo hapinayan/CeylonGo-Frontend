@@ -1,8 +1,8 @@
 .experiences-shell .traveler-workflow {
-  max-width: 1240px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   width: 100%;
-  padding: 2rem clamp(1rem, 3.5vw, 3rem) 4rem;
+  padding: 2rem var(--cg-page-padding, 32px) 4rem;
   box-sizing: border-box;
 
   .workflow-back-link {

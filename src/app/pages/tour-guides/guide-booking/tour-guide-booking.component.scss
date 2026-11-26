@@ -9,16 +9,14 @@
 
 .booking-main {
   flex: 1;
-  padding: 1.5rem 1.5rem 3.5rem;
-
-  @media (max-width: 640px) {
-    padding: 1rem 1rem 2.5rem;
-  }
+  padding: 1.5rem var(--cg-page-padding, 32px) 3.5rem;
+  box-sizing: border-box;
 }
 
 .booking-container {
-  max-width: 1180px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

@@ -12,13 +12,10 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
-import { Footer } from '../../../shared/components/footer/footer';
 import { CategoryNav } from '../../components/category-nav';
 import { ExperienceCard } from '../../components/experience-card';
 import { ExperienceIcon } from '../../components/icon';
 import { Pagination } from '../../components/pagination';
-import { TravelerHeader } from '../../components/traveler-header';
 import { ActivityDiscoverQuery } from '../../models/activity';
 import { Category, Experience, normalizeCategory, Sort } from '../../models/catalog';
 import { ActivitiesApi, extractApiErrorMessage, toActivityCard } from '../../services/activities-api';
@@ -34,13 +31,10 @@ type ResultsState =
 @Component({
   imports: [
     ReactiveFormsModule,
-    TravelerHeader,
     CategoryNav,
     ExperienceCard,
     ExperienceIcon,
     Pagination,
-    Footer,
-    TravelerAuthModal,
   ],
   templateUrl: './discover.html',
   styleUrl: './discover.scss',

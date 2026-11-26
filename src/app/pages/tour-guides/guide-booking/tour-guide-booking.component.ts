@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 
@@ -15,9 +15,7 @@ import {
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TourGuideService } from '../../../core/services/tour-guide.service';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
-import { TravelerNavbar } from '../../../shared/components/traveler-navbar/traveler-navbar';
+import { TravelerBackNavigationService } from '../../../core/services/traveler-back-navigation.service';
 
 @Component({
   selector: 'app-tour-guide-booking',
@@ -26,15 +24,13 @@ import { TravelerNavbar } from '../../../shared/components/traveler-navbar/trave
     CommonModule,
     FormsModule,
     RouterModule,
-    TravelerNavbar,
-    Footer,
-    TravelerAuthModal,
   ],
   templateUrl: './tour-guide-booking.component.html',
   styleUrl: './tour-guide-booking.component.scss',
 })
-export class TourGuideBookingComponent implements OnInit {
+export class TourGuideBookingComponent implements OnInit, OnDestroy {
   readonly guideService = inject(TourGuideService);
+  private readonly backNav = inject(TravelerBackNavigationService);
   readonly authService = inject(AuthService);
   private readonly authModalService = inject(AuthModalService);
   private readonly route = inject(ActivatedRoute);
@@ -398,6 +394,7 @@ export class TourGuideBookingComponent implements OnInit {
           this.bookingRecord.set(record);
           this.isSubmitting.set(false);
           this.step.set(3);
+          this.backNav.markBookingConfirmed();
           this.guideService.clearBookingDraft();
           if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -421,6 +418,10 @@ export class TourGuideBookingComponent implements OnInit {
     if (record.paymentStatus === 'paid_demo') return 'Paid (Academic Demo)';
     if (record.paymentStatus === 'failed') return 'Failed';
     return 'Unpaid';
+  }
+
+  ngOnDestroy(): void {
+    this.backNav.clearBookingConfirmed();
   }
 
   paymentMethodLabel(record: TourGuideBookingRecord): string {

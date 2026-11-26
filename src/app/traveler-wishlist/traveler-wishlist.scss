@@ -1,52 +1,338 @@
-:host { display: block; color: #081f49; background: #fff; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
 
-.wishlist-layout {
+.saved-count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  background: #edf5ff;
+  border: 1px solid #dbeafe;
+  color: #082b5c;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.state-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.88rem;
+}
+
+.btn-retry {
+  min-height: 36px;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #082b5c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wishlist-controls-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.category-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cat-pill {
+  min-height: 38px;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: #edf5ff;
+    color: #082b5c;
+  }
+
+  &.active {
+    background: #0066ff;
+    border-color: #0066ff;
+    color: #ffffff;
+  }
+}
+
+.search-sort-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  select {
+    min-height: 42px;
+    padding: 0 0.85rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.88rem;
+  }
+}
+
+.search-form {
+  flex: 1 1 240px;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0.55rem 0.85rem;
+    font: inherit;
+    font-size: 0.88rem;
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.search-btn {
+  min-width: 44px;
+  min-height: 40px;
+  border: 0;
+  border-left: 1px solid #e2e8f0;
+  background: #edf5ff;
+  color: #0066ff;
   display: grid;
-  grid-template-columns: clamp(230px, 19vw, 292px) minmax(0, 1fr);
-  min-height: calc(100dvh - 78px);
-  align-items: start;
+  place-items: center;
+  cursor: pointer;
 }
 
-.content { min-width: 0; padding: 24px clamp(14px, 2.2vw, 34px) 52px; }
-h1 { font-size: clamp(2rem, 3vw, 2.5rem); margin: 0; letter-spacing: -.035em; }
-header p { color: #304a72; font-size: 1.2rem; margin: 4px 0 24px; }
-.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 16px; }
-.toolbar form { flex: 1 1 245px; min-width: 0; }
-.toolbar label { display: block; font-weight: 700; margin-bottom: 4px; }
-.search-field { display: flex; width: 100%; border: 1px solid #dfe5ed; border-radius: 999px; }
-.search-field input { border: 0; min-width: 0; flex: 1; padding-inline: 14px; border-radius: 999px; }
-.search-field button { width: 48px; border: 0; background: transparent; border-radius: 999px; font-size: 1.25rem; }
-input, select, button { min-height: 44px; font: inherit; color: inherit; }
-select, button { cursor: pointer; }
-select { display: block; margin-top: 4px; padding: 6px 10px; border: 1px solid #dfe5ed; border-radius: 9px; background: #fff; }
-button:disabled { cursor: wait; }
-:where(a, button, select, input):focus-visible { outline: 2px solid #0055ff; outline-offset: 2px; }
-.count { margin: 15px 0 0; font-weight: 750; }
-.coverage { margin: 5px 0 16px; color: #405a7e; font-size: .92rem; }
-.notice { padding: 10px 12px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f5f9ff; }
-.notice button, .samples button {
-  padding: 4px 8px; margin: 4px; border: 1px solid #a9c5f4; border-radius: 8px; background: #fff; color: #004bdc;
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
 }
-.saved-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.saved-card { display: flex; flex-direction: column; border: 1px solid #dfe5ed; border-radius: 18px; overflow: hidden; box-shadow: 0 5px 15px #081f4910; }
-.thumbnail { display: grid; place-items: center; position: relative; aspect-ratio: 16 / 9; background: #eaf2ff; color: #527eaf; font-size: 2.5rem; }
-.thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.card-content { display: flex; flex-direction: column; flex: 1; padding: 14px; overflow-wrap: anywhere; }
-.service, .metadata { margin: 0 0 4px; display: flex; align-items: center; gap: 7px; color: #304a72; }
-.service { font-size: .86rem; font-weight: 750; }
-h2 { margin: 2px 0 6px; font-size: 1.25rem; line-height: 1.25; }
-.price { margin: auto 0 10px; padding-top: 8px; font-weight: 800; }
-.price small, .actions span { font-weight: 550; color: #405a7e; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 7px; }
-.actions a, .remove {
-  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-  border: 1px solid #0055ff; border-radius: 9px; padding: 7px 10px; min-height: 44px;
-  background: #fff; color: #004bdc; font-size: .88rem; font-weight: 750; text-decoration: none;
-}
-.remove app-experience-icon { color: #9d2845; }
-.actions a:hover, .remove:hover { background: #edf4ff; }
-.samples { margin-top: 20px; }
 
-@media (max-width: 1150px) { .saved-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 900px) { .wishlist-layout { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 560px) { .saved-grid { grid-template-columns: minmax(0, 1fr); } }
+.wishlist-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 6px 20px rgba(8, 43, 92, 0.07);
+    transform: translateY(-2px);
+  }
+}
+
+.card-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #edf5ff;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.media-fallback {
+  color: #0066ff;
+  font-size: 2rem;
+}
+
+.card-cat-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #e2e8f0;
+  color: #082b5c;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.heart-remove-btn {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  min-height: 32px;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: rgba(255, 255, 255, 0.96);
+  color: #dc2626;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #fef2f2;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+}
+
+.card-body {
+  padding: 0.95rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  flex: 1;
+
+  h2 {
+    margin: 0;
+    color: #082b5c;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+}
+
+.loc-row,
+.rating-row {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #64748b;
+  font-size: 0.83rem;
+
+  app-experience-icon {
+    color: #0066ff;
+    flex: none;
+  }
+}
+
+.rating-row app-experience-icon {
+  color: #f59e0b;
+}
+
+.card-footer {
+  margin-top: auto;
+  padding-top: 0.7rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.price-col {
+  strong {
+    color: #082b5c;
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 0.78rem;
+    margin-left: 0.15rem;
+  }
+
+  .muted-price {
+    margin-left: 0;
+  }
+}
+
+.btn-detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 36px;
+  padding: 0 0.8rem;
+  border-radius: 9px;
+  background: #edf5ff;
+  color: #0066ff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: #0066ff;
+    color: #ffffff;
+  }
+}
+
+.unavailable-note {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.mutation-error {
+  margin: 0.25rem 0 0;
+  color: #b91c1c;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1120px) {
+  .wishlist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .wishlist-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+}

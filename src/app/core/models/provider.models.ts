@@ -244,6 +244,75 @@ export interface ListingCreateDraftRequest {
   category: ListingCategory;
 }
 
+export interface ArtisanOpeningDay {
+  day_of_week: number;
+  is_closed?: boolean;
+  open_time?: string | null;
+  close_time?: string | null;
+}
+
+export interface ArtisanBusinessPayload {
+  craft_category?: string | null;
+  business_type?: string | null;
+  business_background?: string | null;
+  artisan_information?: string | null;
+  phone?: string | null;
+  whatsapp_number?: string | null;
+  email?: string | null;
+  website_url?: string | null;
+  social_links?: Record<string, string> | null;
+  opening_hours?: string | null;
+  business_hours?: ArtisanOpeningDay[] | null;
+}
+
+export interface ArtisanProductInput {
+  title: string;
+  category: string;
+  description: string;
+  materials?: string | null;
+  price?: number | string | null;
+  is_active: boolean;
+}
+
+export interface ArtisanProductImage {
+  id: number;
+  showcase_item_id: number;
+  image_url: string;
+  caption: string | null;
+  display_order: number;
+  is_primary: boolean;
+  created_at: string;
+}
+
+export interface ArtisanProductDetails {
+  id: number;
+  artisan_listing_id: number;
+  listing_title: string;
+  title: string;
+  category: string;
+  description: string;
+  materials?: string | null;
+  price: number | null;
+  currency?: string;
+  item_type?: 'product' | 'service';
+  image_url: string | null;
+  is_available: boolean;
+  is_active?: boolean;
+  approval_status: string;
+  images: ArtisanProductImage[];
+  product_images: ArtisanProductImage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArtisanProductPage {
+  items: ArtisanProductDetails[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export interface ListingDraftUpdate {
   category?: ListingCategory | null;
   title?: string | null;
@@ -263,6 +332,7 @@ export interface ListingDraftUpdate {
   activity?: ActivityMetadataPayload | null;
   guide?: GuideProfileMetadataPayload | null;
   rental?: RentalMetadataPayload | null;
+  artisan?: ArtisanBusinessPayload | null;
 }
 
 export interface HomestayMetadataPayload {

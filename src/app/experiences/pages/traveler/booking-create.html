@@ -1,6 +1,4 @@
 <div class="experiences-shell">
-  <app-traveler-header />
-
   <main class="discover booking-review-flow">
     @switch (state()?.status) {
       @case ('loading') {
@@ -24,12 +22,6 @@
         @if (listing(); as l) {
           <!-- Page Header & Navigation -->
           <div class="review-header-container">
-            <nav aria-label="Breadcrumb">
-              <a [routerLink]="['/experiences', routeId()]" class="workflow-back-link">
-                <app-experience-icon name="previous" /> Back to Experience
-              </a>
-            </nav>
-
             <div class="review-title-stepper-row">
               <div class="title-column">
                 <h1 class="page-title">Review your booking</h1>
@@ -547,7 +539,4 @@
       }
     }
   </main>
-
-  <app-footer />
-  <app-traveler-auth-modal />
 </div>

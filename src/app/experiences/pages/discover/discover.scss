@@ -53,11 +53,11 @@
 
   .discover {
     flex: 1;
-    max-width: 1440px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     width: 100%;
     box-sizing: border-box;
-    padding: 1rem clamp(1rem, 3vw, 2.5rem) 3rem;
+    padding: 1rem var(--cg-page-padding, 32px) 3rem;
   }
 
   // ==========================================

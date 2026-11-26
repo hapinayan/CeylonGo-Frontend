@@ -1,82 +1,4 @@
 <div class="homestay-detail-page">
-  <!-- 1. TOP NAVIGATION BAR (Matching CeylonGo Brand Shell) -->
-  <header class="cg-navbar" role="banner">
-    <div class="nav-container">
-      <!-- Left: Logo & Back Link -->
-      <div class="nav-left">
-        <a routerLink="/homestays" class="btn-nav-back" aria-label="Back to homestay discovery">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span>All Stays</span>
-        </a>
-
-        <a routerLink="/homestays" class="brand-link" aria-label="CeylonGo Home">
-          <span class="brand-text-logo">CeylonGo</span>
-        </a>
-      </div>
-
-      <!-- Center: Navigation Links -->
-      <nav class="nav-links" aria-label="Main Navigation">
-        <a routerLink="/homestays" class="nav-link active" aria-current="page">Stays</a>
-        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Experiences available in upcoming release')">Experiences</a>
-        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Tour Guides available in upcoming release')">Tour Guides</a>
-        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Bike Rentals available in upcoming release')">Bike Rentals</a>
-        <a href="javascript:void(0)" class="nav-link" (click)="showToast('Community Forum available in upcoming release')">Community</a>
-        <a href="javascript:void(0)" class="nav-link" (click)="showToast('AI Trip Planner available in upcoming release')">AI Trip Planner</a>
-      </nav>
-
-      <!-- Right: Actions & Profile -->
-      <div class="nav-actions">
-        <!-- Wishlist Link -->
-        <a routerLink="/homestays" class="btn-nav-icon" aria-label="Wishlist">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-          @if (wishlistCount() > 0) {
-            <span class="badge-count">{{ wishlistCount() }}</span>
-          }
-        </a>
-
-        <!-- Notifications -->
-        <button type="button" class="btn-nav-icon" aria-label="Notifications" (click)="showToast('You have 2 new notifications')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span class="badge-dot"></span>
-        </button>
-
-        <!-- Traveler Avatar -->
-        <div class="user-pill">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Traveler Profile" class="avatar-img" />
-          <span class="user-name">Traveler</span>
-        </div>
-
-        <!-- Mobile Menu Hamburger -->
-        <button type="button" class="btn-hamburger" (click)="toggleMobileMenu()" aria-label="Toggle navigation menu">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Mobile Drawer -->
-    @if (mobileMenuOpen()) {
-      <div class="mobile-drawer">
-        <a routerLink="/homestays" class="mobile-link active" (click)="toggleMobileMenu()">Stays</a>
-        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Experiences available soon'); toggleMobileMenu()">Experiences</a>
-        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Tour Guides available soon'); toggleMobileMenu()">Tour Guides</a>
-        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Bike Rentals available soon'); toggleMobileMenu()">Bike Rentals</a>
-        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('Community Forum available soon'); toggleMobileMenu()">Community</a>
-        <a href="javascript:void(0)" class="mobile-link" (click)="showToast('AI Trip Planner available soon'); toggleMobileMenu()">AI Trip Planner</a>
-      </div>
-    }
-  </header>
-
   <!-- LIVE AVAILABILITY BANNER -->
   <div class="demo-notice-bar" role="status">
     <div class="demo-notice-content">
@@ -771,9 +693,6 @@
       </div>
     </div>
   }
-
-  <!-- TRAVELER AUTHENTICATION MODAL -->
-  <app-traveler-auth-modal />
 
   <!-- TOAST NOTIFICATION -->
   @if (toastMessage()) {

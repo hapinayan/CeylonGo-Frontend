@@ -1,11 +1,6 @@
 <div class="homestay-discovery-page" (click)="closeGuestDropdown()">
   <!-- =========================================================================
-       1. COMMON TRAVELER NAVBAR (Fixed/Sticky at top throughout scrolling)
-       ========================================================================= -->
-  <app-traveler-navbar />
-
-  <!-- =========================================================================
-       2. HORIZONTAL SEARCH BAR & FILTERS SECTION (Scrolls normally with page)
+       1. HORIZONTAL SEARCH BAR & FILTERS SECTION (Scrolls normally with page)
        ========================================================================= -->
   <section class="discovery-search-section">
     <div class="search-section-container">
@@ -480,17 +475,7 @@
   </main>
 
   <!-- =========================================================================
-       5. COMMON TRAVELER FOOTER (Rendered below split-screen results container)
-       ========================================================================= -->
-  <app-footer />
-
-  <!-- =========================================================================
-       6. TRAVELER AUTHENTICATION MODAL (Contextual Login & Register)
-       ========================================================================= -->
-  <app-traveler-auth-modal />
-
-  <!-- =========================================================================
-       7. EXTENDED FILTERS MODAL (Triggered by outlined Filters button)
+       EXTENDED FILTERS MODAL (Triggered by outlined Filters button)
        ========================================================================= -->
   @if (filterModalOpen()) {
     <div class="filter-modal-backdrop" (click)="closeFilterModal()" aria-modal="true" role="dialog">

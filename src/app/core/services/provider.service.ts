@@ -5,6 +5,10 @@ import { Observable, catchError, forkJoin, map, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ProviderPreviewService } from '../../provider/provider-preview.service';
 import {
+  ArtisanProductDetails,
+  ArtisanProductImage,
+  ArtisanProductInput,
+  ArtisanProductPage,
   AvailabilitySlotCreate,
   AvailabilitySlotResponse,
   BookingStatusUpdateRequest,
@@ -571,6 +575,177 @@ export class ProviderService {
     return this.http.patch<RentalUnitResponse>(
       `${this.baseUrl}/provider/listings/${listingId}/units/${unitId}`,
       payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // ==========================================
+  // ARTISAN SHOWCASE PRODUCTS & PHOTOS APIS
+  // ==========================================
+
+  /**
+   * List owned Artisan showcase products (including inactive items).
+   * Endpoint: GET /api/v1/provider/listings/{listing_id}/products
+   */
+  getArtisanProducts(
+    listingId: number,
+    page = 1,
+    pageSize = 50
+  ): Observable<ArtisanProductPage> {
+    if (this.isPreviewMode()) {
+      const sample = this.previewService.sampleListings.find((l) => l.listing.id === listingId);
+      const rawUnits = Array.isArray(sample?.listing?.units) ? sample!.listing.units : [];
+      const items: ArtisanProductDetails[] = rawUnits.map((u: any) => ({
+        id: u.id,
+        artisan_listing_id: listingId,
+        listing_title: sample?.listing?.title ?? 'Sample Artisan Workshop',
+        title: u.label || u.title || 'Sample Craft',
+        category: 'Handicrafts',
+        description: u.notes || 'Sample Artisan showcase piece.',
+        materials: 'Traditional local materials',
+        price: sample?.listing?.price ? Number(sample.listing.price) : null,
+        currency: 'LKR',
+        item_type: 'product',
+        image_url: sample?.listing?.media?.[0]?.image_url ?? null,
+        is_available: u.is_active !== false,
+        is_active: u.is_active !== false,
+        approval_status: sample?.verification_status ?? 'approved',
+        images: [],
+        product_images: [],
+        created_at: sample?.listing?.created_at ?? '',
+        updated_at: sample?.listing?.created_at ?? '',
+      }));
+      return of({ items, total: items.length, page: 1, page_size: pageSize, total_pages: 1 });
+    }
+
+    return this.http.get<ArtisanProductPage>(
+      `${this.baseUrl}/provider/listings/${listingId}/products?page=${page}&page_size=${pageSize}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get single owned Artisan product details.
+   * Endpoint: GET /api/v1/provider/listings/{listing_id}/products/{product_id}
+   */
+  getArtisanProduct(listingId: number, productId: number): Observable<ArtisanProductDetails> {
+    return this.http.get<ArtisanProductDetails>(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Create a showcase product for an owned Artisan listing.
+   * Endpoint: POST /api/v1/provider/listings/{listing_id}/products
+   */
+  createArtisanProduct(
+    listingId: number,
+    payload: ArtisanProductInput
+  ): Observable<ArtisanProductDetails> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.post<ArtisanProductDetails>(
+      `${this.baseUrl}/provider/listings/${listingId}/products`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Update or deactivate/reactivate an owned Artisan showcase product.
+   * Endpoint: PUT /api/v1/provider/listings/{listing_id}/products/{product_id}
+   */
+  updateArtisanProduct(
+    listingId: number,
+    productId: number,
+    payload: ArtisanProductInput
+  ): Observable<ArtisanProductDetails> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.put<ArtisanProductDetails>(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Soft-deactivate an owned Artisan showcase product.
+   * Endpoint: DELETE /api/v1/provider/listings/{listing_id}/products/{product_id}
+   */
+  deleteArtisanProduct(listingId: number, productId: number): Observable<void> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.delete<void>(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Upload a photo for an owned Artisan product (JPEG/PNG/WebP up to 5MB, max 12 photos).
+   * Endpoint: POST /api/v1/provider/listings/{listing_id}/products/{product_id}/images
+   */
+  uploadArtisanProductPhoto(
+    listingId: number,
+    productId: number,
+    file: File,
+    caption?: string
+  ): Observable<ArtisanProductImage> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption && caption.trim()) {
+      formData.append('caption', caption.trim().slice(0, 160));
+    }
+    return this.http.post<ArtisanProductImage>(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}/images`,
+      formData,
+      { headers: this.getAuthHeaders(true) }
+    );
+  }
+
+  /**
+   * Fetch authenticated product photo preview blob.
+   * Endpoint: GET /api/v1/provider/listings/{listing_id}/products/{product_id}/images/{photo_id}
+   */
+  getArtisanProductPhotoBlob(
+    listingId: number,
+    productId: number,
+    photoId: number
+  ): Observable<Blob> {
+    if (this.isPreviewMode()) {
+      return of(this.previewService.getSamplePhotoBlob());
+    }
+    return this.http.get(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}/images/${photoId}`,
+      {
+        headers: this.getAuthHeaders(),
+        responseType: 'blob',
+      }
+    );
+  }
+
+  /**
+   * Delete a product photo from an owned Artisan showcase item.
+   * Endpoint: DELETE /api/v1/provider/listings/{listing_id}/products/{product_id}/images/{photo_id}
+   */
+  deleteArtisanProductPhoto(
+    listingId: number,
+    productId: number,
+    photoId: number
+  ): Observable<void> {
+    if (this.isPreviewMode()) {
+      return this.previewActionBlocked();
+    }
+    return this.http.delete<void>(
+      `${this.baseUrl}/provider/listings/${listingId}/products/${productId}/images/${photoId}`,
       { headers: this.getAuthHeaders() }
     );
   }

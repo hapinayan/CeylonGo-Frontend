@@ -1,12 +1,5 @@
 <main class="rental-details-page">
   <div class="container">
-    <div class="top-nav-row">
-      <a
-        class="back-link"
-        [routerLink]="['/bicycles']"
-        queryParamsHandling="preserve">Back to rentals</a>
-    </div>
-
     @if (vehicleState().status === 'loading') {
       <div class="state-card" role="status" aria-live="polite">
         <p>Loading vehicle details…</p>

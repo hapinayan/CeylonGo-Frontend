@@ -96,14 +96,15 @@ export class ServicesCatalog {
       category: 'Local Business',
       title: 'Artisan & Local Business',
       description:
-        'Promote authentic Sri Lankan handicrafts, handloom textiles, spice gardens, and culinary workshops.',
-      route: '/artisans',
-      statusBadge: 'Explore Category',
+        'Promote authentic Sri Lankan handicrafts, traditional crafts, handloom textiles, and small local businesses.',
+      route: '/provider/artisans/new',
+      statusBadge: 'Ready to List',
       isAvailable: true,
       features: [
-        'Showcase Handcrafted Products',
-        'Workshop & Masterclass Bookings',
-        'Support Sustainable Communities',
+        '6-Step Guided Setup & Draft Sync',
+        'Business Profile & Leaflet Workshop Pin',
+        'Handcrafted Product Showcase',
+        'Service Verification & Publication Control',
       ],
     },
   ];

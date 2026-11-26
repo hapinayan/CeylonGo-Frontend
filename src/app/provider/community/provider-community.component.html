@@ -1,0 +1,302 @@
+<div class="provider-community-shell">
+  <header class="portal-header">
+    <div>
+      @if (isPreview()) {
+        <span class="preview-badge">Preview Mode · Sample Data (Writes Disabled)</span>
+      }
+      <h1>Provider Community Feed</h1>
+      <p>Share seasonal promotions, showcase local hospitality, and engage directly with CeylonGo travelers.</p>
+    </div>
+    <button type="button" class="btn-share-post" (click)="openShareModal()">
+      + Share Promotional Post
+    </button>
+  </header>
+
+  <div class="tabs-toolbar">
+    <nav class="tab-group" aria-label="Provider Community Views">
+      <button
+        type="button"
+        [class.active]="activeTab() === 'feed'"
+        (click)="switchTab('feed')"
+      >
+        Community Feed
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab() === 'my-posts'"
+        (click)="switchTab('my-posts')"
+      >
+        My Posts
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab() === 'saved'"
+        (click)="switchTab('saved')"
+      >
+        Saved Posts
+      </button>
+    </nav>
+
+    @if (activeTab() === 'feed') {
+      <div class="feed-controls">
+        <div class="filter-chips">
+          <button
+            type="button"
+            [class.active]="feedFilter() === 'all'"
+            (click)="setFeedFilter('all')"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            [class.active]="feedFilter() === 'traveler'"
+            (click)="setFeedFilter('traveler')"
+          >
+            Travelers
+          </button>
+          <button
+            type="button"
+            [class.active]="feedFilter() === 'provider'"
+            (click)="setFeedFilter('provider')"
+          >
+            Service Providers
+          </button>
+        </div>
+
+        <form class="search-inline" (submit)="$event.preventDefault(); applySearch()">
+          <input
+            type="search"
+            [(ngModel)]="searchQuery"
+            name="providerSearch"
+            placeholder="Search posts..."
+            aria-label="Search community posts"
+          />
+          <button type="submit" class="btn-search">Search</button>
+          @if (searchQuery.trim().length > 0) {
+            <button type="button" class="btn-clear" (click)="clearSearch()">Clear</button>
+          }
+        </form>
+      </div>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-box" aria-busy="true">Loading community posts...</div>
+  } @else if (errorMessage()) {
+    <div class="error-box" role="alert">
+      <h3>Could not load community feed</h3>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-share-post" (click)="loadPosts(currentPage())">Retry</button>
+    </div>
+  } @else if (posts().length === 0) {
+    <div class="empty-box">
+      <h3>No community posts to show</h3>
+      <p>
+        @if (activeTab() === 'my-posts') {
+          Share local experiences, craft stories, or seasonal offers to engage travelers.
+        } @else if (activeTab() === 'saved') {
+          You haven't bookmarked any posts yet.
+        } @else {
+          No posts matched your search or filter.
+        }
+      </p>
+      @if (activeTab() === 'my-posts') {
+        <button type="button" class="btn-share-post" (click)="openShareModal()">
+          Share First Post
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="provider-feed-list">
+      @for (post of posts(); track post.id) {
+        <app-community-post-card
+          [post]="post"
+          actorMode="provider"
+          [currentUserId]="currentProviderUserId()"
+          [isAuthenticated]="isAuthenticatedProvider()"
+          [isPreview]="isPreview()"
+          [inlineCommentsOnly]="true"
+          (postChanged)="onPostChanged($event)"
+          (editRequested)="onEditPost($event)"
+          (deleteRequested)="onDeletePostRequested($event)"
+          (reportRequested)="onReportPostRequested($event)"
+          (commentClicked)="openCommentsDrawer($event)"
+          (photoClicked)="onOpenLightbox($event)"
+          (actionFeedback)="showToast($event.kind, $event.message)"
+        />
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <nav class="pagination-bar" aria-label="Provider community pagination">
+        <button
+          type="button"
+          class="btn-clear"
+          (click)="loadPosts(currentPage() - 1)"
+          [disabled]="currentPage() <= 1"
+        >
+          Previous
+        </button>
+        <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+        <button
+          type="button"
+          class="btn-clear"
+          (click)="loadPosts(currentPage() + 1)"
+          [disabled]="currentPage() >= totalPages()"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  }
+
+  <!-- INLINE COMMENTS DRAWER -->
+  @if (commentsDrawerPost(); as activePost) {
+    <div class="drawer-backdrop" (click)="closeCommentsDrawer()">
+      <aside class="comments-drawer" role="dialog" aria-modal="true" aria-label="Post comments" (click)="$event.stopPropagation()">
+        <header class="drawer-head">
+          <div>
+            <h2>Comments ({{ activePost.comments_count }})</h2>
+            <p class="drawer-snippet">{{ activePost.author_name }}: {{ activePost.body | slice: 0 : 90 }}</p>
+          </div>
+          <button type="button" class="close-drawer" (click)="closeCommentsDrawer()" aria-label="Close comments drawer">&times;</button>
+        </header>
+
+        <form class="drawer-composer" (submit)="$event.preventDefault(); submitComment()">
+          <textarea
+            rows="3"
+            maxlength="1500"
+            [(ngModel)]="newCommentBody"
+            name="providerCommentBody"
+            [disabled]="isSubmittingComment() || isPreview()"
+            placeholder="Write a helpful response as a Service Provider..."
+          ></textarea>
+          <div class="drawer-foot">
+            <span>{{ newCommentBody.length }} / 1500</span>
+            <button type="submit" class="btn-share-post" [disabled]="isSubmittingComment() || isPreview()">
+              {{ isSubmittingComment() ? 'Sending...' : 'Reply' }}
+            </button>
+          </div>
+        </form>
+
+        @if (isLoadingComments()) {
+          <p class="drawer-status">Loading comments...</p>
+        } @else if (commentsError()) {
+          <p class="drawer-error" role="alert">{{ commentsError() }}</p>
+        } @else if (drawerComments().length === 0) {
+          <p class="drawer-status">
+            @if (isPreview()) {
+              Live comments are loaded for real backend posts outside Preview Mode.
+            } @else {
+              No comments yet on this post.
+            }
+          </p>
+        } @else {
+          <ul class="drawer-comment-list">
+            @for (comment of drawerComments(); track comment.id) {
+              <li class="drawer-comment">
+                <div class="comment-meta">
+                  <strong>{{ comment.author.provider_business_name || comment.author_name }}</strong>
+                  <span>{{ comment.created_at | date: 'mediumDate' }}</span>
+                </div>
+
+                @if (editingCommentId() === comment.id) {
+                  <textarea rows="2" maxlength="1500" [(ngModel)]="editingCommentBody"></textarea>
+                  <div class="edit-row">
+                    <button type="button" class="btn-clear" (click)="editingCommentId.set(null)">Cancel</button>
+                    <button type="button" class="btn-search" (click)="saveEditComment(comment)" [disabled]="isSavingCommentEdit()">Save</button>
+                  </div>
+                } @else {
+                  <p>{{ comment.body }}</p>
+                  <div class="comment-ops">
+                    @if (isCommentOwner(comment)) {
+                      <button type="button" (click)="startEditComment(comment)">Edit</button>
+                      <button
+                        type="button"
+                        class="danger"
+                        (click)="deleteError.set(null); deleteTarget.set({ type: 'comment', id: comment.id })"
+                      >
+                        Delete
+                      </button>
+                    } @else if (!isPreview()) {
+                      <button
+                        type="button"
+                        (click)="reportTarget.set({ entityType: 'comment', entityId: comment.id, previewText: comment.body.slice(0, 120) })"
+                      >
+                        Report
+                      </button>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (drawerCommentsTotalPages() > 1) {
+            <div class="drawer-pages">
+              <button
+                type="button"
+                class="btn-clear"
+                (click)="loadDrawerComments(drawerCommentsPage() - 1)"
+                [disabled]="drawerCommentsPage() <= 1"
+              >
+                Prev
+              </button>
+              <span>{{ drawerCommentsPage() }} / {{ drawerCommentsTotalPages() }}</span>
+              <button
+                type="button"
+                class="btn-clear"
+                (click)="loadDrawerComments(drawerCommentsPage() + 1)"
+                [disabled]="drawerCommentsPage() >= drawerCommentsTotalPages()"
+              >
+                Next
+              </button>
+            </div>
+          }
+        }
+      </aside>
+    </div>
+  }
+
+  <app-create-post-modal
+    [isOpen]="isComposerOpen()"
+    [initialPost]="editingPost()"
+    actorMode="provider"
+    [authorName]="activeAuthorName()"
+    [authorSubtitle]="activeAuthorSubtitle()"
+    [isPreview]="isPreview()"
+    (closed)="isComposerOpen.set(false); editingPost.set(null)"
+    (published)="onPostPublished($event)"
+  />
+
+  <app-confirm-delete-modal
+    [isOpen]="deleteTarget() !== null"
+    [title]="deleteTarget()?.type === 'comment' ? 'Delete Comment' : 'Delete Post'"
+    message="Are you sure you want to delete this item? This action cannot be undone."
+    [isBusy]="isDeleting()"
+    [errorMessage]="deleteError()"
+    (cancel)="deleteTarget.set(null)"
+    (confirm)="confirmDelete()"
+  />
+
+  <app-report-content-modal
+    [target]="reportTarget()"
+    actorMode="provider"
+    [isPreview]="isPreview()"
+    (closed)="reportTarget.set(null)"
+    (reported)="showToast('info', 'Report submitted for moderation review.')"
+  />
+
+  <app-photo-lightbox-modal
+    [photos]="lightboxPhotos()"
+    [isOpen]="isLightboxOpen()"
+    [initialIndex]="lightboxIndex()"
+    (close)="isLightboxOpen.set(false)"
+  />
+
+  @if (toast(); as t) {
+    <div class="provider-toast" [class.error]="t.kind === 'error'" role="status">
+      {{ t.message }}
+    </div>
+  }
+</div>

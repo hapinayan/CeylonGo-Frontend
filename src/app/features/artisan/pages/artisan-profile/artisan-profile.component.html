@@ -1,528 +1,336 @@
-<div class="profile-page-wrapper">
-  <!-- TOP STICKY BAR -->
-  <header class="top-nav-bar">
-    <div class="bar-inner">
-      <button type="button" class="back-btn" (click)="goBack()" aria-label="Go back to previous page">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="19" y1="12" x2="5" y2="12" />
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-      </button>
+<main class="artisan-detail-main">
+  @if (toastMessage()) {
+    <div class="toast-banner" role="status" aria-live="polite">
+      {{ toastMessage() }}
+    </div>
+  }
 
-      <a routerLink="/artisans" [queryParams]="queryParams()" class="nav-brand" aria-label="CeylonGo Artisans Home">
-        <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="brand-img" />
-      </a>
-
-      <div class="bar-actions">
-        <!-- FAVORITE HEART -->
-        <button
-          type="button"
-          class="icon-action-btn"
-          [class.active]="isSaved()"
-          (click)="toggleWishlist()"
-          [attr.aria-label]="isSaved() ? 'Remove from favorites' : 'Save business'"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" [attr.fill]="isSaved() ? '#1255B5' : 'none'" [attr.stroke]="isSaved() ? '#1255B5' : '#334155'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-          </svg>
-        </button>
-
-        <!-- SHARE BUTTON -->
-        <button type="button" class="icon-action-btn" (click)="onShareClick()" aria-label="Share artisan profile">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-            <polyline points="16 6 12 2 8 6" />
-            <line x1="12" y1="2" x2="12" y2="15" />
-          </svg>
-        </button>
+  <div class="content-container">
+    <!-- LOADING STATE -->
+    @if (isLoading()) {
+      <div class="loading-skeleton" aria-busy="true">
+        <div class="skeleton-bar back-skel"></div>
+        <div class="skeleton-bar title-skel"></div>
+        <div class="skeleton-gallery"></div>
       </div>
-    </div>
-  </header>
+    }
 
-  <!-- TOAST NOTIFICATIONS (COMPACT NON-SHIFTING TOAST) -->
-  @if (followToastMessage()) {
-    <div class="toast-popup info-toast" role="status">
-      <span>{{ followToastMessage() }}</span>
-    </div>
-  }
-  @if (shareToastMessage()) {
-    <div class="toast-popup success-toast" role="status">
-      <span>{{ shareToastMessage() }}</span>
-    </div>
-  }
-
-  <!-- LOADING SKELETON -->
-  @if (isLoading()) {
-    <div class="profile-skeleton" aria-busy="true">
-      <div class="skeleton-cover"></div>
-      <div class="content-container">
-        <div class="skeleton-avatar"></div>
-        <div class="skeleton-bar title-bar"></div>
-        <div class="skeleton-bar subtitle-bar"></div>
-      </div>
-    </div>
-  }
-
-  <!-- ERROR STATE -->
-  @if (!isLoading() && hasError()) {
-    <div class="error-container" role="alert">
-      <h2>Artisan Not Found</h2>
-      <p>We could not find the requested artisan business profile or it may be inactive.</p>
-      <button type="button" class="primary-btn" (click)="goBack()">Return to Discovery</button>
-    </div>
-  }
-
-  <!-- LOADED PROFILE CONTENT -->
-  @if (!isLoading() && !hasError() && listing()) {
-    <main class="profile-main">
-      <!-- FULL-WIDTH RESPONSIVE COVER BANNER -->
-      <section class="fullwidth-cover-section">
-        <img
-          [src]="displayCoverImage()"
-          [alt]="listing()!.title + ' Cover'"
-          (error)="onCoverError($event)"
-          class="cover-banner-img"
-        />
-      </section>
-
-      <div class="content-container">
-        <!-- PROFILE HEADER WITH OVERLAPPING AVATAR & CLEAR TEXT BELOW -->
-        <div class="profile-header-card">
-          <!-- ONLY THE AVATAR OVERLAPS THE COVER IMAGE -->
-          <div class="profile-avatar-box">
-            <img
-              [src]="displayAvatar()"
-              [alt]="listing()!.title"
-              (error)="onAvatarError($event)"
-              class="avatar-img"
-            />
-          </div>
-
-          <div class="header-details-row">
-            <div class="title-meta-block">
-              <h1 class="business-title">
-                {{ listing()!.title }}
-                @if (listing()!.is_verified) {
-                  <app-verified-badge [size]="24" />
-                }
-              </h1>
-
-              <div class="meta-row">
-                <span class="category-pill">{{ listing()!.craft_category }}</span>
-                <span class="dot-sep">&bull;</span>
-                <span class="location-text">{{ formatLocation(listing()!.city, listing()!.district) }}</span>
-                <span class="dot-sep">&bull;</span>
-                @if (totalReviewCount() === 0) {
-                  <span class="no-reviews-pill">No reviews yet</span>
-                } @else {
-                  <div class="rating-display">
-                    <svg class="star-icon" width="16" height="16" viewBox="0 0 24 24" fill="#FFB800" stroke="#FFB800" stroke-width="1" aria-hidden="true">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                    <span class="rating-val">{{ averageRating() | number:'1.1-1' }}</span>
-                    <span class="reviews-count">({{ totalReviewCount() }} reviews)</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- FOLLOW / FOLLOWING BUTTON -->
-            <div class="action-btn-group">
-              <button
-                type="button"
-                class="follow-toggle-btn"
-                [class.following]="isFollowing()"
-                [disabled]="isFollowLoading()"
-                (click)="onFollowToggle()"
-                [attr.aria-label]="isFollowing() ? 'Unfollow artisan' : 'Follow artisan'"
-              >
-                @if (isFollowing()) {
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <span>Following</span>
-                } @else {
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <line x1="19" y1="8" x2="19" y2="14" />
-                    <line x1="22" y1="11" x2="16" y2="11" />
-                  </svg>
-                  <span>Follow</span>
-                }
-              </button>
-            </div>
-          </div>
+    <!-- ERROR / NOT FOUND STATE -->
+    @if (!isLoading() && hasError()) {
+      <div class="error-state-card" role="alert">
+        <h2>Artisan Business Not Found</h2>
+        <p>The requested artisan listing could not be loaded or is not currently published.</p>
+        <div class="error-actions">
+          <a routerLink="/artisans/discover" class="primary-btn">Browse All Artisans</a>
         </div>
+      </div>
+    }
 
-        <!-- FOUR SEGMENTED TABS -->
-        <nav class="profile-tabs-nav" role="tablist" aria-label="Artisan Profile Tabs">
-          <button
-            type="button"
-            role="tab"
-            class="tab-btn"
-            [class.active]="activeTab() === 'overview'"
-            [attr.aria-selected]="activeTab() === 'overview'"
-            (click)="setTab('overview')"
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="tab-btn"
-            [class.active]="activeTab() === 'products'"
-            [attr.aria-selected]="activeTab() === 'products'"
-            (click)="setTab('products')"
-          >
-            Products
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="tab-btn"
-            [class.active]="activeTab() === 'reviews'"
-            [attr.aria-selected]="activeTab() === 'reviews'"
-            (click)="setTab('reviews')"
-          >
-            Reviews ({{ totalReviewCount() }})
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="tab-btn"
-            [class.active]="activeTab() === 'location'"
-            [attr.aria-selected]="activeTab() === 'location'"
-            (click)="setTab('location')"
-          >
-            Location
-          </button>
-        </nav>
-
-        <!-- ============================================== -->
-        <!-- TAB 1: OVERVIEW                                -->
-        <!-- ============================================== -->
-        @if (activeTab() === 'overview') {
-          <section class="tab-pane overview-pane">
-            <div class="overview-layout-grid">
-              <!-- LEFT COL: ABOUT & 4 ATTRIBUTES -->
-              <div class="left-col">
-                <div class="card-box about-box">
-                  <h2 class="section-heading">About the Artisan</h2>
-                  <p class="desc-para">
-                    {{ listing()!.description || 'Traditional Sri Lankan artisan business preserving authentic craft heritage.' }}
-                  </p>
-                </div>
-
-                <!-- 4 BUSINESS ATTRIBUTES -->
-                <div class="attributes-grid">
-                  <div class="attribute-item">
-                    <div class="attr-icon">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                    </div>
-                    <div class="attr-text">
-                      <span class="attr-title">20+ Years</span>
-                      <span class="attr-sub">Experience</span>
-                    </div>
-                  </div>
-
-                  <div class="attribute-item">
-                    <div class="attr-icon">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                      </svg>
-                    </div>
-                    <div class="attr-text">
-                      <span class="attr-title">Local Artisans</span>
-                      <span class="attr-sub">Master Craftsmen</span>
-                    </div>
-                  </div>
-
-                  <div class="attribute-item">
-                    <div class="attr-icon">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
-                      </svg>
-                    </div>
-                    <div class="attr-text">
-                      <span class="attr-title">Authentic Handmade</span>
-                      <span class="attr-sub">100% Traditional</span>
-                    </div>
-                  </div>
-
-                  <div class="attribute-item">
-                    <div class="attr-icon">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <path d="m9 12 2 2 4-4" />
-                      </svg>
-                    </div>
-                    <div class="attr-text">
-                      <span class="attr-title">Quality Assured</span>
-                      <span class="attr-sub">CeylonGo Verified</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- RIGHT COL: CONTACT & VISIT -->
-              <div class="right-col">
-                <div class="card-box contact-summary-card">
-                  <h3 class="info-card-title">Contact & Visit</h3>
-
-                  <!-- BUSINESS HOURS -->
-                  <div class="info-row">
-                    <div class="info-row-header">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                      <span class="info-label">Business Hours</span>
-                      <span class="open-badge">Open Today</span>
-                    </div>
-                    <p class="info-value">{{ listing()!.opening_hours || 'Mon - Sat: 9:00 AM - 6:00 PM' }}</p>
-                  </div>
-
-                  <!-- ADDRESS -->
-                  <div class="info-row">
-                    <div class="info-row-header">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      <span class="info-label">Address</span>
-                    </div>
-                    <p class="info-value">{{ listing()!.address || (listing()!.city + ', ' + listing()!.district) }}</p>
-                  </div>
-
-                  <!-- PHONE -->
-                  @if (listing()!.phone) {
-                    <div class="info-row">
-                      <div class="info-row-header">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                        <span class="info-label">Phone</span>
-                      </div>
-                      <p class="info-value">{{ listing()!.phone }}</p>
-                    </div>
-                  }
-
-                  <a [routerLink]="['/artisans', listing()!.id, 'contact']" [queryParams]="queryParams()" class="contact-cta-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <span>Contact Artisan</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </section>
-        }
-
-        <!-- ============================================== -->
-        <!-- TAB 2: PRODUCTS                                -->
-        <!-- ============================================== -->
-        @if (activeTab() === 'products') {
-          <section class="tab-pane products-pane">
-            <h2 class="section-heading">Our Handmade Products</h2>
-            <p class="pane-subtitle">Explore authentic handicrafts directly crafted in this workshop</p>
-
-            @if (products().length === 0) {
-              <div class="empty-state-box">
-                <p>No products currently displayed for this artisan.</p>
-              </div>
-            } @else {
-              <div class="products-grid">
-                @for (prod of products(); track prod.id) {
-                  <article class="artisan-product-card" [routerLink]="['/artisans', listing()!.id, 'products', prod.id]" [queryParams]="queryParams()">
-                    <div class="prod-img-box">
-                      <img
-                        [src]="getProductImage(prod)"
-                        [alt]="prod.title"
-                        (error)="onProductImageError($event, prod)"
-                        loading="lazy"
-                        class="prod-img"
-                      />
-                      <button
-                        type="button"
-                        class="prod-heart-btn"
-                        [class.active]="isProductSaved(prod.id)"
-                        (click)="toggleProductFavorite($event, prod.id)"
-                        [attr.aria-label]="isProductSaved(prod.id) ? 'Remove from favorites' : 'Save product'"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="isProductSaved(prod.id) ? '#1255B5' : 'none'" [attr.stroke]="isProductSaved(prod.id) ? '#1255B5' : '#334155'" stroke-width="2">
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="prod-meta">
-                      <h3 class="prod-name">{{ prod.title }}</h3>
-                      <div class="prod-price-row">
-                        <span class="prod-price">{{ prod.price | lkrCurrency }}</span>
-                        @if (prod.is_available && prod.stock_quantity > 0) {
-                          <span class="in-stock-badge">In Stock</span>
-                        }
-                      </div>
-                    </div>
-                  </article>
-                }
-              </div>
-            }
-          </section>
-        }
-
-        <!-- ============================================== -->
-        <!-- TAB 3: REVIEWS                                 -->
-        <!-- ============================================== -->
-        @if (activeTab() === 'reviews') {
-          <section class="tab-pane reviews-pane">
-            <div class="reviews-pane-header">
-              <h2 class="section-heading">Customer Reviews & Ratings</h2>
-              @if (queryParams().demo) {
-                <div class="demo-reviews-pill">
-                  <span class="pill-dot"></span>
-                  <span>Sample Demo Reviews</span>
-                </div>
+    <!-- LOADED PROFILE CONTENT -->
+    @if (!isLoading() && !hasError() && listing(); as l) {
+      <!-- HEADER ROW -->
+      <section class="guide-header-section">
+        <div class="header-top-row">
+          <div class="header-identity">
+            <div class="title-with-badge">
+              <h1 class="business-title">{{ l.title }}</h1>
+              @if (l.is_verified) {
+                <span class="verified-pill">
+                  <app-verified-badge [size]="15" />
+                  <span>Verified Business</span>
+                </span>
               }
             </div>
 
-            @if (totalReviewCount() === 0 || (reviews()?.items?.length ?? 0) === 0) {
-              <div class="empty-reviews-card">
-                <div class="empty-icon-box">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.75">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                </div>
-                <h3 class="empty-heading">No reviews yet</h3>
-                <p class="empty-subtext">Be the first traveler to review this artisan workshop after your visit.</p>
-              </div>
-            } @else {
-              <div class="reviews-summary-card">
-                <div class="rating-score-col">
-                  <span class="big-score">{{ averageRating() | number:'1.1-1' }}</span>
-                  <div class="stars-row">
-                    <app-rating-stars [rating]="averageRating()" />
-                  </div>
-                  <span class="score-sub">{{ totalReviewCount() }} verified reviews</span>
-                </div>
+            <div class="meta-summary-row">
+              <span class="category-chip">{{ l.craft_category }}</span>
+              @if (l.business_type) {
+                <span class="sep">&middot;</span>
+                <span class="location-label">{{ l.business_type }}</span>
+              }
+              <span class="sep">&middot;</span>
+              <span class="location-label">{{ formatLocation(l.city, l.district) }}</span>
+              @if (totalReviewCount() > 0 && averageRating() != null) {
+                <span class="sep">&middot;</span>
+                <span class="rating-val">{{ averageRating() | number:'1.1-1' }} ({{ totalReviewCount() }} reviews)</span>
+              }
+            </div>
+          </div>
 
-                <!-- DISTRIBUTION BARS (5 STARS TO 1 STAR) -->
-                <div class="rating-bars-col">
-                  @for (item of ratingDistribution(); track item.stars) {
-                    <div class="dist-row">
-                      <span class="star-label">{{ item.stars }} stars</span>
-                      <div class="bar-track">
-                        <div class="bar-fill" [style.width.%]="item.pct"></div>
-                      </div>
-                      <span class="count-label">{{ item.count }}</span>
-                    </div>
+          <div class="header-actions">
+            <button type="button" class="action-pill-btn" [class.saved]="isSaved()" (click)="toggleWishlist()">
+              <svg width="17" height="17" viewBox="0 0 24 24" [attr.fill]="isSaved() ? '#0066FF' : 'none'" stroke="#0066FF" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+              <span>{{ isSaved() ? 'Saved' : 'Save' }}</span>
+            </button>
+
+            <button type="button" class="action-pill-btn" (click)="onShareClick()">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPACT 240px PHOTO GALLERY -->
+      <section class="compact-gallery" aria-label="Business photographs">
+        <div class="gallery-grid" [class.single-photo]="secondaryPhotos().length === 0">
+          <div class="gallery-main-slot">
+            <img [src]="mainPhoto()" [alt]="l.title" (error)="onImageError($event)" />
+          </div>
+
+          @if (secondaryPhotos().length > 0) {
+            <div class="gallery-side-stack">
+              @for (photo of secondaryPhotos(); track $index; let last = $last) {
+                <div class="gallery-side-slot">
+                  <img [src]="photo" [alt]="l.title + ' photo'" (error)="onImageError($event)" />
+                  @if (last && galleryPhotos().length > 1) {
+                    <button type="button" class="view-all-photos-btn" (click)="openPhotoModal()">
+                      View All Photos ({{ galleryPhotos().length }})
+                    </button>
                   }
                 </div>
-              </div>
+              }
+            </div>
+          } @else if (galleryPhotos().length > 0) {
+            <button type="button" class="view-all-photos-btn standalone" (click)="openPhotoModal()">
+              View All Photos ({{ galleryPhotos().length }})
+            </button>
+          }
+        </div>
+      </section>
 
-              <!-- REVIEWS FEED -->
-              <div class="reviews-feed">
-                @for (rev of reviews()?.items; track rev.id) {
-                  <article class="single-review-card">
-                    <div class="rev-header">
-                      <div class="user-meta">
-                        <span class="user-avatar-circle">
-                          {{ (rev.user_name || 'V').charAt(0).toUpperCase() }}
-                        </span>
-                        <div>
-                          <div class="user-name-row">
-                            <span class="user-name">{{ rev.user_name || 'Verified Traveler' }}</span>
-                            @if (rev.is_verified_booking) {
-                              <span class="verified-chip">Verified Visit</span>
-                            }
-                          </div>
-                          <time class="rev-date">{{ rev.created_at | date:'mediumDate' }}</time>
-                        </div>
-                      </div>
-                      <app-rating-stars [rating]="rev.rating" />
+      <!-- 67% / 33% TWO-COLUMN CONTENT LAYOUT -->
+      <div class="detail-layout">
+        <!-- LEFT 67% MAIN CONTENT -->
+        <div class="main-content-col">
+          <!-- ABOUT THE BUSINESS -->
+          <section class="detail-card-section">
+            <h2 class="section-title">About the Business</h2>
+            <p class="about-text">
+              {{ l.description || 'Local Sri Lankan artisan and craft showcase.' }}
+            </p>
+            @if (l.business_background) {
+              <p class="craftsman-line"><strong>Background:</strong> {{ l.business_background }}</p>
+            }
+            @if (l.artisan_information) {
+              <p class="craftsman-line"><strong>Artisan Story:</strong> {{ l.artisan_information }}</p>
+            }
+            @if (l.provider_business_name) {
+              <p class="craftsman-line"><strong>Operated by:</strong> {{ l.provider_business_name }}</p>
+            }
+          </section>
+
+          <!-- PRODUCTS & HANDICRAFTS -->
+          <section class="detail-card-section">
+            <div class="section-head">
+              <h2 class="section-title">Products &amp; Handicrafts</h2>
+              <span class="item-count">{{ products().length }} {{ products().length === 1 ? 'Item' : 'Items' }}</span>
+            </div>
+
+            @if (products().length > 0) {
+              <div class="products-showcase-grid">
+                @for (item of products(); track item.id) {
+                  <article class="product-showcase-card">
+                    <div class="product-thumb-wrap">
+                      <img [src]="item.image_url || mainPhoto()" [alt]="item.title" (error)="onImageError($event)" />
                     </div>
-
-                    @if (rev.title) {
-                      <h4 class="rev-title">{{ rev.title }}</h4>
-                    }
-                    <p class="rev-body">{{ rev.comment }}</p>
+                    <div class="product-info">
+                      <h3 class="product-name">{{ item.title }}</h3>
+                      @if (item.price != null && item.price > 0) {
+                        <p class="product-price">{{ item.price | lkrCurrency }}</p>
+                      }
+                      <a [routerLink]="['/artisans', l.id, 'products', item.id]" class="view-product-btn">
+                        View Product
+                      </a>
+                    </div>
                   </article>
                 }
               </div>
+            } @else {
+              <p class="empty-inline-note">
+                Individual showcase items for this business can be inquired about directly using Contact Information below.
+              </p>
             }
           </section>
-        }
 
-        <!-- ============================================== -->
-        <!-- TAB 4: LOCATION & MAP                          -->
-        <!-- ============================================== -->
-        @if (activeTab() === 'location') {
-          <section class="tab-pane location-pane">
-            <h2 class="section-heading">Find the Artisan</h2>
-            <p class="pane-subtitle">Visit the workshop in {{ formatLocation(listing()!.city, listing()!.district) }}</p>
-
-            <div class="location-card-container">
-              <div class="map-view-box">
-                <div class="map-bg">
-                  <div class="custom-map-pin">
-                    <div class="pin-icon">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#1255B5" stroke="#FFFFFF" stroke-width="2">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                        <circle cx="12" cy="10" r="3" fill="#FFFFFF" />
-                      </svg>
-                    </div>
-                    <div class="pin-popup">
-                      <strong>{{ listing()!.title }}</strong>
-                      <span>{{ listing()!.city || listing()!.district }}</span>
-                    </div>
-                  </div>
-                </div>
+          <!-- WORKSHOP & BUSINESS GALLERY -->
+          @if (galleryPhotos().length > 1) {
+            <section class="detail-card-section">
+              <h2 class="section-title">Workshop &amp; Business Gallery</h2>
+              <div class="workshop-gallery-grid">
+                @for (photo of galleryPhotos(); track $index) {
+                  <img [src]="photo" [alt]="l.title + ' workshop photograph'" (error)="onImageError($event)" (click)="openPhotoModal()" />
+                }
               </div>
+            </section>
+          }
 
-              <div class="location-details-bar">
-                <div class="address-col">
-                  <span class="address-label">Workshop Address</span>
-                  <p class="address-text">{{ listing()!.address || (listing()!.city + ', ' + listing()!.district + ', Sri Lanka') }}</p>
-                </div>
-                <a
-                  href="https://maps.google.com/?q={{ listing()!.latitude || 7.2906 }},{{ listing()!.longitude || 80.6337 }}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="directions-btn"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                  </svg>
-                  <span>Get Directions</span>
-                </a>
-              </div>
+          <!-- BUSINESS LOCATION -->
+          <section class="detail-card-section location-pane">
+            <div class="section-head">
+              <h2 class="section-title">Business Location</h2>
+              <a [href]="googleMapsUrl()" target="_blank" rel="noopener noreferrer" class="directions-link">
+                Get Directions &rarr;
+              </a>
             </div>
-          </section>
-        }
+            <p class="address-line">{{ l.address || formatLocation(l.city, l.district) }}</p>
 
-        <!-- ============================================== -->
-        <!-- SECTION 4: RELATED LOCAL ARTISANS              -->
-        <!-- ============================================== -->
-        <section class="related-artisans-section">
-          <div class="related-header">
-            <h2 class="related-title">Related Local Artisans</h2>
-            <p class="related-sub">Explore similar artisans and local businesses.</p>
+            @if (hasValidCoordinates()) {
+              <div #artisanMapContainer class="leaflet-map-box" aria-label="Artisan workshop location map"></div>
+            } @else {
+              <p class="empty-inline-note">Exact map coordinates are not published for this workshop.</p>
+            }
+          </section>
+
+          <!-- OPENING HOURS -->
+          @if (businessHours().length > 0 || l.opening_hours) {
+            <section class="detail-card-section">
+              <h2 class="section-title">Opening Hours</h2>
+              @if (l.opening_hours) {
+                <p class="about-text">{{ l.opening_hours }}</p>
+              }
+              @if (businessHours().length > 0) {
+                <dl class="contact-dl">
+                  @for (day of businessHours(); track day.day_of_week) {
+                    <dt>{{ day.day_name || dayNames[day.day_of_week] || ('Day ' + day.day_of_week) }}</dt>
+                    <dd>{{ day.is_closed ? 'Closed' : ((day.open_time || '--:--') + ' - ' + (day.close_time || '--:--')) }}</dd>
+                  }
+                </dl>
+              }
+            </section>
+          }
+
+          <!-- CONTACT INFORMATION -->
+          @if (hasContactMethods()) {
+            <section class="detail-card-section">
+              <h2 class="section-title">Contact Information</h2>
+              <dl class="contact-dl">
+                @if (l.phone) {
+                  <dt>Phone</dt><dd><a [href]="'tel:' + l.phone">{{ l.phone }}</a></dd>
+                }
+                @if (l.whatsapp_number) {
+                  <dt>WhatsApp</dt>
+                  <dd>
+                    @if (l.whatsapp_link) {
+                      <a [href]="l.whatsapp_link" target="_blank" rel="noopener noreferrer">{{ l.whatsapp_number }}</a>
+                    } @else {
+                      {{ l.whatsapp_number }}
+                    }
+                  </dd>
+                }
+                @if (l.email) {
+                  <dt>Email</dt><dd><a [href]="'mailto:' + l.email">{{ l.email }}</a></dd>
+                }
+                @if (l.website_url) {
+                  <dt>Website</dt><dd><a [href]="l.website_url" target="_blank" rel="noopener noreferrer">{{ l.website_url }}</a></dd>
+                }
+                @for (soc of socialEntries(); track soc.label) {
+                  <dt>{{ soc.label }}</dt><dd><a [href]="soc.url" target="_blank" rel="noopener noreferrer">{{ soc.url }}</a></dd>
+                }
+              </dl>
+            </section>
+          }
+
+          <!-- REVIEWS -->
+          <section class="detail-card-section reviews-pane">
+            <h2 class="section-title">Reviews ({{ totalReviewCount() }})</h2>
+            @if (totalReviewCount() > 0 && reviews()?.items?.length) {
+              <div class="reviews-list">
+                @for (rev of reviews()!.items; track rev.id) {
+                  <article class="review-item">
+                    <div class="review-head">
+                      <strong>{{ rev.user_name || 'Verified Traveler' }}</strong>
+                      <span class="review-score">{{ rev.rating }} / 5</span>
+                    </div>
+                    @if (rev.comment) {
+                      <p>{{ rev.comment }}</p>
+                    }
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="empty-reviews-card">
+                <p>No reviews yet for this Artisan business.</p>
+              </div>
+            }
+          </section>
+        </div>
+
+        <!-- RIGHT 33% STICKY SIDEBAR -->
+        <aside class="sidebar-col" aria-label="Contact business sidebar">
+          <div class="sticky-contact-card">
+            <h2 class="sidebar-heading">Contact Business</h2>
+            <p class="sidebar-business-name">{{ l.title }}</p>
+            <p class="sidebar-location">{{ formatLocation(l.city, l.district) }}</p>
+
+            @if (l.price != null && l.price > 0) {
+              <div class="sidebar-price-row">
+                <span class="price-label">Starting craft price</span>
+                <strong class="price-val">{{ l.currency || 'LKR' }} {{ l.price | number:'1.0-0' }}</strong>
+              </div>
+            }
+
+            @if (l.opening_hours) {
+              <p class="sidebar-hours"><strong>Hours:</strong> {{ l.opening_hours }}</p>
+            }
+
+            <div class="sidebar-actions">
+              @if (l.phone) {
+                <a [href]="'tel:' + l.phone" class="sidebar-primary-btn">Call Business</a>
+              }
+              @if (l.whatsapp_link) {
+                <a [href]="l.whatsapp_link" target="_blank" rel="noopener noreferrer" class="sidebar-secondary-btn">WhatsApp</a>
+              }
+              @if (l.website_url) {
+                <a [href]="l.website_url" target="_blank" rel="noopener noreferrer" class="sidebar-secondary-btn">Visit Website</a>
+              }
+
+              <a [href]="googleMapsUrl()" target="_blank" rel="noopener noreferrer" class="sidebar-primary-btn">
+                Get Directions
+              </a>
+
+              <button type="button" class="sidebar-secondary-btn" (click)="toggleWishlist()">
+                {{ isSaved() ? 'Saved to Wishlist' : 'Save to Wishlist' }}
+              </button>
+            </div>
           </div>
+        </aside>
+      </div>
+
+      <!-- RELATED LOCAL ARTISANS -->
+      @if (relatedArtisans().length > 0) {
+        <section class="related-artisans-section">
+          <h2 class="section-title">Related Local Artisans</h2>
           <div class="related-grid">
             @for (rel of relatedArtisans(); track rel.id) {
               <app-artisan-card [listing]="rel" />
             }
           </div>
         </section>
+      }
+    }
+  </div>
+
+  <!-- FULL PHOTO GALLERY MODAL -->
+  @if (isPhotoModalOpen()) {
+    <div class="photo-modal-backdrop" (click)="closePhotoModal()">
+      <div class="photo-modal-content" role="dialog" aria-modal="true" aria-label="All business photographs" (click)="$event.stopPropagation()">
+        <div class="photo-modal-header">
+          <h2>All Business Photographs ({{ galleryPhotos().length }})</h2>
+          <button type="button" class="close-modal-btn" (click)="closePhotoModal()" aria-label="Close photos">&times;</button>
+        </div>
+        <div class="photo-modal-grid">
+          @for (photo of galleryPhotos(); track $index) {
+            <img [src]="photo" [alt]="'Business photo ' + ($index + 1)" (error)="onImageError($event)" />
+          }
+        </div>
       </div>
-    </main>
+    </div>
   }
-</div>
+</main>

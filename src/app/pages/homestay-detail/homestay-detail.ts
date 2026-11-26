@@ -13,12 +13,11 @@ import {
 import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
-import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
 
 @Component({
   selector: 'app-homestay-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TravelerAuthModal],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './homestay-detail.html',
   styleUrl: './homestay-detail.scss',
 })

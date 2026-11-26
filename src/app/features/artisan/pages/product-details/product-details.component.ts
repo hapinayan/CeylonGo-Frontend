@@ -1,16 +1,19 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
   ArtisanListingResponse,
   ArtisanProductImage,
   ShowcaseItemResponse,
+  ShowcaseItemSummary,
 } from '../../models/artisan.models';
 import { ArtisanService } from '../../services/artisan.service';
 import { ProductService } from '../../services/product.service';
 import { FavoriteService } from '../../services/favorite.service';
 import { ArtisanNavigationService } from '../../services/artisan-navigation.service';
+import { AuthModalService } from '../../../../core/services/auth-modal.service';
+import { NEUTRAL_ARTISAN_PLACEHOLDER } from '../../../../shared/components/artisan-card/artisan-card.component';
 import {
   VERIFIED_ARTISAN_PROFILES,
   VERIFIED_ARTISAN_PROFILE,
@@ -22,7 +25,12 @@ import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, RatingStarsComponent, LkrCurrencyPipe],
+  imports: [
+    CommonModule,
+    RouterLink,
+    RatingStarsComponent,
+    LkrCurrencyPipe,
+  ],
   templateUrl: './product-details.component.html',
   styleUrl: './product-details.component.scss',
 })
@@ -32,12 +40,14 @@ export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly artisanService = inject(ArtisanService);
   private readonly favoriteService = inject(FavoriteService);
+  private readonly authModalService = inject(AuthModalService);
   private readonly navService = inject(ArtisanNavigationService);
 
   readonly listingId = signal<number>(1);
   readonly productId = signal<number>(1);
   readonly product = signal<ShowcaseItemResponse | null>(null);
   readonly listing = signal<ArtisanListingResponse | null>(null);
+  readonly relatedProducts = signal<ShowcaseItemSummary[]>([]);
   readonly galleryImages = signal<string[]>([]);
   readonly activeImageIndex = signal<number>(0);
 
@@ -57,7 +67,7 @@ export class ProductDetailsComponent implements OnInit {
     if (list.length > 0 && idx >= 0 && idx < list.length) {
       return list[idx];
     }
-    return this.product()?.image_url || '/images/artisan/product_mask_main.jpg';
+    return this.product()?.image_url || NEUTRAL_ARTISAN_PLACEHOLDER;
   });
 
   ngOnInit(): void {
@@ -97,7 +107,7 @@ export class ProductDetailsComponent implements OnInit {
           const imgs: string[] = [];
           if (item.image_url) imgs.push(item.image_url);
 
-          const additional = item.images || item.product_images || [];
+          const additional = item.images?.length ? item.images : (item.product_images || []);
           additional.forEach((img: ArtisanProductImage) => {
             if (img.image_url && !imgs.includes(img.image_url)) {
               imgs.push(img.image_url);
@@ -105,7 +115,16 @@ export class ProductDetailsComponent implements OnInit {
           });
 
           if (imgs.length === 0) {
-            imgs.push('/images/artisan/product_mask_main.jpg');
+            imgs.push(NEUTRAL_ARTISAN_PLACEHOLDER);
+            this.productService.getProductImages?.(productId)?.subscribe((extraImgs) => {
+              const fetched = (extraImgs ?? [])
+                .map((img) => img.image_url)
+                .filter((url): url is string => !!url);
+              if (fetched.length > 0) {
+                this.galleryImages.set(fetched);
+                this.activeImageIndex.set(0);
+              }
+            });
           }
 
           this.galleryImages.set(imgs);
@@ -123,9 +142,21 @@ export class ProductDetailsComponent implements OnInit {
       },
     });
 
-    // Load artisan listing for contact information
+    // Load artisan listing for contact information and related products
     this.artisanService.getListingById(listingId).subscribe({
-      next: (artisan) => this.listing.set(artisan),
+      next: (artisan) => {
+        this.listing.set(artisan);
+        this.productService
+          .getProductsByListing(listingId, 1, 10)
+          .subscribe({
+            next: (res) => {
+              this.relatedProducts.set(
+                (res?.items ?? []).filter((p) => p.id !== productId).slice(0, 4)
+              );
+            },
+            error: () => this.relatedProducts.set([]),
+          });
+      },
       error: () => {},
     });
   }
@@ -202,14 +233,14 @@ export class ProductDetailsComponent implements OnInit {
   toggleFavorite(): void {
     const id = this.productId();
     if (!id) return;
-    const isDemo = this.route.snapshot?.queryParamMap?.get('demo') === 'true' || this.isFixtureMode();
-    this.favoriteService.toggleProductFavorite(id, isDemo).subscribe({
+    this.favoriteService.toggleProductFavorite(id).subscribe({
       next: () => {},
       error: (err) => {
         if (err?.message === 'AUTHENTICATION_REQUIRED') {
-          this.router.navigate(['/auth'], {
-            queryParams: { returnUrl: this.router.url },
-          });
+          this.authModalService.open('login', undefined, { type: 'wishlist' });
+        } else if (err?.message === 'PRODUCT_FAVORITES_UNSUPPORTED') {
+          this.shareToastMessage.set('Save the Artisan business profile from its page to add it to your wishlist.');
+          setTimeout(() => this.shareToastMessage.set(null), 3500);
         }
       },
     });
@@ -250,6 +281,9 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   onImageError(event: Event): void {
-    (event.target as HTMLImageElement).src = '/images/artisan/product_mask_main.jpg';
+    const img = event.target as HTMLImageElement;
+    if (img && img.src !== NEUTRAL_ARTISAN_PLACEHOLDER) {
+      img.src = NEUTRAL_ARTISAN_PLACEHOLDER;
+    }
   }
 }

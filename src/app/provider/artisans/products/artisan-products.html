@@ -1,0 +1,163 @@
+<div class="products-page-shell">
+  <div class="page-header">
+    <div>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">
+        &larr; Back to Manage Listings
+      </a>
+      <h1 class="page-title">Manage Artisan Showcase Products</h1>
+      <p class="page-subtitle">Add or update handcrafted items displayed on your Artisan business page (no e-commerce checkout).</p>
+    </div>
+
+    <a routerLink="/provider/artisans/new" [queryParams]="previewQueryParams()" class="btn-primary">
+      + New Artisan Listing
+    </a>
+  </div>
+
+  @if (isPreview()) {
+    <div class="info-banner" role="note">
+      Development Preview Mode: product showcase mutations are disabled.
+    </div>
+  }
+  @if (bannerMessage()) {
+    <div class="success-banner" role="status">{{ bannerMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <p class="state-note">Loading Artisan businesses...</p>
+  } @else if (artisanListings().length === 0) {
+    <div class="empty-card">
+      <h2>No Artisan Businesses Yet</h2>
+      <p>Create an Artisan &amp; Local Business listing first before adding showcase products.</p>
+      <a routerLink="/provider/artisans/new" [queryParams]="previewQueryParams()" class="btn-primary">
+        Create Artisan Listing
+      </a>
+    </div>
+  } @else {
+    <div class="toolbar-panel">
+      <label for="artisanSelect">Select Artisan Business:</label>
+      <select
+        id="artisanSelect"
+        [ngModel]="selectedListingId()"
+        (ngModelChange)="onListingChange(+$event)"
+      >
+        @for (item of artisanListings(); track item.listing.id) {
+          <option [value]="item.listing.id">
+            {{ item.listing.title }} ({{ item.verification_status | titlecase }})
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="add-item-panel">
+      <input
+        type="text"
+        [(ngModel)]="newProductName"
+        placeholder="New craft or product name (e.g. Brass Oil Lamp)"
+        aria-label="New product name"
+      />
+      <select [(ngModel)]="newProductCategory" aria-label="Product category">
+        @for (cat of craftCategories; track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+      <input
+        type="number"
+        min="0"
+        step="50"
+        [(ngModel)]="newProductPrice"
+        placeholder="Price LKR (optional)"
+        aria-label="Optional LKR price"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newProductMaterials"
+        placeholder="Materials (optional)"
+        aria-label="Materials"
+      />
+      <input
+        type="text"
+        [(ngModel)]="newProductDescription"
+        placeholder="Short description"
+        aria-label="Short description"
+      />
+      <button type="button" class="btn-primary" (click)="addProduct()" [disabled]="isPreview() || !newProductName.trim()">
+        + Add Showcase Item
+      </button>
+    </div>
+
+    @if (isLoadingProducts()) {
+      <p class="state-note">Loading showcase products...</p>
+    } @else if (products().length === 0) {
+      <div class="empty-card">
+        <p>No showcase items added for this Artisan business yet.</p>
+      </div>
+    } @else {
+      <div class="items-list">
+        @for (product of products(); track product.id) {
+          <div class="item-card">
+            @if (editingProductId === product.id) {
+              <div class="edit-fields-grid">
+                <input type="text" [(ngModel)]="editTitle" class="edit-input" aria-label="Edit title" />
+                <select [(ngModel)]="editCategory" aria-label="Edit category">
+                  @for (cat of craftCategories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                </select>
+                <input type="number" min="0" [(ngModel)]="editPrice" placeholder="Price LKR" aria-label="Edit price" />
+                <input type="text" [(ngModel)]="editMaterials" placeholder="Materials" aria-label="Edit materials" />
+                <input type="text" [(ngModel)]="editDescription" placeholder="Description" aria-label="Edit description" />
+              </div>
+              <div class="actions">
+                <button type="button" class="btn-small primary" (click)="saveEdit(product)">Save</button>
+                <button type="button" class="btn-small" (click)="cancelEdit()">Cancel</button>
+              </div>
+            } @else {
+              <div class="item-meta">
+                <strong class="item-title">{{ product.title }}</strong>
+                <span class="status-tag" [class.inactive]="!product.is_available && !product.is_active">
+                  {{ product.is_available || product.is_active ? 'Active Showcase' : 'Inactive' }}
+                </span>
+                <p class="meta-line">
+                  {{ product.category }}
+                  @if (product.price != null) { · LKR {{ product.price | number }} }
+                  @if (product.materials) { · {{ product.materials }} }
+                </p>
+                @if (product.description) {
+                  <p class="meta-desc">{{ product.description }}</p>
+                }
+                @if ((product.images.length || product.product_images.length)) {
+                  <div class="product-thumbs">
+                    @for (img of (product.images.length ? product.images : product.product_images); track img.id) {
+                      <div class="thumb-chip">
+                        @if (photoPreviews()[photoKey(product.id, img.id)]; as src) {
+                          <img [src]="src" [alt]="product.title" />
+                        } @else {
+                          <span>Photo #{{ img.id }}</span>
+                        }
+                        <button type="button" class="btn-small danger" (click)="deletePhoto(product, img.id)" [disabled]="isPreview()">&times;</button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="actions">
+                <label class="btn-small upload-label" [class.disabled]="isPreview()">
+                  <span>+ Photo</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onPhotoSelected(product, $event)" [disabled]="isPreview()" />
+                </label>
+                <button type="button" class="btn-small" (click)="startEdit(product)" [disabled]="isPreview()">Edit</button>
+                <button type="button" class="btn-small" (click)="toggleProductActive(product)" [disabled]="isPreview()">
+                  {{ product.is_available || product.is_active ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button type="button" class="btn-small danger" (click)="deleteProduct(product)" [disabled]="isPreview()">Delete</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

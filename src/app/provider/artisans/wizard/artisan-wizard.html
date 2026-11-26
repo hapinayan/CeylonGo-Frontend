@@ -1,0 +1,385 @@
+<div class="wizard-container">
+  <div class="wizard-header">
+    <div>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Back to Manage Listings</span>
+      </a>
+      <h1 class="wizard-title">
+        {{ isEditMode() ? 'Edit Artisan & Local Business' : 'List Artisan & Local Business' }}
+      </h1>
+      <div class="draft-meta">
+        <span class="status-pill" [class]="'status-pill status-' + verificationStatus()">
+          {{ verificationStatus() | titlecase }}
+        </span>
+        @if (listingId()) {
+          <span class="draft-pill">Listing #{{ listingId() }}</span>
+        }
+        @if (isPreview()) {
+          <span class="draft-pill">Preview Mode · Read Only</span>
+        }
+      </div>
+    </div>
+
+    <button type="button" class="btn-save-draft" (click)="saveDraft()" [disabled]="isSaving() || isPreview()">
+      {{ isSaving() ? 'Saving Draft...' : 'Save Draft' }}
+    </button>
+  </div>
+
+  <!-- Stepper Bar -->
+  <nav class="stepper-bar" aria-label="Artisan listing steps">
+    @for (s of steps; track s.num) {
+      <button
+        type="button"
+        class="step-item"
+        [class.active]="currentStep() === s.num"
+        [class.done]="currentStep() > s.num"
+        (click)="goToStep(s.num)"
+      >
+        <span class="step-num">0{{ s.num }}</span>
+        <span class="step-label">{{ s.label }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (errorBanner()) {
+    <div class="alert-banner error" role="alert">{{ errorBanner() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert-banner success" role="status">{{ successMessage() }}</div>
+  }
+
+  @if (submittedSuccess()) {
+    <div class="wizard-card completion-card">
+      <h2>Artisan Listing Submitted for Verification</h2>
+      <p>Your business profile and verification evidence have been sent to CeylonGo administrators for review.</p>
+      <div class="completion-actions">
+        <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="btn-primary">
+          Go to Manage Listings
+        </a>
+        <a routerLink="/provider/artisans/products" [queryParams]="{ listingId: listingId() }" class="btn-secondary">
+          Manage Showcase Products
+        </a>
+      </div>
+    </div>
+  } @else {
+    <div class="wizard-card">
+      <!-- STEP 1: BUSINESS INFO -->
+      @if (currentStep() === 1) {
+        <h2 class="step-heading">Step 01 — Business Information</h2>
+        <div class="form-grid">
+          <div class="field full">
+            <label for="artisanTitle">Business / Workshop Name *</label>
+            <input id="artisanTitle" type="text" [(ngModel)]="title" placeholder="e.g. Ruhunu Heritage Pottery Studio" />
+          </div>
+
+          <div class="field">
+            <label for="craftCategory">Craft Category *</label>
+            <select id="craftCategory" [(ngModel)]="craftCategory">
+              @for (c of craftCategories; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="businessType">Business Type</label>
+            <select id="businessType" [(ngModel)]="businessType">
+              @for (bt of businessTypes; track bt) {
+                <option [value]="bt">{{ bt }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="startingPrice">Starting Showcase Price (LKR, Optional)</label>
+            <input id="startingPrice" type="number" min="0" step="50" [(ngModel)]="startingPrice" />
+          </div>
+
+          <div class="field full">
+            <label for="artisanDesc">Business Description *</label>
+            <textarea id="artisanDesc" rows="4" [(ngModel)]="description" placeholder="Describe your Sri Lankan crafts, traditional techniques, and workshop story..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label for="ownerBg">Artisan / Owner Background</label>
+            <textarea id="ownerBg" rows="2" [(ngModel)]="ownerBackground" placeholder="Introduce the master craftspeople behind this workshop..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label for="bizHistory">Workshop Heritage &amp; History (Optional)</label>
+            <textarea id="bizHistory" rows="2" [(ngModel)]="businessHistory" placeholder="Generational lineage, awards, or community impact..."></textarea>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 2: LOCATION & CONTACT -->
+      @if (currentStep() === 2) {
+        <h2 class="step-heading">Step 02 — Location &amp; Contact Information</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="province">Province *</label>
+            <select id="province" [(ngModel)]="province" (ngModelChange)="onProvinceChange()">
+              @for (p of provinces; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="district">District *</label>
+            <select id="district" [(ngModel)]="district">
+              @for (d of availableDistricts(); track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="locality">City / Locality *</label>
+            <input id="locality" type="text" [(ngModel)]="locality" placeholder="e.g. Pilimathalawa" />
+          </div>
+
+          <div class="field">
+            <label for="openingHours">Opening Hours</label>
+            <input id="openingHours" type="text" [(ngModel)]="openingHours" placeholder="Mon - Sat, 09:00 AM - 05:30 PM" />
+          </div>
+
+          <div class="field full">
+            <label for="address">Full Business Address</label>
+            <input id="address" type="text" [(ngModel)]="address" placeholder="Street address, landmarks" />
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone Number</label>
+            <input id="phone" type="tel" [(ngModel)]="phone" placeholder="+94 77 123 4567" />
+          </div>
+
+          <div class="field">
+            <label for="whatsapp">WhatsApp Number</label>
+            <input id="whatsapp" type="tel" [(ngModel)]="whatsapp" placeholder="+94 77 123 4567" />
+          </div>
+
+          <div class="field">
+            <label for="email">Business Email</label>
+            <input id="email" type="email" [(ngModel)]="email" placeholder="workshop@example.lk" />
+          </div>
+
+          <div class="field">
+            <label for="website">Website / Social URL</label>
+            <input id="website" type="url" [(ngModel)]="website" placeholder="https://..." />
+          </div>
+
+          <div class="field full">
+            <label>Workshop Location Pin (Interactive Map)</label>
+            <app-location-picker
+              [latitude]="latitude"
+              [longitude]="longitude"
+              (coordinatesChange)="onCoordinatesChanged($event)"
+            />
+          </div>
+        </div>
+      }
+
+      <!-- STEP 3: BUSINESS PHOTOS -->
+      @if (currentStep() === 3) {
+        <h2 class="step-heading">Step 03 — Business &amp; Workshop Photographs</h2>
+        <p class="helper-copy">Upload high-quality photos of your workshop, showroom, and craft creations (JPEG/PNG/WebP up to 5 MB).</p>
+
+        <div class="upload-bar">
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" [disabled]="isUploadingPhoto() || isPreview()" />
+          @if (isUploadingPhoto()) {
+            <span class="uploading-text">Uploading image...</span>
+          }
+        </div>
+
+        @if (photos().length > 0) {
+          <div class="photos-grid">
+            @for (p of photos(); track p.media.id; let idx = $index) {
+              <div class="photo-card">
+                @if (p.url) {
+                  <img [src]="p.url" alt="Business photograph" />
+                } @else {
+                  <div class="photo-placeholder">Loading photo...</div>
+                }
+                <div class="photo-actions">
+                  @if (idx === 0) {
+                    <span class="cover-badge">Cover Photo</span>
+                  } @else {
+                    <button type="button" class="mini-btn" (click)="setCover(p.media.id)" [disabled]="isPreview()">Set Cover</button>
+                  }
+                  <button type="button" class="mini-btn danger" (click)="removePhoto(p.media.id)" [disabled]="isPreview()">Remove</button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-box">No photos uploaded yet.</div>
+        }
+      }
+
+      <!-- STEP 4: PRODUCTS & HANDICRAFTS -->
+      @if (currentStep() === 4) {
+        <h2 class="step-heading">Step 04 — Products &amp; Handicrafts Showcase</h2>
+        <p class="helper-copy">Add traditional items or crafts for discovery and promotion (no online cart or shipping).</p>
+
+        <div class="product-form-panel">
+          <div class="form-grid">
+            <div class="field">
+              <label for="prodName">Product / Craft Name</label>
+              <input id="prodName" type="text" [(ngModel)]="newProductName" placeholder="e.g. Carved Raksha Mask" />
+            </div>
+            <div class="field">
+              <label for="prodCat">Product Category</label>
+              <select id="prodCat" [(ngModel)]="newProductCategory">
+                @for (c of craftCategories; track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label for="prodPrice">Optional LKR Price</label>
+              <input id="prodPrice" type="number" min="0" step="50" [(ngModel)]="newProductPrice" placeholder="e.g. 4500" />
+            </div>
+            <div class="field">
+              <label for="prodMat">Materials Used</label>
+              <input id="prodMat" type="text" [(ngModel)]="newProductMaterials" placeholder="e.g. Kaduru Wood, Natural Dyes" />
+            </div>
+            <div class="field full">
+              <label for="prodDesc">Short Description</label>
+              <input id="prodDesc" type="text" [(ngModel)]="newProductDescription" placeholder="Craftsmanship details and heritage origin" />
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" (click)="addOrSaveProduct()">
+            {{ editingProductIndex !== null ? 'Update Showcase Item' : '+ Add Product Showcase Item' }}
+          </button>
+        </div>
+
+        @if (showcaseItems().length > 0) {
+          <div class="products-list">
+            @for (item of showcaseItems(); track $index) {
+              <div class="product-row">
+                <div>
+                  <strong>{{ item.name }}</strong>
+                  <span class="meta-line">{{ item.category }} @if (item.price != null) { · LKR {{ item.price | number }} }</span>
+                  @if (item.materials) {
+                    <span class="meta-line">Materials: {{ item.materials }}</span>
+                  }
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="mini-btn" (click)="editProduct($index)">Edit</button>
+                  @if (item.id && !isPreview()) {
+                    <label class="mini-btn upload-inline-btn">
+                      <span>+ Photo</span>
+                      <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onProductPhotoSelected($index, $event)" />
+                    </label>
+                  }
+                  <button type="button" class="mini-btn" (click)="toggleProductActive($index)">
+                    {{ item.is_active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                </div>
+              </div>
+              @if (item.images && item.images.length > 0) {
+                <div class="product-mini-thumbs">
+                  @for (img of item.images; track img.id) {
+                    <div class="mini-thumb-chip">
+                      @if (img.previewUrl) {
+                        <img [src]="img.previewUrl" [alt]="item.name" />
+                      } @else {
+                        <span>Photo #{{ img.id }}</span>
+                      }
+                      <button type="button" class="mini-btn danger" (click)="removeProductPhoto($index, img.id)" [disabled]="isPreview()">&times;</button>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <div class="empty-box">No showcase products added yet.</div>
+        }
+      }
+
+      <!-- STEP 5: SERVICE VERIFICATION -->
+      @if (currentStep() === 5) {
+        <h2 class="step-heading">Step 05 — Business Verification Evidence</h2>
+        <app-service-verification
+          category="artisan"
+          [listingId]="listingId()"
+          [initialData]="initialVerificationData()"
+          (verificationChange)="onVerificationChange($event)"
+        />
+      }
+
+      <!-- STEP 6: REVIEW & SUBMIT -->
+      @if (currentStep() === 6) {
+        <h2 class="step-heading">Step 06 — Review &amp; Submit for Verification</h2>
+        <div class="review-summary-grid">
+          <div class="summary-block">
+            <div class="summary-head">
+              <h3>Business Information</h3>
+              <button type="button" class="link-btn" (click)="goToStep(1)">Edit</button>
+            </div>
+            <p><strong>Name:</strong> {{ title || 'Not set' }}</p>
+            <p><strong>Category:</strong> {{ craftCategory }} ({{ businessType }})</p>
+            <p><strong>Description:</strong> {{ description || 'Not set' }}</p>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-head">
+              <h3>Location &amp; Contact</h3>
+              <button type="button" class="link-btn" (click)="goToStep(2)">Edit</button>
+            </div>
+            <p><strong>Location:</strong> {{ locality || district }}, {{ district }} ({{ province }})</p>
+            <p><strong>Hours:</strong> {{ openingHours || 'Not specified' }}</p>
+            <p><strong>Phone / Email:</strong> {{ phone || 'N/A' }} · {{ email || 'N/A' }}</p>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-head">
+              <h3>Media &amp; Showcase</h3>
+              <button type="button" class="link-btn" (click)="goToStep(3)">Edit Photos</button>
+            </div>
+            <p><strong>Photos Uploaded:</strong> {{ photos().length }}</p>
+            <p><strong>Products Listed:</strong> {{ showcaseItems().length }}</p>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-head">
+              <h3>Verification Evidence</h3>
+              <button type="button" class="link-btn" (click)="goToStep(5)">Edit</button>
+            </div>
+            <p><strong>Evidence Links:</strong> {{ verificationLinks.length }}</p>
+            <p><strong>Evidence Files:</strong> {{ uploadedEvidenceFiles.length }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- NAVIGATION FOOTER -->
+      <div class="wizard-footer-actions">
+        <button type="button" class="btn-secondary" (click)="prevStep()" [disabled]="currentStep() === 1">
+          &larr; Previous
+        </button>
+
+        <div class="right-footer-btns">
+          @if (currentStep() < 6) {
+            <button type="button" class="btn-primary" (click)="nextStep()">
+              Save &amp; Continue &rarr;
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="submitListing()"
+              [disabled]="isSubmitting() || isPreview()"
+            >
+              {{ isSubmitting() ? 'Submitting...' : 'Submit for Verification' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

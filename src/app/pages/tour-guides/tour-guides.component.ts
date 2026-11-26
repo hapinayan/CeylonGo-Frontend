@@ -10,9 +10,6 @@ import {
 import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TourGuideService } from '../../core/services/tour-guide.service';
-import { Footer } from '../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
-import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler-navbar';
 
 @Component({
   selector: 'app-tour-guides',
@@ -21,9 +18,6 @@ import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler
     CommonModule,
     FormsModule,
     RouterModule,
-    TravelerNavbar,
-    Footer,
-    TravelerAuthModal,
   ],
   templateUrl: './tour-guides.component.html',
   styleUrl: './tour-guides.component.scss',

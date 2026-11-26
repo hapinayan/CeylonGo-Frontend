@@ -1,6 +1,4 @@
 <div class="guide-booking-page">
-  <app-traveler-navbar />
-
   <main class="booking-main">
     @if (isLoading()) {
       <div class="state-card" role="status">
@@ -19,18 +17,6 @@
       <div class="booking-container">
         <!-- Header & 3-Step Progress Indicator -->
         <header class="booking-header">
-          <a
-            [routerLink]="['/tour-guides', g.id]"
-            [queryParams]="guideProfileQueryParams()"
-            class="back-link"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Back to Guide Profile</span>
-          </a>
-
           <div class="title-stepper-row">
             <div class="title-col">
               <h1 class="page-title">Review Your Booking</h1>
@@ -458,7 +444,4 @@
       </div>
     }
   </main>
-
-  <app-footer />
-  <app-traveler-auth-modal />
 </div>

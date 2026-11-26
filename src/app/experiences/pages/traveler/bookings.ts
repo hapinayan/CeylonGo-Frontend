@@ -6,10 +6,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { ExperienceIcon } from '../../components/icon';
-import { TravelerHeader } from '../../components/traveler-header';
 import {
   ActivityBookingDetailResponse,
   ActivityBookingResponse,
@@ -41,24 +38,16 @@ export interface EnrichedBookingItem {
 
 @Component({
   imports: [
-    TravelerHeader,
     RouterLink,
     DatePipe,
     DecimalPipe,
     ExperienceIcon,
-    Footer,
-    TravelerAuthModal,
   ],
   styleUrls: ['../discover/discover.scss', './traveler.scss'],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="experiences-shell">
-      <app-traveler-header />
       <main class="discover traveler-workflow">
-        <a routerLink="/experiences" class="workflow-back-link">
-          <app-experience-icon name="previous" /> Back to Discover
-        </a>
-
         <div class="workflow-page-header">
           <h1>My Bookings</h1>
           <p class="workflow-lead-p">View and manage your adventure, bike rental and tour guide booking requests across Sri Lanka.</p>
@@ -212,8 +201,6 @@ export interface EnrichedBookingItem {
           }
         }
       </main>
-      <app-footer />
-      <app-traveler-auth-modal />
     </div>
   `,
 })

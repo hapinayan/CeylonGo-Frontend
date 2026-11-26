@@ -1,45 +1,4 @@
 <div class="booking-review-page">
-  <!-- TOP NAVBAR -->
-  <header class="cg-navbar" role="banner">
-    <div class="nav-container">
-      <div class="nav-left">
-        @if (homestay()) {
-          <a [routerLink]="['/homestays', homestay()!.id]" class="btn-nav-back" aria-label="Back to homestay details">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span>Back to Property</span>
-          </a>
-        } @else {
-          <a routerLink="/homestays" class="btn-nav-back" aria-label="Back to homestays">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span>All Stays</span>
-          </a>
-        }
-
-        <a routerLink="/homestays" class="brand-link" aria-label="CeylonGo Home">
-          <span class="brand-text-logo">CeylonGo</span>
-        </a>
-      </div>
-
-      <div class="nav-center-step">
-        <span class="step-badge">Step 2 of 2: Review & Request</span>
-      </div>
-
-      <div class="nav-right">
-        <span class="secure-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          Direct Host Booking
-        </span>
-      </div>
-    </div>
-  </header>
-
   <!-- LIVE INTEGRATION NOTICE BAR -->
   <div class="demo-notice-bar" role="status">
     <div class="demo-notice-content">
@@ -456,9 +415,6 @@
       </div>
     }
   </main>
-
-  <!-- TRAVELER AUTHENTICATION MODAL -->
-  <app-traveler-auth-modal />
 
   <!-- TOAST NOTIFICATION -->
   @if (toastMessage()) {

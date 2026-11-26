@@ -1,11 +1,11 @@
 import {
   Component,
+  DestroyRef,
   signal,
   ChangeDetectionStrategy,
   inject,
   input,
   output,
-  viewChild,
   HostListener,
   ElementRef,
   OnInit,
@@ -16,54 +16,52 @@ import { filter } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
+import {
+  TravelerNotificationItem,
+  TravelerNotificationsService,
+  resolveNotificationRoute,
+} from '../../../core/services/traveler-notifications.service';
 import { User } from '../../../core/models/auth.models';
-import { ExperienceIcon } from '../../../experiences/components/icon';
 
-export interface NotificationItem {
-  id: string | number;
-  title: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
+export type NotificationItem = TravelerNotificationItem;
 
 @Component({
   selector: 'app-traveler-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, ExperienceIcon],
+  imports: [CommonModule, RouterLink],
   templateUrl: './traveler-navbar.html',
   styleUrls: ['./traveler-navbar.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelerNavbar implements OnInit {
+  /** Retained as a backward-compatible optional input; Homepage UI is always rendered. */
   readonly variant = input<'default' | 'bookings'>('default');
   readonly bookingSearchRequested = output<void>();
 
-  readonly serviceLinks = [
+  readonly experienceDropdownLinks = [
+    { label: 'All Experiences', path: '/experiences' },
     { label: 'Homestays', path: '/homestays' },
-    { label: 'Experiences', path: '/experiences' },
     { label: 'Tour Guides', path: '/tour-guides' },
-    { label: 'Bike Rental', path: '/bicycles' },
-    { label: 'Artisan', path: '/artisans' },
+    { label: 'Bike & Bicycle Rentals', path: '/bicycles' },
+    { label: 'Artisans & Handicrafts', path: '/artisans/discover' },
   ];
 
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
+  readonly notificationsService = inject(TravelerNotificationsService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
-
-  private readonly exploreMenu = viewChild<ElementRef<HTMLDetailsElement>>('explore');
+  private readonly destroyRef = inject(DestroyRef);
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly isMobileMenuOpen = signal(false);
+  readonly isExperiencesDropdownOpen = signal(false);
+  readonly isMobileExperiencesOpen = signal(false);
   readonly isScrolled = signal(false);
   readonly activeSection = signal<string | null>('home');
-  readonly isRentalRoute = signal(false);
-  readonly isHomestayRoute = signal(false);
-  readonly isTourGuideRoute = signal(false);
 
   get isAuthenticated(): boolean {
-    return this.authService.isAuthenticated() && (this.variant() === 'default' ||
-      (this.currentUser?.role === 'traveler' && this.currentUser.is_active));
+    return this.authService.isAuthenticated();
   }
 
   openAuthModal(mode: 'login' | 'register', event?: Event): void {
@@ -74,19 +72,23 @@ export class TravelerNavbar implements OnInit {
     this.authModalService.open(mode);
   }
 
-  // Dropdown states
   readonly isProfileMenuOpen = signal(false);
   readonly isNotificationsOpen = signal(false);
 
-  // Notification state
-  readonly notifications = signal<NotificationItem[]>([]);
-  readonly unreadCount = signal(0);
-  readonly isNotificationsLoading = signal(false);
-  readonly notificationError = signal<string | null>(null);
+  readonly notifications = this.notificationsService.notifications;
+  readonly unreadCount = this.notificationsService.unreadCount;
+  readonly isNotificationsLoading = this.notificationsService.isLoading;
+  readonly notificationError = this.notificationsService.errorMessage;
 
   readonly infoToast = signal<string | null>(null);
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.toastTimer) {
+        clearTimeout(this.toastTimer);
+        this.toastTimer = null;
+      }
+    });
     if (typeof window !== 'undefined') {
       window.addEventListener(
         'scroll',
@@ -101,61 +103,78 @@ export class TravelerNavbar implements OnInit {
   ngOnInit(): void {
     this.updateActiveSectionFromUrl();
 
-    // Listen to route changes
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
+        this.isExperiencesDropdownOpen.set(false);
         this.updateActiveSectionFromUrl();
       });
 
-    // Attempt to sync authenticated profile if token exists but user signal is not yet filled
-    if (this.authService.isAuthenticated() && !this.authService.currentUser()) {
-      this.authService.getCurrentUser().subscribe({
-        next: () => {},
-        error: () => {},
-      });
+    if (this.authService.isAuthenticated()) {
+      if (!this.authService.currentUser()) {
+        this.authService.getCurrentUser().subscribe({
+          next: () => {},
+          error: () => {},
+        });
+      }
+      if (this.isTravelerSession) {
+        this.notificationsService.refreshUnreadCount().subscribe();
+      }
     }
   }
 
+  get isTravelerSession(): boolean {
+    const user = this.authService.currentUser();
+    return this.authService.isAuthenticated() && (!user || user.role === 'traveler');
+  }
+
+  get avatarSrc(): string | null {
+    return this.authService.avatarUrl?.() || this.currentUser?.avatar_url || null;
+  }
+
   private updateActiveSectionFromUrl(): void {
-    const isRentalRoute = /^\/bicycles(?:[/?#]|$)/.test(this.router.url);
-    this.isRentalRoute.set(isRentalRoute);
-    if (isRentalRoute) {
-      this.activeSection.set('bicycles');
-      return;
-    }
+    const rawUrl = this.router.url || '/';
+    const path = rawUrl.split('?')[0].split('#')[0] || '/';
 
-    const isHomestayRoute = /^\/homestays(?:[/?#]|$)|^\/stays(?:[/?#]|$)/.test(this.router.url);
-    this.isHomestayRoute.set(isHomestayRoute);
-    if (isHomestayRoute) {
-      this.activeSection.set('stays');
-      return;
-    }
-
-    const isTourGuideRoute = /^\/tour-guides?(?:[/?#]|$)/.test(this.router.url);
-    this.isTourGuideRoute.set(isTourGuideRoute);
-    if (isTourGuideRoute) {
-      this.activeSection.set('tour-guides');
-      return;
-    }
-
-    if (/^\/my-bookings(?:[/?#]|$)|^\/wishlist(?:[/?#]|$)/.test(this.router.url)) {
-      this.activeSection.set(null);
-      return;
-    }
-
-    if (this.router.url.startsWith('/experiences')) {
+    if (/^\/(?:experiences|explore|homestays?|stays|tour-guides?|bicycles|bike-rentals|rentals|artisans?)(?:\/|$)/.test(path)) {
       this.activeSection.set('experiences');
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash?.replace('#', '');
-      if (hash && ['community', 'ai-planner', 'destinations', 'contact', 'about'].includes(hash)) {
-        this.activeSection.set(hash);
-      } else {
-        this.activeSection.set('home');
-      }
+    if (/^\/community(?:\/|$)/.test(path)) {
+      this.activeSection.set('community');
+      return;
+    }
+
+    if (/^\/(?:ai-planner|ai-trip-planner|travel-preferences|saved-trips|itinerary)(?:\/|$)/.test(path)) {
+      this.activeSection.set('ai-planner');
+      return;
+    }
+
+    if (/^\/contact(?:\/|$)/.test(path)) {
+      this.activeSection.set('contact');
+      return;
+    }
+
+    if (/^\/about(?:\/|$)/.test(path)) {
+      this.activeSection.set('about');
+      return;
+    }
+
+    const isHomepagePath = path === '/' || path === '' || path === '/home' || path === '/traveler' || path === '/traveler/home';
+    if (!isHomepagePath) {
+      // Account, booking, wishlist, and legal pages must not highlight Home.
+      this.activeSection.set(null);
+      return;
+    }
+
+    const fragment = rawUrl.includes('#') ? rawUrl.split('#')[1] : '';
+    const windowHash = typeof window !== 'undefined' ? window.location.hash?.replace('#', '') : '';
+    const hash = fragment || windowHash;
+    if (hash && ['community', 'ai-planner', 'contact', 'about'].includes(hash)) {
+      this.activeSection.set(hash);
+    } else {
+      this.activeSection.set('home');
     }
   }
 
@@ -164,11 +183,11 @@ export class TravelerNavbar implements OnInit {
   }
 
   get travelerName(): string {
-    return this.currentUser?.full_name?.trim() || (this.variant() === 'bookings' ? 'Traveler' : 'Hapinayan Perera');
+    return this.currentUser?.full_name?.trim() || 'Traveler';
   }
 
   get travelerEmail(): string {
-    return this.currentUser?.email?.trim() || (this.variant() === 'bookings' ? '' : 'traveler@ceylongo.com');
+    return this.currentUser?.email?.trim() || '';
   }
 
   get travelerInitials(): string {
@@ -181,16 +200,34 @@ export class TravelerNavbar implements OnInit {
     return name.slice(0, 2).toUpperCase();
   }
 
+  toggleExperiencesDropdown(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isProfileMenuOpen.set(false);
+    this.isNotificationsOpen.set(false);
+    this.isExperiencesDropdownOpen.update((open) => !open);
+  }
+
+  closeExperiencesDropdown(): void {
+    this.isExperiencesDropdownOpen.set(false);
+  }
+
+  toggleMobileExperiences(): void {
+    this.isMobileExperiencesOpen.update((open) => !open);
+  }
+
   toggleMobileMenu(): void {
     this.isMobileMenuOpen.update((open) => !open);
     if (this.isMobileMenuOpen()) {
       this.isProfileMenuOpen.set(false);
       this.isNotificationsOpen.set(false);
+      this.isExperiencesDropdownOpen.set(false);
     }
   }
 
   closeMobileMenu(): void {
     this.isMobileMenuOpen.set(false);
+    this.isMobileExperiencesOpen.set(false);
   }
 
   toggleProfileMenu(event?: Event): void {
@@ -198,6 +235,7 @@ export class TravelerNavbar implements OnInit {
       event.stopPropagation();
     }
     this.isNotificationsOpen.set(false);
+    this.isExperiencesDropdownOpen.set(false);
     this.isProfileMenuOpen.update((open) => !open);
   }
 
@@ -210,7 +248,31 @@ export class TravelerNavbar implements OnInit {
       event.stopPropagation();
     }
     this.isProfileMenuOpen.set(false);
-    this.isNotificationsOpen.update((open) => !open);
+    this.isExperiencesDropdownOpen.set(false);
+    const next = !this.isNotificationsOpen();
+    this.isNotificationsOpen.set(next);
+    if (next && this.isTravelerSession) {
+      this.notificationsService.refresh({ page: 1, pageSize: 8, unreadOnly: false, category: null });
+    }
+  }
+
+  onNotificationClick(notif: TravelerNotificationItem): void {
+    this.isNotificationsOpen.set(false);
+    if (!notif.is_read) {
+      this.notificationsService.markAsRead(notif.id).subscribe({ error: () => {} });
+    }
+    const target = resolveNotificationRoute(notif);
+    if (target) {
+      this.router.navigate(target);
+    } else {
+      this.router.navigate(['/notifications']);
+    }
+  }
+
+  markAllNotificationsRead(event: Event): void {
+    event.stopPropagation();
+    if (!this.isTravelerSession || this.unreadCount() === 0) return;
+    this.notificationsService.markAllAsRead().subscribe({ error: () => {} });
   }
 
   closeNotifications(): void {
@@ -220,11 +282,10 @@ export class TravelerNavbar implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const explore = this.exploreMenu()?.nativeElement;
-    if (explore?.open && !explore.contains(target)) explore.open = false;
     if (!this.elementRef.nativeElement.contains(target)) {
       this.isProfileMenuOpen.set(false);
       this.isNotificationsOpen.set(false);
+      this.isExperiencesDropdownOpen.set(false);
     }
   }
 
@@ -233,6 +294,7 @@ export class TravelerNavbar implements OnInit {
     if (event.key === 'Escape' || event.key === 'Esc') {
       this.isProfileMenuOpen.set(false);
       this.isNotificationsOpen.set(false);
+      this.isExperiencesDropdownOpen.set(false);
       this.isMobileMenuOpen.set(false);
     }
   }
@@ -247,12 +309,7 @@ export class TravelerNavbar implements OnInit {
       event.preventDefault();
     }
     this.closeMobileMenu();
-
-    if (sectionId === 'stays') {
-      this.activeSection.set('stays');
-      this.router.navigate(['/homestays']);
-      return;
-    }
+    this.closeExperiencesDropdown();
 
     if (sectionId === 'experiences') {
       this.activeSection.set('experiences');
@@ -260,18 +317,29 @@ export class TravelerNavbar implements OnInit {
       return;
     }
 
+    if (sectionId === 'community') {
+      this.activeSection.set('community');
+      this.router.navigate(['/community']);
+      return;
+    }
+
+    if (sectionId === 'ai-planner') {
+      this.activeSection.set('ai-planner');
+      this.router.navigate(['/ai-planner']);
+      return;
+    }
+
     if (sectionId === 'home') {
       this.activeSection.set('home');
-      if (this.router.url.startsWith('/experiences') || (this.router.url !== '/' && this.router.url !== '/traveler/home')) {
+      const currentPath = this.router.url.split('?')[0].split('#')[0];
+      if (currentPath !== '/' && currentPath !== '' && currentPath !== '/traveler/home') {
         this.router.navigate(['/']).then(() => {
           if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         });
-      } else {
-        if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+      } else if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       return;
     }
@@ -283,11 +351,11 @@ export class TravelerNavbar implements OnInit {
     }
 
     this.activeSection.set(sectionId);
-    const targetElementId = sectionId === 'community' ? 'travel-community' : sectionId;
-    if (this.router.url !== '/' && this.router.url !== '' && this.router.url !== '/traveler/home') {
-      this.router.navigate(['/'], { fragment: targetElementId });
+    const currentPath = this.router.url.split('?')[0].split('#')[0];
+    if (currentPath !== '/' && currentPath !== '' && currentPath !== '/traveler/home') {
+      this.router.navigate(['/'], { fragment: sectionId });
     } else {
-      const element = document.getElementById(targetElementId);
+      const element = document.getElementById(sectionId);
       if (element && typeof element.scrollIntoView === 'function') {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
@@ -300,7 +368,7 @@ export class TravelerNavbar implements OnInit {
 
     switch (action) {
       case 'profile':
-        this.showToast('My Profile: ' + this.travelerName + ' (' + this.travelerEmail + ')');
+        this.router.navigate(['/profile']);
         break;
       case 'bookings':
         this.router.navigate(['/my-bookings']);
@@ -308,8 +376,12 @@ export class TravelerNavbar implements OnInit {
       case 'wishlist':
         this.router.navigate(['/wishlist']);
         break;
+      case 'notifications':
+        this.isNotificationsOpen.set(false);
+        this.router.navigate(['/notifications']);
+        break;
       case 'settings':
-        this.showToast('Settings: Account preferences and notifications.');
+        this.router.navigate(['/settings']);
         break;
       case 'help':
         this.showToast('Help & Support: 24/7 traveler assistance.');
@@ -323,16 +395,19 @@ export class TravelerNavbar implements OnInit {
   logout(): void {
     this.closeProfileMenu();
     this.closeMobileMenu();
+    this.notificationsService.clearOnLogout();
     this.authService.logout();
     this.router.navigate(['/']);
   }
 
-  private showToast(msg: string): void {
-    this.infoToast.set(msg);
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        this.infoToast.set(null);
-      }, 3500);
+  private showToast(message: string): void {
+    this.infoToast.set(message);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
     }
+    this.toastTimer = setTimeout(() => {
+      this.infoToast.set(null);
+      this.toastTimer = null;
+    }, 3500);
   }
 }

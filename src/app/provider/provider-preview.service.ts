@@ -3,6 +3,7 @@ import { Params } from '@angular/router';
 
 import {
   PREVIEW_BOOKINGS,
+  PREVIEW_COMMUNITY_POSTS,
   PREVIEW_DASHBOARD_BOOKINGS,
   PREVIEW_DASHBOARD_STATS,
   PREVIEW_LISTINGS,
@@ -34,6 +35,7 @@ export class ProviderPreviewService {
   readonly sampleListings = PREVIEW_LISTINGS;
   readonly sampleSlotsMap = PREVIEW_SLOTS;
   readonly sampleBookings = PREVIEW_BOOKINGS;
+  readonly sampleCommunityPosts = PREVIEW_COMMUNITY_POSTS;
 
   canUsePreview(): boolean {
     return providerPreviewEnabled;

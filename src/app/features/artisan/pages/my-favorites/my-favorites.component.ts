@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
 
 import {
   ArtisanFavoriteResponse,
@@ -179,8 +180,8 @@ export class MyFavoritesComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    const remove$ = this.isFixtureMode()
-      ? this.favoriteService.toggleBusinessWishlist(listingId, true)
+    const remove$: Observable<unknown> = this.favoriteService.removeSavedBusiness
+      ? this.favoriteService.removeSavedBusiness(listingId)
       : this.favoriteService.toggleBusinessWishlist(listingId);
 
     remove$.subscribe({

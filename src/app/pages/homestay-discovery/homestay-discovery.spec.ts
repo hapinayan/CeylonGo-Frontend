@@ -71,9 +71,9 @@ describe('HomestayDiscovery', () => {
     expect(component.resultsCount()).toBeGreaterThan(0);
   });
 
-  it('should render common Traveler Navbar, search bar, and filters button', () => {
+  it('should render search bar and filters button without duplicating shared layout chrome', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-traveler-navbar')).toBeTruthy();
+    expect(compiled.querySelector('app-traveler-navbar')).toBeNull();
     expect(compiled.querySelector('.horizontal-search-bar')).toBeTruthy();
     expect(compiled.querySelector('#search-location')).toBeTruthy();
     expect(compiled.querySelector('#search-checkin')).toBeTruthy();
@@ -88,7 +88,7 @@ describe('HomestayDiscovery', () => {
     expect(compiled.querySelector('.listings-pane')).toBeTruthy();
     expect(compiled.querySelector('.map-pane')).toBeTruthy();
     expect(compiled.querySelector('app-homestay-map')).toBeTruthy();
-    expect(compiled.querySelector('app-footer')).toBeTruthy();
+    expect(compiled.querySelector('app-footer')).toBeNull();
   });
 
   it('should render results header with count and fee inclusion badge', () => {

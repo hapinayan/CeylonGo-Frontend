@@ -18,8 +18,16 @@ describe('FavoriteService', () => {
     currentUser: typeof currentUserSignal;
   };
 
-  const favoritesUrl = `${environment.apiBaseUrl}/artisan-product-favorites`;
+  const wishlistUrl = `${environment.apiBaseUrl}/artisan-wishlists`;
   const listingsUrl = `${environment.apiBaseUrl}/artisan-listings`;
+  const travelerUser: User = {
+    id: 10,
+    email: 'traveler@ceylongo.lk',
+    full_name: 'Traveler Tester',
+    role: 'traveler',
+    is_active: true,
+    created_at: '',
+  };
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -48,90 +56,101 @@ describe('FavoriteService', () => {
     TestBed.resetTestingModule();
   });
 
-  it('optimistically adds product favorite and commits PUT request', () => {
+  it('optimistically saves business wishlist via POST and removes via DELETE', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
-    service.productFavoriteIds.set(new Set());
+    currentUserSignal.set(travelerUser);
+    service.businessWishlistIds.set(new Set());
 
-    service.toggleProductFavorite(101).subscribe((res) => {
-      expect(res.isFavorite).toBe(true);
-      expect(service.isProductFavorite(101)).toBe(true);
+    service.toggleBusinessWishlist(121).subscribe((res) => {
+      expect(res.isSaved).toBe(true);
+      expect(service.isBusinessSaved(121)).toBe(true);
     });
 
-    const req = httpMock.expectOne(`${favoritesUrl}/101`);
-    expect(req.request.method).toBe('PUT');
-    req.flush({ product_id: 101, created_at: '2026-01-01', product: {} });
-  });
+    const postReq = httpMock.expectOne(`${listingsUrl}/121/wishlist`);
+    expect(postReq.request.method).toBe('POST');
+    postReq.flush({ id: 1, artisan_listing_id: 121, user_id: 10, is_available: true, listing: null });
 
-  it('optimistically removes product favorite on second toggle and sends DELETE', () => {
-    authServiceMock.isAuthenticated.mockReturnValue(true);
-    service.productFavoriteIds.set(new Set([101]));
-
-    service.toggleProductFavorite(101).subscribe((res) => {
-      expect(res.isFavorite).toBe(false);
-      expect(service.isProductFavorite(101)).toBe(false);
+    service.toggleBusinessWishlist(121).subscribe((res) => {
+      expect(res.isSaved).toBe(false);
+      expect(service.isBusinessSaved(121)).toBe(false);
     });
 
-    const req = httpMock.expectOne(`${favoritesUrl}/101`);
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null, { status: 204, statusText: 'No Content' });
+    const delReq = httpMock.expectOne(`${listingsUrl}/121/wishlist`);
+    expect(delReq.request.method).toBe('DELETE');
+    delReq.flush(null, { status: 204, statusText: 'No Content' });
   });
 
-  it('rolls back optimistic state if API request fails', () => {
+  it('rolls back optimistic wishlist state if API fails', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
-    service.productFavoriteIds.set(new Set());
+    currentUserSignal.set(travelerUser);
+    service.businessWishlistIds.set(new Set());
 
-    service.toggleProductFavorite(999).subscribe({
+    service.toggleBusinessWishlist(999).subscribe({
       next: () => {},
       error: () => {
-        expect(service.isProductFavorite(999)).toBe(false);
+        expect(service.isBusinessSaved(999)).toBe(false);
       },
     });
 
-    const req = httpMock.expectOne(`${favoritesUrl}/999`);
-    req.flush('Error saving favorite', { status: 500, statusText: 'Server Error' });
+    const req = httpMock.expectOne(`${listingsUrl}/999/wishlist`);
+    req.flush('Error saving wishlist', { status: 500, statusText: 'Server Error' });
   });
 
-  it('rejects toggle if traveler is unauthenticated', () => {
+  it('rejects wishlist toggle if traveler is unauthenticated', () => {
     authServiceMock.isAuthenticated.mockReturnValue(false);
 
-    service.toggleProductFavorite(101).subscribe({
+    service.toggleBusinessWishlist(101).subscribe({
       next: () => {},
       error: (err) => {
         expect(err.message).toBe('AUTHENTICATION_REQUIRED');
       },
     });
 
-    httpMock.expectNone(`${favoritesUrl}/101`);
+    httpMock.expectNone(`${listingsUrl}/101/wishlist`);
   });
 
-  it('prevents concurrent duplicate toggle requests for same product', () => {
+  it('prevents concurrent duplicate toggle requests for the same business', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
-    service.productFavoriteIds.set(new Set());
-
-    // First click initiates request
-    service.toggleProductFavorite(105).subscribe();
-    const req = httpMock.expectOne(`${favoritesUrl}/105`);
-
-    // Rapid second click while first is in-flight returns current state without second HTTP call
-    service.toggleProductFavorite(105).subscribe((res) => {
-      expect(res.isFavorite).toBe(true);
-    });
-
-    httpMock.expectNone(`${favoritesUrl}/105`);
-    req.flush({ product_id: 105, created_at: '2026-01-01', product: {} });
-  });
-
-  it('toggles business wishlist with POST and DELETE', () => {
-    authServiceMock.isAuthenticated.mockReturnValue(true);
+    currentUserSignal.set(travelerUser);
     service.businessWishlistIds.set(new Set());
 
-    service.toggleBusinessWishlist(5).subscribe((res) => {
+    service.toggleBusinessWishlist(105).subscribe();
+    const req = httpMock.expectOne(`${listingsUrl}/105/wishlist`);
+
+    service.toggleBusinessWishlist(105).subscribe((res) => {
       expect(res.isSaved).toBe(true);
-      expect(service.isBusinessSaved(5)).toBe(true);
     });
 
-    const req = httpMock.expectOne(`${listingsUrl}/5/wishlist`);
-    expect(req.request.method).toBe('POST');
-    req.flush({ id: 1, artisan_listing_id: 5 });
+    httpMock.expectNone(`${listingsUrl}/105/wishlist`);
+    req.flush({ id: 2, artisan_listing_id: 105, user_id: 10, is_available: true, listing: null });
+  });
+
+  it('checks individual wishlist status and loads paginated traveler wishlist from /artisan-wishlists/me', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    currentUserSignal.set(travelerUser);
+
+    service.checkBusinessWishlist(121).subscribe((res) => {
+      expect(res.is_saved).toBe(true);
+      expect(service.isBusinessSaved(121)).toBe(true);
+    });
+    const checkReq = httpMock.expectOne(`${listingsUrl}/121/wishlist/check`);
+    expect(checkReq.request.method).toBe('GET');
+    checkReq.flush({ listing_id: 121, is_saved: true, wishlist_id: 4 });
+
+    service.getBusinessWishlist(1, 20).subscribe((res) => {
+      expect(res.items.length).toBe(1);
+      expect(res.items[0].artisan_listing_id).toBe(121);
+    });
+    const listReq = httpMock.expectOne(
+      (r) => r.url === `${wishlistUrl}/me` && r.params.get('page') === '1' && r.params.get('page_size') === '20',
+    );
+    expect(listReq.request.method).toBe('GET');
+    listReq.flush({
+      items: [{ id: 4, artisan_listing_id: 121, user_id: 10, is_available: true, listing: null }],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      total_pages: 1,
+    });
   });
 });

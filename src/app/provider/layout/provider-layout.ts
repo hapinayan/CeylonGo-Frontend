@@ -51,6 +51,7 @@ export class ProviderLayout implements OnInit {
     { label: 'Tour Packages', route: '/provider/guides/packages', icon: 'tour_packages' },
     { label: 'Guide Availability', route: '/provider/guides/availability', icon: 'guide_schedule' },
     { label: 'Fleet & Availability', route: '/provider/rentals/availability', icon: 'rental_fleet' },
+    { label: 'Artisan Products', route: '/provider/artisans/products', icon: 'artisan_products' },
     { label: 'Bookings', route: '/provider/bookings', icon: 'calendar_month' },
     { label: 'Promotions', route: '/provider/promotions', icon: 'loyalty' },
     { label: 'Community Feed', route: '/provider/community', icon: 'forum' },

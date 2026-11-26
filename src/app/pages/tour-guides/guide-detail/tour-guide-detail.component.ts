@@ -11,10 +11,7 @@ import {
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TourGuideService } from '../../../core/services/tour-guide.service';
-import { Footer } from '../../../shared/components/footer/footer';
 import { LocationPickerComponent } from '../../../shared/components/location-picker/location-picker.component';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
-import { TravelerNavbar } from '../../../shared/components/traveler-navbar/traveler-navbar';
 
 @Component({
   selector: 'app-tour-guide-detail',
@@ -23,9 +20,6 @@ import { TravelerNavbar } from '../../../shared/components/traveler-navbar/trave
     CommonModule,
     FormsModule,
     RouterModule,
-    TravelerNavbar,
-    Footer,
-    TravelerAuthModal,
     LocationPickerComponent,
   ],
   templateUrl: './tour-guide-detail.component.html',

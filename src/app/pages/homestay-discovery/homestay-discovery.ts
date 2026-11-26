@@ -15,9 +15,6 @@ import {
   HomestayService,
   NEUTRAL_HOMESTAY_PLACEHOLDER,
 } from '../../core/services/homestay.service';
-import { Footer } from '../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
-import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler-navbar';
 import { HomestayMapComponent } from './components/homestay-map/homestay-map.component';
 
 @Component({
@@ -27,9 +24,6 @@ import { HomestayMapComponent } from './components/homestay-map/homestay-map.com
     CommonModule,
     FormsModule,
     RouterLink,
-    TravelerNavbar,
-    Footer,
-    TravelerAuthModal,
     HomestayMapComponent,
   ],
   templateUrl: './homestay-discovery.html',

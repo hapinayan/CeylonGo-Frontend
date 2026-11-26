@@ -31,8 +31,8 @@
 
 .nav-container {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -106,8 +106,9 @@
 }
 
 .demo-notice-content {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -125,10 +126,10 @@
 /* MAIN VIEWPORT */
 .review-main-viewport {
   flex: 1;
-  padding: 32px 24px 64px 24px;
-  max-width: 1200px;
+  padding: 32px var(--cg-page-padding, 32px) 64px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   box-sizing: border-box;
 }
 

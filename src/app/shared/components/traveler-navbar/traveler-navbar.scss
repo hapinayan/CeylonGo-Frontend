@@ -14,14 +14,16 @@
 }
 
 .navbar-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 24px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 var(--cg-page-padding, 32px);
   height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  box-sizing: border-box;
 }
 
 /* BRAND LOGO */
@@ -53,7 +55,7 @@
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 32px;
+    gap: clamp(14px, 1.8vw, 32px);
   }
 
   .nav-link {
@@ -63,6 +65,7 @@
     font-weight: 500;
     color: #475569;
     text-decoration: none;
+    white-space: nowrap;
     position: relative;
     transition: color 0.15s ease;
 
@@ -85,6 +88,114 @@
         border-radius: 2px 2px 0 0;
       }
     }
+  }
+}
+
+.nav-item-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-trigger-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.experiences-caret-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease, transform 0.15s ease;
+
+  &:hover,
+  &.active {
+    color: #0066ff;
+  }
+
+  &.open svg {
+    transform: rotate(180deg);
+  }
+}
+
+.experiences-dropdown {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  min-width: 225px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(8, 43, 92, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 120;
+}
+
+.exp-dropdown-link {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: #eff6ff;
+    color: #0066ff;
+  }
+}
+
+.mobile-experiences-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-exp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-exp-toggle {
+  border: none;
+  background: transparent;
+  padding: 8px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.mobile-exp-sublinks {
+  display: flex;
+  flex-direction: column;
+  padding-left: 14px;
+  border-left: 2px solid #e2e8f0;
+  margin: 4px 0 8px 8px;
+  gap: 4px;
+}
+
+.mobile-sub-cat {
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    background: #eff6ff;
+    color: #0066ff;
   }
 }
 
@@ -765,20 +876,21 @@
 }
 
 .rental-nav .navbar-container {
-  max-width: 1440px;
+  max-width: none;
 }
 
 .rental-nav .nav-list {
-  gap: clamp(8px, 1.5vw, 24px);
+  gap: clamp(12px, 1.6vw, 28px);
 }
 
 .rental-nav .nav-link {
   white-space: nowrap;
 }
 
-@media (min-width: 900px) and (max-width: 1099px) {
-  .rental-nav .desktop-nav { display: none; }
-  .rental-nav .mobile-toggle-btn { display: flex; }
+@media (min-width: 900px) and (max-width: 1120px) {
+  .desktop-nav .nav-link {
+    font-size: 14px;
+  }
 }
 
 .booking-nav {

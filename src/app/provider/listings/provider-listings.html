@@ -101,6 +101,7 @@
         <option value="rentals">Bike &amp; Bicycle Rentals</option>
         <option value="bike">Motorbikes &amp; Scooters</option>
         <option value="bicycle">Bicycles</option>
+        <option value="artisan">Artisan &amp; Local Businesses</option>
       </select>
 
       <div class="search-box">
@@ -203,6 +204,10 @@
               <div class="guide-meta-row">
                 <span>{{ rentalFleetLabel(item) }}</span>
               </div>
+            } @else if (item.listing.category === 'artisan') {
+              <div class="guide-meta-row">
+                <span>{{ artisanProductsLabel(item) }}</span>
+              </div>
             }
 
             <div class="price-row">
@@ -304,6 +309,17 @@
                   >
                     View Bookings
                   </a>
+                } @else if (item.listing.category === 'artisan') {
+                  <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                    Edit Listing
+                  </button>
+                  <a
+                    [routerLink]="['/provider/artisans/products']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Products
+                  </a>
                 } @else {
                   <a [routerLink]="['/provider/rooms']" [queryParams]="previewQueryParams()" class="btn-action btn-outline">
                     Rooms & Rates
@@ -313,10 +329,19 @@
                 <button type="button" class="btn-action btn-highlight" (click)="openFeedbackModal(item)">
                   View Feedback & Resubmit
                 </button>
-                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item)) {
+                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || item.listing.category === 'artisan' || isRental(item)) {
                   <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
                     Edit
                   </button>
+                }
+                @if (item.listing.category === 'artisan') {
+                  <a
+                    [routerLink]="['/provider/artisans/products']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Products
+                  </a>
                 }
                 @if (isRental(item)) {
                   <a
@@ -381,8 +406,17 @@
                 }
               } @else if (item.verification_status === 'draft') {
                 <button type="button" class="btn-action btn-primary-sm" (click)="editListing(item)">
-                  {{ item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item) ? 'Edit Draft' : 'Continue Draft' }}
+                  {{ item.listing.category === 'adventure' || item.listing.category === 'guide' || item.listing.category === 'artisan' || isRental(item) ? 'Edit Draft' : 'Continue Draft' }}
                 </button>
+                @if (item.listing.category === 'artisan') {
+                  <a
+                    [routerLink]="['/provider/artisans/products']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Products
+                  </a>
+                }
                 @if (item.listing.category === 'guide') {
                   <a
                     [routerLink]="['/provider/guides/packages']"
@@ -407,7 +441,7 @@
                     Fleet &amp; Availability
                   </a>
                 }
-                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item)) {
+                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || item.listing.category === 'artisan' || isRental(item)) {
                   <button
                     type="button"
                     class="btn-action btn-outline"

@@ -1,0 +1,154 @@
+<div class="ai-workspace-shell">
+  <app-ai-conversation-sidebar
+    [conversations]="conversations()"
+    [activeConversationId]="activeConversationId()"
+    [isLoading]="isLoadingSidebar()"
+    [isAuthenticated]="isTravelerAuthenticated"
+    [errorMessage]="sidebarError()"
+    [collapsed]="sidebarCollapsed()"
+    [mobileDrawerOpen]="mobileDrawerOpen()"
+    (newTrip)="startNewTrip()"
+    (selectConversation)="onSelectConversation($event)"
+    (renameConversation)="onRenameConversation($event)"
+    (deleteConversation)="onDeleteConversation($event)"
+    (retryLoad)="loadConversations()"
+    (toggleCollapse)="sidebarCollapsed.update((v) => !v)"
+    (closeDrawer)="mobileDrawerOpen.set(false)"
+  />
+
+  <main class="ai-main-workspace" aria-label="AI Trip Planner Chat">
+    <header class="workspace-topbar">
+      <div class="topbar-left">
+        <button
+          type="button"
+          class="mobile-drawer-btn"
+          (click)="mobileDrawerOpen.set(true)"
+          aria-label="Open conversations drawer"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          <span>Chats</span>
+        </button>
+
+        <div class="thread-heading">
+          <span class="model-pill">CeylonGo AI</span>
+          <strong>{{ activeThread()?.title || 'New Trip Plan' }}</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="chat-scroll-area" #chatScrollArea>
+      <div class="chat-inner">
+        @if (isLoadingMessages()) {
+          <div class="loading-thread" aria-busy="true">
+            <div class="skel-msg"></div>
+            <div class="skel-msg wide"></div>
+          </div>
+        } @else if (messagesError()) {
+          <div class="error-state-card" role="alert">
+            <h3>Unable to open conversation</h3>
+            <p>{{ messagesError() }}</p>
+            <div class="err-actions">
+              <button type="button" class="btn-retry" (click)="openConversationById(activeConversationId()!)">
+                Try Again
+              </button>
+              <button type="button" class="btn-secondary" (click)="startNewTrip()">New Trip</button>
+            </div>
+          </div>
+        } @else if (turns().length === 0 && !pendingUserPreview()) {
+          <app-ai-welcome-screen (suggestionSelected)="onSuggestionClicked($event)" />
+        } @else {
+          @for (turn of turns(); track turn.id) {
+            <app-ai-message
+              [turn]="turn"
+              [extraProposal]="attachedProposalsByTurn()[turn.id] ?? null"
+              [savingTurnId]="savingTurnId()"
+              (saveTripRequested)="onOpenSaveTrip($event)"
+              (modifyTripRequested)="onModifyTrip($event)"
+              (askAiRequested)="onAskAi()"
+              (cheaperAlternativesRequested)="onAskCheaper()"
+              (bookWithAiRequested)="onBookWithAi($event)"
+              (modifyBookingRequested)="onModifyBookingProposal($event)"
+            />
+          }
+
+          @if (pendingUserPreview(); as pending) {
+            <div class="pending-turn">
+              <div class="pending-user-bubble">{{ pending }}</div>
+              <div class="ai-thinking-row" role="status" aria-live="polite">
+                <span class="dot-pulse" aria-hidden="true"></span>
+                <span>CeylonGo AI is planning your trip...</span>
+              </div>
+            </div>
+          }
+        }
+
+        @if (sendError()) {
+          <div class="send-error-banner" role="alert">
+            <span>{{ sendError() }}</span>
+            <button type="button" class="btn-retry-inline" (click)="retryLastMessage()" [disabled]="isSending()">
+              Retry
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="composer-dock">
+      <app-ai-message-composer
+        #composerRef
+        [text]="composerText()"
+        [isSubmitting]="isSending()"
+        (textChange)="composerText.set($event)"
+        (submitMessage)="onSendMessage($event)"
+      />
+    </div>
+  </main>
+</div>
+
+<app-ai-booking-quote-modal
+  [listing]="quoteTargetListing()"
+  (closed)="quoteTargetListing.set(null)"
+  (proposalReady)="onProposalReady($event)"
+/>
+
+@if (saveModalTurn(); as turnTarget) {
+  <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="save-trip-title" (click)="saveModalTurn.set(null)">
+    <form class="save-modal" (click)="$event.stopPropagation()" (submit)="$event.preventDefault(); confirmSaveTrip()">
+      <header class="modal-head">
+        <h2 id="save-trip-title">Save Trip Itinerary</h2>
+        <button type="button" class="close-x" (click)="saveModalTurn.set(null)" aria-label="Close save dialog">&times;</button>
+      </header>
+      <div class="modal-body">
+        <label for="saveTripTitleInput">Trip Title *</label>
+        <input
+          id="saveTripTitleInput"
+          type="text"
+          maxlength="120"
+          [(ngModel)]="saveTripTitleDraft"
+          name="saveTripTitle"
+          required
+          [disabled]="isSavingTrip()"
+        />
+        @if (saveError()) {
+          <p class="modal-error" role="alert">{{ saveError() }}</p>
+        }
+      </div>
+      <footer class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="saveModalTurn.set(null)" [disabled]="isSavingTrip()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="isSavingTrip()">
+          {{ isSavingTrip() ? 'Saving...' : 'Save Trip' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+}
+
+@if (toast(); as t) {
+  <div class="ai-toast" [class.error]="t.kind === 'error'" role="status">
+    {{ t.message }}
+  </div>
+}
