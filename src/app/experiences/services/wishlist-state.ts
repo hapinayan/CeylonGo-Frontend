@@ -72,6 +72,12 @@ export class WishlistState {
 
   remove(id: number): void { this.setSaved(id, false); }
 
+  reconcileRemoval(id: number): void {
+    if (this.session.account() !== this.owner) return;
+    this.entries.update(ids => this.withValue(ids, id, false));
+    this.generation.update(value => value + 1);
+  }
+
   private setSaved(id: number, saved: boolean): void {
     const account = this.session.account();
     if (!account || !this.ready() || this.pending().has(id)) return;

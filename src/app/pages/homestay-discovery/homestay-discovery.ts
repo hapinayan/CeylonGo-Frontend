@@ -247,9 +247,13 @@ export class HomestayDiscovery implements OnInit {
   toggleWishlist(homestay: HomestaySummary, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-    const added = this.homestayService.toggleWishlist(homestay.id);
-    homestay.is_wishlisted = added;
-    this.showToast(added ? `Saved "${homestay.name}" to wishlist` : `Removed from wishlist`);
+    this.homestayService.changeWishlist(homestay).subscribe({
+      next: added => {
+        homestay.is_wishlisted = added;
+        this.showToast(added ? 'Saved to wishlist' : 'Removed from wishlist');
+      },
+      error: () => this.showToast('Could not update the wishlist. Try again.'),
+    });
   }
 
   isWishlisted(id: number): boolean {

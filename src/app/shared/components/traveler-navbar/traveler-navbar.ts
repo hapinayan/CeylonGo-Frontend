@@ -3,6 +3,9 @@ import {
   signal,
   ChangeDetectionStrategy,
   inject,
+  input,
+  output,
+  viewChild,
   HostListener,
   ElementRef,
   OnInit,
@@ -14,6 +17,7 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { User } from '../../../core/models/auth.models';
+import { ExperienceIcon } from '../../../experiences/components/icon';
 
 export interface NotificationItem {
   id: string | number;
@@ -26,24 +30,38 @@ export interface NotificationItem {
 @Component({
   selector: 'app-traveler-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ExperienceIcon],
   templateUrl: './traveler-navbar.html',
   styleUrls: ['./traveler-navbar.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelerNavbar implements OnInit {
+  readonly variant = input<'default' | 'bookings'>('default');
+  readonly bookingSearchRequested = output<void>();
+
+  readonly serviceLinks = [
+    { label: 'Homestays', path: '/homestays' },
+    { label: 'Experiences', path: '/experiences' },
+    { label: 'Tour Guides', path: '/tour-guides' },
+    { label: 'Bike Rental', path: '/bicycles' },
+    { label: 'Artisan', path: '/artisans' },
+  ];
+
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
 
+  private readonly exploreMenu = viewChild<ElementRef<HTMLDetailsElement>>('explore');
+
   readonly isMobileMenuOpen = signal(false);
   readonly isScrolled = signal(false);
-  readonly activeSection = signal('home');
+  readonly activeSection = signal<string | null>('home');
   readonly isRentalRoute = signal(false);
 
   get isAuthenticated(): boolean {
-    return this.authService.isAuthenticated();
+    return this.authService.isAuthenticated() && (this.variant() === 'default' ||
+      (this.currentUser?.role === 'traveler' && this.currentUser.is_active));
   }
 
   openAuthModal(mode: 'login' | 'register', event?: Event): void {
@@ -105,6 +123,11 @@ export class TravelerNavbar implements OnInit {
       return;
     }
 
+    if (/^\/my-bookings(?:[/?#]|$)/.test(this.router.url)) {
+      this.activeSection.set(null);
+      return;
+    }
+
     if (this.router.url.startsWith('/experiences')) {
       this.activeSection.set('experiences');
       return;
@@ -125,11 +148,11 @@ export class TravelerNavbar implements OnInit {
   }
 
   get travelerName(): string {
-    return this.currentUser?.full_name?.trim() || 'Hapinayan Perera';
+    return this.currentUser?.full_name?.trim() || (this.variant() === 'bookings' ? 'Traveler' : 'Hapinayan Perera');
   }
 
   get travelerEmail(): string {
-    return this.currentUser?.email?.trim() || 'traveler@ceylongo.com';
+    return this.currentUser?.email?.trim() || (this.variant() === 'bookings' ? '' : 'traveler@ceylongo.com');
   }
 
   get travelerInitials(): string {
@@ -181,6 +204,8 @@ export class TravelerNavbar implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
+    const explore = this.exploreMenu()?.nativeElement;
+    if (explore?.open && !explore.contains(target)) explore.open = false;
     if (!this.elementRef.nativeElement.contains(target)) {
       this.isProfileMenuOpen.set(false);
       this.isNotificationsOpen.set(false);
@@ -255,10 +280,10 @@ export class TravelerNavbar implements OnInit {
         this.showToast('My Profile: ' + this.travelerName + ' (' + this.travelerEmail + ')');
         break;
       case 'bookings':
-        this.router.navigate(['/experiences/bookings']);
+        this.router.navigate(['/my-bookings']);
         break;
       case 'wishlist':
-        this.router.navigate(['/experiences/wishlist']);
+        this.router.navigate(['/wishlist']);
         break;
       case 'settings':
         this.showToast('Settings: Account preferences and notifications.');

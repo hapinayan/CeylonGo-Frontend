@@ -245,6 +245,10 @@ export const routes: Routes = [
         .then(module => module.rentalRoutes)
   },
 
+  { path: 'my-bookings', loadChildren: () => import('./traveler-bookings/booking.routes').then(module => module.travelerBookingRoutes) },
+
+  { path: 'wishlist', loadChildren: () => import('./traveler-wishlist/wishlist.routes').then(module => module.travelerWishlistRoutes) },
+
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',

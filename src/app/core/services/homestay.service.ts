@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { catchError, map, Observable, of } from 'rxjs';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { DEMO_HOMESTAY_CATEGORIES, DEMO_HOMESTAYS } from '../data/demo-homestays.data';
@@ -15,6 +15,9 @@ import {
   HomestaySummary,
 } from '../models/homestay.models';
 
+import { HomestayWishlistState } from '../../traveler-wishlist/homestay-wishlist-state';
+import { AuthService } from './auth.service';
+
 const WISHLIST_STORAGE_KEY = 'ceylongo_homestay_wishlist';
 const BOOKING_DRAFT_KEY = 'ceylongo_booking_draft';
 
@@ -27,7 +30,16 @@ export class HomestayService {
 
   private readonly wishlistSignal = signal<number[]>(this.loadWishlistFromStorage());
 
-  readonly wishlistIds = this.wishlistSignal.asReadonly();
+  private readonly accountWishlist = inject(HomestayWishlistState);
+  private readonly auth = inject(AuthService);
+  private readonly demoListings = new WeakSet<HomestaySummary>();
+  readonly wishlistIds = computed(() => this.auth.isAuthenticated() ? this.accountWishlist.ids() : this.wishlistSignal());
+
+  changeWishlist(item: HomestaySummary): Observable<boolean> {
+    if (!this.auth.isAuthenticated()) return of(this.toggleWishlist(item.id));
+    if (this.demoListings.has(item)) return throwError(() => new Error('Sample property cannot be saved to an account.'));
+    return this.accountWishlist.change(item.id);
+  }
 
   /**
    * Retrieves homestays matching search & filter parameters.
@@ -70,7 +82,7 @@ export class HomestayService {
       .get<HomestayListResponse>(`${this.apiBaseUrl}/homestays`, { params: httpParams })
       .pipe(
         map((response) => {
-          const wishlisted = new Set(this.wishlistSignal());
+          const wishlisted = new Set(this.wishlistIds());
           const enrichedItems = response.items.map((item) => ({
             ...item,
             is_wishlisted: wishlisted.has(item.id),
@@ -82,7 +94,9 @@ export class HomestayService {
           };
         }),
         catchError(() => {
-          return of(this.filterDemoHomestays(params));
+          const result = this.filterDemoHomestays(params);
+          result.items.forEach(item => this.demoListings.add(item));
+          return of(result);
         })
       );
   }
@@ -120,7 +134,7 @@ export class HomestayService {
   }
 
   isWishlisted(homestayId: number): boolean {
-    return this.wishlistSignal().includes(homestayId);
+    return this.wishlistIds().includes(homestayId);
   }
 
   /**
@@ -144,7 +158,9 @@ export class HomestayService {
           };
         }),
         catchError(() => {
-          return of(this.findDemoHomestayById(numericId));
+          const item = this.findDemoHomestayById(numericId);
+          if (item) this.demoListings.add(item);
+          return of(item);
         })
       );
   }
@@ -252,7 +268,7 @@ export class HomestayService {
    */
   filterDemoHomestays(params?: HomestaySearchParams): HomestayListResponse {
     let items = [...DEMO_HOMESTAYS];
-    const wishlisted = new Set(this.wishlistSignal());
+    const wishlisted = new Set(this.wishlistIds());
 
     // 1. Text & Location Search
     if (params?.query && params.query.trim()) {

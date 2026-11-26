@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, effect, inject, signal } from '@angular/core';
-import { Observable, catchError, of, tap, throwError } from 'rxjs';
+import { Observable, catchError, defer, finalize, of, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
@@ -34,7 +34,7 @@ export class FavoriteService {
   private readonly DEMO_WISHLIST_KEY = 'ceylongo_demo_wishlist_ids';
   private readonly DEMO_FAVORITES_KEY = 'ceylongo_demo_favorites_ids';
 
-  private lastUserId: number | null = null;
+  private lastUser: ReturnType<AuthService['currentUser']> = null;
 
   constructor() {
     this.initDemoFavorites();
@@ -42,12 +42,11 @@ export class FavoriteService {
     // Monitor auth changes: clear state on logout or account switch, load on login
     effect(() => {
       const user = this.authService.currentUser();
-      const currentUserId = user?.id ?? null;
 
-      if (currentUserId !== this.lastUserId) {
-        this.lastUserId = currentUserId;
+      if (user !== this.lastUser) {
+        this.lastUser = user;
 
-        if (currentUserId !== null) {
+        if (user !== null) {
           this.productFavoriteIds.set(new Set());
           this.businessWishlistIds.set(new Set());
           this.refreshFavoriteIds();
@@ -98,7 +97,8 @@ export class FavoriteService {
    * Real backend API is the authoritative source; no fake persistent fallback.
    */
   refreshFavoriteIds(): void {
-    if (!this.authService.isAuthenticated()) {
+    const owner = this.authService.currentUser();
+    if (!owner?.is_active || owner.role !== 'traveler' || !this.authService.isAuthenticated()) {
       this.productFavoriteIds.set(new Set());
       this.businessWishlistIds.set(new Set());
       return;
@@ -106,6 +106,7 @@ export class FavoriteService {
 
     this.getProductFavorites(1, 100).subscribe({
       next: (res) => {
+        if (this.authService.currentUser() !== owner) return;
         const ids = new Set(res.items.map((i) => i.product_id));
         this.productFavoriteIds.set(ids);
       },
@@ -116,6 +117,7 @@ export class FavoriteService {
 
     this.getBusinessWishlist(1, 100).subscribe({
       next: (res) => {
+        if (this.authService.currentUser() !== owner) return;
         const ids = new Set(res.items.map((i) => i.artisan_listing_id));
         this.businessWishlistIds.set(ids);
       },
@@ -303,6 +305,37 @@ export class FavoriteService {
         }),
         catchError(() => of({ listing_id: listingId, is_saved: false, wishlist_id: null }))
       );
+  }
+
+  removeSavedProduct(productId: number): Observable<void> {
+    return this.removeSavedItem(productId, this.favoritesUrl + '/' + productId,
+      this.productFavoriteIds, this.pendingProductRequests);
+  }
+
+  removeSavedBusiness(listingId: number): Observable<void> {
+    return this.removeSavedItem(listingId, this.listingsUrl + '/' + listingId + '/wishlist',
+      this.businessWishlistIds, this.pendingWishlistRequests);
+  }
+
+  private removeSavedItem(
+    id: number, url: string, state: typeof this.productFavoriteIds, pending: Set<number>,
+  ): Observable<void> {
+    return defer(() => {
+      const owner = this.authService.currentUser();
+      if (!owner?.is_active || owner.role !== 'traveler' || !this.authService.isAuthenticated()) {
+        return throwError(() => new Error('AUTHENTICATION_REQUIRED'));
+      }
+      if (pending.has(id)) return throwError(() => new Error('WISHLIST_UPDATE_PENDING'));
+      pending.add(id);
+      return this.http.delete<void>(url).pipe(tap(() => {
+        if (this.authService.currentUser() !== owner) return;
+        state.update(values => {
+          const updated = new Set(values);
+          updated.delete(id);
+          return updated;
+        });
+      }), finalize(() => pending.delete(id)));
+    });
   }
 
   /**
