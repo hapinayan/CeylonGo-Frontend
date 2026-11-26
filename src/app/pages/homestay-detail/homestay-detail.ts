@@ -267,9 +267,13 @@ export class HomestayDetail implements OnInit, OnDestroy {
     const h = this.homestay();
     if (!h) return;
 
-    const added = this.homestayService.toggleWishlist(h.id);
-    h.is_wishlisted = added;
-    this.showToast(added ? `Saved "${h.name}" to wishlist` : `Removed from wishlist`);
+    this.homestayService.changeWishlist(h).subscribe({
+      next: added => {
+        h.is_wishlisted = added;
+        this.showToast(added ? 'Saved to wishlist' : 'Removed from wishlist');
+      },
+      error: () => this.showToast('Could not update the wishlist. Try again.'),
+    });
   }
 
   copyShareLink(): void {

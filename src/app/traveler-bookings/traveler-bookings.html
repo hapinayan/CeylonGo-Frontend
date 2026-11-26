@@ -1,22 +1,6 @@
 <app-traveler-navbar [variant]="detail() ? 'default' : 'bookings'" (bookingSearchRequested)="focusSearch()" />
 <main class="account-layout" [class.dashboard]="!detail()">
-  <aside class="account-panel" aria-label="Traveler account">
-    <div class="identity">
-      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
-      <div>
-        <strong>{{ preview() ? 'Preview account' : account()?.full_name || 'Traveler account' }}</strong>
-        @if (account()?.email; as email) { <small>{{ email }}</small> }
-      </div>
-    </div>
-    <nav class="account-links" aria-label="Account navigation">
-      <span><app-experience-icon name="user" /> <span>My Profile <small>Unavailable</small></span></span>
-      <a routerLink="/my-bookings" queryParamsHandling="preserve" aria-current="location"><app-experience-icon name="calendar" /> My Bookings</a>
-      <a routerLink="/experiences/wishlist"><app-experience-icon name="heart" /> <span>Wishlist <small>Experiences</small></span></a>
-      <span><app-experience-icon name="bell" /> <span>Notifications <small>In the navbar</small></span></span>
-      <span><app-experience-icon name="settings" /> <span>Account Settings <small>Unavailable</small></span></span>
-      @if (account()) { <button type="button" (click)="logout()"><app-experience-icon name="logout" /> Log out</button> }
-    </nav>
-  </aside>
+  <app-traveler-account-sidebar [account]="account()" [preview]="preview()" [premium]="!detail()" active="bookings" (signedOut)="logout()" />
 
   <section class="content" aria-labelledby="booking-heading">
     @if (preview() && detail()) {

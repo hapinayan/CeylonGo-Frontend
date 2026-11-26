@@ -7,6 +7,7 @@ import { AuthService } from '../core/services/auth.service';
 import { User } from '../core/models/auth.models';
 import { ExperienceIcon } from '../experiences/components/icon';
 import { Footer } from '../shared/components/footer/footer';
+import { TravelerAccountSidebar } from '../shared/components/traveler-account-sidebar/traveler-account-sidebar';
 import { TravelerNavbar } from '../shared/components/traveler-navbar/traveler-navbar';
 import { TravelerAuthModal } from '../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { TravelerBookingsApi, ServiceBookings } from './booking-api';
@@ -35,7 +36,7 @@ export class BookingReturnPosition {
 }
 
 @Component({
-  imports: [DatePipe, DecimalPipe, RouterLink, ExperienceIcon, Footer, TravelerNavbar, TravelerAuthModal],
+  imports: [DatePipe, DecimalPipe, RouterLink, ExperienceIcon, Footer, TravelerNavbar, TravelerAccountSidebar, TravelerAuthModal],
   templateUrl: './traveler-bookings.html',
   styleUrl: './traveler-bookings.scss',
 })
@@ -60,7 +61,6 @@ export class TravelerBookings {
     const session = this.session();
     return session && session !== PREVIEW ? session : null;
   });
-  readonly initials = computed(() => this.account()?.full_name?.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'CG');
   readonly detail = computed(() => this.params().has('service'));
   readonly filter = computed(() => tabs.find(tab => tab.key === this.query().get('status'))?.key ?? 'all');
   readonly search = computed(() => (this.query().get('q') ?? '').slice(0, 120));

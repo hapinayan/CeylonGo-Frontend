@@ -23,6 +23,12 @@ export interface RentalQuote extends RentalDates {
   security_deposit: string | null;
 }
 
+export interface SavedRental {
+  saved_at: string; vehicle_id: number; vehicle_name: string; vehicle_type: string;
+  city: string | null; district: string | null; location_name: string | null; primary_image_url: string | null;
+  price_per_day: string | number; currency: string; is_available: boolean;
+}
+
 interface WishlistStatus {
   vehicle_id: number;
   saved: boolean;
@@ -97,6 +103,12 @@ export class RentalApi {
     return this.http.post<RentalQuote>(this.vehicles + '/' + id + '/calculate-quote', dates, {
       context: new HttpContext().set(ANONYMOUS_API_REQUEST, true),
     });
+  }
+
+  savedList(page: number, limit: number) {
+    return this.http.get<{ items: SavedRental[]; total: number; page: number; limit: number; pages: number }>(
+      environment.apiBaseUrl + '/rental-wishlist', { params: { page, limit } },
+    ).pipe(map(result => ({ ...result, page_size: result.limit, total_pages: result.pages })));
   }
 
   saved(id: number): Observable<WishlistStatus> {

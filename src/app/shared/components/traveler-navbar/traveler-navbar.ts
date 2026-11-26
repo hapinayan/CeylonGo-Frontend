@@ -283,7 +283,7 @@ export class TravelerNavbar implements OnInit {
         this.router.navigate(['/my-bookings']);
         break;
       case 'wishlist':
-        this.router.navigate(['/experiences/wishlist']);
+        this.router.navigate(['/wishlist']);
         break;
       case 'settings':
         this.showToast('Settings: Account preferences and notifications.');
