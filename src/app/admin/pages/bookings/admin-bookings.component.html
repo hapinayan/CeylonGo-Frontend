@@ -1,0 +1,227 @@
+<div class="admin-page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item"><a routerLink="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-separator" aria-hidden="true">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Bookings</li>
+        </ol>
+      </nav>
+      <h1 class="page-title">Booking Management & Oversight</h1>
+      <p class="page-subtitle">Platform-wide booking registry, reservation schedules, traveler-provider dossiers, and dispute oversight.</p>
+    </div>
+    <div class="header-right">
+      <button type="button" class="btn-refresh" (click)="refreshData()" [disabled]="isLoading">
+        <svg class="icon-refresh" [class.spinning]="isLoading" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+        </svg>
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="alert alert-info">
+    <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+    </svg>
+    <span><strong>Cross-Module Booking Governance:</strong> Read-only operational oversight across Homestay, Tour Guide, Rental, and Adventure reservations. Financial transactions and native cancellations remain strictly managed within authorized domain workflows.</span>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="alert-close" (click)="errorMessage = null">&times;</button>
+  </div>
+
+  <!-- KPI Metrics Cards -->
+  <section class="kpi-grid" aria-label="Booking Metrics">
+    <div class="kpi-card">
+      <span class="kpi-label">Total Bookings</span>
+      <span class="kpi-value">{{ kpis.total_bookings }}</span>
+      <span class="kpi-sub">All active service lines</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">Confirmed / Scheduled</span>
+      <span class="kpi-value">{{ kpis.confirmed_bookings }}</span>
+      <span class="kpi-sub">Payment captured / guaranteed</span>
+    </div>
+    <div class="kpi-card kpi-warning">
+      <span class="kpi-label">Pending Confirmation</span>
+      <span class="kpi-value">{{ kpis.pending_bookings }}</span>
+      <span class="kpi-sub">Awaiting provider acceptance</span>
+    </div>
+    <div class="kpi-card kpi-info">
+      <span class="kpi-label">Completed Stays/Trips</span>
+      <span class="kpi-value">{{ kpis.completed_bookings }}</span>
+      <span class="kpi-sub">Successfully concluded</span>
+    </div>
+  </section>
+
+  <!-- Filter Toolbar -->
+  <section class="filter-card">
+    <div class="filter-row">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by reference (e.g. BK-TG-101), traveler, provider..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-controls">
+        <app-admin-select
+          ariaLabel="Filter by Category"
+          [options]="categoryOptions"
+          [value]="selectedCategory"
+          (valueChange)="onCategoryChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by Booking Status"
+          [options]="statusOptions"
+          [value]="selectedStatus"
+          (valueChange)="onStatusChange($event)"
+        ></app-admin-select>
+
+        <div class="date-filter-group">
+          <label class="filter-label" for="dateFromInput">From Date</label>
+          <input
+            id="dateFromInput"
+            type="date"
+            class="date-input"
+            [(ngModel)]="dateFrom"
+            (change)="onDateFilterChange()"
+          />
+        </div>
+
+        <div class="date-filter-group">
+          <label class="filter-label" for="dateToInput">To Date</label>
+          <input
+            id="dateToInput"
+            type="date"
+            class="date-input"
+            [(ngModel)]="dateTo"
+            (change)="onDateFilterChange()"
+          />
+        </div>
+
+        <app-admin-select
+          ariaLabel="Items per page"
+          [options]="pageSizeOptions"
+          [value]="pageSize"
+          (valueChange)="onPageSizeChange($event)"
+        ></app-admin-select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Table -->
+  <section class="table-card">
+    <div class="table-wrapper">
+      <table class="data-table" aria-label="Bookings Registry">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Category</th>
+            <th>Traveler</th>
+            <th>Service / Provider</th>
+            <th>Service Date</th>
+            <th>Amount</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bookings">
+            <td>
+              <span class="ref-badge">{{ b.booking_reference }}</span>
+            </td>
+            <td>
+              <span class="category-chip" [attr.data-cat]="b.category">
+                {{ b.category | uppercase }}
+              </span>
+            </td>
+            <td>
+              <div class="traveler-cell">
+                <span class="traveler-name">{{ b.traveler_name }}</span>
+                <span class="traveler-email">{{ b.traveler_email }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="service-cell">
+                <span class="service-title">{{ b.service_title }}</span>
+                <span class="provider-sub">{{ b.provider_business_name || b.provider_name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="cell-date">{{ b.start_date | date:'mediumDate' }}</span>
+            </td>
+            <td>
+              <span class="cell-amount">LKR {{ b.amount | number }}</span>
+            </td>
+            <td>
+              <span class="pay-chip" [attr.data-pay]="b.payment_status">
+                {{ b.payment_status | uppercase }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [attr.data-status]="b.booking_status">
+                {{ b.booking_status | uppercase }}
+              </span>
+            </td>
+            <td class="text-right actions-cell">
+              <button type="button" class="btn-action btn-inspect" (click)="openDetail(b)">
+                Inspect Dossier
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="bookings.length === 0 && !isLoading">
+            <td colspan="9" class="empty-cell">
+              <div class="empty-state">
+                <p>No bookings match the selected filters or date range.</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="isLoading">
+            <td colspan="9" class="loading-cell">
+              <div class="loading-state">
+                <span>Loading booking records...</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <span class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} of {{ totalItems }} entries
+      </span>
+      <div class="pagination-buttons">
+        <button type="button" class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          Previous
+        </button>
+        <span class="page-curr">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Dossier Modal -->
+<app-admin-booking-detail-modal
+  *ngIf="selectedBookingDetail"
+  [booking]="selectedBookingDetail"
+  (close)="closeDetail()"
+></app-admin-booking-detail-modal>

@@ -1,0 +1,337 @@
+<div class="travelers-page">
+  <!-- Breadcrumb & Top Bar -->
+  <div class="breadcrumb-bar">
+    <a routerLink="/admin/dashboard" class="crumb-root crumb-link" title="Navigate to Dashboard">Dashboard</a>
+    <span class="crumb-separator">/</span>
+    <span class="crumb-current">Travelers</span>
+  </div>
+
+  <!-- Header Banner -->
+  <header class="page-header">
+    <div class="header-titles">
+      <div class="title-row">
+        <h1 class="page-title">Traveler Management</h1>
+        <span class="role-pill" [class.super]="isSuperAdmin()" [class.standard]="!isSuperAdmin()">
+          {{ isSuperAdmin() ? 'Super Admin Access' : 'Operational View' }}
+        </span>
+      </div>
+      <p class="page-subtitle">
+        Inspect registered traveler directory, review profile details, and manage authorized account access.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="header-actions">
+      @if (lastRefreshed()) {
+        <span class="last-refreshed">
+          Last synced: {{ lastRefreshed() | date: 'mediumTime' }}
+        </span>
+      }
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="refreshData()"
+        [disabled]="isLoading() || isRefreshing()"
+        title="Sync traveler directory data with backend"
+        id="btn-refresh-travelers"
+      >
+        <svg
+          class="refresh-icon"
+          [class.spinning]="isLoading() || isRefreshing()"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          width="16"
+          height="16"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75a.75.75 0 00-.75.75v4.482a.75.75 0 001.5 0v-2.067l.39.389a7 7 0 0011.977-3.177.75.75 0 00-1.555-.242zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.77a.75.75 0 000 1.5h4.482a.75.75 0 00.75-.75V2.689a.75.75 0 00-1.5 0v2.067l-.39-.389A7 7 0 003.135 7.544a.75.75 0 001.553.242z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>{{ isRefreshing() ? 'Refreshing...' : 'Refresh Data' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Demo Preview Alert Banner -->
+  @if (isDemo()) {
+    <div class="preview-mode-banner">
+      <div class="banner-badge">Demo Preview Mode</div>
+      <p class="banner-text">
+        Displaying isolated client-side mock fixtures. Account status changes update local state and audit history without affecting production.
+      </p>
+    </div>
+  }
+
+  <!-- Success & Error Banners -->
+  @if (successBanner()) {
+    <div class="notification-banner success">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>{{ successBanner() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="notification-banner error">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="btn-retry" (click)="loadTravelers()">Retry</button>
+    </div>
+  }
+
+  <!-- Summary KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">Total Travelers</span>
+        <span class="kpi-value">{{ totalItems() }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">Active Accounts</span>
+        <span class="kpi-value">{{ totalActive() }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap red">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+        </svg>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-label">Suspended Accounts</span>
+        <span class="kpi-value">{{ totalSuspended() }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Toolbar -->
+  <section class="toolbar-section">
+    <!-- Search Field -->
+    <div class="search-wrap">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search travelers by name or email..."
+        [ngModel]="searchInput()"
+        (ngModelChange)="onSearchChange($event)"
+      />
+      @if (searchInput()) {
+        <button type="button" class="clear-search-btn" (click)="onSearchChange('')" aria-label="Clear search">
+          &times;
+        </button>
+      }
+    </div>
+
+    <!-- Filters & Clear -->
+    <div class="filter-actions">
+      <div class="filter-buttons">
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="statusFilter() === 'all'"
+          (click)="onStatusFilterChange('all')"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="statusFilter() === 'active'"
+          (click)="onStatusFilterChange('active')"
+        >
+          Active
+        </button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="statusFilter() === 'suspended'"
+          (click)="onStatusFilterChange('suspended')"
+        >
+          Suspended
+        </button>
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button type="button" class="btn-clear-all" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Data Table Container -->
+  <section class="table-card">
+    @if (isLoading()) {
+      <div class="table-loading-overlay">
+        <div class="spinner"></div>
+        <span>Retrieving directory records...</span>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th class="col-name">Traveler</th>
+            <th class="col-email">Email Address</th>
+            <th class="col-date">Registered Date</th>
+            <th class="col-status">Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (travelers().length === 0 && !isLoading()) {
+            <tr>
+              <td colspan="6" class="empty-cell">
+                <div class="empty-state">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <h4>No Travelers Found</h4>
+                  <p>No traveler accounts match your current search criteria or status filter.</p>
+                  @if (hasActiveFilters()) {
+                    <button type="button" class="btn btn-outline" (click)="clearFilters()">Reset Filters</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (t of travelers(); track t.id) {
+              <tr class="table-row">
+                <td class="col-id">#{{ t.id }}</td>
+                <td class="col-name">
+                  <div class="traveler-cell">
+                    <div class="avatar-initial">{{ t.full_name.charAt(0).toUpperCase() }}</div>
+                    <span class="name-text">{{ t.full_name }}</span>
+                  </div>
+                </td>
+                <td class="col-email">{{ t.email }}</td>
+                <td class="col-date">{{ t.created_at | date:'mediumDate' }}</td>
+                <td class="col-status">
+                  <span class="status-badge" [class.active]="t.is_active" [class.suspended]="!t.is_active">
+                    {{ t.is_active ? 'Active' : 'Suspended' }}
+                  </span>
+                </td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <button type="button" class="btn-action view" (click)="openDetail(t)" title="View profile & history">
+                      <span>View</span>
+                    </button>
+
+                    @if (isSuperAdmin()) {
+                      @if (t.is_active) {
+                        <button
+                          type="button"
+                          class="btn-action suspend"
+                          (click)="openStatusModal(t, false)"
+                          title="Suspend traveler account"
+                        >
+                          <span>Suspend</span>
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn-action reactivate"
+                          (click)="openStatusModal(t, true)"
+                          title="Reactivate traveler account"
+                        >
+                          <span>Reactivate</span>
+                        </button>
+                      }
+                    } @else {
+                      <span class="restricted-tag" title="Account status modification requires Super Admin privileges.">
+                        Super Admin Only
+                      </span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="table-footer">
+      <span class="record-count">
+        Showing <strong>{{ travelers().length }}</strong> of <strong>{{ totalItems() }}</strong> travelers
+      </span>
+
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="currentPage() <= 1 || isLoading()"
+          (click)="goToPage(currentPage() - 1)"
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        <span class="page-indicator">
+          Page <strong>{{ currentPage() }}</strong> of <strong>{{ totalPages() }}</strong>
+        </span>
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="currentPage() >= totalPages() || isLoading()"
+          (click)="goToPage(currentPage() + 1)"
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modals -->
+  @if (detailModalTraveler()) {
+    <app-admin-traveler-detail-modal
+      [traveler]="detailModalTraveler()!"
+      (close)="closeDetail()"
+    ></app-admin-traveler-detail-modal>
+  }
+
+  @if (statusModalTraveler()) {
+    <app-admin-traveler-status-modal
+      [traveler]="statusModalTraveler()!"
+      [targetActive]="statusModalTargetActive()"
+      [isSubmitting]="isSubmittingStatus()"
+      (confirm)="confirmStatusChange($event)"
+      (cancel)="closeStatusModal()"
+    ></app-admin-traveler-status-modal>
+  }
+</div>

@@ -47,6 +47,12 @@
                 },
                 "fonts": false
               },
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -82,6 +88,10 @@
                 }
               ],
               "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                },
                 {
                   "replace": "src/app/experiences/services/catalog-provider.ts",
                   "with": "src/app/experiences/services/catalog-provider.development.ts"

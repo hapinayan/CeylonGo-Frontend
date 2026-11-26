@@ -1,0 +1,46 @@
+<div class="dialog-backdrop" (click)="onCancel()">
+  <div class="dialog-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <div class="dialog-header">
+      <h3 id="dialog-title" class="dialog-title">Reject Adventure Activity</h3>
+      <button type="button" class="btn-close" (click)="onCancel()" aria-label="Close dialog">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="dialog-body">
+      <p class="dialog-intro">
+        You are rejecting <strong>{{ activity.title }}</strong> submitted by
+        <em>{{ activity.provider_business_name || ('Provider #' + activity.provider_id) }}</em>.
+      </p>
+
+      <div class="form-group">
+        <label for="reject-reason" class="form-label">
+          Reason for Rejection <span class="required">*</span>
+        </label>
+        <textarea
+          id="reject-reason"
+          rows="4"
+          class="form-control"
+          placeholder="Please state clearly what needs to be corrected (minimum 5 characters)..."
+          [(ngModel)]="reason"
+          (input)="validationError = null"
+        ></textarea>
+        <div class="error-msg" *ngIf="validationError">{{ validationError }}</div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="isProcessing || reason.trim().length < 5"
+        (click)="onConfirm()"
+      >
+        {{ isProcessing ? 'Rejecting...' : 'Confirm Rejection' }}
+      </button>
+    </div>
+  </div>
+</div>

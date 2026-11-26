@@ -1,0 +1,245 @@
+<div class="admin-page-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item"><a routerLink="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-separator" aria-hidden="true">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Artisans</li>
+        </ol>
+      </nav>
+      <h1 class="page-title">Artisan & Small Business Management</h1>
+      <p class="page-subtitle">Promote authentic local Sri Lankan craft guilds, moderate showcase products and review moderation.</p>
+    </div>
+    <div class="header-right">
+      <button type="button" class="btn-refresh" (click)="refreshData()" [disabled]="isLoading">
+        <svg class="icon-refresh" [class.spinning]="isLoading" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+        </svg>
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span>{{ successMessage }}</span>
+    <button type="button" class="alert-close" (click)="successMessage = null">&times;</button>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="alert-close" (click)="errorMessage = null">&times;</button>
+  </div>
+
+  <!-- KPI Metrics Cards -->
+  <section class="kpi-grid" aria-label="Artisan Metrics">
+    <div class="kpi-card">
+      <span class="kpi-label">Total Workshops</span>
+      <span class="kpi-value">{{ kpis.total_businesses }}</span>
+      <span class="kpi-sub">Across 9 provinces</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">Approved & Active</span>
+      <span class="kpi-value">{{ kpis.approved_count }}</span>
+      <span class="kpi-sub">Published to public catalog</span>
+    </div>
+    <div class="kpi-card kpi-warning">
+      <span class="kpi-label">Pending Moderation</span>
+      <span class="kpi-value">{{ kpis.pending_count }}</span>
+      <span class="kpi-sub">Awaiting verification</span>
+    </div>
+    <div class="kpi-card kpi-info">
+      <span class="kpi-label">Verified Crafts</span>
+      <span class="kpi-value">{{ kpis.verified_count }}</span>
+      <span class="kpi-sub">Authenticity certified</span>
+    </div>
+  </section>
+
+  <!-- Filter Toolbar -->
+  <section class="filter-card">
+    <div class="filter-row">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by workshop title, city, craft..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-controls">
+        <app-admin-select
+          ariaLabel="Filter by Craft Category"
+          [options]="categoryOptions"
+          [value]="selectedCategory"
+          (valueChange)="onCategoryChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by Province"
+          [options]="provinceOptions"
+          [value]="selectedProvince"
+          (valueChange)="onProvinceChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by District"
+          [options]="districtOptions"
+          [value]="selectedDistrict"
+          (valueChange)="onDistrictChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by Approval Status"
+          [options]="statusOptions"
+          [value]="selectedStatus"
+          (valueChange)="onStatusChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Items per page"
+          [options]="pageSizeOptions"
+          [value]="pageSize"
+          (valueChange)="onPageSizeChange($event)"
+        ></app-admin-select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Table -->
+  <section class="table-card">
+    <div class="table-wrapper">
+      <table class="data-table" aria-label="Artisan Directory">
+        <thead>
+          <tr>
+            <th>Artisan Workshop / Guild</th>
+            <th>Craft Category</th>
+            <th>Location</th>
+            <th>Catalog Status</th>
+            <th>Badge</th>
+            <th>Featured</th>
+            <th>Approval</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of listings" [class.row-pending]="a.approval_status === 'pending'">
+            <td>
+              <div class="artisan-cell">
+                <span class="artisan-title">{{ a.title }}</span>
+                <span class="artisan-sub">{{ a.provider_business_name || 'Independent Guild' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="chip-craft">{{ a.craft_category | uppercase }}</span>
+            </td>
+            <td>
+              <span class="cell-location">{{ a.city }}, {{ a.district }}</span>
+            </td>
+            <td>
+              <span class="dot-status" [class.dot-active]="a.is_active">
+                {{ a.is_active ? 'Active' : 'Hidden' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-pill" *ngIf="a.is_verified">Verified</span>
+              <span class="text-muted" *ngIf="!a.is_verified">Standard</span>
+            </td>
+            <td>
+              <span class="star-featured" *ngIf="a.is_featured">&#9733; Featured</span>
+              <span class="text-muted" *ngIf="!a.is_featured">-</span>
+            </td>
+            <td>
+              <span class="status-badge" [attr.data-status]="a.approval_status">
+                {{ a.approval_status | uppercase }}
+              </span>
+            </td>
+            <td class="text-right actions-cell">
+              <button type="button" class="btn-action btn-inspect" (click)="openDetail(a.id)">
+                Inspect
+              </button>
+              <button
+                *ngIf="canReview() && a.approval_status !== 'approved'"
+                type="button"
+                class="btn-action btn-approve"
+                (click)="approveListing(a.id)"
+              >
+                Approve
+              </button>
+              <button
+                *ngIf="canReview() && a.approval_status === 'pending'"
+                type="button"
+                class="btn-action btn-reject"
+                (click)="openRejectDialog(a.id, 'reject')"
+              >
+                Reject
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="listings.length === 0 && !isLoading">
+            <td colspan="8" class="empty-cell">
+              <div class="empty-state">
+                <p>No artisan businesses match your filter criteria.</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="isLoading">
+            <td colspan="8" class="loading-cell">
+              <div class="loading-state">
+                <span>Loading artisan workshop directory...</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <span class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} of {{ totalItems }} entries
+      </span>
+      <div class="pagination-buttons">
+        <button type="button" class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          Previous
+        </button>
+        <span class="page-curr">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modals & Dialogs -->
+<app-admin-artisan-detail-modal
+  *ngIf="selectedListing"
+  [listing]="selectedListing"
+  [products]="selectedProducts"
+  [reviews]="selectedReviews"
+  [canReview]="canReview()"
+  [canModerate]="canModerate()"
+  [isProcessing]="isProcessing"
+  (close)="closeDetail()"
+  (approve)="approveListing($event)"
+  (reject)="openRejectDialog($event, 'reject')"
+  (suspend)="openRejectDialog($event, 'suspend')"
+  (toggleFeature)="toggleFeature($event)"
+  (approveProduct)="approveProduct($event)"
+  (rejectProduct)="rejectProduct($event)"
+  (toggleReviewPublish)="toggleReviewPublish($event)"
+></app-admin-artisan-detail-modal>
+
+<app-admin-artisan-reject-dialog
+  *ngIf="isRejectDialogOpen"
+  [actionType]="rejectActionType"
+  [isProcessing]="isProcessing"
+  (cancel)="closeRejectDialog()"
+  (confirm)="confirmRejectOrSuspend($event)"
+></app-admin-artisan-reject-dialog>

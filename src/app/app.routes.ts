@@ -569,6 +569,13 @@ export const routes: Routes = [
     ],
   },
 
+  // CEYLONGO ADMIN MODULE (PHASES 01–08)
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('./admin/admin.routes')
+        .then(m => m.ADMIN_ROUTES)
+  },
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',
