@@ -245,6 +245,8 @@ export const routes: Routes = [
         .then(module => module.rentalRoutes)
   },
 
+  { path: 'my-bookings', loadChildren: () => import('./traveler-bookings/booking.routes').then(module => module.travelerBookingRoutes) },
+
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',
