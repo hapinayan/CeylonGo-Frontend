@@ -1,0 +1,104 @@
+<app-traveler-navbar variant="bookings" (bookingSearchRequested)="focusSearch()" />
+<main class="wishlist-layout">
+  <app-traveler-account-sidebar [account]="account()" [preview]="preview()" active="wishlist" (signedOut)="logout()" />
+  <section class="content" aria-labelledby="wishlist-heading">
+    <header>
+      <h1 id="wishlist-heading">My Wishlist</h1>
+      <p>All your favourite places and experiences in one place.</p>
+    </header>
+    @if (preview()) {
+      <p class="notice" role="note"><strong>Development preview</strong> · Sample records and illustrative images. Changes stay in this preview.</p>
+    }
+    @if (!owner()) {
+      <p class="notice" role="status">Sign in with an active traveler account to see your saved items.</p>
+    } @else {
+      <div class="toolbar">
+        <form role="search" (submit)="$event.preventDefault(); updateQuery('q', searchField.value)">
+          <label for="wishlist-search">Search saved items</label>
+          <div class="search-field">
+            <input id="wishlist-search" #searchField type="search" maxlength="120" [value]="search()" placeholder="Title, service or location" />
+            <button type="submit" aria-label="Search"><app-experience-icon name="search" /></button>
+          </div>
+        </form>
+        <label>Service
+          <select [value]="category()" (change)="updateQuery('category', $any($event.target).value)">
+            <option value="all" [selected]="category() === 'all'">All services</option>
+            @for (kind of kinds; track kind) { <option [value]="kind" [selected]="category() === kind">{{ labels[kind] }}</option> }
+          </select>
+        </label>
+        <label>Sort by
+          <select [value]="sort()" (change)="updateQuery('sort', $any($event.target).value)">
+            <option value="recent">Recently saved</option>
+            <option value="name">Name</option>
+            <option value="price">Price (within currency)</option>
+          </select>
+        </label>
+      </div>
+      <p class="count" aria-live="polite">{{ count() }} saved {{ count() === 1 ? 'item' : 'items' }} loaded@if (visible().length !== count()) { · {{ visible().length }} shown}</p>
+      @for (section of sections(); track section.kind) {
+        @if (section.state === 'error') {
+          <p class="notice" role="status">{{ labels[section.kind] }} could not load.
+            <button type="button" (click)="retry(section.kind)">Retry {{ labels[section.kind] }}</button>
+          </p>
+        }
+      }
+      @if (loading()) { <p role="status">Loading saved items…</p> }
+      <div class="saved-grid">
+        @for (item of visible(); track key(item)) {
+          <article class="saved-card">
+            <div class="thumbnail">
+              <app-experience-icon [name]="icons[item.kind]" />
+              @if (item.image) {
+                <img [src]="item.image" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="$any($event.target).hidden = true" />
+              }
+            </div>
+            <div class="card-content">
+              <p class="service"><app-experience-icon [name]="icons[item.kind]" /> {{ labels[item.kind] }}</p>
+              <h2>{{ item.title }}</h2>
+              <p class="metadata"><app-experience-icon name="pin" /> {{ item.location || 'Location unavailable' }}</p>
+              @if (item.rating != null) {
+                <p class="metadata"><app-experience-icon name="star" /> {{ item.rating | number:'1.1-1' }}
+                  @if (item.reviews != null) { ({{ item.reviews }} reviews) }
+                </p>
+              }
+              <p class="price">
+                @if (item.price != null && item.currency) {
+                  {{ item.currency }} {{ item.price | number:'1.0-2' }}
+                  @if (item.unit) { <small>· {{ item.unit }}</small> }
+                } @else { <small>Price unavailable</small> }
+              </p>
+              <div class="actions">
+                @if (item.detail; as target) {
+                  <a [routerLink]="target" (click)="remember()">View Details <app-experience-icon name="next" /></a>
+                } @else {
+                  <span>{{ preview() ? 'Sample listing' : 'Details unavailable' }}</span>
+                }
+                <button type="button" class="remove" [disabled]="mutation(item)?.busy"
+                  [attr.aria-label]="'Remove ' + item.title + ' from wishlist'" (click)="remove(item)">
+                  <app-experience-icon name="heart" /> {{ mutation(item)?.busy ? 'Removing…' : 'Remove' }}
+                </button>
+              </div>
+              @if (mutation(item) && !mutation(item)?.busy) {
+                <p class="notice" role="status">Could not remove this item. Try again.</p>
+              }
+            </div>
+          </article>
+        } @empty {
+          @if (!loading()) {
+            <p class="notice">{{ count() ? 'No saved items match your filters.' : 'No saved items to show.' }}</p>
+          }
+        }
+      </div>
+      @if (missingSamples().length) {
+        <div class="samples">
+          <h2>Restore removed sample items</h2>
+          @for (item of missingSamples(); track key(item)) {
+            <button type="button" (click)="setSample(item, true)">Save {{ item.title }}</button>
+          }
+        </div>
+      }
+    }
+  </section>
+</main>
+<app-footer />
+<app-traveler-auth-modal />

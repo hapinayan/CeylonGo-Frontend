@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProviderDashboard } from './provider-dashboard';
 import { ProviderAuthService } from '../../core/services/provider-auth.service';
+import { ProviderService } from '../../core/services/provider.service';
 
 describe('ProviderDashboard Component', () => {
   let component: ProviderDashboard;
@@ -11,7 +13,14 @@ describe('ProviderDashboard Component', () => {
   let router: Router;
   let providerAuthServiceMock: {
     currentProviderUser: ReturnType<typeof vi.fn>;
+    getToken: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
+    getProfile?: ReturnType<typeof vi.fn>;
+  };
+  let providerServiceMock: {
+    getDashboardStats: ReturnType<typeof vi.fn>;
+    getMyBookings: ReturnType<typeof vi.fn>;
+    getMyListings: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -27,7 +36,22 @@ describe('ProviderDashboard Component', () => {
         district: 'Hambantota',
         approval_status: 'approved',
       }),
+      getToken: vi.fn().mockReturnValue('mock-token'),
       logout: vi.fn(),
+      getProfile: vi.fn().mockReturnValue(of({ verification_status: 'approved' })),
+    };
+
+    providerServiceMock = {
+      getDashboardStats: vi.fn().mockReturnValue(
+        of({
+          total_listings: 4,
+          published_listings: 3,
+          pending_approvals: 1,
+          total_bookings: 12,
+        })
+      ),
+      getMyBookings: vi.fn().mockReturnValue(of([])),
+      getMyListings: vi.fn().mockReturnValue(of([])),
     };
 
     await TestBed.configureTestingModule({
@@ -35,6 +59,7 @@ describe('ProviderDashboard Component', () => {
       providers: [
         provideRouter([]),
         { provide: ProviderAuthService, useValue: providerAuthServiceMock },
+        { provide: ProviderService, useValue: providerServiceMock },
       ],
     }).compileComponents();
 
@@ -52,6 +77,8 @@ describe('ProviderDashboard Component', () => {
     expect(compiled.querySelector('.subtitle')?.textContent).toContain('Yala Eco Safari');
     expect(compiled.textContent).toContain('safari@ceylongo.com');
     expect(compiled.textContent).toContain('Hambantota');
+    expect(compiled.textContent).toContain('Total Listings');
+    expect(compiled.textContent).toContain('4');
   });
 
   it('should call logout and navigate to /provider/login when Sign Out is clicked', () => {

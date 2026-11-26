@@ -1,52 +1,73 @@
-import { DecimalPipe, NgTemplateOutlet, ViewportScroller } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
+import { catchError, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { RentalApi } from './rental-api';
 import { RentalImage } from './rental-image';
-import { DEFAULT_QUERY, PRICE_RANGES, RentalCategory, RentalPage, RentalQuery, RentalSort, rentalDateError } from './rental-models';
-import { rentalPreviewEnabled, previewSearch } from './rental-preview';
-import { RentalScroll } from './rental.routes';
+import {
+  PAGE_SIZE,
+  PRICE_RANGES,
+  RENTAL_CITIES,
+  RentalCategory,
+  RentalPage,
+  RentalQuery,
+  RentalSort,
+  RentalVehicle,
+  formatLkr,
+  rentalDateError,
+} from './rental-models';
+import { previewSearch, rentalPreviewEnabled } from './rental-preview';
 import { RentalWishlist } from './rental-wishlist';
 
-const LIVE_CATEGORIES: readonly { value: RentalCategory; label: string; icon: string }[] = [
-  { value: '', label: 'All Vehicles', icon: 'all' },
-  { value: 'bike', label: 'Motorbikes', icon: 'motor' },
-  { value: 'bicycle', label: 'Bicycles', icon: 'cycle' },
+interface CategoryTile {
+  readonly id: '' | 'scooter' | 'motorcycle' | 'bicycle';
+  readonly label: string;
+  readonly icon: 'grid' | 'scooter' | 'motorcycle' | 'bicycle';
+}
+
+const CATEGORY_TILES: readonly CategoryTile[] = [
+  { id: '', label: 'All Vehicles', icon: 'grid' },
+  { id: 'scooter', label: 'Scooters', icon: 'scooter' },
+  { id: 'motorcycle', label: 'Motorbikes', icon: 'motorcycle' },
+  { id: 'bicycle', label: 'Bicycles', icon: 'bicycle' },
 ];
-const PREVIEW_CATEGORIES = [
-  LIVE_CATEGORIES[0],
-  { value: 'scooter', label: 'Scooters', icon: 'motor' },
-  { value: 'motorcycle', label: 'Motorcycles', icon: 'motor' },
-  LIVE_CATEGORIES[2],
-  { value: 'electric', label: 'Electric Bikes', icon: 'electric' },
-] as const;
 
-interface BrowseState { query: RentalQuery; preview: boolean }
-type Results = { kind: 'loading' } | { kind: 'error'; status: number } | { kind: 'ready'; page: RentalPage };
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; items: readonly RentalVehicle[]; total: number; pages: number };
 
-function readState(params: ParamMap): BrowseState {
-  const preview = rentalPreviewEnabled && params.get('preview') === '1';
-  const category = params.get('type') as RentalCategory;
-  const sort = params.get('sort') as RentalSort;
-  const requestedPage = Number(params.get('page'));
-  const pickup = params.get('pickup') ?? '';
-  const dropoff = params.get('return') ?? '';
-  const dateError = rentalDateError(pickup, dropoff);
-  return { preview, query: {
-    city: (params.get('city') ?? '').trim().slice(0, 100),
-    pickup: dateError ? '' : pickup, dropoff: dateError ? '' : dropoff,
-    category: (preview ? PREVIEW_CATEGORIES : LIVE_CATEGORIES).some(option => option.value === category) ? category : '',
-    sort: sort === 'price_asc' || sort === 'price_desc' || (preview && (sort === 'popular' || sort === 'rating')) ? sort : 'newest',
-    price: Object.hasOwn(PRICE_RANGES, params.get('price') ?? '') ? params.get('price')! : '',
-    rating: preview && params.get('rating') === '1',
-    page: Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
-  } };
+const SORTS = new Set(['newest', 'price_asc', 'price_desc', 'rating', 'popular']);
+const CATEGORIES = new Set(['', 'scooter', 'motorcycle', 'bicycle', 'electric', 'bike']);
+const PRICES = new Set(['', 'budget', 'mid', 'premium']);
+
+function cleanCategory(value: string | null): RentalCategory {
+  if (!value) return '';
+  return CATEGORIES.has(value) ? (value as RentalCategory) : '';
+}
+
+function queryFrom(params: ParamMap): RentalQuery {
+  const page = Number(params.get('page'));
+  const sort = params.get('sort') ?? '';
+  const price = params.get('price') ?? '';
+  return {
+    city: params.get('city')?.trim() ?? '',
+    category: cleanCategory(params.get('category') ?? params.get('type')),
+    pickup: params.get('pickup') ?? '',
+    dropoff: params.get('dropoff') ?? params.get('return') ?? '',
+    sort: SORTS.has(sort) ? (sort as RentalSort) : 'newest',
+    price: PRICES.has(price) ? price : '',
+    rating: params.get('rating') === '4',
+    transmission: params.get('transmission')?.trim() ?? '',
+    availableOnly: params.get('available') === '1',
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
 }
 
 @Component({
-  imports: [RouterLink, DecimalPipe, NgTemplateOutlet, RentalImage, RentalWishlist],
+  selector: 'app-rental-discover',
+  imports: [FormsModule, RouterLink, RentalWishlist, RentalImage],
   templateUrl: './rental-discover.html',
   styleUrl: './rental-discover.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,91 +76,226 @@ export class RentalDiscover {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(RentalApi);
-  private readonly scroll = inject(RentalScroll);
-  private readonly viewport = inject(ViewportScroller);
-  private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly searchForm = viewChild<ElementRef<HTMLFormElement>>('searchForm');
-  private readonly retryRequest = new BehaviorSubject(0);
-  private readonly params = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  readonly state = computed(() => readState(this.params()));
-  readonly query = computed(() => this.state().query);
-  readonly preview = computed(() => this.state().preview);
-  readonly categories = computed(() => this.preview() ? PREVIEW_CATEGORIES : LIVE_CATEGORIES);
-  readonly previewEnabled = rentalPreviewEnabled;
-  readonly moreCities = signal(false);
-  readonly cities = ['Colombo', 'Kandy', 'Galle', 'Trincomalee', 'Jaffna', 'Ella', 'Matara', 'Anuradhapura'];
-  readonly prices = [
-    { value: 'budget', label: 'LKR 500–1,500' },
-    { value: 'mid', label: 'LKR 1,501–3,000' },
-    { value: 'premium', label: 'LKR 3,001+' },
-  ];
-  readonly dateError = signal('');
-  readonly results = toSignal(combineLatest([this.route.queryParamMap, this.retryRequest]).pipe(
-    switchMap(([params]) => {
-      const { query, preview } = readState(params);
-      if (preview) return of<Results>({ kind: 'ready', page: previewSearch(query) });
-      return this.api.search(query).pipe(
-        map(page => ({ kind: 'ready', page }) as const),
-        startWith({ kind: 'loading' } as const),
-        catchError(error => of({ kind: 'error', status: error.status } as const)),
-      );
-    }),
-  ), { initialValue: { kind: 'loading' } as Results });
+  private readonly retries = new Subject<void>();
 
-  constructor() {
-    effect(() => {
-      if (this.results().kind !== 'loading' && this.scroll.position) {
-        const position = this.scroll.position;
-        this.scroll.position = 0;
-        requestAnimationFrame(() => {
-          if (this.host.nativeElement.isConnected) this.viewport.scrollToPosition([0, position]);
-        });
-      }
+  readonly categories = CATEGORY_TILES;
+  readonly cities = RENTAL_CITIES;
+  readonly priceRanges = Object.entries(PRICE_RANGES);
+  readonly minDate = new Date().toISOString().slice(0, 10);
+
+  readonly params = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
+  readonly preview = computed(() => rentalPreviewEnabled && this.params().get('preview') === '1');
+  readonly query = computed(() => queryFrom(this.params()));
+
+  readonly cityInput = signal('');
+  readonly pickupInput = signal('');
+  readonly dropoffInput = signal('');
+  readonly dateError = signal('');
+
+  readonly filtersOpen = signal(false);
+  readonly draftCity = signal('');
+  readonly draftCategory = signal<RentalCategory>('');
+  readonly draftPrice = signal('');
+  readonly draftTransmission = signal('');
+  readonly draftAvailableOnly = signal(false);
+
+  private readonly refresh$ = this.retries.pipe(startWith(undefined));
+  private readonly result = toSignal(
+    this.route.queryParamMap.pipe(
+      switchMap((params) => {
+        const current = queryFrom(params);
+        this.syncInputs(current);
+        return this.refresh$.pipe(
+          switchMap(() => {
+            if (rentalPreviewEnabled && params.get('preview') === '1') {
+              const page = previewSearch(current);
+              return of<LoadState>({ status: 'ready', ...page });
+            }
+            return this.api.search(current).pipe(
+              map((page: RentalPage): LoadState => ({
+                status: 'ready',
+                items: page.items,
+                total: page.total,
+                pages: page.pages || Math.ceil(page.total / PAGE_SIZE),
+              })),
+              startWith<LoadState>({ status: 'loading' }),
+              catchError((err: { status?: number; error?: { detail?: string } }) =>
+                of<LoadState>({
+                  status: 'error',
+                  message:
+                    err?.status === 401 || err?.status === 403
+                      ? 'The rental catalog server denied access to the public catalog.'
+                      : err?.error?.detail || 'We could not reach the rental catalog service. Please try again.',
+                }),
+              ),
+            );
+          }),
+        );
+      }),
+    ),
+    { initialValue: { status: 'loading' } as LoadState },
+  );
+
+  readonly state = this.result;
+
+  readonly hasActiveFilters = computed(() => {
+    const q = this.query();
+    return !!(
+      q.city ||
+      q.category ||
+      q.pickup ||
+      q.dropoff ||
+      q.price ||
+      q.rating ||
+      q.transmission ||
+      q.availableOnly ||
+      q.sort !== 'newest'
+    );
+  });
+
+  readonly activeFilterCount = computed(() => {
+    const q = this.query();
+    let count = 0;
+    if (q.city) count++;
+    if (q.category) count++;
+    if (q.price) count++;
+    if (q.transmission) count++;
+    if (q.availableOnly) count++;
+    if (q.rating) count++;
+    return count;
+  });
+
+  readonly countLabel = computed(() => {
+    const s = this.state();
+    if (s.status !== 'ready') return 'Rentals';
+    return `${s.total} ${s.total === 1 ? 'Rental' : 'Rentals'} Found`;
+  });
+
+  readonly formatLkr = formatLkr;
+
+  private syncInputs(q: RentalQuery): void {
+    this.cityInput.set(q.city);
+    this.pickupInput.set(q.pickup);
+    this.dropoffInput.set(q.dropoff);
+    this.dateError.set('');
+  }
+
+  searchVehicles(event?: Event, cityRaw?: string, pickupRaw?: string, dropoffRaw?: string): void {
+    event?.preventDefault();
+    const cityVal = cityRaw ?? this.cityInput();
+    const pickupVal = pickupRaw ?? this.pickupInput();
+    const dropoffVal = dropoffRaw ?? this.dropoffInput();
+    this.cityInput.set(cityVal);
+    this.pickupInput.set(pickupVal);
+    this.dropoffInput.set(dropoffVal);
+
+    const err = rentalDateError(pickupVal, dropoffVal);
+    if (err) {
+      this.dateError.set(err);
+      return;
+    }
+    this.dateError.set('');
+    this.navigate({
+      city: cityVal.trim() || null,
+      pickup: pickupVal || null,
+      dropoff: dropoffVal || null,
+      return: null,
+      page: null,
     });
   }
 
-  search(event: Event, city: string, pickup: string, dropoff: string, category: string): void {
-    event.preventDefault();
-    const error = rentalDateError(pickup, dropoff);
-    this.dateError.set(error);
-    if (!error) this.update({ city: city.trim(), pickup, dropoff, category: category as RentalCategory });
+  selectCategory(category: RentalCategory): void {
+    this.navigate({ category: category || null, type: null, page: null });
   }
 
-  update(change: Partial<RentalQuery>): void {
+  setSort(sort: string): void {
+    this.navigate({ sort: SORTS.has(sort) && sort !== 'newest' ? sort : null, page: null });
+  }
+
+  openFilters(): void {
+    const q = this.query();
+    this.draftCity.set(q.city);
+    this.draftCategory.set(q.category);
+    this.draftPrice.set(q.price);
+    this.draftTransmission.set(q.transmission ?? '');
+    this.draftAvailableOnly.set(!!q.availableOnly);
+    this.filtersOpen.set(true);
+  }
+
+  closeFilters(): void {
+    this.filtersOpen.set(false);
+  }
+
+  applyFilters(): void {
+    this.filtersOpen.set(false);
+    this.navigate({
+      city: this.draftCity().trim() || null,
+      category: this.draftCategory() || null,
+      price: this.draftPrice() || null,
+      transmission: this.draftTransmission() || null,
+      available: this.draftAvailableOnly() ? '1' : null,
+      page: null,
+    });
+  }
+
+  clearFilters(): void {
+    this.cityInput.set('');
+    this.pickupInput.set('');
+    this.dropoffInput.set('');
     this.dateError.set('');
-    this.navigate({ ...this.query(), page: 1, ...change }, this.preview());
+    this.draftCity.set('');
+    this.draftCategory.set('');
+    this.draftPrice.set('');
+    this.draftTransmission.set('');
+    this.draftAvailableOnly.set(false);
+    this.filtersOpen.set(false);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.preview() ? { preview: '1' } : {},
+    });
   }
 
-  sortBy(sort: string): void {
-    this.update({ sort: sort as RentalSort });
-  }
-
-  clear(): void {
-    this.searchForm()?.nativeElement.reset();
-    this.dateError.set('');
-    this.navigate(DEFAULT_QUERY, this.preview());
-  }
-
-  changeMode(): void {
-    this.searchForm()?.nativeElement.reset();
-    this.dateError.set('');
-    this.navigate(DEFAULT_QUERY, !this.preview());
+  goToPage(page: number): void {
+    this.navigate({ page: page > 1 ? String(page) : null });
   }
 
   retry(): void {
-    this.retryRequest.next(this.retryRequest.value + 1);
+    this.retries.next();
   }
 
-  rememberScroll(): void {
-    this.scroll.position = this.viewport.getScrollPosition()[1];
+  categoryLabel(vehicle: RentalVehicle): string {
+    const raw = (vehicle.vehicle_subtype || vehicle.rental?.subtype || vehicle.category || vehicle.vehicle_type || '').toLowerCase();
+    if (raw === 'scooter') return 'Scooter';
+    if (raw === 'motorcycle' || raw === 'bike') return 'Motorbike';
+    if (raw === 'bicycle' || raw === 'electric' || vehicle.vehicle_type === 'bicycle') {
+      return raw === 'city' || raw === 'mountain' || raw === 'road' || raw === 'hybrid'
+        ? `${raw.charAt(0).toUpperCase() + raw.slice(1)} Bicycle`
+        : 'Bicycle';
+    }
+    return 'Rental';
   }
 
-  private navigate(query: RentalQuery, preview: boolean): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: {
-      preview: preview ? '1' : null, city: query.city || null, pickup: query.pickup || null,
-      return: query.dropoff || null, type: query.category || null, price: query.price || null,
-      rating: query.rating ? '1' : null, sort: query.sort === 'newest' ? null : query.sort,
-      page: query.page > 1 ? query.page : null,
-    } });
+  specsSummary(vehicle: RentalVehicle): string {
+    const parts: string[] = [];
+    const transmission = vehicle.rental?.transmission ?? vehicle.transmission;
+    const seating = vehicle.rental?.seating_capacity ?? vehicle.seating_capacity;
+    if (transmission) {
+      parts.push(transmission.replace('_', ' '));
+    }
+    if (seating) {
+      parts.push(`${seating} ${seating === 1 ? 'seat' : 'seats'}`);
+    }
+    if (vehicle.district || vehicle.city) {
+      parts.push(vehicle.district || vehicle.city || '');
+    }
+    return parts.filter(Boolean).slice(0, 3).join(' · ') || this.categoryLabel(vehicle);
+  }
+
+  private navigate(changes: Params): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: changes,
+      queryParamsHandling: 'merge',
+    });
   }
 }

@@ -1,0 +1,167 @@
+<div class="favorites-page-wrapper">
+  <!-- TOP STICKY BAR -->
+  <header class="top-nav-bar">
+    <div class="bar-inner">
+      <button type="button" class="back-btn" (click)="goBack()" aria-label="Go back to discovery">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+      </button>
+      <h1 class="page-title">My Favorites</h1>
+    </div>
+  </header>
+
+  <main class="content-container">
+    <!-- TOAST STATUS MESSAGE -->
+    @if (statusMessage()) {
+      <div class="toast-banner" role="status">
+        <span>{{ statusMessage() }}</span>
+      </div>
+    }
+
+    <!-- TAB SWITCHER -->
+    <div class="favorites-tabs">
+      <button
+        type="button"
+        class="tab-pill"
+        [class.active]="activeTab() === 'products'"
+        (click)="switchTab('products')"
+      >
+        Saved Products ({{ savedProducts().length }})
+      </button>
+      <button
+        type="button"
+        class="tab-pill"
+        [class.active]="activeTab() === 'businesses'"
+        (click)="switchTab('businesses')"
+      >
+        Saved Artisans ({{ savedBusinesses().length }})
+      </button>
+    </div>
+
+    <!-- LOADING STATE -->
+    @if (isLoading()) {
+      <div class="skeleton-list" aria-busy="true">
+        @for (n of [1, 2, 3]; track n) {
+          <div class="skeleton-item"></div>
+        }
+      </div>
+    }
+
+    <!-- ERROR STATE -->
+    @if (!isLoading() && hasError()) {
+      <div class="state-card" role="alert">
+        <h2>Unable to load favorites</h2>
+        <p>Please check your connection and try again.</p>
+        <button type="button" class="primary-btn" (click)="loadAllFavorites()">Retry</button>
+      </div>
+    }
+
+    <!-- TAB 1: SAVED PRODUCTS LIST (MATCHING APPROVED REFERENCE BOTTOM RIGHT) -->
+    @if (!isLoading() && !hasError() && activeTab() === 'products') {
+      @if (savedProducts().length === 0) {
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8" aria-hidden="true">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+          </svg>
+          <h3>No saved products yet</h3>
+          <p>Explore Sri Lankan handmade crafts and tap the heart icon to save your favorites.</p>
+          <a routerLink="/artisans" class="primary-btn">Discover Artisans</a>
+        </div>
+      } @else {
+        <div class="favorites-list">
+          @for (item of savedProducts(); track item.product_id) {
+            <article class="favorite-item-card" [routerLink]="['/artisans', item.product.artisan_listing_id, 'products', item.product_id]">
+              <!-- PRODUCT THUMBNAIL -->
+              <div class="item-thumb-box">
+                <img
+                  [src]="item.product.image_url || '/images/artisan/product_mask_main.jpg'"
+                  [alt]="item.product.title"
+                  (error)="onImageError($event)"
+                  class="item-thumb-img"
+                />
+              </div>
+
+              <!-- PRODUCT DETAILS -->
+              <div class="item-info">
+                <h2 class="item-title">{{ item.product.title }}</h2>
+                <span class="item-business">{{ item.product.sku || 'Artisan Workshop' }}</span>
+              </div>
+
+              <!-- PRICE -->
+              <div class="item-price">
+                <span>{{ item.product.price | lkrCurrency }}</span>
+              </div>
+
+              <!-- REMOVE HEART BUTTON -->
+              <button
+                type="button"
+                class="remove-fav-btn"
+                (click)="removeProductFavorite($event, item.product_id)"
+                aria-label="Remove from favorites"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1255B5" stroke="#1255B5" stroke-width="2" aria-hidden="true">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </button>
+            </article>
+          }
+        </div>
+      }
+    }
+
+    <!-- TAB 2: SAVED ARTISAN BUSINESSES (WISHLIST) -->
+    @if (!isLoading() && !hasError() && activeTab() === 'businesses') {
+      @if (savedBusinesses().length === 0) {
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8" aria-hidden="true">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+          </svg>
+          <h3>No saved artisan businesses yet</h3>
+          <p>Bookmark your favorite workshops to stay in touch with master makers.</p>
+          <a routerLink="/artisans" class="primary-btn">Discover Artisans</a>
+        </div>
+      } @else {
+        <div class="favorites-list">
+          @for (item of savedBusinesses(); track item.id) {
+            <article class="favorite-item-card" [routerLink]="['/artisans', item.artisan_listing_id]">
+              <!-- THUMBNAIL -->
+              <div class="item-thumb-box">
+                <img
+                  [src]="item.listing?.cover_image_url || '/images/artisan/kandy_masks.jpg'"
+                  [alt]="item.listing?.title || 'Artisan'"
+                  (error)="onImageError($event)"
+                  class="item-thumb-img"
+                />
+              </div>
+
+              <!-- DETAILS -->
+              <div class="item-info">
+                <div class="title-row">
+                  <h2 class="item-title">{{ item.listing?.title || 'Artisan Workshop' }}</h2>
+                  @if (item.listing?.is_active) {
+                    <app-verified-badge [size]="16" />
+                  }
+                </div>
+                <span class="item-business">{{ item.listing?.craft_category }} &middot; {{ item.listing?.city || item.listing?.district }}</span>
+              </div>
+
+              <!-- REMOVE HEART BUTTON -->
+              <button
+                type="button"
+                class="remove-fav-btn"
+                (click)="removeBusinessWishlist($event, item.artisan_listing_id)"
+                aria-label="Remove business from favorites"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1255B5" stroke="#1255B5" stroke-width="2" aria-hidden="true">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </button>
+            </article>
+          }
+        </div>
+      }
+    }
+  </main>
+</div>

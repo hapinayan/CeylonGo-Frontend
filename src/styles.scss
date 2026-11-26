@@ -1,5 +1,6 @@
 
 @use './styles/tokens' as *;
+@import 'leaflet/dist/leaflet.css';
 
 html,
 body {

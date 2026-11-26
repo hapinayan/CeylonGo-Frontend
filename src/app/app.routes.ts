@@ -53,6 +53,21 @@ export const routes: Routes = [
     redirectTo: 'homestays',
     pathMatch: 'full'
   },
+  {
+    path: 'stays',
+    redirectTo: 'homestays',
+    pathMatch: 'full'
+  },
+  {
+    path: 'bike-rentals',
+    redirectTo: 'bicycles',
+    pathMatch: 'full'
+  },
+  {
+    path: 'rentals',
+    redirectTo: 'bicycles',
+    pathMatch: 'full'
+  },
 
   // LEGACY TRAVELER HOMEPAGE REDIRECT
   {
@@ -157,6 +172,7 @@ export const routes: Routes = [
   // SERVICE PROVIDER PORTAL WELCOME PAGE
   {
     path: 'provider',
+    pathMatch: 'full',
     loadComponent: () =>
       import('./pages/provider-welcome/provider-welcome')
         .then(m => m.ProviderWelcome)
@@ -204,8 +220,230 @@ export const routes: Routes = [
     path: 'provider/dashboard',
     canActivate: [providerAuthGuard],
     loadComponent: () =>
-      import('./pages/provider-dashboard/provider-dashboard')
-        .then(m => m.ProviderDashboard)
+      import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/provider-dashboard/provider-dashboard').then(
+            (m) => m.ProviderDashboard
+          ),
+      },
+    ],
+  },
+
+  // AUTHENTICATED PROVIDER PORTAL WITH COMMON LAYOUT & SIDEBAR
+  {
+    path: 'provider',
+    canActivate: [providerAuthGuard],
+    loadComponent: () =>
+      import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/provider-dashboard/provider-dashboard').then(
+            (m) => m.ProviderDashboard
+          ),
+      },
+      {
+        path: 'services/new',
+        loadComponent: () =>
+          import('./provider/services-catalog/services-catalog').then(
+            (m) => m.ServicesCatalog
+          ),
+      },
+      {
+        path: 'homestays/new',
+        loadComponent: () =>
+          import('./provider/homestays/wizard/homestay-wizard').then(
+            (m) => m.HomestayWizard
+          ),
+      },
+      {
+        path: 'activities/new',
+        loadComponent: () =>
+          import('./provider/activities/wizard/adventure-wizard').then(
+            (m) => m.AdventureWizard
+          ),
+      },
+      {
+        path: 'activities/:id/edit',
+        loadComponent: () =>
+          import('./provider/activities/wizard/adventure-wizard').then(
+            (m) => m.AdventureWizard
+          ),
+      },
+      {
+        path: 'activities/availability',
+        loadComponent: () =>
+          import('./provider/activities/availability/activity-availability').then(
+            (m) => m.ActivityAvailability
+          ),
+      },
+      {
+        path: 'guides/new',
+        loadComponent: () =>
+          import('./provider/guides/wizard/tour-guide-wizard').then(
+            (m) => m.TourGuideWizard
+          ),
+      },
+      {
+        path: 'guides/:id/edit',
+        loadComponent: () =>
+          import('./provider/guides/wizard/tour-guide-wizard').then(
+            (m) => m.TourGuideWizard
+          ),
+      },
+      {
+        path: 'guides/packages',
+        loadComponent: () =>
+          import('./provider/guides/packages/tour-guide-packages').then(
+            (m) => m.TourGuidePackages
+          ),
+      },
+      {
+        path: 'guides/availability',
+        loadComponent: () =>
+          import('./provider/guides/availability/tour-guide-availability').then(
+            (m) => m.TourGuideAvailability
+          ),
+      },
+      {
+        path: 'rentals/new',
+        loadComponent: () =>
+          import('./provider/rentals/wizard/rental-wizard').then(
+            (m) => m.RentalWizard
+          ),
+      },
+      {
+        path: 'rentals/:id/edit',
+        loadComponent: () =>
+          import('./provider/rentals/wizard/rental-wizard').then(
+            (m) => m.RentalWizard
+          ),
+      },
+      {
+        path: 'rentals/availability',
+        loadComponent: () =>
+          import('./provider/rentals/availability/rental-availability').then(
+            (m) => m.RentalAvailability
+          ),
+      },
+      {
+        path: 'listings',
+        loadComponent: () =>
+          import('./provider/listings/provider-listings').then(
+            (m) => m.ProviderListings
+          ),
+      },
+      {
+        path: 'rooms',
+        loadComponent: () =>
+          import('./provider/rooms/provider-rooms').then((m) => m.ProviderRooms),
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./provider/bookings/provider-bookings').then(
+            (m) => m.ProviderBookings
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'My Provider Profile',
+          description:
+            'Manage your verified business credentials, contact phone, and registered district.',
+        },
+      },
+      {
+        path: 'promotions',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Promotions & Discounts',
+          description:
+            'Create seasonal promotional codes and discounts for upcoming holidays in Sri Lanka.',
+        },
+      },
+      {
+        path: 'community',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Provider Community Feed',
+          description:
+            'Connect with fellow hosts, tour guides, and local artisans across Sri Lanka.',
+        },
+      },
+      {
+        path: 'payouts',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Payouts & Financial Settlements',
+          description:
+            'View your earnings, bank account details, and completed payouts in LKR.',
+        },
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Provider Account Settings',
+          description:
+            'Configure notifications, password, language preferences, and business policies.',
+        },
+      },
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('./provider/placeholder/provider-placeholder').then(
+            (m) => m.ProviderPlaceholder
+          ),
+        data: {
+          title: 'Help & Host Support',
+          description:
+            'Access host guides, FAQs, and contact CeylonGo support representatives.',
+        },
+      },
+    ],
+  },
+
+  // LOCAL TOUR GUIDES DISCOVER, PROFILE & BOOKING PAGES
+  {
+    path: 'tour-guides/:id/booking',
+    loadComponent: () =>
+      import('./pages/tour-guides/guide-booking/tour-guide-booking.component')
+        .then((m) => m.TourGuideBookingComponent),
+  },
+  {
+    path: 'tour-guides/:id',
+    loadComponent: () =>
+      import('./pages/tour-guides/guide-detail/tour-guide-detail.component')
+        .then((m) => m.TourGuideDetailComponent),
+  },
+
+  // ARTISAN TRAVELER MODULE
+  {
+    path: 'artisans',
+    loadChildren: () =>
+      import('./features/artisan/artisan.routes')
+        .then(m => m.artisanRoutes)
   },
 
   // LOCAL TOUR GUIDES DISCOVER PAGE
@@ -213,12 +451,12 @@ export const routes: Routes = [
     path: 'tour-guides',
     loadComponent: () =>
       import('./pages/tour-guides/tour-guides.component')
-        .then(m => m.TourGuidesComponent)
+        .then((m) => m.TourGuidesComponent),
   },
   {
     path: 'tour-guide',
     redirectTo: 'tour-guides',
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
 
   // EXPERIENCES MODULE
@@ -237,7 +475,11 @@ export const routes: Routes = [
         .then(module => module.rentalRoutes)
   },
 
-  // CEYLONGO ADMIN MODULE (PHASE 01)
+  { path: 'my-bookings', loadChildren: () => import('./traveler-bookings/booking.routes').then(module => module.travelerBookingRoutes) },
+
+  { path: 'wishlist', loadChildren: () => import('./traveler-wishlist/wishlist.routes').then(module => module.travelerWishlistRoutes) },
+
+  // CEYLONGO ADMIN MODULE (PHASES 01–08)
   {
     path: 'admin',
     loadChildren: () =>

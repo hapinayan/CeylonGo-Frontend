@@ -1,0 +1,499 @@
+@use '../../../styles/tokens' as *;
+
+:host {
+  display: block;
+}
+
+// Background Homepage Underlay
+.homepage-underlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+// Auth Modal Backdrop (Match TravelerAuthModal Backdrop with dark overlay & blur)
+.auth-modal-backdrop,
+.forgot-page,
+.status-page,
+.reset-page,
+.success-page {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  z-index: 2500;
+  background-color: rgba(8, 20, 40, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: fadeInBackdrop 0.22s ease-out;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Centered White Modal Card (Match TravelerAuthModal Card)
+.auth-modal-card,
+.forgot-modal,
+.status-card,
+.reset-modal,
+.success-card {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 2.25rem 2.25rem 2rem;
+  box-shadow: 0 20px 60px rgba(8, 43, 92, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-sizing: border-box;
+  animation: scaleUpModal 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto;
+  text-align: center;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+
+  @media (max-width: 540px) {
+    padding: 1.75rem 1.25rem 1.5rem;
+    border-radius: 20px;
+  }
+}
+
+@keyframes scaleUpModal {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// Consistent Close (X) Button in Top-Right
+.modal-close-btn,
+.close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  z-index: 10;
+
+  &:hover {
+    background-color: #e2e8f0;
+    color: #082b5c;
+    transform: scale(1.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+// Logo Wrapper & Image
+.modal-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.25rem;
+
+  .modal-logo-img,
+  .modal-logo {
+    height: 48px;
+    width: auto;
+    max-width: 160px;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+// Blue Outline Icon in Circular Light-Blue Background
+.recovery-icon-badge,
+.status-icon-wrapper,
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.25rem auto 1.25rem;
+  background-color: #eaf5ff;
+  color: #2563eb;
+
+  svg {
+    width: 38px;
+    height: 38px;
+    stroke: #2563eb;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+  }
+}
+
+// Header Typography (#082B5C Headings per specification)
+.modal-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title,
+h1 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #082b5c;
+  margin: 0 0 0.45rem;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+
+  @media (max-width: 540px) {
+    font-size: 1.3rem;
+  }
+}
+
+.modal-subtitle,
+.subtitle,
+.description {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.92rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+// Alerts
+.modal-alert-error,
+.alert-box.error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  text-align: left;
+  animation: fadeIn 0.2s ease-out;
+
+  .alert-svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    stroke: #b91c1c;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.modal-alert-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  text-align: left;
+}
+
+// Forms & Inputs
+.recovery-form,
+.forgot-form,
+.reset-form {
+  width: 100%;
+}
+
+.field-wrapper,
+.form-group {
+  width: 100%;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.field-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.4rem;
+  text-align: left;
+}
+
+.input-group,
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  height: 50px;
+  padding: 0 1rem;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+
+  &:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+
+  &.has-error,
+  &.input-error {
+    border-color: #ef4444;
+    background-color: #fffbfa;
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+  }
+
+  .input-icon-wrapper,
+  .field-icon {
+    display: flex;
+    align-items: center;
+    color: #2563eb;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .auth-text-input,
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background: transparent;
+    padding: 0;
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+
+  .password-toggle-btn,
+  .eye-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+
+    &:hover {
+      color: #082b5c;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+  }
+}
+
+.inline-field-error,
+.error-text {
+  display: block;
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: #ef4444;
+  line-height: 1.35;
+  padding-left: 0.25rem;
+  text-align: left;
+}
+
+// Email Display Box (for Check Email and Reset Success)
+.email-display-box,
+.email-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .email-value,
+  strong {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #082b5c;
+    word-break: break-all;
+  }
+}
+
+.instruction-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0.85rem 0 1.25rem;
+  text-align: center;
+}
+
+// Action Buttons: Blue #2563EB Primary Button
+.btn-primary-blue,
+.btn-primary-continue,
+.reset-btn,
+.primary-btn,
+.login-btn,
+.request-btn,
+.retry-btn {
+  width: 100%;
+  height: 50px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.96rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  box-sizing: border-box;
+
+  &:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Bottom Switch / Back to Sign In / Login Navigation
+.auth-bottom-switch,
+.bottom-nav {
+  text-align: center;
+  margin-top: 1.35rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  color: #475569;
+
+  .switch-auth-link,
+  .back-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 600;
+    color: #2563eb;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    &:hover {
+      color: #1d4ed8;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+}
+
+.token-verifying-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  color: #64748b;
+  gap: 1rem;
+  font-size: 0.92rem;
+
+  .large-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #cbd5e1;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+}

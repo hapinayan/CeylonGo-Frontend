@@ -1,0 +1,596 @@
+<div class="listings-shell">
+  <!-- Page Header -->
+  <div class="listings-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="badge">Listing Management</span>
+        @if (isPreview()) {
+          <span class="badge">Preview Mode · Sample Data</span>
+        }
+      </div>
+      <h1 class="page-title">Manage Service Listings</h1>
+      <p class="page-subtitle">Track verification status, publish approved services, and manage inventory &amp; slots.</p>
+    </div>
+
+    <div class="header-right">
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-new-listing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        <span>Add New Service</span>
+      </a>
+    </div>
+  </div>
+
+  @if (apiError()) {
+    <div class="error-banner">
+      {{ apiError() }}
+    </div>
+  }
+
+  <!-- Search & Filter Controls -->
+  <div class="controls-bar">
+    <div class="filter-tabs">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'all'"
+        (click)="selectedFilter.set('all')"
+      >
+        All ({{ listings().length }})
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'published'"
+        (click)="selectedFilter.set('published')"
+      >
+        Published
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'pending'"
+        (click)="selectedFilter.set('pending')"
+      >
+        Under Review
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'action_required'"
+        (click)="selectedFilter.set('action_required')"
+      >
+        Action Required
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'draft'"
+        (click)="selectedFilter.set('draft')"
+      >
+        Drafts
+      </button>
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="selectedFilter() === 'rejected'"
+        (click)="selectedFilter.set('rejected')"
+      >
+        Rejected
+      </button>
+    </div>
+
+    <div class="filter-controls-right">
+      <select
+        class="category-select"
+        aria-label="Filter by service category"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event)"
+      >
+        <option value="all">All Categories</option>
+        <option value="homestay">Homestays</option>
+        <option value="adventure">Adventure &amp; Activities</option>
+        <option value="guide">Tour Guides</option>
+        <option value="rentals">Bike &amp; Bicycle Rentals</option>
+        <option value="bike">Motorbikes &amp; Scooters</option>
+        <option value="bicycle">Bicycles</option>
+      </select>
+
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Filter by title or district..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Listings Cards Grid -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading service listings from backend...</span>
+    </div>
+  } @else if (filteredListings().length === 0) {
+    <div class="empty-listings-card">
+      <div class="empty-icon">🏠</div>
+      <h3 class="empty-title">No service listings found</h3>
+      <p class="empty-desc">
+        @if (selectedFilter() === 'all') {
+          You haven't listed any services yet. Start by creating your first homestay draft.
+        } @else {
+          No listings match the filter "{{ selectedFilter() }}".
+        }
+      </p>
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-create-first">Create New Homestay</a>
+    </div>
+  } @else {
+    <div class="listings-grid">
+      @for (item of filteredListings(); track item.listing.id) {
+        <div class="listing-item-card" [class.action-needed]="item.verification_status === 'more_evidence_required'">
+          <!-- Image Container -->
+          <div class="card-img-wrap">
+            @if (coverImageSrc(item)) {
+              <img
+                [src]="coverImageSrc(item)"
+                [alt]="item.listing.title"
+                class="listing-thumb"
+              />
+            } @else {
+              <div class="img-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                </svg>
+              </div>
+            }
+
+            <span class="category-tag">{{ categoryLabel(item) }}</span>
+
+            <!-- Status Badge -->
+            <span class="status-pill-badge" [class]="item.verification_status">
+              @if (item.verification_status === 'approved') {
+                {{ item.listing.is_active ? '✓ Published' : 'Approved (Unpublished)' }}
+              } @else if (item.verification_status === 'pending') {
+                ⏱ Under Review
+              } @else if (item.verification_status === 'more_evidence_required') {
+                ⚠️ Action Required
+              } @else if (item.verification_status === 'draft') {
+                📝 Draft
+              } @else if (item.verification_status === 'rejected') {
+                ✕ Rejected
+              } @else {
+                {{ item.verification_status | titlecase }}
+              }
+            </span>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <div class="location-line">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              <span>{{ item.listing.locality || item.listing.district || 'Sri Lanka' }}, {{ item.listing.district }}</span>
+            </div>
+
+            <h3 class="listing-title">{{ item.listing.title || 'Untitled Draft' }}</h3>
+
+            @if (item.listing.category === 'guide' && (guideLanguagesLabel(item) || guideSpecializationsLabel(item))) {
+              <div class="guide-meta-row">
+                @if (guideSpecializationsLabel(item)) {
+                  <span>{{ guideSpecializationsLabel(item) }}</span>
+                }
+                @if (guideLanguagesLabel(item)) {
+                  <span>Languages: {{ guideLanguagesLabel(item) }}</span>
+                }
+              </div>
+            } @else if (isRental(item)) {
+              <div class="guide-meta-row">
+                <span>{{ rentalFleetLabel(item) }}</span>
+              </div>
+            }
+
+            <div class="price-row">
+              <span class="price-val">LKR {{ item.listing.price | number }}</span>
+              <span class="price-unit">{{ priceUnitLabel(item) }}</span>
+              <span class="pub-pill" [class.live]="item.listing.is_active">
+                {{ item.listing.is_active ? 'Live' : 'Unpublished' }}
+              </span>
+            </div>
+
+            <!-- Admin Feedback preview snippet -->
+            @if ((item.verification_status === 'more_evidence_required' || item.verification_status === 'rejected' || item.verification_status === 'suspended') && item.decision_reason) {
+              <div class="action-alert-box">
+                <span class="alert-label">Admin Feedback:</span>
+                <p class="alert-snippet">{{ item.decision_reason }}</p>
+              </div>
+            }
+
+            <!-- Contextual Actions -->
+            <div class="card-footer-actions">
+              @if (item.verification_status === 'approved') {
+                @if (!item.listing.is_active) {
+                  <button
+                    type="button"
+                    class="btn-action btn-publish"
+                    (click)="publishListing(item.listing.id)"
+                    [disabled]="isPreview()"
+                  >
+                    Publish Listing
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn-action btn-unpublish"
+                    (click)="unpublishListing(item.listing.id)"
+                    [disabled]="isPreview()"
+                  >
+                    Unpublish
+                  </button>
+                }
+                @if (item.listing.category === 'adventure') {
+                  <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                    Edit
+                  </button>
+                  <a
+                    [routerLink]="['/provider/activities/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Availability
+                  </a>
+                  <a
+                    [routerLink]="['/provider/bookings']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, category: 'adventure', preview: 'true' } : { listingId: item.listing.id, category: 'adventure' }"
+                    class="btn-action btn-outline"
+                  >
+                    View Bookings
+                  </a>
+                } @else if (item.listing.category === 'guide') {
+                  <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                    Edit
+                  </button>
+                  <a
+                    [routerLink]="['/provider/guides/packages']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Packages
+                  </a>
+                  <a
+                    [routerLink]="['/provider/guides/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Availability
+                  </a>
+                  <a
+                    [routerLink]="['/provider/bookings']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, category: 'guide', preview: 'true' } : { listingId: item.listing.id, category: 'guide' }"
+                    class="btn-action btn-outline"
+                  >
+                    View Bookings
+                  </a>
+                } @else if (isRental(item)) {
+                  <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                    Edit
+                  </button>
+                  <a
+                    [routerLink]="['/provider/rentals/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Fleet &amp; Availability
+                  </a>
+                  <a
+                    [routerLink]="['/provider/bookings']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, category: item.listing.category, preview: 'true' } : { listingId: item.listing.id, category: item.listing.category }"
+                    class="btn-action btn-outline"
+                  >
+                    View Bookings
+                  </a>
+                } @else {
+                  <a [routerLink]="['/provider/rooms']" [queryParams]="previewQueryParams()" class="btn-action btn-outline">
+                    Rooms & Rates
+                  </a>
+                }
+              } @else if (item.verification_status === 'more_evidence_required') {
+                <button type="button" class="btn-action btn-highlight" (click)="openFeedbackModal(item)">
+                  View Feedback & Resubmit
+                </button>
+                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item)) {
+                  <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                    Edit
+                  </button>
+                }
+                @if (isRental(item)) {
+                  <a
+                    [routerLink]="['/provider/rentals/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Fleet &amp; Availability
+                  </a>
+                }
+                @if (item.listing.category === 'guide') {
+                  <a
+                    [routerLink]="['/provider/guides/packages']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Packages
+                  </a>
+                }
+              } @else if (item.verification_status === 'rejected') {
+                <button type="button" class="btn-action btn-outline" (click)="editListing(item)">
+                  Edit
+                </button>
+                <button type="button" class="btn-action btn-highlight" (click)="openFeedbackModal(item)">
+                  Resubmit
+                </button>
+              } @else if (item.verification_status === 'pending') {
+                <button type="button" class="btn-action btn-outline" (click)="openFeedbackModal(item)">
+                  Verification Timeline
+                </button>
+                @if (item.listing.category === 'adventure') {
+                  <a
+                    [routerLink]="['/provider/activities/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Availability
+                  </a>
+                } @else if (item.listing.category === 'guide') {
+                  <a
+                    [routerLink]="['/provider/guides/packages']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Packages
+                  </a>
+                  <a
+                    [routerLink]="['/provider/guides/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Manage Availability
+                  </a>
+                } @else if (isRental(item)) {
+                  <a
+                    [routerLink]="['/provider/rentals/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Fleet &amp; Availability
+                  </a>
+                }
+              } @else if (item.verification_status === 'draft') {
+                <button type="button" class="btn-action btn-primary-sm" (click)="editListing(item)">
+                  {{ item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item) ? 'Edit Draft' : 'Continue Draft' }}
+                </button>
+                @if (item.listing.category === 'guide') {
+                  <a
+                    [routerLink]="['/provider/guides/packages']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Packages
+                  </a>
+                  <a
+                    [routerLink]="['/provider/guides/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Availability
+                  </a>
+                } @else if (isRental(item)) {
+                  <a
+                    [routerLink]="['/provider/rentals/availability']"
+                    [queryParams]="isPreview() ? { listingId: item.listing.id, preview: 'true' } : { listingId: item.listing.id }"
+                    class="btn-action btn-outline"
+                  >
+                    Fleet &amp; Availability
+                  </a>
+                }
+                @if (item.listing.category === 'adventure' || item.listing.category === 'guide' || isRental(item)) {
+                  <button
+                    type="button"
+                    class="btn-action btn-outline"
+                    (click)="submitDraftListing(item.listing.id)"
+                    [disabled]="isPreview()"
+                  >
+                    Submit for Verification
+                  </button>
+                }
+              } @else if (item.verification_status === 'suspended') {
+                <button type="button" class="btn-action btn-outline" (click)="openFeedbackModal(item)">
+                  View Details
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Verification Feedback & Resubmission Modal -->
+  @if (isFeedbackModalOpen() && activeListing()) {
+    <div class="modal-backdrop" (click)="closeFeedbackModal()">
+      <div class="modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-tag">Verification Status</span>
+            <h3 class="modal-title">{{ activeListing()?.listing?.title }}</h3>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="closeFeedbackModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Timeline -->
+          <div class="timeline-wrap">
+            <div class="timeline-step completed">
+              <div class="step-dot">✓</div>
+              <div class="step-info">
+                <span class="step-title">Listing Created</span>
+                <span class="step-time">Draft details registered</span>
+              </div>
+            </div>
+
+            <div
+              class="timeline-step"
+              [class.completed]="activeListing()?.verification_status === 'approved'"
+              [class.active]="activeListing()?.verification_status === 'pending' || activeListing()?.verification_status === 'more_evidence_required'"
+            >
+              <div class="step-dot">
+                @if (activeListing()?.verification_status === 'approved') {
+                  ✓
+                } @else if (activeListing()?.verification_status === 'more_evidence_required') {
+                  !
+                } @else {
+                  ⏱
+                }
+              </div>
+              <div class="step-info">
+                <span class="step-title">Administrative Review</span>
+                <span class="step-time">
+                  {{ activeListing()?.verification_status === 'more_evidence_required' ? 'More evidence requested' : 'Currently in verification' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="timeline-step" [class.completed]="activeListing()?.verification_status === 'approved'">
+              <div class="step-dot">3</div>
+              <div class="step-info">
+                <span class="step-title">Approval & Publication</span>
+                <span class="step-time">Ready for traveler bookings</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feedback Box -->
+          <div class="feedback-card">
+            <h4 class="feedback-heading">Compliance Team Feedback</h4>
+            <p class="feedback-msg">
+              {{ activeListing()?.decision_reason || 'Verification is currently in progress. Administrators review attached documents within 24–48 hours.' }}
+            </p>
+          </div>
+
+          <!-- Resubmit Evidence Form -->
+          @if (activeListing()?.verification_status === 'more_evidence_required' || activeListing()?.verification_status === 'rejected') {
+            <div class="resubmit-form">
+              <h4 class="resubmit-title">Attach Additional Evidence &amp; Resubmit</h4>
+
+              @if (modalError) {
+                <div class="error-banner">{{ modalError }}</div>
+              }
+
+              <div class="form-group">
+                <label class="form-label">Evidence Category</label>
+                <select
+                  class="form-input"
+                  [(ngModel)]="selectedEvidenceKind"
+                  (ngModelChange)="onEvidenceKindChange()"
+                >
+                  @if (activeListing()?.listing?.category === 'adventure') {
+                    <option value="safety">Safety Certificate</option>
+                    <option value="license">Activity / Guide License</option>
+                    <option value="credentials">Instructor Qualifications</option>
+                    <option value="activity_photo">Activity Photo</option>
+                    <option value="video">Activity Video</option>
+                    <option value="customer_feedback">Customer Feedback (Redacted)</option>
+                  } @else if (activeListing()?.listing?.category === 'guide') {
+                    <option value="license">Guide License (SLTDA / Area)</option>
+                    <option value="credentials">Professional Qualifications &amp; Certificates</option>
+                    <option value="business_certificate">Registration Certificate</option>
+                    <option value="customer_feedback">Customer Feedback Screenshots (Redacted)</option>
+                    <option value="activity_photo">Supporting Photographs</option>
+                    <option value="video">Supporting Video</option>
+                  } @else if (activeListing()?.listing?.category === 'bike' || activeListing()?.listing?.category === 'bicycle') {
+                    <option value="vehicle_registration">Vehicle Registration Certificate</option>
+                    <option value="ownership">Proof of Ownership / Lease Authorization</option>
+                    <option value="authorization">Authority Authorization</option>
+                    <option value="insurance">Commercial Rental Insurance</option>
+                    <option value="vehicle_photo">Private Fleet Photos</option>
+                    <option value="business_certificate">Business Registration Certificate</option>
+                    <option value="customer_feedback">Customer Feedback Screenshots (Redacted)</option>
+                  } @else {
+                    <option value="business_certificate">Business Registration / Certificate</option>
+                    <option value="ownership">Proof of Ownership / Deed</option>
+                    <option value="authorization">Council Authorization / Grama Niladhari</option>
+                    <option value="license">SLTDA / Local Trade License</option>
+                    <option value="customer_feedback">Guest Reviews (Redacted Screenshots)</option>
+                    <option value="other">Other Proof</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Explanation Note</label>
+                <textarea
+                  class="form-textarea"
+                  rows="3"
+                  [(ngModel)]="additionalEvidenceNote"
+                  placeholder="Explain the updated evidence or safety measures..."
+                ></textarea>
+              </div>
+
+              @if (selectedEvidenceKind === 'customer_feedback') {
+                <label class="redaction-confirm-box">
+                  <input type="checkbox" [(ngModel)]="isRedacted" />
+                  <span>I confirm all guest personal details and contact info are redacted before upload.</span>
+                </label>
+              }
+
+              <div class="form-group">
+                <label class="form-label">Upload Additional File (PDF 10MB, Image 5MB, MP4 25MB)</label>
+                <input
+                  type="file"
+                  class="file-input"
+                  (change)="onFileSelected($event)"
+                  [disabled]="isPreview() || (selectedEvidenceKind === 'customer_feedback' && !isRedacted)"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4"
+                />
+              </div>
+
+              @if (resubmitSuccess) {
+                <div class="success-resubmit-alert">
+                  ✓ Additional evidence submitted successfully! Listing is now back under admin review.
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeFeedbackModal()">Close</button>
+          @if ((activeListing()?.verification_status === 'more_evidence_required' || activeListing()?.verification_status === 'rejected') && !resubmitSuccess) {
+            <button
+              type="button"
+              class="btn-resubmit-action"
+              (click)="resubmitEvidence()"
+              [disabled]="isResubmitting || isPreview()"
+            >
+              {{ isPreview() ? 'Resubmit Disabled in Preview Mode' : (isResubmitting ? 'Submitting...' : 'Resubmit for Admin Review') }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

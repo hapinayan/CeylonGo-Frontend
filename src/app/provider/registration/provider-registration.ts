@@ -576,7 +576,7 @@ export class ProviderRegistration implements OnInit, OnDestroy {
   private resumeRegistration(): void {
     if (this.isSubmitting()) return;
     const token = this.stateService.getAuthorizationToken();
-    if (!token || (this.stateService.personalDetails() && !this.reviewNeedsVerification())) {
+    if (!token) {
       this.stateService.goToPersonalDetails();
       this.loadPersonalDetailsToForm();
       return;
@@ -587,11 +587,29 @@ export class ProviderRegistration implements OnInit, OnDestroy {
       next: (draft) => {
         this.isSubmitting.set(false);
         this.restoreReviewDetails(draft);
-        if (draft.identity_document_type === 'nic' && draft.current_step === 'review') {
+        if (draft.identity_document_type && draft.identity_document_type !== 'nic') {
+          this.stateService.goToPersonalDetails();
+          this.loadPersonalDetailsToForm();
+          return;
+        }
+        if (
+          draft.identity_document_type === 'nic' &&
+          (draft.current_step === 'review' ||
+            (draft.identity_completed && draft.personal_completed && draft.business_completed))
+        ) {
           this.stateService.completeIdentityVerification();
           this.reviewDraft.set(draft);
           this.reviewConfirmed.set(false);
           this.reviewNeedsVerification.set(false);
+        } else if (
+          draft.current_step === 'identity' ||
+          (draft.business_completed && draft.personal_completed)
+        ) {
+          this.stateService.goToIdentityVerification();
+          this.syncDocumentsFromDraft(draft, true);
+        } else if (draft.current_step === 'business' || draft.personal_completed) {
+          this.stateService.goToBusinessDetails();
+          this.loadBusinessDetailsToForm();
         } else {
           this.stateService.goToPersonalDetails();
           this.loadPersonalDetailsToForm();

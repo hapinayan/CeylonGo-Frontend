@@ -1,216 +1,371 @@
-<ng-template #icon let-name>
-  <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    @switch (name) {
-      @case ('pin') { <path d="M20 10c0 5-8 10-8 10s-8-5-8-10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/> }
-      @case ('calendar') { <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/> }
-      @case ('cycle') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-8 4 8H5m8 0 4-8m-9 0h9m0 0-1-3h3M7 7h4"/> }
-      @case ('price') { <path d="M20 13 13 20a2 2 0 0 1-3 0l-7-7V4h9l8 6a2 2 0 0 1 0 3Z"/><circle cx="8" cy="9" r="1"/> }
-      @case ('star') { <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/> }
-      @case ('gear') { <circle cx="12" cy="12" r="4"/><path d="M12 3v5m0 8v5M3 12h5m8 0h5M5.6 5.6l3.6 3.6m5.6 5.6 3.6 3.6m0-12.8-3.6 3.6m-5.6 5.6-3.6 3.6"/> }
-      @case ('helmet') { <path d="M3 15v-2a9 9 0 1 1 18 0v5H9l-2-3H3Zm8-4h10m-10 0 2 4h8"/> }
-    }
-  </svg>
-</ng-template>
+<main class="rental-discover-page">
+  <section class="search-header">
+    <div class="container">
+      @if (preview()) {
+        <div class="preview-pill-row">
+          <span class="preview-badge">Preview Mode — Sample Data</span>
+        </div>
+      }
 
-<main>
-  <section class="hero" aria-labelledby="rental-heading">
-    <div class="wrap hero-layout">
-      <div class="hero-copy">
-        <h1 id="rental-heading">Bike &amp; Bicycle Rental</h1>
-        <p>Explore Sri Lanka at your own pace with our rental vehicles.</p>
-      </div>
-      <aside class="hero-panel" aria-label="Rental discovery features">
-        <ul>
-          <li><span aria-hidden="true">&#10003;</span> Compare vehicle types</li>
-          <li><span aria-hidden="true">&#10003;</span> Browse daily rates</li>
-          <li><span aria-hidden="true">&#10003;</span> Search by travel dates</li>
-          <li><span aria-hidden="true">&#10003;</span> Find rentals by city</li>
-        </ul>
-      </aside>
-      <form #searchForm class="search" (submit)="search($event, city.value, pickup.value, dropoff.value, type.value)">
-        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />Location</span>
-          <input #city type="search" placeholder="Select location" list="rental-cities" maxlength="100" [value]="query().city" />
-          <datalist id="rental-cities">
-            @for (place of cities; track place) { <option [value]="place"></option> }
-          </datalist>
-        </label>
-        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'calendar' }" />Pickup date</span>
-          <input #pickup type="date" [value]="query().pickup" [attr.aria-describedby]="dateError() ? 'date-error' : null" />
-        </label>
-        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'calendar' }" />Return date</span>
-          <input #dropoff type="date" [value]="query().dropoff" [attr.aria-describedby]="dateError() ? 'date-error' : null" />
-        </label>
-        <label><span class="search-label"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'cycle' }" />Vehicle type</span>
-          <select #type>
-            @for (category of categories(); track category.value) {
-              <option [value]="category.value" [selected]="query().category === category.value">{{ category.label }}</option>
-            }
-          </select>
-        </label>
-        <button class="primary" type="submit">Search Rentals</button>
-        @if (dateError()) { <p id="date-error" role="alert">{{ dateError() }}</p> }
+      <form
+        class="rental-search-pill"
+        (submit)="searchVehicles($event, cityField.value, pickupField.value, dropoffField.value)"
+        novalidate>
+        <div class="search-segment location-segment">
+          <div class="field-icon-circle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21s-6-5.3-6-10a6 6 0 1 1 12 0c0 4.7-6 10-6 10Z" />
+              <circle cx="12" cy="11" r="2.2" />
+            </svg>
+          </div>
+          <div class="field-text-wrap">
+            <label for="rental-location-input">Location</label>
+            <input
+              #cityField
+              id="rental-location-input"
+              type="search"
+              name="city"
+              list="rental-cities"
+              placeholder="Where do you want to ride?"
+              [ngModel]="cityInput()"
+              (ngModelChange)="cityInput.set($event)"
+              autocomplete="off" />
+            <datalist id="rental-cities">
+              @for (city of cities; track city) {
+                <option [value]="city"></option>
+              }
+            </datalist>
+          </div>
+        </div>
+
+        <span class="pill-divider" aria-hidden="true"></span>
+
+        <div class="search-segment">
+          <div class="field-icon-circle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 10h18" />
+            </svg>
+          </div>
+          <div class="field-text-wrap">
+            <label for="rental-pickup-input">Pickup Date</label>
+            <input
+              #pickupField
+              id="rental-pickup-input"
+              type="date"
+              name="pickup"
+              [min]="minDate"
+              [ngModel]="pickupInput()"
+              (ngModelChange)="pickupInput.set($event); dateError.set('')" />
+          </div>
+        </div>
+
+        <span class="pill-divider" aria-hidden="true"></span>
+
+        <div class="search-segment">
+          <div class="field-icon-circle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 10h18" />
+            </svg>
+          </div>
+          <div class="field-text-wrap">
+            <label for="rental-dropoff-input">Return Date</label>
+            <input
+              #dropoffField
+              id="rental-dropoff-input"
+              type="date"
+              name="dropoff"
+              [min]="pickupInput() || minDate"
+              [ngModel]="dropoffInput()"
+              (ngModelChange)="dropoffInput.set($event); dateError.set('')" />
+          </div>
+        </div>
+
+        <button type="submit" class="search-submit-btn">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <span>Search</span>
+        </button>
       </form>
+
+      @if (dateError()) {
+        <p id="date-error" class="date-validation-error" role="alert">{{ dateError() }}</p>
+      }
+
+      <nav class="category-strip" aria-label="Vehicle categories">
+        @for (cat of categories; track cat.id) {
+          <button
+            type="button"
+            class="category-card"
+            [class.active]="query().category === cat.id"
+            (click)="selectCategory(cat.id)">
+            <div class="category-thumb-box" aria-hidden="true">
+              @switch (cat.icon) {
+                @case ('grid') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  </svg>
+                }
+                @case ('scooter') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="6.5" cy="17.5" r="2.5" />
+                    <circle cx="18" cy="17.5" r="2.5" />
+                    <path d="M9 17.5h4.5c1 0 1.8-.8 1.8-1.8V12l1.2-4.5H14" />
+                    <path d="M16.5 7.5H19" />
+                    <path d="M5 13h5.5l1.5 2.5" />
+                    <path d="M15.3 13l2.7 4.5" />
+                  </svg>
+                }
+                @case ('motorcycle') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="5.5" cy="17" r="3" />
+                    <circle cx="18.5" cy="17" r="3" />
+                    <path d="M5.5 17l3.5-4.5h4.5l3-3.5" />
+                    <path d="M15 6.5h2.5L18.5 17" />
+                    <path d="M6.5 11.5h4l2-2.5h3" />
+                    <path d="M10.5 14l2.5 3h2.5" />
+                  </svg>
+                }
+                @case ('bicycle') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="5.5" cy="16.5" r="3.5" />
+                    <circle cx="18.5" cy="16.5" r="3.5" />
+                    <path d="M5.5 16.5h5.5l4-6.5H8.5z" />
+                    <path d="M18.5 16.5L14.5 7h3" />
+                    <path d="M8.5 10L7.5 7h2.5" />
+                  </svg>
+                }
+              }
+            </div>
+            <span class="category-label">{{ cat.label }}</span>
+          </button>
+        }
+      </nav>
     </div>
   </section>
 
-  <section class="wrap browse" aria-labelledby="browse-heading">
-    @if (previewEnabled) {
-      <div class="preview-notice">
-        @if (preview()) {
-          <p><strong>Development preview</strong> &middot; Sample listings, prices, ratings and photos. Live availability is not checked.</p>
-        } @else {
-          <p>Live catalog</p>
-        }
-        <div class="preview-actions">
-          @if (preview()) { <a class="text-button preview-link" routerLink="/bicycles/my-rentals" [queryParams]="{ preview: 1 }">My Rentals</a> }
-          <button type="button" class="text-button" (click)="changeMode()">{{ preview() ? 'Switch to live catalog' : 'Open development preview' }}</button>
+  <section class="catalog-section">
+    <div class="container">
+      <div class="results-toolbar">
+        <div class="results-summary">
+          <h1>{{ countLabel() }}</h1>
+          @if (hasActiveFilters()) {
+            <button type="button" class="clear-inline-btn" (click)="clearFilters()">Clear All</button>
+          }
         </div>
-      </div>
-    }
-    <div class="section-heading">
-      <h2 id="browse-heading">Browse Rentals</h2>
-      <button type="button" class="mobile-filter" (click)="filterDrawer.showModal()">Filter Rentals</button>
-    </div>
 
-    <ng-template #filters>
-      <div class="filter-heading">
-        <strong>Filter Rentals</strong>
-        <button class="text-button" type="button" (click)="clear()">Clear All</button>
-      </div>
-      <details open>
-        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />Location</span></summary>
-        @for (place of moreCities() ? cities : cities.slice(0, 5); track place) {
-          <label class="check"><input type="checkbox" [checked]="query().city === place"
-            (change)="update({ city: query().city === place ? '' : place })" />{{ place }}</label>
-        }
-        <button class="text-button more" type="button" [attr.aria-expanded]="moreCities()" (click)="moreCities.update(value => !value)">{{ moreCities() ? 'Show Less' : 'Show More' }}</button>
-      </details>
-      <details open>
-        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'cycle' }" />Vehicle type</span></summary>
-        @for (category of categories().slice(1); track category.value) {
-          <label class="check"><input type="checkbox" [checked]="query().category === category.value"
-            (change)="update({ category: query().category === category.value ? '' : category.value })" />{{ category.label }}</label>
-        }
-      </details>
-      <details open>
-        <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'price' }" />Daily price</span></summary>
-        @for (price of prices; track price.value) {
-          <label class="check"><input type="checkbox" [checked]="query().price === price.value"
-            (change)="update({ price: query().price === price.value ? '' : price.value })" />{{ price.label }}</label>
-        }
-      </details>
-      @if (preview()) {
-        <details open>
-          <summary><span><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'star' }" />Rating</span></summary>
-          <label class="check"><input type="checkbox" [checked]="query().rating"
-            (change)="update({ rating: !query().rating })" /><span class="star" aria-hidden="true">★</span> 4.0 and above</label>
-        </details>
-      }
-      <button class="outline reset" type="button" (click)="clear()">Reset Filters</button>
-    </ng-template>
-
-    <dialog #filterDrawer aria-label="Rental filters" class="drawer">
-      <form method="dialog"><button class="outline" aria-label="Close filters">Close</button></form>
-      <ng-container [ngTemplateOutlet]="filters" />
-      <form method="dialog"><button class="primary reset">Show Results</button></form>
-    </dialog>
-
-    <div class="browse-layout">
-      <aside class="filters" aria-label="Rental filters"><ng-container [ngTemplateOutlet]="filters" /></aside>
-      <div class="inventory">
-        <div class="tools">
-          <div class="categories" role="group" aria-label="Vehicle categories">
-            @for (category of categories(); track category.value) {
-              <button type="button" [attr.aria-pressed]="query().category === category.value" (click)="update({ category: category.value })">
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  @switch (category.icon) {
-                    @case ('all') { <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/> }
-                    @case ('electric') { <path d="m13 2-9 12h7l-1 8 10-13h-8l1-7Z"/> }
-                    @case ('motor') { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-7h5l3 7m-9 0h6m2-12h3l2 8M6 9h4"/> }
-                    @default { <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-8 4 8H5m8 0 4-8m-9 0h9m0 0-1-3h3M7 7h4"/> }
-                  }
-                </svg>{{ category.label }}
-              </button>
-            }
-          </div>
-          <label class="sort">Sort by
-            <select #sort (change)="sortBy(sort.value)">
-              <option value="newest" [selected]="query().sort === 'newest'">{{ preview() ? 'Featured' : 'Newest' }}</option>
-              @if (preview()) {
-                <option value="popular" [selected]="query().sort === 'popular'">Popular First</option>
-                <option value="rating" [selected]="query().sort === 'rating'">Top Rated</option>
-              }
-              <option value="price_asc" [selected]="query().sort === 'price_asc'">Price: Low to High</option>
-              <option value="price_desc" [selected]="query().sort === 'price_desc'">Price: High to Low</option>
+        <div class="toolbar-actions">
+          <label class="sort-control">
+            <span class="sr-only">Sort rentals</span>
+            <select
+              aria-label="Sort rentals"
+              [ngModel]="query().sort"
+              (ngModelChange)="setSort($event)">
+              <option value="newest">Recommended</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
             </select>
           </label>
-        </div>
 
-        @let result = results();
-        @if (result.kind === 'loading') {
-          <p class="count" role="status">Loading rentals…</p>
-          <div class="cards" aria-hidden="true">@for (placeholder of [1, 2, 3]; track placeholder) { <div class="skeleton"></div> }</div>
-        } @else if (result.kind === 'error') {
-          <div class="state" role="alert">
-            <h3>Rentals couldn&rsquo;t load</h3>
-            @if (result.status === 401 || result.status === 403) {
-              <p>The rental service denied access to the public catalog.</p>
-            } @else {
-              <p>Check your connection and try again.</p>
+          <button type="button" class="filters-trigger-btn" (click)="openFilters()">
+            <span>Filters</span>
+            @if (activeFilterCount() > 0) {
+              <span class="filter-count-pill">{{ activeFilterCount() }}</span>
             }
-            <button class="primary" type="button" (click)="retry()">Try Again</button>
+          </button>
+        </div>
+      </div>
+
+      @if (state().status === 'loading') {
+        <div class="state-panel loading-state" role="status" aria-live="polite">
+          <div class="skeleton-grid">
+            @for (slot of [1, 2, 3, 4, 5, 6, 7, 8]; track slot) {
+              <div class="skeleton-card"></div>
+            }
           </div>
-        } @else if (result.kind === 'ready') {
-          <p class="count" role="status">{{ result.page.total | number }} {{ result.page.total === 1 ? 'vehicle' : 'vehicles' }} found
-            @if (!preview()) { <span class="sponsor-note">Sponsored listings may appear first.</span> }
-          </p>
-          @if (!result.page.items.length) {
-            <div class="state">
-              @if (result.page.total) {
-                <h3>This page is out of range</h3>
-                <button type="button" class="primary" (click)="update({ page: 1 })">First Page</button>
+          <p class="loading-caption">Loading rentals…</p>
+        </div>
+      } @else if (state().status === 'error') {
+        @let err = $any(state());
+        <div class="state-panel error-state" role="alert">
+          <h2>Rentals couldn’t load</h2>
+          <p>{{ err.message }}</p>
+          <button type="button" class="primary-btn" (click)="retry()">Try Again</button>
+        </div>
+      } @else {
+        @let ready = $any(state());
+        @if (ready.items.length === 0) {
+          <div class="state-panel empty-state">
+            <h2>No approved rental vehicles available yet</h2>
+            <p>
+              @if (hasActiveFilters()) {
+                Try adjusting your location, category, price range or travel dates to see available vehicles.
               } @else {
-                <h3>No matching rentals</h3><p>Try another location or clear your filters.</p>
-                <button type="button" class="outline" (click)="clear()">Reset Filters</button>
+                Verified bikes, scooters and bicycles will appear here once published by local providers.
               }
-            </div>
-          } @else {
-            <div class="cards">
-              @for (vehicle of result.page.items; track vehicle.id) {
-                <article class="card">
-                  <div class="photo">
-                    <app-rental-image [src]="vehicle.primary_image_url" [alt]="preview() ? 'Illustrative photo for ' + vehicle.vehicle_name : vehicle.vehicle_name" />
-                    @if (vehicle.is_provider_verified) { <span class="badge">✓ Verified provider</span> }
+            </p>
+            @if (hasActiveFilters()) {
+              <button type="button" class="outline-btn" (click)="clearFilters()">Clear All</button>
+            }
+          </div>
+        } @else {
+          <div class="vehicles-grid">
+            @for (vehicle of ready.items; track vehicle.id) {
+              <article class="card vehicle-card">
+                <div class="card-media">
+                  <app-rental-image
+                    [src]="vehicle.primary_image_url"
+                    [alt]="vehicle.vehicle_name" />
+                  <span class="category-chip">{{ categoryLabel(vehicle) }}</span>
+                  <div class="wishlist-overlay">
                     <app-rental-wishlist [id]="vehicle.id" [preview]="preview()" />
                   </div>
-                  <div class="card-body">
-                    <h3>{{ vehicle.vehicle_name }}</h3>
-                    <p class="card-location"><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'pin' }" />{{ vehicle.city || vehicle.district || 'Location unavailable' }}</p>
-                    @if (vehicle.rating !== undefined) {
-                      <p class="card-rating"><span class="star" aria-hidden="true">&#9733;</span> <strong>{{ vehicle.rating | number:'1.1-1' }}</strong><span>({{ vehicle.reviewCount }} sample reviews)</span></p>
+                </div>
+
+                <div class="card-body">
+                  <div class="card-meta-row">
+                    <span class="city-text">{{ vehicle.city || 'Sri Lanka' }}</span>
+                    @if (vehicle.rating) {
+                      <span class="rating-pill">
+                        <span class="star-icon" aria-hidden="true">★</span>
+                        {{ vehicle.rating.toFixed(1) }}
+                        @if (vehicle.reviewCount) {
+                          <span class="review-muted">({{ vehicle.reviewCount }})</span>
+                        }
+                      </span>
                     }
-                    @if (vehicle.transmission || vehicle.helmets?.helmet_provided) {
-                      <ul class="features" aria-label="Vehicle features">
-                        @if (vehicle.transmission) { <li><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'gear' }" />{{ vehicle.transmission }}</li> }
-                        @if (vehicle.helmets?.helmet_provided) { <li><ng-container [ngTemplateOutlet]="icon" [ngTemplateOutletContext]="{ $implicit: 'helmet' }" />Helmet provided</li> }
-                      </ul>
-                    }
-                    <p class="price">{{ vehicle.currency }} {{ vehicle.price_per_day | number:'1.0-2' }} <span>/ day</span></p>
-                    <a class="primary details-link" [routerLink]="[vehicle.id]" queryParamsHandling="preserve" (click)="rememberScroll()">View Details <span aria-hidden="true">→</span></a>
                   </div>
-                </article>
-              }
-            </div>
-            @if (result.page.pages > 1) {
-              <nav class="pagination" aria-label="Rental result pages">
-                <button type="button" class="outline" [disabled]="query().page <= 1" (click)="update({ page: query().page - 1 })">Previous</button>
-                <span>Page {{ query().page }} of {{ result.page.pages }}</span>
-                <button type="button" class="outline" [disabled]="query().page >= result.page.pages" (click)="update({ page: query().page + 1 })">Next</button>
-              </nav>
+
+                  <h3 class="vehicle-title">{{ vehicle.vehicle_name }}</h3>
+                  <p class="vehicle-specs">{{ specsSummary(vehicle) }}</p>
+
+                  <div class="card-footer">
+                    <div class="price-block">
+                      <span class="price-value">{{ formatLkr(vehicle.price_per_day) }}</span>
+                      <span class="price-unit">/ day</span>
+                    </div>
+
+                    <a
+                      class="details-link"
+                      [routerLink]="['/bicycles', vehicle.id]"
+                      queryParamsHandling="preserve">
+                      View Vehicle
+                    </a>
+                  </div>
+                </div>
+              </article>
             }
+          </div>
+
+          @if (ready.pages > 1) {
+            <nav class="pagination-bar" aria-label="Pagination">
+              <button
+                type="button"
+                class="outline-btn"
+                [disabled]="query().page <= 1"
+                (click)="goToPage(query().page - 1)">
+                Previous
+              </button>
+              <span class="page-indicator">Page {{ query().page }} of {{ ready.pages }}</span>
+              <button
+                type="button"
+                class="outline-btn"
+                [disabled]="query().page >= ready.pages"
+                (click)="goToPage(query().page + 1)">
+                Next
+              </button>
+            </nav>
           }
         }
-      </div>
+      }
     </div>
   </section>
+
+  @if (filtersOpen()) {
+    <div class="filters-backdrop" (click)="closeFilters()">
+      <div
+        class="filters-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rental-filters-heading"
+        (click)="$event.stopPropagation()">
+        <div class="filters-modal-header">
+          <h2 id="rental-filters-heading">Filter Rentals</h2>
+          <button type="button" class="close-modal-btn" aria-label="Close filters" (click)="closeFilters()">×</button>
+        </div>
+
+        <div class="filters-modal-body">
+          <div class="filter-field">
+            <label for="filter-location">Location / City</label>
+            <input
+              id="filter-location"
+              type="text"
+              list="rental-cities"
+              placeholder="e.g. Ella, Galle, Colombo"
+              [ngModel]="draftCity()"
+              (ngModelChange)="draftCity.set($event)" />
+          </div>
+
+          <div class="filter-field">
+            <label for="filter-category">Vehicle Type</label>
+            <select
+              id="filter-category"
+              [ngModel]="draftCategory()"
+              (ngModelChange)="draftCategory.set($event)">
+              <option value="">All Vehicles</option>
+              <option value="scooter">Scooters</option>
+              <option value="motorcycle">Motorbikes</option>
+              <option value="bicycle">Bicycles</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filter-price">Daily Price Range (LKR)</label>
+            <select
+              id="filter-price"
+              [ngModel]="draftPrice()"
+              (ngModelChange)="draftPrice.set($event)">
+              <option value="">Any price</option>
+              @for (entry of priceRanges; track entry[0]) {
+                @if (entry[0]) {
+                  <option [value]="entry[0]">
+                    @if (entry[1][1]) {
+                      LKR {{ entry[1][0] }} – {{ entry[1][1] }}
+                    } @else {
+                      LKR {{ entry[1][0] }}+
+                    }
+                  </option>
+                }
+              }
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="filter-transmission">Transmission</label>
+            <select
+              id="filter-transmission"
+              [ngModel]="draftTransmission()"
+              (ngModelChange)="draftTransmission.set($event)">
+              <option value="">All</option>
+              <option value="automatic">Automatic</option>
+              <option value="manual">Manual</option>
+              <option value="single_speed">Single Speed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filters-modal-footer">
+          <button type="button" class="outline-btn" (click)="clearFilters()">Clear All</button>
+          <button type="button" class="primary-btn" (click)="applyFilters()">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+  }
 </main>

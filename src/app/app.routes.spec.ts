@@ -27,9 +27,9 @@ describe('App Routing Configuration', () => {
     router = TestBed.inject(Router);
   });
 
-  it('should redirect root path ("") to "/homestays"', async () => {
+  it('should navigate to root path ("") and load unified homepage', async () => {
     await router.navigateByUrl('');
-    expect(router.url).toBe('/homestays');
+    expect(router.url).toBe('/');
   });
 
   it('should navigate directly to "/homestays" without authentication requirement', async () => {
@@ -42,12 +42,23 @@ describe('App Routing Configuration', () => {
     expect(homestayRoute?.canActivate).toBeUndefined(); // No blocking guards
   });
 
-  it('should redirect alias paths "/homestay" and "/explore" to "/homestays"', async () => {
+  it('should redirect alias paths "/homestay", "/explore", and "/stays" to "/homestays"', async () => {
     await router.navigateByUrl('/homestay');
     expect(router.url).toBe('/homestays');
 
     await router.navigateByUrl('/explore');
     expect(router.url).toBe('/homestays');
+
+    await router.navigateByUrl('/stays');
+    expect(router.url).toBe('/homestays');
+  });
+
+  it('should redirect alias paths "/bike-rentals" and "/rentals" to "/bicycles"', async () => {
+    await router.navigateByUrl('/bike-rentals');
+    expect(router.url).toBe('/bicycles');
+
+    await router.navigateByUrl('/rentals');
+    expect(router.url).toBe('/bicycles');
   });
 
   it('should navigate to "/auth" and resolve AuthEntry component', async () => {
@@ -111,6 +122,36 @@ describe('App Routing Configuration', () => {
       const comp = await (reviewRoute.loadComponent as Function)();
       expect(comp).toBe(HomestayBookingReview);
     }
+  });
+
+  it('should register and resolve TourGuidesComponent, TourGuideDetailComponent, and TourGuideBookingComponent without redirecting to /homestays', async () => {
+    await router.navigateByUrl('/tour-guides');
+    expect(router.url).toBe('/tour-guides');
+
+    await router.navigateByUrl('/tour-guides/guide-1');
+    expect(router.url).toBe('/tour-guides/guide-1');
+
+    await router.navigateByUrl('/tour-guides/guide-1/booking');
+    expect(router.url).toBe('/tour-guides/guide-1/booking');
+
+    const listRoute = routes.find((r) => r.path === 'tour-guides');
+    const detailRoute = routes.find((r) => r.path === 'tour-guides/:id');
+    const bookingRoute = routes.find((r) => r.path === 'tour-guides/:id/booking');
+
+    expect(listRoute?.loadComponent).toBeDefined();
+    expect(detailRoute?.loadComponent).toBeDefined();
+    expect(bookingRoute?.loadComponent).toBeDefined();
+
+    const [{ TourGuidesComponent }, { TourGuideDetailComponent }, { TourGuideBookingComponent }] =
+      await Promise.all([
+        import('./pages/tour-guides/tour-guides.component'),
+        import('./pages/tour-guides/guide-detail/tour-guide-detail.component'),
+        import('./pages/tour-guides/guide-booking/tour-guide-booking.component'),
+      ]);
+
+    expect(await (listRoute!.loadComponent as Function)()).toBe(TourGuidesComponent);
+    expect(await (detailRoute!.loadComponent as Function)()).toBe(TourGuideDetailComponent);
+    expect(await (bookingRoute!.loadComponent as Function)()).toBe(TourGuideBookingComponent);
   });
 });
 

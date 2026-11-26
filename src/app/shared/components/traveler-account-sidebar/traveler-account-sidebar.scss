@@ -1,0 +1,51 @@
+:host { display: block; }
+.account-panel { background: #fff; border: 1px solid #d8e8f8; border-radius: 16px; box-shadow: 0 6px 24px #082b5c0b; }
+.account-panel { padding: 14px; }
+.identity { display: flex; align-items: center; gap: 10px; padding: 8px 6px 16px; border-bottom: 1px solid #d8e8f8; overflow-wrap: anywhere; }
+.identity small { display: block; font-size: .78rem; color: #52657d; }
+.avatar { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 50%; background: #eaf5ff; color: #194fb9; font-weight: 750; }
+.account-links { display: grid; gap: 4px; padding-top: 10px; }
+.account-links > * { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; min-height: 44px; border-radius: 8px; text-align: start; text-decoration: none; font: inherit; font-size: .875rem; color: #42566f; }
+.account-links small { color: #52657d; font-size: .72rem; }
+.account-links a[aria-current] { background: #eaf5ff; color: #194fb9; font-weight: 750; }
+.account-links button { border: 0; background: transparent; color: #a12836; cursor: pointer; }
+.account-panel { padding: 17px; }
+.identity { gap: 13px; padding-bottom: 17px; }
+.avatar { width: 47px; height: 47px; flex-basis: 47px; font-size: .95rem; }
+.account-links a:hover, .account-links button:hover { background: #f0f6fd; }
+.account-links a[aria-current] { border-inline-start: 3px solid #2563eb; }
+.account-links app-experience-icon { font-size: 1.35em; }
+.account-links > :has(app-experience-icon) { justify-content: flex-start; }
+.account-links > * > span { min-width: 0; }
+.account-links small { margin-inline-start: 4px; }
+.account-panel.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 78px);
+  padding: 34px 12px 56px;
+  border: 0;
+  border-inline-end: 1px solid var(--dashboard-border);
+  border-radius: 0;
+  box-shadow: none;
+  background: #fbfcfd;
+}
+.dashboard .identity { gap: 16px; padding: 0 4px 30px 20px; border: 0; font-size: 1.15rem; }
+.dashboard .identity small { font-size: .95rem; color: #304a72; }
+.dashboard .avatar { width: 64px; height: 64px; flex-basis: 64px; background: #e0e6ec; color: var(--dashboard-ink); font-size: 1.55rem; }
+.dashboard .account-links { display: flex; flex-direction: column; flex: 1; gap: 2px; padding: 0; }
+.dashboard .account-links > * { min-height: 60px; gap: 20px; padding: 8px 24px; color: var(--dashboard-ink); font-size: 1.2rem; font-weight: 700; }
+.dashboard .account-links app-experience-icon { font-size: 1.45em; }
+.dashboard .account-links small { display: block; margin: 0; font-size: .69rem; font-weight: 500; }
+.dashboard .account-links a[aria-current] { border: 0; color: #004bdc; background: #d5e5fa; }
+.dashboard .account-links button { margin-top: auto; }
+.account-panel.dashboard { --dashboard-border: #dfe5ed; --dashboard-ink: #081f49; color: var(--dashboard-ink); }
+@media (max-width: 900px) {
+  .account-links { display: flex; gap: 4px; flex-wrap: wrap; }
+  .account-panel.dashboard { min-height: 0; padding: 18px; border-inline-end: 0; border-bottom: 1px solid #dfe5ed; }
+  .dashboard .identity { padding: 0 0 12px; }
+  .dashboard .avatar { width: 46px; height: 46px; flex-basis: 46px; font-size: 1rem; }
+  .dashboard .account-links { flex-flow: row wrap; gap: 4px; }
+  .dashboard .account-links > * { min-height: 44px; padding: 7px; gap: 6px; font-size: .87rem; }
+  .dashboard .account-links button { margin-top: 0; }
+}
+@media (max-width: 560px) { .account-panel:not(.dashboard) { padding: 12px; } }

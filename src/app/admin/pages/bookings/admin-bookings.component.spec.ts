@@ -60,6 +60,7 @@ describe('AdminBookingsComponent', () => {
   };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [AdminBookingsComponent],
       providers: [{ provide: AdminBookingsService, useValue: mockService }],

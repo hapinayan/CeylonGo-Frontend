@@ -1,49 +1,90 @@
+<!-- TRAVELER HOMEPAGE UNDERLAY (BLURRED IN BACKGROUND) -->
+<div class="homepage-underlay" aria-hidden="true" tabindex="-1">
+  <app-traveler-home></app-traveler-home>
+</div>
 
-<div class="success-page">
-  <div class="success-card">
+<!-- AUTH MODAL BACKDROP (DARK OVERLAY & BLUR) -->
+<div class="auth-modal-backdrop success-page" (click)="onBackdropClick($event)">
+  <div class="auth-modal-card success-card" role="dialog" aria-modal="true" aria-labelledby="reset-success-title">
 
-    <div class="brand">Ceylon<span>Go</span></div>
+    <!-- CLOSE (X) BUTTON IN TOP-RIGHT -->
+    <button
+      type="button"
+      class="modal-close-btn close-btn"
+      aria-label="Close modal"
+      (click)="closeModal()"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
 
-    <div class="success-icon">
-      <svg viewBox="0 0 52 52" role="img"
-           aria-label="Demo completed">
-        <circle class="check-circle"
-                cx="26" cy="26" r="24" fill="none"/>
-        <path class="check-mark"
-              d="M14 27 L22 35 L39 18" fill="none"/>
+    <!-- CEYLONGO BRAND LOGO -->
+    <div class="modal-logo-wrapper">
+      <img
+        src="/images/ceylongo-brand-logo.png"
+        alt="CeylonGo - Discover Local. Feel at Home."
+        class="modal-logo-img modal-logo"
+      />
+    </div>
+
+    <!-- BLUE SUCCESS CHECKMARK OUTLINE ICON IN LIGHT-BLUE CIRCULAR BACKGROUND -->
+    <div class="recovery-icon-badge success-icon" aria-hidden="true">
+      <svg
+        width="38"
+        height="38"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 6L9 17l-5-5" />
       </svg>
     </div>
 
-    <h1>Reset Demo Completed!</h1>
-    <h2>Password Reset Flow Tested</h2>
+    <!-- HEADING & DESCRIPTION -->
+    <div class="modal-header">
+      <h1 id="reset-success-title" class="modal-title">Password Reset Successful!</h1>
+      <p class="modal-subtitle subtitle">
+        Your password has been successfully updated. You can now log in using your new password.
+      </p>
+    </div>
 
-    <p class="description">
-      You've successfully completed the frontend
-      password reset demonstration.
-    </p>
-
+    <!-- EMAIL DISPLAY CONTAINER -->
     @if (email) {
-      <div class="email-box">
-        <span>Account email</span>
-        <strong>{{ email }}</strong>
+      <div class="email-display-box email-box">
+        <span class="email-value">{{ email }}</span>
       </div>
     }
 
-    <p class="notice">
-      Your password has not actually changed.
-      The backend will handle secure password
-      resets when connected.
-    </p>
+    <!-- DEMONSTRATION NOTICE (ONLY IF RUNNING IN DEMO MODE) -->
+    @if (isDemoMode) {
+      <div class="modal-alert-info" role="status">
+        <span>CeylonGo • Frontend Testing / Demonstration Mode</span>
+      </div>
+    }
 
-    <button type="button"
-            class="login-btn"
-            (click)="goToLogin()">
-      Continue to Login →
+    <!-- PRIMARY BUTTON (SOLID BLUE #2563EB): CONTINUE TO LOGIN -->
+    <button
+      type="button"
+      class="btn-primary-blue login-btn"
+      (click)="goToLogin()"
+    >
+      Continue to Login &rarr;
     </button>
-
-    <p class="demo-note">
-      CeylonGo • Frontend Testing Mode
-    </p>
 
   </div>
 </div>

@@ -67,7 +67,7 @@ describe('Rental discovery', () => {
     list('bike', [vehicle]);
     list('bicycle', [{ ...vehicle, id: 13, vehicle_type: 'bicycle', vehicle_name: 'City Bicycle', price_per_day: 800 }]);
     expect([...page().querySelectorAll('.card h3')].map(heading => heading.textContent)).toEqual(['City Bicycle', 'Coastal Motorbike']);
-    expect(page().textContent).toContain('2 vehicles found');
+    expect(page().textContent).toContain('2 Rentals Found');
     http.verify();
   });
 
@@ -89,7 +89,7 @@ describe('Rental discovery', () => {
     await click('Clear All');
     expect(list('bike').request.params.has('city')).toBe(false);
     list('bicycle');
-    expect(page().textContent).toContain('No matching rentals');
+    expect(page().textContent).toContain('No approved rental vehicles available yet');
     http.verify();
   });
 
@@ -182,7 +182,7 @@ describe('Rental discovery', () => {
     expect(page().textContent).toContain('denied access to the public catalog');
     await click('Try Again');
     list('bike');
-    expect(page().textContent).toContain('No matching rentals');
+    expect(page().textContent).toContain('No approved rental vehicles available yet');
     http.verify();
   });
 

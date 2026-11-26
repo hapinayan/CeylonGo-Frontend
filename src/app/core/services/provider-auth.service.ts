@@ -1,12 +1,13 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, catchError, tap, throwError } from 'rxjs';
+import { Observable, catchError, of, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
   ProviderAuthError,
   ProviderLoginRequest,
   ProviderLoginResponse,
+  ProviderResponse,
   ProviderUser,
 } from '../models/provider-auth.models';
 
@@ -76,9 +77,25 @@ export class ProviderAuthService {
   }
 
   /**
-   * Clear provider session and remove credentials from storage.
+   * Clear provider session, revoke session on backend, and remove credentials from storage.
+   * Endpoint: POST /api/v1/providers/logout
    */
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      this.http
+        .post(`${this.baseUrl}/logout`, null)
+        .pipe(catchError(() => of(null)))
+        .subscribe();
+    }
+
+    this.clearSession();
+  }
+
+  /**
+   * Clear transient in-memory and sessionStorage state immediately.
+   */
+  clearSession(): void {
     this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
 
@@ -90,6 +107,40 @@ export class ProviderAuthService {
         // Ignore storage access errors
       }
     }
+  }
+
+  /**
+   * Fetch authenticated provider profile from backend and refresh session state.
+   * Endpoint: GET /api/v1/providers/me
+   */
+  getProfile(): Observable<ProviderResponse> {
+    return this.http.get<ProviderResponse>(`${this.baseUrl}/me`).pipe(
+      tap((profile) => {
+        const user = this.getUser();
+        if (user) {
+          const updated: ProviderUser = {
+            ...user,
+            business_name: profile.business_name || user.business_name,
+            district: profile.district || user.district,
+            approval_status: profile.verification_status || user.approval_status,
+          };
+          this.currentUserSignal.set(updated);
+          if (typeof sessionStorage !== 'undefined') {
+            try {
+              sessionStorage.setItem(PROVIDER_USER_KEY, JSON.stringify(updated));
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      }),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401 || error.status === 403) {
+          this.clearSession();
+        }
+        return throwError(() => this.formatApiError(error));
+      })
+    );
   }
 
   /**

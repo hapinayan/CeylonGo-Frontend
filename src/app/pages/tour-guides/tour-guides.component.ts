@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { TourGuideService } from '../../core/services/tour-guide.service';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+
 import {
-  TourCategory,
   TourGuide,
-  TourGuideFilter,
-  TourGuideSortBy
+  TourGuideSortBy,
 } from '../../core/models/tour-guide.models';
-import { TravelerHeaderComponent } from '../../shared/components/traveler-header/traveler-header.component';
-import { TravelerFooterComponent } from '../../shared/components/traveler-footer/traveler-footer.component';
+import { AuthModalService } from '../../core/services/auth-modal.service';
+import { AuthService } from '../../core/services/auth.service';
+import { TourGuideService } from '../../core/services/tour-guide.service';
+import { Footer } from '../../shared/components/footer/footer';
+import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
+import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler-navbar';
 
 @Component({
   selector: 'app-tour-guides',
@@ -18,15 +20,20 @@ import { TravelerFooterComponent } from '../../shared/components/traveler-footer
   imports: [
     CommonModule,
     FormsModule,
-    TravelerHeaderComponent,
-    TravelerFooterComponent
+    RouterModule,
+    TravelerNavbar,
+    Footer,
+    TravelerAuthModal,
   ],
   templateUrl: './tour-guides.component.html',
-  styleUrl: './tour-guides.component.scss'
+  styleUrl: './tour-guides.component.scss',
 })
 export class TourGuidesComponent implements OnInit {
   readonly guideService = inject(TourGuideService);
+  private readonly authService = inject(AuthService);
+  private readonly authModalService = inject(AuthModalService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   // SERVICE SIGNALS
   readonly categories = this.guideService.categories;
@@ -37,40 +44,37 @@ export class TourGuidesComponent implements OnInit {
   readonly totalCount = this.guideService.totalCount;
   readonly totalPages = this.guideService.totalPages;
   readonly currentPage = this.guideService.currentPage;
-  readonly selectedGuide = this.guideService.selectedGuide;
   readonly isLoading = this.guideService.isLoading;
   readonly errorMessage = this.guideService.errorMessage;
+  readonly isDemoMode = this.guideService.isDemoMode;
 
-  // LOCAL UI POPUPS & MODALS STATE
+  // SEARCH POPUPS & FILTER MODAL
   readonly isLocationDropdownOpen = signal<boolean>(false);
   readonly isDatePickerOpen = signal<boolean>(false);
   readonly isTravelersOpen = signal<boolean>(false);
+  readonly isLanguageDropdownOpen = signal<boolean>(false);
   readonly isSortDropdownOpen = signal<boolean>(false);
   readonly isFilterModalOpen = signal<boolean>(false);
-  readonly isBookingModalOpen = signal<boolean>(false);
 
   // SEARCH BAR INPUT SIGNALS
   readonly searchLocationInput = signal<string>('');
   readonly selectedDateInput = signal<string>('');
   readonly travelersCount = signal<number>(1);
+  readonly searchLanguageInput = signal<string>('');
 
   // FILTER MODAL TEMPORARY FORM STATE
+  tempLocation = signal<string>('');
+  tempSpecialization = signal<string>('');
   tempMinPrice = signal<number | null>(null);
   tempMaxPrice = signal<number | null>(null);
   tempLanguages = signal<string[]>([]);
+  tempMinExperience = signal<number | null>(null);
+  tempMinRating = signal<number | null>(null);
   tempVerifiedOnly = signal<boolean>(false);
   tempSortBy = signal<TourGuideSortBy>('top_rated');
 
-  // BOOKING MODAL STATE
-  readonly bookingStep = signal<'form' | 'success'>('form');
-  readonly bookingDate = signal<string>('2026-12-05');
-  readonly bookingDays = signal<number>(1);
-  readonly bookingTravelers = signal<number>(2);
-  readonly bookingNotes = signal<string>('');
-
   ngOnInit(): void {
-    // Read optional query params (e.g. ?location=Kandy&category=nature-hiking)
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       if (params['location']) {
         this.guideService.setLocation(params['location']);
         this.searchLocationInput.set(params['location']);
@@ -78,30 +82,37 @@ export class TourGuidesComponent implements OnInit {
       if (params['category']) {
         this.guideService.setCategory(params['category']);
       }
+      if (params['language']) {
+        this.guideService.setLanguage(params['language']);
+        this.searchLanguageInput.set(params['language']);
+      }
+      if (params['travelers'] && +params['travelers'] >= 1) {
+        const count = +params['travelers'];
+        this.travelersCount.set(count);
+        this.guideService.setTravelers(count);
+      }
     });
 
-    // Sync search input
     this.searchLocationInput.set(this.filter().location);
-
-    // Initial load through service
-    this.guideService.loadGuides();
+    this.searchLanguageInput.set(this.filter().language);
+    this.travelersCount.set(this.filter().travelers || 1);
+    this.guideService.loadGuides(this.filter().location || undefined);
   }
 
   retryLoadGuides(): void {
-    this.guideService.loadGuides();
+    this.guideService.loadGuides(this.searchLocationInput().trim() || undefined);
   }
 
-  // CATEGORY SELECTION
   selectCategory(categoryId: string): void {
     this.guideService.setCategory(categoryId);
   }
 
-  // SEARCH BAR ACTIONS
   toggleLocationDropdown(event: Event): void {
     event.stopPropagation();
-    this.isLocationDropdownOpen.update(v => !v);
+    this.isLocationDropdownOpen.update((v) => !v);
     this.isDatePickerOpen.set(false);
     this.isTravelersOpen.set(false);
+    this.isLanguageDropdownOpen.set(false);
   }
 
   selectLocation(loc: string, event: Event): void {
@@ -114,23 +125,25 @@ export class TourGuidesComponent implements OnInit {
 
   toggleDatePicker(event: Event): void {
     event.stopPropagation();
-    this.isDatePickerOpen.update(v => !v);
+    this.isDatePickerOpen.update((v) => !v);
     this.isLocationDropdownOpen.set(false);
     this.isTravelersOpen.set(false);
+    this.isLanguageDropdownOpen.set(false);
   }
 
   selectDate(dateStr: string, event: Event): void {
     event.stopPropagation();
     this.selectedDateInput.set(dateStr);
-    this.guideService.setDate(dateStr);
+    this.guideService.setDate(dateStr || null);
     this.isDatePickerOpen.set(false);
   }
 
   toggleTravelersPicker(event: Event): void {
     event.stopPropagation();
-    this.isTravelersOpen.update(v => !v);
+    this.isTravelersOpen.update((v) => !v);
     this.isLocationDropdownOpen.set(false);
     this.isDatePickerOpen.set(false);
+    this.isLanguageDropdownOpen.set(false);
   }
 
   changeTravelers(delta: number, event: Event): void {
@@ -140,15 +153,36 @@ export class TourGuidesComponent implements OnInit {
     this.guideService.setTravelers(updated);
   }
 
+  toggleLanguageDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isLanguageDropdownOpen.update((v) => !v);
+    this.isLocationDropdownOpen.set(false);
+    this.isDatePickerOpen.set(false);
+    this.isTravelersOpen.set(false);
+  }
+
+  selectSearchLanguage(lang: string, event: Event): void {
+    event.stopPropagation();
+    this.searchLanguageInput.set(lang);
+    this.guideService.setLanguage(lang);
+    this.isLanguageDropdownOpen.set(false);
+  }
+
   executeSearch(): void {
-    this.guideService.setLocation(this.searchLocationInput().trim());
+    const destination = this.searchLocationInput().trim();
+    this.guideService.updateFilter({
+      location: destination,
+      date: this.selectedDateInput() || null,
+      travelers: this.travelersCount(),
+      language: this.searchLanguageInput().trim(),
+    });
+    this.guideService.loadGuides(destination || undefined);
     this.closePopups();
   }
 
-  // SORT ACTIONS
   toggleSortDropdown(event: Event): void {
     event.stopPropagation();
-    this.isSortDropdownOpen.update(v => !v);
+    this.isSortDropdownOpen.update((v) => !v);
   }
 
   setSortOption(option: TourGuideSortBy, event: Event): void {
@@ -172,12 +206,28 @@ export class TourGuidesComponent implements OnInit {
     }
   }
 
-  // FILTER MODAL ACTIONS
+  activeFilterCount(): number {
+    const f = this.filter();
+    let count = 0;
+    if (f.languages.length > 0) count++;
+    if (f.location) count++;
+    if (f.specialization) count++;
+    if (f.minPrice !== null || f.maxPrice !== null) count++;
+    if (f.minExperience !== null) count++;
+    if (f.minRating !== null) count++;
+    if (f.verifiedOnly) count++;
+    return count;
+  }
+
   openFilterModal(): void {
     const f = this.filter();
+    this.tempLocation.set(f.location);
+    this.tempSpecialization.set(f.specialization);
     this.tempMinPrice.set(f.minPrice);
     this.tempMaxPrice.set(f.maxPrice);
     this.tempLanguages.set([...f.languages]);
+    this.tempMinExperience.set(f.minExperience);
+    this.tempMinRating.set(f.minRating);
     this.tempVerifiedOnly.set(f.verifiedOnly);
     this.tempSortBy.set(f.sortBy);
     this.isFilterModalOpen.set(true);
@@ -190,19 +240,25 @@ export class TourGuidesComponent implements OnInit {
   toggleLanguageFilter(lang: string): void {
     const current = this.tempLanguages();
     if (current.includes(lang)) {
-      this.tempLanguages.set(current.filter(l => l !== lang));
+      this.tempLanguages.set(current.filter((l) => l !== lang));
     } else {
       this.tempLanguages.set([...current, lang]);
     }
   }
 
   applyModalFilters(): void {
+    const loc = this.tempLocation().trim();
+    this.searchLocationInput.set(loc);
     this.guideService.updateFilter({
+      location: loc,
+      specialization: this.tempSpecialization().trim(),
       minPrice: this.tempMinPrice(),
       maxPrice: this.tempMaxPrice(),
       languages: this.tempLanguages(),
+      minExperience: this.tempMinExperience(),
+      minRating: this.tempMinRating(),
       verifiedOnly: this.tempVerifiedOnly(),
-      sortBy: this.tempSortBy()
+      sortBy: this.tempSortBy(),
     });
     this.closeFilterModal();
   }
@@ -212,40 +268,53 @@ export class TourGuidesComponent implements OnInit {
     this.searchLocationInput.set('');
     this.selectedDateInput.set('');
     this.travelersCount.set(1);
+    this.searchLanguageInput.set('');
+    this.guideService.loadGuides();
     this.closeFilterModal();
   }
 
-  // FAVORITES
   toggleFavorite(guide: TourGuide, event: Event): void {
     event.stopPropagation();
+    if (!this.authService.isAuthenticated()) {
+      this.authModalService.open('login', event.currentTarget as HTMLElement, {
+        type: 'wishlist',
+        resumeCallback: () => this.guideService.toggleFavorite(guide.id),
+      });
+      return;
+    }
     this.guideService.toggleFavorite(guide.id);
   }
 
-  // GUIDE DETAILS & BOOKING
-  openGuideDetail(guide: TourGuide): void {
-    this.guideService.selectGuide(guide);
+  guideLinkQueryParams(): Record<string, string | number> {
+    const queryParams: Record<string, string | number> = {};
+    if (this.selectedDateInput()) {
+      queryParams['date'] = this.selectedDateInput();
+    }
+    if (this.travelersCount() > 1) {
+      queryParams['travelers'] = this.travelersCount();
+    }
+    return queryParams;
   }
 
-  closeGuideDetail(): void {
-    this.guideService.selectGuide(null);
-  }
-
-  openBookingModal(guide: TourGuide, event: Event): void {
+  onViewProfileClick(guide: TourGuide, event: Event): void {
     event.stopPropagation();
     this.guideService.selectGuide(guide);
-    this.bookingStep.set('form');
-    this.isBookingModalOpen.set(true);
   }
 
-  closeBookingModal(): void {
-    this.isBookingModalOpen.set(false);
+  viewGuideProfile(guide: TourGuide, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.guideService.selectGuide(guide);
+    void this.router.navigate(['/tour-guides', guide.id], {
+      queryParams: this.guideLinkQueryParams(),
+    });
   }
 
-  submitBooking(): void {
-    this.bookingStep.set('success');
+  pricingUnitLabel(guide: TourGuide): string {
+    return this.guideService.formatPricingUnitLabel(guide.pricingUnit);
   }
 
-  // PAGINATION NUMBERS GENERATOR (e.g. 1, 2, 3, 4, 5, ..., 13)
   getVisiblePages(): (number | string)[] {
     const current = this.currentPage();
     const total = this.totalPages();
@@ -269,27 +338,33 @@ export class TourGuidesComponent implements OnInit {
   goToPage(page: number | string): void {
     if (typeof page === 'number') {
       this.guideService.setPage(page);
-      window.scrollTo({ top: 320, behavior: 'smooth' });
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }
 
   nextPage(): void {
     this.guideService.nextPage();
-    window.scrollTo({ top: 320, behavior: 'smooth' });
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   prevPage(): void {
     this.guideService.prevPage();
-    window.scrollTo({ top: 320, behavior: 'smooth' });
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
-  // IMAGE FALLBACK HANDLER
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = '/images/sigiriya.jpg';
+    if (img.src !== this.guideService.neutralPlaceholder) {
+      img.src = this.guideService.neutralPlaceholder;
+    }
   }
 
-  // GLOBAL CLICK LISTENER
   @HostListener('document:click')
   onDocumentClick(): void {
     this.closePopups();
@@ -299,6 +374,7 @@ export class TourGuidesComponent implements OnInit {
     this.isLocationDropdownOpen.set(false);
     this.isDatePickerOpen.set(false);
     this.isTravelersOpen.set(false);
+    this.isLanguageDropdownOpen.set(false);
     this.isSortDropdownOpen.set(false);
   }
 }

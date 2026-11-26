@@ -1,0 +1,242 @@
+.catalog-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.catalog-header {
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem 1.75rem;
+
+  .header-pre {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0066ff;
+    text-decoration: none;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #082b5c;
+    background: #f1f5f9;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+
+  .catalog-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #082b5c;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .catalog-subtitle {
+    font-size: 0.925rem;
+    color: #64748b;
+    margin: 0.35rem 0 0;
+    max-width: 780px;
+    line-height: 1.5;
+  }
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.service-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: #0066ff;
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.08);
+    transform: translateY(-3px);
+  }
+
+  &.featured {
+    border-color: #0066ff;
+    box-shadow: 0 4px 16px rgba(0, 102, 255, 0.06);
+    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: #0066ff;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .category-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #0066ff;
+    background: #eff6ff;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.35rem;
+  }
+
+  .status-indicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #059669;
+  }
+
+  .card-icon-banner {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    background: #eff6ff;
+    color: #0066ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    svg {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .service-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #082b5c;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .service-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0.5rem 0 1rem;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.85rem 0;
+    border-top: 1px solid #f1f5f9;
+    margin-bottom: 1.25rem;
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #334155;
+
+      svg {
+        width: 14px;
+        height: 14px;
+        color: #10b981;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .card-action {
+    margin-top: auto;
+  }
+
+  .btn-start {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 0.6rem;
+    background: #f1f5f9;
+    color: #082b5c;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.15s;
+    }
+
+    &:hover {
+      background: #e2e8f0;
+      svg {
+        transform: translateX(3px);
+      }
+    }
+
+    &.btn-featured {
+      background: #0066ff;
+      color: #ffffff;
+
+      &:hover {
+        background: #0052cc;
+      }
+    }
+  }
+}

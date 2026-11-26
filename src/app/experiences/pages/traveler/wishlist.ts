@@ -1,97 +1,178 @@
 import { Component, computed, inject, signal, ViewEncapsulation } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { map, of, switchMap } from 'rxjs';
+import { of, switchMap, map } from 'rxjs';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
+import { Footer } from '../../../shared/components/footer/footer';
+import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { ExperienceCard } from '../../components/experience-card';
+import { ExperienceIcon } from '../../components/icon';
 import { Pagination } from '../../components/pagination';
 import { TravelerHeader } from '../../components/traveler-header';
-import { EXPERIENCE_CATALOG } from '../../services/catalog';
-import { toExperience } from '../../services/eco-api';
+import { toActivityCard } from '../../services/activities-api';
 import { TRAVEL_SOURCE } from '../../services/travel-api';
 import { TravelSession } from '../../services/travel-session';
 import { WishlistState } from '../../services/wishlist-state';
 import { loadState } from '../../services/workflow-state';
 
 @Component({
-  imports: [TravelerHeader, RouterLink, ExperienceCard, Pagination],
+  imports: [
+    TravelerHeader,
+    RouterLink,
+    ExperienceCard,
+    Pagination,
+    ExperienceIcon,
+    Footer,
+    TravelerAuthModal,
+  ],
   styleUrls: ['../discover/discover.scss', './traveler.scss'],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="experiences-shell"><app-traveler-header />
+    <div class="experiences-shell">
+      <app-traveler-header />
       <main class="discover traveler-workflow">
-        <a routerLink="/experiences">Back to Discover</a>
-        <h1>Saved Experiences</h1>
-        @if (catalog.preview) {
-          <p role="status">Development preview · Favorites are temporary.</p>
-          @if (samples().length) {
-            <p class="workflow-pill">{{ samples().length }} saved</p>
-            <div class="experience-grid">
-              @for (card of samples(); track card.id) {
-                <app-experience-card [experience]="card" [favorite]="true" [preview]="true" [detailLink]="true"
-                  (toggleFavorite)="wishlist.togglePreview(card.id)" />
+        <a routerLink="/experiences" class="workflow-back-link">
+          <app-experience-icon name="previous" /> Back to Discover
+        </a>
+
+        <div class="workflow-page-header">
+          <div class="header-title-wrap">
+            <h1>Saved Experiences</h1>
+            <p class="workflow-lead-p">Keep track of your saved activities across Sri Lanka.</p>
+          </div>
+        </div>
+
+        @if (!session.account()) {
+          <div class="workflow-card signin-prompt">
+            <h2>Sign in to see your saved experiences</h2>
+            <p>Sign in with your traveler account to view and manage your saved experiences.</p>
+            <button type="button" class="outline-control workflow-primary" (click)="openAuthModal()">
+              Sign in
+            </button>
+          </div>
+        } @else {
+          @if (wishlist.error()) {
+            <div class="workflow-state" role="alert">
+              <p>{{ wishlist.error() }}</p>
+              @if (!wishlist.ready()) {
+                <button type="button" class="outline-control" (click)="wishlist.ensure()">
+                  Retry saved status
+                </button>
               }
             </div>
-          } @else { <p>No saved experiences yet.</p> }
-        } @else if (!session.account()) {
-          <p>Sign in to see your saved experiences.</p><a class="outline-control" routerLink="/auth">Sign in</a>
-        } @else {
-          <label><input type="checkbox" #available [checked]="only()" (change)="filter(available.checked)"> Available only</label>
-          @if (wishlist.error()) {
-            <p role="alert">{{ wishlist.error() }}</p>
-            @if (!wishlist.ready()) { <button class="outline-control" (click)="wishlist.ensure()">Retry saved status</button> }
           }
+
           @if (state(); as result) {
-            @if (result.status === 'loading') { <p class="workflow-state" role="status">Loading saved experiences…</p> }
-            @if (result.status === 'error') {
-              <div role="alert"><p>Could not load saved experiences.</p><button class="outline-control" (click)="retry()">Retry</button></div>
-            }
-            @if (result.status === 'ready' && result.owner === session.account()) {
-              <p class="workflow-pill" aria-live="polite">{{ result.data.total }} saved</p>
-              @if (!result.data.items.length) { <p>No saved experiences on this page.</p> }
-              <div class="experience-grid">
-                @for (item of result.data.items; track item.id) {
-                  @if (item.experience && item.is_available) {
-                    <app-experience-card [experience]="mapCard(item.experience)" [favorite]="true" [detailLink]="true" [liveFavorite]="true" />
-                  } @else {
-                    <article class="workflow-state"><h2>Experience unavailable</h2>
-                      <button type="button" class="outline-control" [disabled]="!wishlist.ready() || wishlist.busy(item.eco_experience_id)"
-                        (click)="wishlist.remove(item.eco_experience_id)">Remove from saved</button>
-                    </article>
-                  }
-                }
+            @if (result.status === 'loading') {
+              <p class="workflow-state" role="status">Loading saved experiences…</p>
+            } @else if (result.status === 'error') {
+              <div class="workflow-state" role="alert">
+                <p>Could not load saved experiences.</p>
+                <button type="button" class="outline-control" (click)="retry()">Retry</button>
               </div>
-              <app-experience-pagination [page]="page()" [totalPages]="result.data.total_pages" (change)="page.set($event)" />
-              @if (page() > 1 && page() > result.data.total_pages) {
-                <button class="outline-control" (click)="page.set(page() - 1)">Previous page</button>
+            } @else if (result.status === 'ready' && result.owner === session.account()) {
+              <div class="results-meta-bar" style="margin-bottom: 1.5rem;">
+                <div class="count-pill">
+                  <span class="pill-badge">{{ result.data.items.length }}{{ result.data.next_offset !== null ? '+' : '' }}</span>
+                  <span class="pill-text" aria-live="polite">
+                    {{ result.data.items.length }} saved on page {{ page() }}
+                  </span>
+                </div>
+              </div>
+
+              @if (!result.data.items.length) {
+                <div class="workflow-card empty-wishlist-card">
+                  <app-experience-icon name="heart" class="empty-icon" />
+                  <h3>No saved experiences yet.</h3>
+                  <p>Explore activities and click the heart icon on any card to save it for later.</p>
+                  <a routerLink="/experiences" class="outline-control workflow-primary" style="margin-top: 1rem;">
+                    Explore Experiences
+                  </a>
+                </div>
+              } @else {
+                <div class="experience-grid">
+                  @for (item of result.data.items; track item.id) {
+                    <app-experience-card
+                      [experience]="mapCard(item)"
+                      [detailLink]="true"
+                      [liveFavorite]="true"
+                    />
+                  }
+                </div>
+
+                <div class="wishlist-pagination-wrap">
+                  <app-experience-pagination
+                    [page]="page()"
+                    [hasNext]="result.data.next_offset !== null"
+                    (change)="changePage($event, result.data.next_offset)"
+                  />
+                </div>
               }
             }
           }
         }
       </main>
+      <app-footer />
+      <app-traveler-auth-modal />
     </div>
   `,
 })
 export class SavedExperiences {
-  readonly catalog = inject(EXPERIENCE_CATALOG);
   readonly wishlist = inject(WishlistState);
   readonly session = inject(TravelSession);
   private readonly api = inject(TRAVEL_SOURCE);
-  readonly page = signal(1);
-  readonly only = signal(false);
-  private readonly refresh = signal(0);
-  readonly mapCard = toExperience;
-  readonly samples = computed(() => this.catalog.experiences.filter(item => this.wishlist.previewIds().has(item.id)));
-  private readonly request = computed(() => ({
-    owner: this.session.account(), page: this.page(), only: this.only(), revision: this.wishlist.revision(), refresh: this.refresh(),
-  }));
-  readonly state = toSignal(toObservable(this.request).pipe(switchMap(({owner, page, only}) => {
-    if (!owner || this.catalog.preview) return of({status: 'idle'} as const);
-    this.wishlist.ensure();
-    return loadState(this.api.saved(page, 8, only)).pipe(
-      map(state => state.status === 'ready' ? {...state, owner} : state),
-    );
-  })));
+  private readonly authModal = inject(AuthModalService);
 
-  filter(value: boolean): void { this.only.set(value); this.page.set(1); }
-  retry(): void { this.refresh.update(value => value + 1); }
+  readonly pageSize = 8;
+  readonly page = signal(1);
+  readonly offset = signal(0);
+  readonly offsetHistory = signal<number[]>([0]);
+  private readonly refresh = signal(0);
+  readonly mapCard = toActivityCard;
+
+  private readonly request = computed(() => ({
+    owner: this.session.account(),
+    offset: this.offset(),
+    revision: this.wishlist.revision(),
+    refresh: this.refresh(),
+  }));
+
+  readonly state = toSignal(
+    toObservable(this.request).pipe(
+      switchMap(({ owner, offset }) => {
+        if (!owner) return of({ status: 'idle' } as const);
+        this.wishlist.ensure();
+        return loadState(this.api.saved(this.pageSize, offset)).pipe(
+          map((state) => (state.status === 'ready' ? { ...state, owner } : state)),
+        );
+      }),
+    ),
+  );
+
+  changePage(nextPage: number, nextOffset: number | null): void {
+    if (nextPage === this.page() || nextPage < 1) return;
+    if (nextPage > this.page()) {
+      if (nextOffset == null) return;
+      this.offsetHistory.update((history) => [...history, nextOffset]);
+      this.offset.set(nextOffset);
+      this.page.set(nextPage);
+    } else {
+      const history = this.offsetHistory();
+      const targetOffset = history[nextPage - 1] ?? 0;
+      this.offsetHistory.set(history.slice(0, nextPage));
+      this.offset.set(targetOffset);
+      this.page.set(nextPage);
+    }
+  }
+
+  openAuthModal(): void {
+    this.authModal.open('login', undefined, {
+      type: 'wishlist',
+      resumeCallback: () => this.retry(),
+    });
+  }
+
+  retry(): void {
+    this.refresh.update((value) => value + 1);
+  }
 }
