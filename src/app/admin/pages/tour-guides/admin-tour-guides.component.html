@@ -1,0 +1,264 @@
+<div class="admin-page-container">
+  <!-- Header / Breadcrumbs -->
+  <header class="page-header">
+    <div class="header-left">
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item"><a routerLink="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-separator" aria-hidden="true">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Tour Guides</li>
+        </ol>
+      </nav>
+      <h1 class="page-title">Tour Guide Management</h1>
+      <p class="page-subtitle">Inspect professional licenses, language competencies, verification badges and operational statuses.</p>
+    </div>
+    <div class="header-right">
+      <button type="button" class="btn-refresh" (click)="refreshData()" [disabled]="isLoading">
+        <svg class="icon-refresh" [class.spinning]="isLoading" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+        </svg>
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span>{{ successMessage }}</span>
+    <button type="button" class="alert-close" (click)="successMessage = null">&times;</button>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="alert-close" (click)="errorMessage = null">&times;</button>
+  </div>
+
+  <!-- KPI Metrics Cards -->
+  <section class="kpi-grid" aria-label="Tour Guide Metrics">
+    <div class="kpi-card">
+      <span class="kpi-label">Total Tour Guides</span>
+      <span class="kpi-value">{{ kpis.total_guides }}</span>
+      <span class="kpi-sub">Across all 25 districts</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">Active & Available</span>
+      <span class="kpi-value">{{ kpis.active_guides }}</span>
+      <span class="kpi-sub">Open for tourist bookings</span>
+    </div>
+    <div class="kpi-card kpi-warning">
+      <span class="kpi-label">Pending Review</span>
+      <span class="kpi-value">{{ kpis.pending_approval }}</span>
+      <span class="kpi-sub">Awaiting admin review</span>
+    </div>
+    <div class="kpi-card kpi-info">
+      <span class="kpi-label">Verified Badges</span>
+      <span class="kpi-value">{{ kpis.verified_guides }}</span>
+      <span class="kpi-sub">SLTDA-accredited guides</span>
+    </div>
+  </section>
+
+  <!-- Filter Toolbar -->
+  <section class="filter-card">
+    <div class="filter-row">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by guide name, business, city..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-controls">
+        <app-admin-select
+          ariaLabel="Filter by Province"
+          [options]="provinceOptions"
+          [value]="selectedProvince"
+          (valueChange)="onProvinceChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by District"
+          [options]="districtOptions"
+          [value]="selectedDistrict"
+          (valueChange)="onDistrictChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by Approval Status"
+          [options]="approvalOptions"
+          [value]="selectedApproval"
+          (valueChange)="onApprovalChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Filter by Verification Badge"
+          [options]="verificationOptions"
+          [value]="selectedVerification"
+          (valueChange)="onVerificationChange($event)"
+        ></app-admin-select>
+
+        <app-admin-select
+          ariaLabel="Items per page"
+          [options]="pageSizeOptions"
+          [value]="pageSize"
+          (valueChange)="onPageSizeChange($event)"
+        ></app-admin-select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Table -->
+  <section class="table-card">
+    <div class="table-wrapper">
+      <table class="data-table" aria-label="Tour Guides Directory">
+        <thead>
+          <tr>
+            <th>Tour Guide / Business</th>
+            <th>Location</th>
+            <th>Daily Rate</th>
+            <th>Experience</th>
+            <th>Rating</th>
+            <th>Approval</th>
+            <th>Badge</th>
+            <th>Credentials</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let g of guides" [class.row-pending]="g.approval_status === 'pending'">
+            <td>
+              <div class="guide-cell">
+                <span class="guide-title">{{ g.business_name }}</span>
+                <span class="guide-sub">{{ g.provider_name }} &bull; {{ g.email }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="cell-location">{{ g.base_city }}, {{ g.base_district }}</span>
+            </td>
+            <td>
+              <span class="cell-rate">LKR {{ g.daily_rate | number }}</span>
+            </td>
+            <td>
+              <span>{{ g.years_of_experience }} yrs</span>
+            </td>
+            <td>
+              <div class="rating-cell" *ngIf="g.rating_average; else noRating">
+                <span class="star-icon">&#9733;</span>
+                <span class="rating-val">{{ g.rating_average | number:'1.1-2' }}</span>
+                <span class="rating-count">({{ g.review_count }})</span>
+              </div>
+              <ng-template #noRating>
+                <span class="text-muted">New</span>
+              </ng-template>
+            </td>
+            <td>
+              <span class="status-badge" [attr.data-status]="g.approval_status">
+                {{ g.approval_status | uppercase }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-pill" *ngIf="g.verification_status === 'verified'">Verified</span>
+              <span class="badge-pill pill-pending" *ngIf="g.verification_status === 'pending'">Pending</span>
+              <span class="text-muted" *ngIf="g.verification_status === 'unverified'">None</span>
+            </td>
+            <td>
+              <span class="cred-chip" *ngIf="g.pending_credentials_count > 0">
+                {{ g.pending_credentials_count }} to verify
+              </span>
+              <span class="cred-chip chip-ok" *ngIf="g.pending_credentials_count === 0 && g.approved_credentials_count > 0">
+                {{ g.approved_credentials_count }} verified
+              </span>
+              <span class="text-muted" *ngIf="g.pending_credentials_count === 0 && g.approved_credentials_count === 0">0</span>
+            </td>
+            <td class="text-right actions-cell">
+              <button type="button" class="btn-action btn-inspect" (click)="openDetail(g.id)">
+                Inspect
+              </button>
+              <button
+                *ngIf="canReview() && g.approval_status !== 'approved'"
+                type="button"
+                class="btn-action btn-approve"
+                (click)="approveGuide(g.id)"
+              >
+                Approve
+              </button>
+              <button
+                *ngIf="canReview() && g.approval_status === 'pending'"
+                type="button"
+                class="btn-action btn-reject"
+                (click)="openRejectDialog(g.id, 'reject')"
+              >
+                Reject
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="guides.length === 0 && !isLoading">
+            <td colspan="9" class="empty-cell">
+              <div class="empty-state">
+                <p>No tour guides match your search or filter criteria.</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="isLoading">
+            <td colspan="9" class="loading-cell">
+              <div class="loading-state">
+                <span>Loading tour guide directory...</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <span class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} of {{ totalItems }} entries
+      </span>
+      <div class="pagination-buttons">
+        <button type="button" class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          Previous
+        </button>
+        <span class="page-curr">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modals & Dialogs -->
+<app-admin-tour-guide-detail-modal
+  *ngIf="selectedGuideDetail"
+  [guideDetail]="selectedGuideDetail"
+  [canReview]="canReview()"
+  [canVerify]="canVerify()"
+  [isProcessing]="isProcessing"
+  (close)="closeDetail()"
+  (approve)="approveGuide($event)"
+  (reject)="openRejectDialog($event, 'reject')"
+  (suspend)="openRejectDialog($event, 'suspend')"
+  (toggleBadge)="toggleGuideBadge($event)"
+  (verifyCredential)="openVerifyCredentialDialog($event)"
+></app-admin-tour-guide-detail-modal>
+
+<app-admin-tour-guide-reject-dialog
+  *ngIf="isRejectDialogOpen"
+  [actionType]="rejectActionType"
+  [isProcessing]="isProcessing"
+  (cancel)="closeRejectDialog()"
+  (confirm)="confirmRejectOrSuspend($event)"
+></app-admin-tour-guide-reject-dialog>
+
+<app-admin-credential-verify-dialog
+  *ngIf="isVerifyDialogOpen && targetCredential"
+  [credential]="targetCredential"
+  [isProcessing]="isProcessing"
+  (cancel)="closeVerifyCredentialDialog()"
+  (confirm)="confirmCredentialVerification($event)"
+></app-admin-credential-verify-dialog>

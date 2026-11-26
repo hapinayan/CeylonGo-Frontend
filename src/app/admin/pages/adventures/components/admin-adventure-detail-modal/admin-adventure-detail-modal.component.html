@@ -1,0 +1,146 @@
+<div class="modal-backdrop" (click)="onClose()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title-' + activity.id">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="header-titles">
+        <span class="badge-category">{{ activity.category | titlecase }}</span>
+        <h2 [id]="'modal-title-' + activity.id" class="modal-title">{{ activity.title }}</h2>
+        <p class="modal-subtitle">Provider: {{ activity.provider_business_name || ('Provider #' + activity.provider_id) }}</p>
+      </div>
+      <button type="button" class="btn-close" (click)="onClose()" aria-label="Close dialog">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Status & Highlight Strip -->
+      <div class="status-strip">
+        <div class="strip-item">
+          <span class="strip-label">Status</span>
+          <span class="badge-status" [ngClass]="'status-' + activity.approval_status">
+            {{ activity.approval_status | uppercase }}
+          </span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Difficulty</span>
+          <span class="badge-difficulty" [ngClass]="'diff-' + (activity.difficulty_level || 'moderate')">
+            {{ activity.difficulty_level || 'Moderate' | titlecase }}
+          </span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Duration</span>
+          <span class="strip-value">{{ activity.duration_hours }} Hours</span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Rate / Person</span>
+          <span class="strip-value font-price">LKR {{ activity.price_per_person | number:'1.0-0' }}</span>
+        </div>
+        <div class="strip-item">
+          <span class="strip-label">Capacity</span>
+          <span class="strip-value">{{ activity.min_participants }}–{{ activity.max_participants }} Persons</span>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      <div class="detail-section">
+        <h4 class="section-title">Overview & Description</h4>
+        <p class="description-text">{{ activity.description }}</p>
+      </div>
+
+      <!-- Location & Meeting Point -->
+      <div class="detail-section">
+        <h4 class="section-title">Location & Logistics</h4>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Location / Landmark</span>
+            <span class="meta-val">{{ activity.location }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">City</span>
+            <span class="meta-val">{{ activity.city }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">District & Province</span>
+            <span class="meta-val">{{ activity.district }}{{ activity.province ? ', ' + activity.province + ' Province' : '' }}</span>
+          </div>
+          <div class="meta-item" *ngIf="activity.meeting_point">
+            <span class="meta-label">Meeting Point</span>
+            <span class="meta-val">{{ activity.meeting_point }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safety & Requirements -->
+      <div class="detail-section" *ngIf="activity.safety_guidelines?.length || activity.requirements?.length">
+        <h4 class="section-title">Safety Guidelines & Requirements</h4>
+        <div class="guidelines-grid">
+          <div class="guidelines-col" *ngIf="activity.safety_guidelines?.length">
+            <h5 class="sub-title">Safety Rules</h5>
+            <ul class="bullet-list">
+              <li *ngFor="let rule of activity.safety_guidelines">{{ rule }}</li>
+            </ul>
+          </div>
+          <div class="guidelines-col" *ngIf="activity.requirements?.length">
+            <h5 class="sub-title">Participant Requirements</h5>
+            <ul class="bullet-list">
+              <li *ngFor="let req of activity.requirements">{{ req }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inclusions & Certifications -->
+      <div class="detail-section" *ngIf="activity.included_items?.length || activity.certification_details">
+        <h4 class="section-title">Inclusions & Compliance</h4>
+        <div class="inclusions-grid">
+          <div class="inc-col" *ngIf="activity.included_items?.length">
+            <h5 class="sub-title">Included Equipment & Gear</h5>
+            <div class="tags-container">
+              <span class="tag-pill" *ngFor="let item of activity.included_items">{{ item }}</span>
+            </div>
+          </div>
+          <div class="inc-col" *ngIf="activity.certification_details">
+            <h5 class="sub-title">Certification & Licensing</h5>
+            <div class="cert-box">
+              <span class="cert-icon">🛡️</span>
+              <span class="cert-text">{{ activity.certification_details }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rejection Notice (if rejected) -->
+      <div class="rejection-box" *ngIf="activity.approval_status === 'rejected' && activity.rejection_reason">
+        <h5 class="rejection-title">Listing Rejection Reason</h5>
+        <p class="rejection-text">{{ activity.rejection_reason }}</p>
+        <span class="rejection-time" *ngIf="activity.reviewed_at">Reviewed on {{ activity.reviewed_at | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Close</button>
+      <div class="action-buttons" *ngIf="canReview && activity.approval_status === 'pending'">
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="isProcessing"
+          (click)="onReject()"
+        >
+          Reject Activity
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="isProcessing"
+          (click)="onApprove()"
+        >
+          {{ isProcessing ? 'Processing...' : 'Approve Activity' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

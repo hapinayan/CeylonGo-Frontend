@@ -1,0 +1,445 @@
+<div class="admin-page-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-title-row">
+        <h1 class="page-title">System Settings</h1>
+        <span class="role-badge" [class.badge-super]="canManageSettings()" [class.badge-restricted]="!canManageSettings()">
+          {{ canManageSettings() ? 'Super Admin Access' : 'Restricted (Read Only)' }}
+        </span>
+      </div>
+      <p class="page-subtitle">Configure global platform runtime variables, security parameters, and commission rates.</p>
+    </div>
+    <div class="header-right" *ngIf="settings">
+      <div class="meta-tag">
+        <span class="meta-label">Last Modified:</span>
+        <span class="meta-value">{{ settings.last_updated_at | date:'medium' }}</span>
+      </div>
+      <div class="meta-tag">
+        <span class="meta-label">Admin:</span>
+        <span class="meta-value">{{ settings.updated_by_admin }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="alert-icon">✓</span>
+    <span>{{ successMessage }}</span>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <span class="alert-icon">⚠️</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Settings Navigation Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'general'"
+      (click)="setTab('general')"
+      type="button"
+      data-testid="tab-general"
+    >
+      <span class="tab-icon">🌐</span>
+      <span>General</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'security'"
+      (click)="setTab('security')"
+      type="button"
+      data-testid="tab-security"
+    >
+      <span class="tab-icon">🔒</span>
+      <span>Security & Access</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'service_fees'"
+      (click)="setTab('service_fees')"
+      type="button"
+      data-testid="tab-fees"
+    >
+      <span class="tab-icon">💰</span>
+      <span>Fees & Commissions</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'notifications'"
+      (click)="setTab('notifications')"
+      type="button"
+      data-testid="tab-notifications"
+    >
+      <span class="tab-icon">🔔</span>
+      <span>Alerts & Notifications</span>
+    </button>
+  </div>
+
+  <!-- Content Panes -->
+  <div class="tab-content-card" *ngIf="!isLoading">
+    <!-- General Settings Form -->
+    <div class="settings-section" *ngIf="activeTab === 'general'">
+      <div class="section-header">
+        <h2 class="section-title">General Platform Parameters</h2>
+        <p class="section-description">Core platform branding, identity, and operational status.</p>
+      </div>
+
+      <form class="settings-form" (ngSubmit)="saveSection('general')">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Platform Name</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="generalForm.platform_name"
+              name="platform_name"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Support Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="generalForm.support_email"
+              name="support_email"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contact Hotline</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="generalForm.contact_hotline"
+              name="contact_hotline"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Default Currency</label>
+            <select
+              class="form-control"
+              [(ngModel)]="generalForm.default_currency"
+              name="default_currency"
+              [disabled]="!canManageSettings() || isSaving"
+            >
+              <option value="LKR">LKR (Sri Lankan Rupee)</option>
+              <option value="USD">USD (US Dollar)</option>
+              <option value="EUR">EUR (Euro)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Operating Timezone</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="generalForm.operating_timezone"
+              name="operating_timezone"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <div class="checkbox-control">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="generalForm.maintenance_mode"
+                  name="maintenance_mode"
+                  [disabled]="!canManageSettings() || isSaving"
+                />
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label-group">
+                <span class="toggle-title">Platform Maintenance Mode</span>
+                <span class="toggle-desc">When active, client portals will display a scheduled maintenance screen.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" *ngIf="canManageSettings()">
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Saving Changes...' : 'Save General Settings' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Security Settings Form -->
+    <div class="settings-section" *ngIf="activeTab === 'security'">
+      <div class="section-header">
+        <h2 class="section-title">Security & Session Policies</h2>
+        <p class="section-description">Admin session longevity, login retry limits, and IP address controls.</p>
+      </div>
+
+      <form class="settings-form" (ngSubmit)="saveSection('security')">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Session Inactivity Timeout (Minutes)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="securityForm.session_timeout_minutes"
+              name="session_timeout_minutes"
+              min="5"
+              max="1440"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Max Failed Login Attempts</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="securityForm.max_failed_login_attempts"
+              name="max_failed_login_attempts"
+              min="3"
+              max="10"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Admin Password Expiry (Days)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="securityForm.password_expiry_days"
+              name="password_expiry_days"
+              min="0"
+              max="365"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Allowed Admin IP Ranges (CIDR notation, comma separated)</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="securityForm.allowed_admin_ip_ranges"
+              name="allowed_admin_ip_ranges"
+              placeholder="e.g. 0.0.0.0/0 or 192.168.1.0/24"
+              [disabled]="!canManageSettings() || isSaving"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <div class="checkbox-control">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="securityForm.enforce_2fa_for_admins"
+                  name="enforce_2fa_for_admins"
+                  [disabled]="!canManageSettings() || isSaving"
+                />
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label-group">
+                <span class="toggle-title">Enforce Two-Factor Authentication (2FA)</span>
+                <span class="toggle-desc">Mandate TOTP authenticator app verification for all admin logins.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" *ngIf="canManageSettings()">
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Saving Changes...' : 'Save Security Settings' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Service Fees Form -->
+    <div class="settings-section" *ngIf="activeTab === 'service_fees'">
+      <div class="section-header">
+        <h2 class="section-title">Commission & Service Fees</h2>
+        <p class="section-description">Define platform commission percentages charged across service categories.</p>
+      </div>
+
+      <form class="settings-form" (ngSubmit)="saveSection('service_fees')">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Homestay Commission Rate (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="feesForm.homestay_commission_rate"
+              name="homestay_commission_rate"
+              min="0"
+              max="50"
+              step="0.5"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tour Guide Commission Rate (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="feesForm.tour_guide_commission_rate"
+              name="tour_guide_commission_rate"
+              min="0"
+              max="50"
+              step="0.5"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vehicle & Bike Rental Rate (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="feesForm.rental_commission_rate"
+              name="rental_commission_rate"
+              min="0"
+              max="50"
+              step="0.5"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Artisan Marketplace Fee (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="feesForm.artisan_marketplace_fee"
+              name="artisan_marketplace_fee"
+              min="0"
+              max="50"
+              step="0.5"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cancellation Grace Period (Hours)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="feesForm.cancellation_grace_period_hours"
+              name="cancellation_grace_period_hours"
+              min="0"
+              max="168"
+              [disabled]="!canManageSettings() || isSaving"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-actions" *ngIf="canManageSettings()">
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Saving Changes...' : 'Save Fee Parameters' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Notification Settings Form -->
+    <div class="settings-section" *ngIf="activeTab === 'notifications'">
+      <div class="section-header">
+        <h2 class="section-title">Automated Alerts & Webhooks</h2>
+        <p class="section-description">Manage automated notification triggers and external operational alert integrations.</p>
+      </div>
+
+      <form class="settings-form" (ngSubmit)="saveSection('notifications')">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label class="form-label">Security & Critical Alert Webhook URL</label>
+            <input
+              type="url"
+              class="form-control"
+              [(ngModel)]="notificationsForm.system_alert_webhook_url"
+              name="system_alert_webhook_url"
+              placeholder="https://hooks.slack.com/services/..."
+              [disabled]="!canManageSettings() || isSaving"
+            />
+          </div>
+
+          <div class="form-group full-width">
+            <div class="checkbox-control">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="notificationsForm.send_email_on_new_provider"
+                  name="send_email_on_new_provider"
+                  [disabled]="!canManageSettings() || isSaving"
+                />
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label-group">
+                <span class="toggle-title">New Provider Registration Notice</span>
+                <span class="toggle-desc">Notify administrators immediately whenever a host, guide, or artisan registers.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <div class="checkbox-control">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="notificationsForm.send_email_on_verification_request"
+                  name="send_email_on_verification_request"
+                  [disabled]="!canManageSettings() || isSaving"
+                />
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label-group">
+                <span class="toggle-title">Verification Request Alert</span>
+                <span class="toggle-desc">Trigger email notifications when listings are submitted for review.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <div class="checkbox-control">
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="notificationsForm.daily_digest_to_finance"
+                  name="daily_digest_to_finance"
+                  [disabled]="!canManageSettings() || isSaving"
+                />
+                <span class="slider"></span>
+              </label>
+              <div class="toggle-label-group">
+                <span class="toggle-title">Daily Financial Digest</span>
+                <span class="toggle-desc">Dispatch daily settlement and booking revenue totals to the finance inbox.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" *ngIf="canManageSettings()">
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Saving Changes...' : 'Save Notification Settings' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

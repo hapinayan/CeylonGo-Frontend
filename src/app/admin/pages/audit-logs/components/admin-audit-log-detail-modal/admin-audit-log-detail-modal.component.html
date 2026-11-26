@@ -1,0 +1,57 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-header">
+      <div>
+        <span class="badge action-badge">{{ log.action_type }}</span>
+        <h2 id="modal-title" class="modal-title">Audit Record #{{ log.id }}</h2>
+        <p class="modal-subtitle">Logged at: {{ log.created_at | date:'medium' }}</p>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close dialog">&times;</button>
+    </header>
+
+    <div class="modal-body">
+      <div class="actor-card">
+        <h3>Actor Details</h3>
+        <p><strong>Admin Name:</strong> {{ log.actor?.full_name || 'System / Direct' }}</p>
+        <p><strong>Email:</strong> {{ log.actor?.email || 'N/A' }}</p>
+        <p><strong>Actor Role:</strong> {{ log.actor?.role || 'system' }}</p>
+        <p><strong>Actor User ID:</strong> #{{ log.admin_user_id }}</p>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="label">Target Entity Type</span>
+          <span class="val">{{ log.entity_type }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">Target Entity ID</span>
+          <span class="val">{{ log.entity_id || 'N/A' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">IP Address</span>
+          <span class="val font-mono">{{ log.ip_address || 'Internal' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="label">Client User-Agent</span>
+          <span class="val text-truncate font-mono">{{ log.user_agent || 'Standard API Client' }}</span>
+        </div>
+      </div>
+
+      <div class="payload-box" *ngIf="log.details">
+        <h4>Structured Audit Context Payload:</h4>
+        <pre>{{ log.details | json }}</pre>
+      </div>
+
+      <div class="compliance-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span>Immutable Forensic Trail: This entry is cryptographically committed and cannot be altered or removed.</span>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Close</button>
+    </footer>
+  </div>
+</div>

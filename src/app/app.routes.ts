@@ -479,6 +479,14 @@ export const routes: Routes = [
 
   { path: 'wishlist', loadChildren: () => import('./traveler-wishlist/wishlist.routes').then(module => module.travelerWishlistRoutes) },
 
+  // CEYLONGO ADMIN MODULE (PHASES 01–08)
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('./admin/admin.routes')
+        .then(m => m.ADMIN_ROUTES)
+  },
+
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',

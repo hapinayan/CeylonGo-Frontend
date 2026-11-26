@@ -1,0 +1,51 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-header">
+      <div>
+        <h2 id="modal-title" class="modal-title">Invite Platform Administrator</h2>
+        <p class="modal-subtitle">Provisions a secure governance account with role-restricted permissions.</p>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close dialog">&times;</button>
+    </header>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="inviteEmail">Official Admin Email:</label>
+        <input id="inviteEmail" type="email" class="input" placeholder="name@ceylongo.lk" [(ngModel)]="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="inviteName">Full Legal Name:</label>
+        <input id="inviteName" type="text" class="input" placeholder="First and last name" [(ngModel)]="fullName" />
+      </div>
+
+      <div class="form-group">
+        <label for="inviteRole">Assigned Canonical Role:</label>
+        <select id="inviteRole" class="input" [(ngModel)]="role">
+          <option value="operations_admin">Operations Administrator (Listing and Verification)</option>
+          <option value="finance_admin">Finance Administrator (Reconciliation and Settlements)</option>
+          <option value="content_moderator">Content Moderator (Community and Reviews)</option>
+          <option value="support_admin">Support Administrator (Read-Only Customer Care)</option>
+          <option value="super_admin">Super Administrator (Full Root Authority)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="inviteDept">Department / Functional Unit:</label>
+        <input id="inviteDept" type="text" class="input" placeholder="e.g. Host Verification Team" [(ngModel)]="department" />
+      </div>
+
+      <div class="form-group">
+        <label for="inviteNote">Invitation Note (optional):</label>
+        <textarea id="inviteNote" rows="2" class="input" placeholder="Context for this administrative access grant..." [(ngModel)]="invitationNote"></textarea>
+      </div>
+
+      <p class="error-msg" *ngIf="validationError">{{ validationError }}</p>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit()">Send Invitation</button>
+    </footer>
+  </div>
+</div>

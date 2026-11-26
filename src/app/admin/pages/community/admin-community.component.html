@@ -1,0 +1,116 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Community & Trust Moderation</h1>
+      <p class="page-subtitle">Reported user content, travel forum discussions, comment moderation, and writer policy enforcement.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadReports()" [disabled]="isLoading">
+        <span>Refresh Queue</span>
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="successMessage" class="banner success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="banner error">{{ errorMessage }}</div>
+
+  <!-- Filters Toolbar -->
+  <section class="filters-card">
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search violation reason, reporter, or author..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <app-admin-select
+        ariaLabel="Filter by Content Type"
+        [options]="entityTypeOptions"
+        [value]="selectedEntityType"
+        (valueChange)="onEntityTypeChange($event)"
+      ></app-admin-select>
+
+      <app-admin-select
+        ariaLabel="Filter by Status"
+        [options]="statusOptions"
+        [value]="selectedStatus"
+        (valueChange)="onStatusChange($event)"
+      ></app-admin-select>
+
+      <app-admin-select
+        ariaLabel="Items per page"
+        [options]="pageSizeOptions"
+        [value]="pageSize"
+        (valueChange)="onPageSizeChange($event)"
+      ></app-admin-select>
+    </div>
+  </section>
+
+  <!-- Reports Table -->
+  <section class="table-card">
+    <div *ngIf="isLoading" class="loading-state">
+      <p>Loading reported community violations...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="table-wrapper">
+      <table class="data-table" aria-label="Community Moderation Queue">
+        <thead>
+          <tr>
+            <th>Report ID</th>
+            <th>Content Target</th>
+            <th>Reported User</th>
+            <th>Reporter</th>
+            <th>Violation Reason</th>
+            <th>Status</th>
+            <th>Reported Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of reports">
+            <td><strong>#{{ r.id }}</strong></td>
+            <td><span class="badge entity-badge">{{ r.entity_type | uppercase }} #{{ r.entity_id }}</span></td>
+            <td>{{ r.reported_user_name }}</td>
+            <td>{{ r.reporter_name }}</td>
+            <td class="reason-cell">
+              <span>{{ r.reason }}</span>
+              <span *ngIf="r.details" class="details-snippet">{{ r.details }}</span>
+            </td>
+            <td><span class="badge" [ngClass]="r.status">{{ r.status | uppercase }}</span></td>
+            <td>{{ r.created_at | date:'short' }}</td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline" (click)="openReview(r)">
+                {{ canModerate() && r.status === 'pending' ? 'Review & Moderate' : 'Inspect Details' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="reports.length === 0">
+            <td colspan="8" class="empty-cell">No community violation reports in this queue.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pagination-footer" *ngIf="totalPages > 1">
+      <span class="pagination-info">Showing {{ reports.length }} of {{ totalItems }} records</span>
+      <div class="pagination-btns">
+        <button type="button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Previous</button>
+        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- Review Modal -->
+  <app-admin-community-review-modal
+    *ngIf="selectedReport"
+    [report]="selectedReport"
+    [canModerate]="canModerate()"
+    (close)="closeReview()"
+    (action)="executeAction($event)"
+  ></app-admin-community-review-modal>
+</div>

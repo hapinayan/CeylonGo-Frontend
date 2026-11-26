@@ -1,0 +1,84 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-header">
+      <div>
+        <span class="badge" [ngClass]="report.status">{{ report.status | uppercase }}</span>
+        <h2 id="modal-title" class="modal-title">Review Content Report #{{ report.id }}</h2>
+        <p class="modal-subtitle">Target: <strong>{{ report.entity_type | uppercase }} #{{ report.entity_id }}</strong></p>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close dialog">&times;</button>
+    </header>
+
+    <div class="modal-body">
+      <div class="report-parties">
+        <div class="party">
+          <span class="label">Reported User</span>
+          <span class="val">{{ report.reported_user_name }}</span>
+          <span class="sub">User ID: #{{ report.reported_user_id }}</span>
+        </div>
+        <div class="party">
+          <span class="label">Reporter</span>
+          <span class="val">{{ report.reporter_name }}</span>
+          <span class="sub">User ID: #{{ report.reporter_id }}</span>
+        </div>
+      </div>
+
+      <div class="report-box">
+        <h4>Reported Violation:</h4>
+        <p class="reason"><strong>{{ report.reason }}</strong></p>
+        <p class="details" *ngIf="report.details">{{ report.details }}</p>
+        <span class="date">Reported on: {{ report.created_at | date:'medium' }}</span>
+      </div>
+
+      <div class="moderation-controls" *ngIf="canModerate && report.status === 'pending'">
+        <h3>Moderation Action</h3>
+        <div class="action-options">
+          <label>
+            <input type="radio" name="modAction" [(ngModel)]="selectedAction" value="hide" />
+            <span>Hide Content (Soft moderation)</span>
+          </label>
+          <label>
+            <input type="radio" name="modAction" [(ngModel)]="selectedAction" value="remove" />
+            <span>Remove Content (Permanent deletion)</span>
+          </label>
+          <label>
+            <input type="radio" name="modAction" [(ngModel)]="selectedAction" value="suspend_author" />
+            <span>Suspend Author Write Access</span>
+          </label>
+          <label>
+            <input type="radio" name="modAction" [(ngModel)]="selectedAction" value="approve" />
+            <span>Dismiss Report (Content complies)</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="reasonInput">Administrative Justification / Audit Notes (required):</label>
+          <textarea
+            id="reasonInput"
+            rows="3"
+            class="textarea"
+            placeholder="Document reason for moderation action..."
+            [(ngModel)]="reason"
+          ></textarea>
+          <span class="error-text" *ngIf="validationError">{{ validationError }}</span>
+        </div>
+      </div>
+
+      <div class="read-only-notice" *ngIf="!canModerate">
+        <p>Your administrator role has read-only audit permissions for Community Management.</p>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Close</button>
+      <button
+        *ngIf="canModerate && report.status === 'pending'"
+        type="button"
+        class="btn btn-primary"
+        (click)="onSubmit()"
+      >
+        Execute Action
+      </button>
+    </footer>
+  </div>
+</div>
