@@ -108,6 +108,29 @@ describe('Traveler Wishlist', () => {
       status: 'available',
     });
     expect(mappedRental).toMatchObject({ kind: 'rental', id: 9, title: 'Coastal Scooter', price: 2500, detail: ['/bicycles', 9] });
+
+    const mappedArtisan = adaptWishlist.artisan({
+      id: 14,
+      artisan_listing_id: 121,
+      user_id: 10,
+      is_available: true,
+      listing: {
+        id: 121,
+        provider_profile_id: 9,
+        title: 'Vavuniya Clay Studio',
+        craft_category: 'Pottery & Ceramics',
+        district: 'Vavuniya',
+        city: 'Vavuniya',
+        price: 2200,
+        currency: 'LKR',
+        cover_image_url: '/api/v1/listings/121/photos/120',
+        approval_status: 'approved',
+        is_active: true,
+        average_rating: null,
+        total_reviews: 0,
+      },
+    });
+    expect(mappedArtisan).toMatchObject({ kind: 'artisan', id: 121, title: 'Vavuniya Clay Studio', price: 2200, detail: ['/artisans', 121] });
   });
 
   it('uses cursor pagination on /homestays/wishlist and removes items via MVP wishlist endpoints', () => {
@@ -116,6 +139,7 @@ describe('Traveler Wishlist', () => {
     const http = TestBed.inject(HttpTestingController);
     const homestayBase = environment.apiBaseUrl + '/homestays';
     const guideBase = environment.apiBaseUrl + '/tour-guides';
+    const artisanBase = environment.apiBaseUrl + '/artisan-listings';
 
     const read = vi.fn();
     api.list('homestay').subscribe(read);
@@ -130,6 +154,7 @@ describe('Traveler Wishlist', () => {
 
     api.remove(guide).subscribe();
     http.expectOne({ method: 'DELETE', url: guideBase + '/7/wishlist' }).flush({ listing_id: 7, saved: false });
+    void artisanBase;
     http.verify();
   });
 
@@ -162,7 +187,7 @@ describe('Traveler Wishlist', () => {
       .find(node => node.textContent?.includes(label))!;
     expect(harness.routeNativeElement!.textContent).toContain(stay.title);
     expect(harness.routeNativeElement!.textContent).toContain(guide.title);
-    find('Retry Bike & Bicycle Rental').click();
+    find('Retry Rentals').click();
     harness.detectChanges();
     expect(harness.routeNativeElement!.textContent).toContain(rental.title);
     expect(api.list.mock.calls.filter(([kind]) => kind === 'rental')).toHaveLength(2);

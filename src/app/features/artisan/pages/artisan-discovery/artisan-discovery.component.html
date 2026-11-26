@@ -1,281 +1,252 @@
-<app-traveler-navbar />
-
 <main class="discovery-main">
-  <!-- DEMO MODE BADGE (Discreet banner displayed only when explicitly in demo mode) -->
-  @if (isFixtureMode()) {
-  <div class="content-container">
-    <div class="demo-mode-badge" role="note">
-      <span class="badge-dot"></span>
-      <span>Demo Mode Active &bull; Showing Verified Reference UI Showcase</span>
-      <button type="button" class="exit-demo-btn" (click)="exitDemoMode()" aria-label="Exit Demo Mode">
-        Exit Demo
-      </button>
-    </div>
-  </div>
-  }
-
-  <!-- HERO / DISCOVERY HEADING -->
-  <section class="hero-section">
+  <!-- COMPACT SEARCH BAR SECTION -->
+  <section class="search-header-section" aria-label="Search local artisans and handicrafts">
     <div class="content-container">
-      <div class="hero-header-row">
-        <a [routerLink]="['/artisans']" [queryParams]="queryParams()" class="back-to-landing-link" aria-label="Back to Artisan Landing">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
+      <form class="search-pill-bar" (ngSubmit)="onSearchSubmit()">
+        <div class="search-segment search-keyword-segment">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span>All Artisans Home</span>
-        </a>
-      </div>
-      <h1 class="hero-title">Discover Local Artisans & Small Businesses</h1>
-      <p class="hero-subtitle">Support Sri Lankan artisans, handcrafted products and local businesses.</p>
-    </div>
-  </section>
-
-  <!-- COMPACT HORIZONTAL PILL CATEGORY TABS -->
-  <section class="category-section">
-    <div class="content-container">
-      <app-category-bar [selectedCategory]="selectedCategory()" [allCategories]="categories()"
-        (categorySelected)="onCategoryPillSelected($event)" />
-    </div>
-  </section>
-
-  <!-- COMPACT FILTER TOOLBAR -->
-  <section class="filter-toolbar-section">
-    <div class="content-container">
-      <div class="filter-toolbar">
-        <!-- LEFT: ALL DISTRICTS & SORT BY -->
-        <div class="toolbar-left">
-          <!-- ALL 25 DISTRICTS DROPDOWN -->
-          <div class="toolbar-field district-dropdown-box">
-            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <select id="toolbarDistrictSelect" [ngModel]="selectedDistrict()"
-              (ngModelChange)="onDistrictDropdownChange($event)" class="toolbar-select"
-              aria-label="Filter by Sri Lankan District">
-              <option [ngValue]="null">All Districts (25)</option>
-              @for (dist of districts(); track dist) {
-              <option [value]="dist">{{ dist }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- SORT BY DROPDOWN -->
-          <div class="toolbar-field sort-dropdown-box">
-            <label for="sortSelect" class="toolbar-label">Sort by:</label>
-            <select id="sortSelect" class="toolbar-select" [value]="selectedSort()" (change)="onSortChange($event)"
-              aria-label="Sort artisans">
-              <option value="popular">Popular</option>
-              <option value="rating">Highest Rated</option>
-              <option value="newest">Newest</option>
-            </select>
-          </div>
+          <input
+            type="text"
+            name="search"
+            class="search-input"
+            [ngModel]="searchLocation()"
+            (ngModelChange)="searchLocation.set($event)"
+            placeholder="Search artisans, workshops, crafts or products..."
+            aria-label="Search artisans or businesses"
+          />
         </div>
 
-        <!-- RIGHT: VIEW TOGGLE & FILTERS DRAWER BUTTON -->
-        <div class="toolbar-right">
-          <!-- GRID / LIST VIEW TOGGLE -->
-          <div class="view-toggle-group" role="group" aria-label="View Layout Toggle">
-            <button type="button" class="view-btn" [class.active]="viewMode() === 'grid'" (click)="setViewMode('grid')"
-              aria-label="Grid View" title="Grid View">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                <rect x="3" y="14" width="7" height="7" rx="1.5" />
-              </svg>
+        <div class="segment-divider" aria-hidden="true"></div>
+
+        <div class="search-segment search-district-segment">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          <select
+            name="district"
+            class="district-select"
+            [ngModel]="selectedDistrict()"
+            (ngModelChange)="selectedDistrict.set($event)"
+            aria-label="Select district"
+          >
+            <option [ngValue]="null">All Districts (25)</option>
+            @for (dist of districts(); track dist) {
+              <option [value]="dist">{{ dist }}</option>
+            }
+          </select>
+        </div>
+
+        <button type="submit" class="search-submit-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span>Search</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CATEGORY ICON NAVIGATION -->
+  <section class="category-nav-section" aria-label="Artisan categories">
+    <div class="content-container">
+      <app-category-bar
+        [selectedCategory]="selectedCategory()"
+        [allCategories]="categories()"
+        (categorySelected)="onCategorySelected($event)"
+      />
+    </div>
+  </section>
+
+  <!-- RESULTS HEADER & ACTIONS -->
+  <section class="results-section">
+    <div class="content-container">
+      <div class="results-toolbar">
+        <div class="results-count-group">
+          <h1 class="results-count">{{ displayedCount() }} Artisans Found</h1>
+          @if (hasActiveFilters()) {
+            <button type="button" class="clear-inline-btn" (click)="clearAllFilters()">
+              Clear filters
             </button>
-            <button type="button" class="view-btn" [class.active]="viewMode() === 'list'" (click)="setViewMode('list')"
-              aria-label="List View" title="List View">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
-            </button>
+          }
+        </div>
+
+        <div class="results-actions">
+          <div class="sort-box">
+            <label for="artisanSort" class="sort-label">Sort:</label>
+            <select
+              id="artisanSort"
+              class="sort-select"
+              [value]="selectedSort()"
+              (change)="onSortChange($event)"
+              aria-label="Sort artisan listings"
+            >
+              <option value="newest">Newest</option>
+              <option value="title">Name (A - Z)</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+            </select>
           </div>
 
-          <!-- FILTERS BUTTON -->
-          <button type="button" class="filters-btn" [class.active]="showFiltersDrawer()" (click)="toggleFiltersDrawer()"
-            aria-label="Toggle Filters Panel">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="4" y1="21" x2="4" y2="14" />
-              <line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" />
-              <line x1="20" y1="12" x2="20" y2="3" />
-              <line x1="1" y1="14" x2="7" y2="14" />
-              <line x1="9" y1="8" x2="15" y2="8" />
-              <line x1="17" y1="16" x2="23" y2="16" />
+          <button type="button" class="filters-btn" (click)="openFiltersModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="7" y1="12" x2="17" y2="12" />
+              <line x1="10" y1="18" x2="14" y2="18" />
             </svg>
             <span>Filters</span>
             @if (activeFilterCount() > 0) {
-            <span class="filter-count-badge">{{ activeFilterCount() }}</span>
+              <span class="filter-badge">{{ activeFilterCount() }}</span>
             }
           </button>
         </div>
       </div>
 
-      <!-- FILTER DRAWER PANEL -->
-      @if (showFiltersDrawer()) {
-      <div class="filter-panel-card" role="region" aria-label="Filter Options">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <h3>Filter Artisans by District</h3>
-            <span class="panel-subtitle">All 25 Sri Lankan Districts</span>
-          </div>
-          <div class="panel-actions">
-            <input type="text" placeholder="Search district..." [ngModel]="districtSearch()"
-              (ngModelChange)="districtSearch.set($event)" class="district-search-input" aria-label="Search district" />
-            <button type="button" class="clear-btn" (click)="clearDistrict()">Clear District</button>
-            <button type="button" class="close-panel-btn" (click)="toggleFiltersDrawer()"
-              aria-label="Close filters panel">&times;</button>
-          </div>
-        </div>
-
-        <div class="district-pills">
-          @for (dist of filteredDistricts(); track dist) {
-          <button type="button" class="district-pill" [class.active]="selectedDistrict() === dist"
-            (click)="toggleDistrict(dist)">
-            {{ dist }}
-          </button>
-          }
-        </div>
-      </div>
-      }
-    </div>
-  </section>
-
-  <!-- RESULTS SECTION -->
-  <section class="results-section">
-    <div class="content-container">
-      <!-- RESULTS META BAR (Count below toolbar + Reset active filters link) -->
-      <div class="results-meta-bar">
-        <h2 class="results-count">
-          @if (displayedCount() === 0) {
-          No Artisans & Businesses Found
-          } @else if (displayedCount() === 1) {
-          1 Local Artisan & Business
-          } @else {
-          {{ displayedCount() }} Local Artisans & Businesses
-          }
-        </h2>
-
-        @if (hasActiveFilters()) {
-        <button type="button" class="reset-filters-btn" (click)="clearAllFilters()" aria-label="Reset all filters">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-          <span>Reset Filters</span>
-        </button>
-        }
-      </div>
-
       <!-- LOADING SKELETONS -->
       @if (isLoading()) {
-      <div class="artisan-grid" aria-busy="true">
-        @for (n of [1, 2, 3, 4, 5, 6, 7, 8]; track n) {
-        <div class="skeleton-card">
-          <div class="skeleton-img"></div>
-          <div class="skeleton-text line-1"></div>
-          <div class="skeleton-text line-2"></div>
-          <div class="skeleton-text line-3"></div>
-        </div>
-        }
-      </div>
-      }
-
-      <!-- LOADED ARTISAN CARD GRID OR LIST -->
-      @if (!isLoading() && paginatedListings().length > 0) {
-      <div [class]="viewMode() === 'grid' ? 'artisan-grid' : 'artisan-list'">
-        @for (item of paginatedListings(); track item.id) {
-        <app-artisan-card [listing]="item" [layout]="viewMode()" />
-        }
-      </div>
-
-      <!-- PAGINATION BAR (Visible only when more than 1 page exists) -->
-      @if (totalPages() > 1) {
-      <nav class="pagination-bar" aria-label="Artisan Listings Pagination">
-        <button type="button" class="page-arrow" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)"
-          aria-label="Previous Page">
-          &larr;
-        </button>
-
-        <div class="page-numbers">
-          @for (p of getPageNumbers(); track $index) {
-          @if (p === '...') {
-          <span class="page-ellipsis">&hellip;</span>
-          } @else {
-          <button type="button" class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(+p)"
-            [attr.aria-current]="p === currentPage() ? 'page' : null">
-            {{ p }}
-          </button>
-          }
+        <div class="listings-grid" aria-busy="true" aria-label="Loading artisan listings">
+          @for (s of [1, 2, 3, 4, 5, 6, 7, 8]; track s) {
+            <div class="skeleton-card">
+              <div class="skeleton-img"></div>
+              <div class="skeleton-body">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line sub"></div>
+                <div class="skeleton-line desc"></div>
+              </div>
+            </div>
           }
         </div>
-
-        <button type="button" class="page-arrow" [disabled]="currentPage() >= totalPages()"
-          (click)="goToPage(currentPage() + 1)" aria-label="Next Page">
-          &rarr;
-        </button>
-      </nav>
-      }
       }
 
-      <!-- ERROR STATE (Strict Isolation: Explicitly shown on backend/network failure) -->
+      <!-- API ERROR STATE -->
       @if (!isLoading() && hasError()) {
-      <div class="empty-state error-state" role="alert">
-        <div class="empty-icon-box error-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </div>
-        <h3>Unable to Load Artisans</h3>
-        <p>{{ errorMessage() || 'Could not connect to the backend service. Please ensure the backend is running.' }}</p>
-        <div class="error-actions" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
-          <button type="button" class="clear-filters-btn" (click)="fetchListings()">
+        <div class="state-card error-state" role="alert">
+          <h2>Unable to Load Artisans</h2>
+          <p>{{ errorMessage() }}</p>
+          <button type="button" class="primary-btn" (click)="fetchListings()">
             Retry Connection
           </button>
-          <a routerLink="/artisans" [queryParams]="{ demo: 'true' }" class="clear-filters-btn"
-            style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; display: inline-flex; align-items: center;">
-            View UI Demo Preview
-          </a>
         </div>
-      </div>
       }
 
-      <!-- EMPTY STATE (Legitimate empty database or search filter) -->
-      @if (!isLoading() && !hasError() && filteredListings().length === 0) {
-      <div class="empty-state">
-        <div class="empty-icon-box">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+      <!-- EMPTY STATE -->
+      @if (!isLoading() && !hasError() && listings().length === 0) {
+        <div class="state-card" role="status">
+          <h2>No Artisans Found</h2>
+          <p>
+            No approved Artisan &amp; Local Business listings matched your current search criteria.
+          </p>
+          @if (hasActiveFilters()) {
+            <button type="button" class="primary-btn" (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+          }
         </div>
-        <h3>No Artisans Found</h3>
-        <p>We could not find any artisan workshops matching your search criteria{{ selectedDistrict() ? ' in ' +
-          selectedDistrict() : '' }}.</p>
-        <button type="button" class="clear-filters-btn" (click)="clearAllFilters()">
-          Clear All Filters
-        </button>
-      </div>
+      }
+
+      <!-- LISTINGS GRID -->
+      @if (!isLoading() && !hasError() && listings().length > 0) {
+        <div class="listings-grid">
+          @for (item of listings(); track item.id) {
+            <app-artisan-card [listing]="item" />
+          }
+        </div>
+
+        <!-- PAGINATION -->
+        @if (totalPages() > 1) {
+          <nav class="pagination-bar" aria-label="Artisan pagination">
+            <button
+              type="button"
+              class="page-btn"
+              [disabled]="currentPage() <= 1"
+              (click)="goToPage(currentPage() - 1)"
+            >
+              Previous
+            </button>
+
+            @for (page of getPageNumbers(); track $index) {
+              @if (page === '...') {
+                <span class="page-ellipsis">...</span>
+              } @else {
+                <button
+                  type="button"
+                  class="page-btn"
+                  [class.active]="page === currentPage()"
+                  (click)="goToPage(+page)"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+
+            <button
+              type="button"
+              class="page-btn"
+              [disabled]="currentPage() >= totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+            >
+              Next
+            </button>
+          </nav>
+        }
       }
     </div>
   </section>
 </main>
+
+<!-- FILTERS MODAL -->
+@if (showFiltersModal()) {
+  <div class="modal-backdrop" (click)="closeFiltersModal()">
+    <div class="filters-modal" role="dialog" aria-modal="true" aria-labelledby="filters-modal-title" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="filters-modal-title">Filter Artisan Listings</h2>
+        <button type="button" class="close-btn" (click)="closeFiltersModal()" aria-label="Close filters">
+          &times;
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-field">
+          <label for="modalCategory">Craft Category</label>
+          <select id="modalCategory" [(ngModel)]="draftCategory">
+            <option [ngValue]="null">All Artisans</option>
+            @for (cat of categories(); track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="modalDistrict">District</label>
+          <select id="modalDistrict" [(ngModel)]="draftDistrict">
+            <option [ngValue]="null">All Districts (25)</option>
+            @for (dist of districts(); track dist) {
+              <option [value]="dist">{{ dist }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="modalMaxPrice">Maximum Starting Price (LKR)</label>
+          <input
+            id="modalMaxPrice"
+            type="number"
+            min="0"
+            step="100"
+            [(ngModel)]="draftMaxPrice"
+            placeholder="e.g. 5000"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="secondary-btn" (click)="clearAllFilters()">Clear All</button>
+        <button type="button" class="primary-btn" (click)="applyModalFilters()">Show Results</button>
+      </div>
+    </div>
+  </div>
+}

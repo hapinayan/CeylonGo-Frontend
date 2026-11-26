@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -36,6 +38,8 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
       imports: [TravelerHome],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: AuthService, useValue: authServiceMock },
       ],
     }).compileComponents();
@@ -54,14 +58,10 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
   });
 
   // =========================================================================
-  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (9 SECTIONS)
+  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (7 CONTENT SECTIONS INSIDE LAYOUT)
   // =========================================================================
-  it('should render all 9 sections in the exact specified order', () => {
+  it('should render all 7 homepage content sections in the exact specified order', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-
-    // Section 01: Navbar
-    const navbar = compiled.querySelector('app-traveler-navbar');
-    expect(navbar).toBeTruthy();
 
     // Section 02: AI Trip Planner Hero
     const hero = compiled.querySelector('#ai-planner');
@@ -90,10 +90,6 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     // Section 08: Why CeylonGo?
     const whyCeylonGo = compiled.querySelector('#why-ceylongo');
     expect(whyCeylonGo).toBeTruthy();
-
-    // Section 09: Footer
-    const footer = compiled.querySelector('app-footer');
-    expect(footer).toBeTruthy();
 
     // Verify DOM sequence order inside <main>
     const mainChildren = Array.from(compiled.querySelector('main')?.children || []);
@@ -130,7 +126,8 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
 
     ctaBtn.click();
     fixture.detectChanges();
-    expect(component.toastMessage()).toContain('Launching CeylonGo AI Trip Planner...');
+    expect(router.navigate).toHaveBeenCalledWith(['/ai-planner']);
+    expect(component.toastMessage()).toContain('CeylonGo AI Trip Planner');
   });
 
   it('should render interactive AI Quick Planner card with dropdowns and trip generation', () => {
@@ -154,11 +151,10 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     generateBtn.click();
     fixture.detectChanges();
 
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
+    expect(router.navigate).toHaveBeenCalledWith(['/ai-planner'], expect.objectContaining({
       queryParams: expect.objectContaining({
         destination: 'Ella',
         duration: '3 Days',
-        planner: 'quick',
       }),
     }));
   });
@@ -194,9 +190,17 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     });
   });
 
+  it('should navigate to /artisans/discover when the Artisan & Handicrafts category card is clicked', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('.experience-category-card');
+    const artisanCard = cards[4] as HTMLElement; // Artisan & Handicrafts
+    artisanCard.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/artisans/discover']);
+  });
+
   it('should navigate to /experiences without misleading query param when an unsupported category is clicked', () => {
-    const artisanCategory = component.experienceCategories[4]; // Artisan & Handicrafts
-    component.onCategoryClick(artisanCategory);
+    const heritageCategory = component.experienceCategories[5]; // Heritage & Landmarks
+    component.onCategoryClick(heritageCategory);
     expect(router.navigate).toHaveBeenCalledWith(['/experiences']);
   });
 
@@ -430,10 +434,10 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
   // =========================================================================
   // CONTEXTUAL AUTHENTICATION & RESUME ACTIONS
   // =========================================================================
-  it('should render TravelerAuthModal component in template', () => {
+  it('should delegate TravelerAuthModal rendering to TravelerLayoutComponent without duplicating it in TravelerHome', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const modal = compiled.querySelector('app-traveler-auth-modal');
-    expect(modal).toBeTruthy();
+    expect(modal).toBeNull();
   });
 
   it('should prompt contextual auth modal when guest clicks Generate My Trip with destination & duration', () => {
@@ -455,7 +459,7 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     expect(component.toastMessage()).toContain('Please log in or create an account');
   });
 
-  it('should directly generate itinerary when authenticated traveler clicks Generate My Trip', () => {
+  it('should navigate to /ai-planner with preserved quick draft when authenticated traveler clicks Generate My Trip', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
 
     component.selectDestination('Ella');
@@ -464,7 +468,14 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     fixture.detectChanges();
 
     expect(component.authModalService.isOpen()).toBe(false);
-    expect(component.isGenerating()).toBe(true);
-    expect(component.toastMessage()).toContain('Generating custom AI itinerary for Ella (2 Days)...');
+    expect(router.navigate).toHaveBeenCalledWith(['/ai-planner'], {
+      queryParams: { destination: 'Ella', duration: '2 Days' },
+    });
+    expect(component.toastMessage()).toContain('Ella (2 Days)');
+  });
+
+  it('should navigate to /ai-planner when hero Plan Your Trip with AI CTA is clicked', () => {
+    component.onPlanTripWithAI();
+    expect(router.navigate).toHaveBeenCalledWith(['/ai-planner']);
   });
 });

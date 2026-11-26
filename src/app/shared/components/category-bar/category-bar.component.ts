@@ -1,20 +1,24 @@
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  HostListener,
-  Input,
-  Output,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export interface CategoryPillItem {
-  id: string; // Canonical category identifier used across app & backend ('' for All)
-  label: string; // Display label matching approved UI
+export interface ArtisanCategoryCard {
+  id: string;
+  label: string;
+  apiValue: string | null;
+  icon: 'all' | 'handicrafts' | 'pottery' | 'batik' | 'weaving' | 'jewellery' | 'woodcarving' | 'local' | 'spices';
 }
+
+export const ARTISAN_ICON_CATEGORIES: readonly ArtisanCategoryCard[] = [
+  { id: 'all', label: 'All Artisans', apiValue: null, icon: 'all' },
+  { id: 'handicrafts', label: 'Handicrafts', apiValue: 'Handicrafts', icon: 'handicrafts' },
+  { id: 'pottery', label: 'Pottery & Ceramics', apiValue: 'Pottery & Ceramics', icon: 'pottery' },
+  { id: 'batik', label: 'Batik & Textiles', apiValue: 'Batik & Textiles', icon: 'batik' },
+  { id: 'weaving', label: 'Handmade & Weaving', apiValue: 'Handmade & Weaving', icon: 'weaving' },
+  { id: 'jewellery', label: 'Jewellery & Gem Craft', apiValue: 'Jewellery & Gem Craft', icon: 'jewellery' },
+  { id: 'woodcarving', label: 'Woodcarving & Masks', apiValue: 'Woodcarving & Masks', icon: 'woodcarving' },
+  { id: 'local', label: 'Local Products', apiValue: 'Local Products', icon: 'local' },
+  { id: 'spices', label: 'Spices & Herbal Products', apiValue: 'Spices & Herbal Products', icon: 'spices' },
+];
 
 @Component({
   selector: 'app-category-bar',
@@ -24,124 +28,27 @@ export interface CategoryPillItem {
   styleUrl: './category-bar.component.scss',
 })
 export class CategoryBarComponent {
-  private readonly elementRef = inject(ElementRef);
-
   @Input() selectedCategory: string | null = null;
-  private readonly _allCategories = signal<string[]>([]);
-
-  @Input()
-  set allCategories(value: string[]) {
-    this._allCategories.set(value || []);
-  }
-  get allCategories(): string[] {
-    return this._allCategories();
-  }
+  @Input() allCategories: string[] = [];
   @Output() categorySelected = new EventEmitter<string | null>();
 
-  readonly showMoreDropdown = signal<boolean>(false);
+  readonly categories = ARTISAN_ICON_CATEGORIES;
 
-  /**
-   * Primary 7 categories matching approved CeylonGo Artisan UI specification.
-   */
-  readonly primaryCategories: CategoryPillItem[] = [
-    { id: '', label: 'All Artisans' },
-    { id: 'Handicrafts', label: 'Handicrafts' },
-    { id: 'Pottery', label: 'Pottery' },
-    { id: 'Batik & Textiles', label: 'Batik & Textiles' },
-    { id: 'Handmade', label: 'Handmade' },
-    { id: 'Jewellery', label: 'Jewellery' },
-    { id: 'Local Products', label: 'Local Products' },
-  ];
-
-  /**
-   * Backward compatibility alias for tests checking categories array.
-   */
-  get categories(): CategoryPillItem[] {
-    return this.primaryCategories;
-  }
-
-  /**
-   * Scalable additional categories sourced from dynamic data source not already covered in primary tabs.
-   */
-  readonly extraCategories = computed(() => {
-    const primaryNormalized = new Set(
-      this.primaryCategories.map((c) => c.id.toLowerCase()).filter((id) => id !== '')
-    );
-    primaryNormalized.add('pottery & ceramics');
-    primaryNormalized.add('handmade & weaving');
-    primaryNormalized.add('jewelry & gem craft');
-    primaryNormalized.add('jewellery & gem craft');
-
-    return (this._allCategories() || []).filter(
-      (cat) => cat && !primaryNormalized.has(cat.trim().toLowerCase())
-    );
-  });
-
-  readonly isMoreActive = computed(() => {
-    if (!this.selectedCategory) return false;
+  isSelected(card: ArtisanCategoryCard): boolean {
+    if (!this.selectedCategory && card.apiValue === null) {
+      return true;
+    }
+    if (!this.selectedCategory || !card.apiValue) {
+      return false;
+    }
     const current = this.selectedCategory.trim().toLowerCase();
-    return this.extraCategories().some((c) => c.toLowerCase() === current);
-  });
-
-  readonly moreButtonLabel = computed(() => {
-    if (this.isMoreActive() && this.selectedCategory) {
-      return `More (${this.selectedCategory})`;
-    }
-    return 'More';
-  });
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.showMoreDropdown.set(false);
-    }
+    const target = card.apiValue.trim().toLowerCase();
+    if (current === target) return true;
+    if (card.id === 'jewellery' && current.includes('jewel')) return true;
+    return false;
   }
 
-  toggleMoreDropdown(event: MouseEvent): void {
-    event.stopPropagation();
-    this.showMoreDropdown.update((v) => !v);
-  }
-
-  select(id: string): void {
-    this.showMoreDropdown.set(false);
-    const val = id === '' ? null : id;
-    this.categorySelected.emit(val);
-  }
-
-  selectFromMore(cat: string): void {
-    this.showMoreDropdown.set(false);
-    this.categorySelected.emit(cat);
-  }
-
-  isSelected(id: string): boolean {
-    if (id === '' && (!this.selectedCategory || this.selectedCategory.trim() === '')) return true;
-    if (!this.selectedCategory) return false;
-    const current = this.selectedCategory.trim().toLowerCase();
-    const target = id.toLowerCase();
-
-    if (target === 'handicrafts') {
-      return (
-        current === 'handicrafts' ||
-        current === 'woodcarving & masks' ||
-        current === 'brass & metalware' ||
-        current === 'traditional handicrafts'
-      );
-    }
-    if (target === 'pottery') {
-      return current === 'pottery' || current === 'pottery & ceramics';
-    }
-    if (target === 'batik & textiles') {
-      return current === 'batik & textiles' || current === 'batik';
-    }
-    if (target === 'handmade') {
-      return current === 'handmade' || current === 'handloom & weaving' || current === 'handmade & weaving';
-    }
-    if (target === 'jewellery') {
-      return current === 'jewellery' || current === 'jewelry & gem craft' || current === 'jewellery & gem craft' || current === 'jewelry';
-    }
-    if (target === 'local products') {
-      return current === 'local products' || current === 'spices & herbal products' || current === 'spices';
-    }
-    return current === target;
+  select(card: ArtisanCategoryCard): void {
+    this.categorySelected.emit(card.apiValue);
   }
 }

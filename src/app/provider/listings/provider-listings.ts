@@ -136,6 +136,9 @@ export class ProviderListings implements OnInit, OnDestroy {
     if (review.listing.category === 'guide') {
       return 'Tour Guide';
     }
+    if (review.listing.category === 'artisan') {
+      return 'Artisan & Local Business';
+    }
     if (review.listing.category === 'bike') {
       const sub = String(review.details?.['rental']?.subtype || '');
       return sub === 'scooter' ? 'Scooter' : 'Motorbike';
@@ -149,11 +152,20 @@ export class ProviderListings implements OnInit, OnDestroy {
 
   priceUnitLabel(review: ReviewListing): string {
     if (review.listing.category === 'adventure') return '/ participant';
-    if (review.listing.category === 'guide') return 'starting';
+    if (review.listing.category === 'guide' || review.listing.category === 'artisan') return 'starting';
     if (review.listing.category === 'bike' || review.listing.category === 'bicycle') {
       return '/ day';
     }
     return '/ night';
+  }
+
+  artisanProductsLabel(review: ReviewListing): string {
+    if (review.listing.category !== 'artisan') return '';
+    const count = Array.isArray(review.listing.units) ? review.listing.units.length : 0;
+    const active = Array.isArray(review.listing.units)
+      ? review.listing.units.filter((u: any) => u?.is_active !== false).length
+      : 0;
+    return `Showcase: ${active}/${count} active item(s)`;
   }
 
   isRental(review: ReviewListing): boolean {
@@ -223,6 +235,13 @@ export class ProviderListings implements OnInit, OnDestroy {
     if (this.isRental(review)) {
       void this.router.navigate(
         ['/provider/rentals', review.listing.id, 'edit'],
+        { queryParams: this.previewQueryParams() }
+      );
+      return;
+    }
+    if (review.listing.category === 'artisan') {
+      void this.router.navigate(
+        ['/provider/artisans', review.listing.id, 'edit'],
         { queryParams: this.previewQueryParams() }
       );
       return;

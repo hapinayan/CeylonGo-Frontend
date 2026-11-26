@@ -51,6 +51,14 @@ const RENTAL_LINK_OPTIONS: { kind: EvidenceLinkKind; label: string }[] = [
   { kind: 'instagram', label: 'Instagram Profile' },
 ];
 
+const ARTISAN_LINK_OPTIONS: { kind: EvidenceLinkKind; label: string }[] = [
+  { kind: 'maps', label: 'Google Maps Workshop Link' },
+  { kind: 'facebook', label: 'Facebook Page' },
+  { kind: 'instagram', label: 'Instagram Profile' },
+  { kind: 'website', label: 'Business Website' },
+  { kind: 'video', label: 'Craft / Workshop Video' },
+];
+
 const HOMESTAY_FILE_OPTIONS: { kind: EvidenceFileKind; label: string }[] = [
   { kind: 'business_certificate', label: 'Business Registration / Certificate' },
   { kind: 'ownership', label: 'Proof of Ownership / Property Deed' },
@@ -89,6 +97,16 @@ const RENTAL_FILE_OPTIONS: { kind: EvidenceFileKind; label: string }[] = [
   { kind: 'vehicle_photo', label: 'Private Fleet Inspection / Serial Photos' },
   { kind: 'business_certificate', label: 'Business Registration Certificate' },
   { kind: 'customer_feedback', label: 'Customer Feedback Screenshots (Redacted)' },
+];
+
+const ARTISAN_FILE_OPTIONS: { kind: EvidenceFileKind; label: string }[] = [
+  { kind: 'business_certificate', label: 'Business Registration / Craft Guild Certificate' },
+  { kind: 'workshop', label: 'Workshop & Craft Production Photographs' },
+  { kind: 'activity_photo', label: 'Product & Craft Showcase Photos' },
+  { kind: 'authorization', label: 'Local Council / Grama Niladhari Authorization' },
+  { kind: 'ownership', label: 'Proof of Workshop Premises / Lease' },
+  { kind: 'customer_feedback', label: 'Customer Feedback Screenshots (Redacted)' },
+  { kind: 'other', label: 'Other Supporting Document' },
 ];
 
 @Component({
@@ -131,6 +149,7 @@ export class ServiceVerificationComponent implements OnInit, OnChanges {
   get linkKindOptions(): { kind: EvidenceLinkKind; label: string }[] {
     if (this.category === 'adventure') return ADVENTURE_LINK_OPTIONS;
     if (this.category === 'guide') return GUIDE_LINK_OPTIONS;
+    if (this.category === 'artisan') return ARTISAN_LINK_OPTIONS;
     if (this.category === 'bike' || this.category === 'bicycle' || this.category === 'rental') {
       return RENTAL_LINK_OPTIONS;
     }
@@ -140,6 +159,7 @@ export class ServiceVerificationComponent implements OnInit, OnChanges {
   get fileKindOptions(): { kind: EvidenceFileKind; label: string }[] {
     if (this.category === 'adventure') return ADVENTURE_FILE_OPTIONS;
     if (this.category === 'guide') return GUIDE_FILE_OPTIONS;
+    if (this.category === 'artisan') return ARTISAN_FILE_OPTIONS;
     if (this.category === 'bike' || this.category === 'bicycle' || this.category === 'rental') {
       return RENTAL_FILE_OPTIONS;
     }
@@ -172,6 +192,11 @@ export class ServiceVerificationComponent implements OnInit, OnChanges {
       }
     } else if (this.category === 'guide') {
       this.selectedFileKind = 'license';
+      if (!this.initialData?.evidence?.links?.length) {
+        this.links.set([]);
+      }
+    } else if (this.category === 'artisan') {
+      this.selectedFileKind = 'business_certificate';
       if (!this.initialData?.evidence?.links?.length) {
         this.links.set([]);
       }

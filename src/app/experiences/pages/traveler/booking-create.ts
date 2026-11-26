@@ -17,10 +17,8 @@ import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
+import { TravelerBackNavigationService } from '../../../core/services/traveler-back-navigation.service';
 import { ExperienceIcon } from '../../components/icon';
-import { TravelerHeader } from '../../components/traveler-header';
 import {
   ActivityBookingCreateRequest,
   ActivityBookingDetailResponse,
@@ -51,10 +49,7 @@ import { loadState, positiveId, publishDate } from '../../services/workflow-stat
     DecimalPipe,
     FormsModule,
     RouterLink,
-    TravelerHeader,
     ExperienceIcon,
-    Footer,
-    TravelerAuthModal,
   ],
   templateUrl: './booking-create.html',
   styleUrls: ['../discover/discover.scss', './traveler.scss', './booking-create.scss'],
@@ -69,6 +64,10 @@ export class BookingCreate {
   readonly session = inject(TravelSession);
   private readonly source = inject(TRAVEL_SOURCE);
   private readonly writeLock = inject(ReservationWriteLock);
+  private readonly backNav = inject(TravelerBackNavigationService, { optional: true });
+  private readonly cleanupBackConfirmation = this.destroy.onDestroy(() =>
+    this.backNav?.clearBookingConfirmed('/experiences'),
+  );
 
   readonly firstDay = publishDate();
   readonly lastDay = publishDate(365);
@@ -738,6 +737,7 @@ export class BookingCreate {
       .subscribe((authoritative) => {
         this.confirmedBooking.set(authoritative);
         this.step.set(3);
+        this.backNav?.markBookingConfirmed('/experiences');
         this.submitting.set(false);
       });
   }

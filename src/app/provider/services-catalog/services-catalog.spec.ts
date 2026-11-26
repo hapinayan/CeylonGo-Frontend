@@ -44,4 +44,17 @@ describe('ServicesCatalog Component', () => {
     expect(guideLink).toBeTruthy();
     expect(guideLink?.textContent).toContain('Start 6-Step Wizard');
   });
+
+  it('should expose Artisan & Local Business connected to /provider/artisans/new', () => {
+    const artisanCard = component.services.find((s) => s.id === 'artisan');
+    expect(artisanCard).toBeDefined();
+    expect(artisanCard?.route).toBe('/provider/artisans/new');
+    expect(artisanCard?.isAvailable).toBe(true);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Artisan & Local Business');
+    const artisanLink = compiled.querySelector('a[href="/provider/artisans/new"]');
+    expect(artisanLink).toBeTruthy();
+    expect(artisanLink?.textContent).toContain('Start 6-Step Wizard');
+  });
 });

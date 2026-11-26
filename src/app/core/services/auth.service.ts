@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +11,9 @@ import {
   GoogleAuthRequest,
   LoginRequest,
   LoginResponse,
+  PasswordChangeRequest,
+  PasswordChangeResponse,
+  ProfilePatchRequest,
   RegisterRequest,
   RegisterResponse,
   ResendEmailOtpRequest,
@@ -33,162 +36,160 @@ const USER_KEY = 'ceylongo_user';
 /**
  * Centralized Authentication Service for CeylonGo Frontend.
  * Connects directly to the Python FastAPI backend (/api/v1/auth).
- *
- * Security & Token Storage Strategy:
- * - In-Memory State: Primary reactive storage using Angular Signals. Fast and
- *   isolated from long-term storage vulnerabilities.
- * - SessionStorage Backup: Transient fallback to preserve active session across
- *   page reloads within the same browser tab without indefinite persistence.
- * - Sensitive Data Guarantee: User passwords are NEVER stored in memory or storage.
- * - Refresh-Token Note: The backend currently issues stateless JWT access tokens
- *   without separate refresh tokens; token renewal is handled via re-authentication.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly authUrl = `${environment.apiBaseUrl}/auth`;
+  private readonly usersUrl = `${environment.apiBaseUrl}/users`;
 
   private readonly tokenSignal = signal<string | null>(this.loadStoredToken());
   private readonly currentUserSignal = signal<User | null>(this.loadStoredUser());
+  private readonly avatarObjectUrlSignal = signal<string | null>(null);
+  private avatarFetchSeq = 0;
 
   readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly avatarUrl = this.avatarObjectUrlSignal.asReadonly();
 
-  /**
-   * Check whether an email address is already registered in CeylonGo.
-   */
+  constructor() {
+    this.destroyRef.onDestroy(() => this.revokeAvatarObjectUrl());
+
+    const initialUser = this.currentUserSignal();
+    if (this.tokenSignal() && initialUser?.avatar_url) {
+      this.syncAvatarBlob(initialUser);
+    }
+  }
+
   checkEmail(email: string): Observable<CheckEmailResponse> {
     const payload: CheckEmailRequest = { email: email.trim().toLowerCase() };
-    return this.http.post<CheckEmailResponse>(
-      `${this.authUrl}/check-email`,
-      payload
-    );
+    return this.http.post<CheckEmailResponse>(`${this.authUrl}/check-email`, payload);
   }
 
-  /**
-   * Register a new traveler account with full name, email, and password.
-   */
   register(payload: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(
-      `${this.authUrl}/register`,
-      payload
+    return this.http.post<RegisterResponse>(`${this.authUrl}/register`, payload);
+  }
+
+  login(payload: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.authUrl}/login`, payload).pipe(
+      tap((response) => {
+        this.setSession(response.access_token, response.user);
+      }),
     );
   }
 
-  /**
-   * Authenticate traveler with email and password, storing the issued JWT session.
-   */
-  login(payload: LoginRequest): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.authUrl}/login`, payload)
-      .pipe(
-        tap((response) => {
-          this.setSession(response.access_token, response.user);
-        })
-      );
-  }
-
-  /**
-   * Authenticate traveler using a Google Identity Services ID token.
-   */
   loginWithGoogle(idToken: string): Observable<LoginResponse> {
     const payload: GoogleAuthRequest = { id_token: idToken };
-    return this.http
-      .post<LoginResponse>(`${this.authUrl}/google`, payload)
-      .pipe(
-        tap((response) => {
-          this.setSession(response.access_token, response.user);
-        })
-      );
+    return this.http.post<LoginResponse>(`${this.authUrl}/google`, payload).pipe(
+      tap((response) => {
+        this.setSession(response.access_token, response.user);
+      }),
+    );
   }
 
-  /**
-   * Request a password reset link for the specified email address.
-   */
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {
     const payload: ForgotPasswordRequest = { email: email.trim().toLowerCase() };
-    return this.http.post<ForgotPasswordResponse>(
-      `${this.authUrl}/forgot-password`,
-      payload
-    );
+    return this.http.post<ForgotPasswordResponse>(`${this.authUrl}/forgot-password`, payload);
   }
 
-  /**
-   * Verify the validity and expiration of a password reset token.
-   */
   verifyResetToken(token: string): Observable<VerifyResetTokenResponse> {
     const params = new HttpParams().set('token', token.trim());
-    return this.http.get<VerifyResetTokenResponse>(
-      `${this.authUrl}/verify-reset-token`,
-      { params }
-    );
+    return this.http.get<VerifyResetTokenResponse>(`${this.authUrl}/verify-reset-token`, { params });
   }
 
-  /**
-   * Reset traveler password using a verified single-use reset token.
-   */
   resetPassword(payload: ResetPasswordRequest): Observable<ResetPasswordResponse> {
-    return this.http.post<ResetPasswordResponse>(
-      `${this.authUrl}/reset-password`,
-      payload
-    );
+    return this.http.post<ResetPasswordResponse>(`${this.authUrl}/reset-password`, payload);
   }
 
-  /**
-   * Verify traveler email with 6-digit OTP code and registration challenge ID.
-   * Endpoint: POST /api/v1/auth/verify-email
-   */
   verifyEmail(payload: VerifyEmailRequest): Observable<VerifyEmailResponse> {
-    return this.http.post<VerifyEmailResponse>(
-      `${this.authUrl}/verify-email`,
-      payload
-    );
+    return this.http.post<VerifyEmailResponse>(`${this.authUrl}/verify-email`, payload);
   }
 
-  /**
-   * Resend verification OTP code to traveler's email with registration challenge ID.
-   * Endpoint: POST /api/v1/auth/resend-email-otp
-   */
   resendEmailOtp(payload: ResendEmailOtpRequest): Observable<ResendEmailOtpResponse> {
-    return this.http.post<ResendEmailOtpResponse>(
-      `${this.authUrl}/resend-email-otp`,
-      payload
-    );
+    return this.http.post<ResendEmailOtpResponse>(`${this.authUrl}/resend-email-otp`, payload);
   }
 
-  /**
-   * Alias for verifyEmail
-   */
   verifyOtp(payload: VerifyEmailRequest): Observable<VerifyEmailResponse> {
     return this.verifyEmail(payload);
   }
 
-  /**
-   * Alias for resendEmailOtp
-   */
   resendOtp(payload: ResendEmailOtpRequest): Observable<ResendEmailOtpResponse> {
     return this.resendEmailOtp(payload);
   }
 
   /**
-   * Fetch current authenticated traveler profile via protected /api/v1/auth/me.
+   * Fetch current authenticated traveler profile via protected GET /api/v1/auth/me.
    */
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.authUrl}/me`).pipe(
       tap((user) => {
-        this.currentUserSignal.set(user);
-        this.saveStoredUser(user);
-      })
+        if (!this.isAuthenticated()) return;
+        this.updateUserState(user);
+      }),
     );
   }
 
   /**
-   * Log out the traveler and purge all session tokens.
+   * Partial profile update via PATCH /api/v1/auth/me.
+   */
+  updateProfile(payload: ProfilePatchRequest): Observable<User> {
+    return this.http.patch<User>(`${this.authUrl}/me`, payload).pipe(
+      tap((user) => {
+        if (!this.isAuthenticated()) return;
+        this.updateUserState(user);
+      }),
+    );
+  }
+
+  /**
+   * Upload or replace profile photo via POST /api/v1/auth/me/avatar (multipart field: "file").
+   */
+  uploadAvatar(file: File): Observable<User> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<User>(`${this.authUrl}/me/avatar`, formData).pipe(
+      tap((user) => {
+        if (!this.isAuthenticated()) return;
+        this.updateUserState(user, true);
+      }),
+    );
+  }
+
+  /**
+   * Remove profile photo via DELETE /api/v1/auth/me/avatar.
+   */
+  deleteAvatar(): Observable<User> {
+    return this.http.delete<User>(`${this.authUrl}/me/avatar`).pipe(
+      tap((user) => {
+        if (!this.isAuthenticated()) return;
+        this.updateUserState(user, true);
+      }),
+    );
+  }
+
+  /**
+   * Change password via POST /api/v1/auth/change-password and clear invalidated session when required.
+   */
+  changePassword(payload: PasswordChangeRequest): Observable<PasswordChangeResponse> {
+    return this.http.post<PasswordChangeResponse>(`${this.authUrl}/change-password`, payload).pipe(
+      tap((res) => {
+        if (res?.login_required !== false) {
+          this.logout();
+        }
+      }),
+    );
+  }
+
+  /**
+   * Log out the traveler and purge all session tokens and transient avatar object URLs.
    */
   logout(): void {
+    this.avatarFetchSeq++;
     this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
+    this.revokeAvatarObjectUrl();
     if (typeof sessionStorage !== 'undefined') {
       try {
         sessionStorage.removeItem(TOKEN_KEY);
@@ -199,16 +200,10 @@ export class AuthService {
     }
   }
 
-  /**
-   * Retrieve current active JWT access token for HTTP authorization headers.
-   */
   getToken(): string | null {
     return this.tokenSignal() || this.loadStoredToken();
   }
 
-  /**
-   * Check whether traveler is currently logged in.
-   */
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
@@ -225,6 +220,64 @@ export class AuthService {
         // Fallback gracefully
       }
     }
+    this.syncAvatarBlob(user, true);
+  }
+
+  private updateUserState(user: User, forceAvatarRefresh = false): void {
+    const prevAvatar = this.currentUserSignal()?.avatar_url;
+    this.currentUserSignal.set(user);
+    this.saveStoredUser(user);
+    if (forceAvatarRefresh || user.avatar_url !== prevAvatar || (!this.avatarObjectUrlSignal() && user.avatar_url)) {
+      this.syncAvatarBlob(user, forceAvatarRefresh);
+    }
+  }
+
+  private syncAvatarBlob(user: User, forceRefresh = false): void {
+    const seq = ++this.avatarFetchSeq;
+    if (!user.avatar_url || !this.isAuthenticated()) {
+      this.revokeAvatarObjectUrl();
+      return;
+    }
+
+    if (user.avatar_url.startsWith('data:') || user.avatar_url.startsWith('blob:')) {
+      this.revokeAvatarObjectUrl();
+      this.avatarObjectUrlSignal.set(user.avatar_url);
+      return;
+    }
+
+    const baseAvatarUrl = `${this.usersUrl}/${user.id}/avatar`;
+    const cacheBust = forceRefresh ? `?t=${Date.now()}` : '';
+    const tokenAtStart = this.getToken();
+
+    this.http.get(`${baseAvatarUrl}${cacheBust}`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        if (seq !== this.avatarFetchSeq || !this.isAuthenticated() || this.getToken() !== tokenAtStart) {
+          return;
+        }
+        if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' && blob && blob.size > 0) {
+          const objectUrl = URL.createObjectURL(blob);
+          this.revokeAvatarObjectUrl();
+          this.avatarObjectUrlSignal.set(objectUrl);
+        }
+      },
+      error: () => {
+        if (seq === this.avatarFetchSeq) {
+          this.revokeAvatarObjectUrl();
+        }
+      },
+    });
+  }
+
+  private revokeAvatarObjectUrl(): void {
+    const existing = this.avatarObjectUrlSignal();
+    if (existing && existing.startsWith('blob:') && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+      try {
+        URL.revokeObjectURL(existing);
+      } catch {
+        // Ignore revocation failures
+      }
+    }
+    this.avatarObjectUrlSignal.set(null);
   }
 
   private loadStoredToken(): string | null {

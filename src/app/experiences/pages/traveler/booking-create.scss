@@ -1,8 +1,9 @@
 /* Booking Review Page Styles */
 .booking-review-flow {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 1.5rem 1.25rem 4rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem var(--cg-page-padding, 32px) 4rem;
   box-sizing: border-box;
 
   .review-header-container {

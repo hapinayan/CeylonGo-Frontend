@@ -1,0 +1,235 @@
+<div class="community-page-shell">
+  <main class="community-main" id="main-content">
+    <div class="community-grid">
+      <!-- LEFT SIDEBAR (22%) -->
+      <aside class="sticky-col left-col" aria-label="Community Navigation">
+        <div class="left-nav-card">
+          <div class="profile-summary">
+            <div class="profile-avatar">{{ userInitials() }}</div>
+            <div class="profile-text">
+              @if (isAuthenticated()) {
+                <strong>{{ currentUser()?.full_name || 'Traveler' }}</strong>
+                <span>CeylonGo Community Member</span>
+              } @else {
+                <strong>Explore as Guest</strong>
+                <span>Sign in to post, like &amp; save</span>
+              }
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <a routerLink="/community" class="nav-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h10" />
+              </svg>
+              <span>News Feed</span>
+            </a>
+            <button type="button" class="nav-item" (click)="navigateProtected('/community/my-posts')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span>My Posts</span>
+            </button>
+            <button type="button" class="nav-item" (click)="navigateProtected('/community/saved')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+              </svg>
+              <span>Saved Posts</span>
+            </button>
+          </nav>
+
+          <button type="button" class="create-post-cta" (click)="openCreatePostModal()">
+            + Create Post
+          </button>
+        </div>
+      </aside>
+
+      <!-- CENTER FEED (53%) -->
+      <section class="center-feed-col" aria-label="Travel Community Feed">
+        <header class="feed-header-card">
+          <div>
+            <h1>Travel Community</h1>
+            <p>Discover real Sri Lanka stories, hidden gems, local crafts, and travel updates.</p>
+          </div>
+          @if (!isLoading() && totalPosts() > 0) {
+            <span class="total-badge">{{ totalPosts() }} {{ totalPosts() === 1 ? 'Post' : 'Posts' }}</span>
+          }
+        </header>
+
+        <!-- COMPOSER PROMPT -->
+        <div class="composer-trigger-card">
+          <div class="composer-avatar">{{ userInitials() }}</div>
+          <button type="button" class="composer-prompt-btn" (click)="openCreatePostModal()">
+            Share your Sri Lanka journey, tips, or photos...
+          </button>
+          <button type="button" class="composer-photo-btn" (click)="openCreatePostModal()">
+            Add Photos
+          </button>
+        </div>
+
+        <!-- SEARCH & FILTER TOOLBAR -->
+        <div class="toolbar-card">
+          <form class="search-form" (submit)="$event.preventDefault(); applySearch()">
+            <label for="communityFeedSearch" class="sr-only">Search community posts</label>
+            <input
+              id="communityFeedSearch"
+              type="search"
+              [(ngModel)]="searchQuery"
+              name="searchQuery"
+              placeholder="Search destinations, tips, travelers, or providers..."
+            />
+            <button type="submit" class="search-btn">Search</button>
+            @if (searchQuery.trim().length > 0) {
+              <button type="button" class="clear-btn" (click)="clearSearch()">Clear</button>
+            }
+          </form>
+
+          <div class="filter-pills" role="tablist" aria-label="Filter community posts">
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="activeFilter() === 'all'"
+              [class.active]="activeFilter() === 'all'"
+              (click)="setFilter('all')"
+            >
+              Latest
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="activeFilter() === 'traveler'"
+              [class.active]="activeFilter() === 'traveler'"
+              (click)="setFilter('traveler')"
+            >
+              Travelers
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="activeFilter() === 'provider'"
+              [class.active]="activeFilter() === 'provider'"
+              (click)="setFilter('provider')"
+            >
+              Service Providers
+            </button>
+          </div>
+        </div>
+
+        <!-- LOADING SKELETONS -->
+        @if (isLoading()) {
+          <div class="feed-list" aria-busy="true" aria-label="Loading posts">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="skeleton-card">
+                <div class="skel-line short"></div>
+                <div class="skel-line medium"></div>
+                <div class="skel-line tall"></div>
+              </div>
+            }
+          </div>
+        } @else if (errorMessage()) {
+          <div class="state-card" role="alert">
+            <h3>Unable to load community feed</h3>
+            <p>{{ errorMessage() }}</p>
+            <button type="button" class="btn-primary-inline" (click)="loadPosts(currentPage())">
+              Try Again
+            </button>
+          </div>
+        } @else if (posts().length === 0) {
+          <div class="state-card">
+            <h3>No community posts match your filter</h3>
+            <p>Be the first to share a story or clear your current search filter.</p>
+            <button type="button" class="btn-primary-inline" (click)="clearSearch(); setFilter('all')">
+              Reset Filters
+            </button>
+          </div>
+        } @else {
+          <div class="feed-list">
+            @for (post of posts(); track post.id) {
+              <app-community-post-card
+                [post]="post"
+                actorMode="traveler"
+                [currentUserId]="currentUser()?.id ?? null"
+                [isAuthenticated]="isAuthenticated()"
+                (postChanged)="onPostChanged($event)"
+                (editRequested)="onEditPost($event)"
+                (deleteRequested)="onDeleteRequested($event)"
+                (reportRequested)="onReportRequested($event)"
+                (photoClicked)="onOpenLightbox($event)"
+                (authRequired)="onAuthRequired($event)"
+                (actionFeedback)="onActionFeedback($event)"
+              />
+            }
+          </div>
+
+          @if (totalPages() > 1) {
+            <nav class="pagination-bar" aria-label="Community feed pages">
+              <button
+                type="button"
+                class="page-btn"
+                (click)="goToPage(currentPage() - 1)"
+                [disabled]="currentPage() <= 1"
+              >
+                Previous
+              </button>
+              <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+              <button
+                type="button"
+                class="page-btn"
+                (click)="goToPage(currentPage() + 1)"
+                [disabled]="currentPage() >= totalPages()"
+              >
+                Next
+              </button>
+            </nav>
+          }
+        }
+      </section>
+
+      <!-- RIGHT SIDEBAR (25%) -->
+      <div class="sticky-col right-col">
+        <app-community-explore-sidebar />
+      </div>
+    </div>
+  </main>
+
+  <app-create-post-modal
+    [isOpen]="isComposerOpen()"
+    [initialPost]="editingPost()"
+    actorMode="traveler"
+    [authorName]="currentUser()?.full_name || 'Traveler'"
+    authorSubtitle="Traveler"
+    (closed)="isComposerOpen.set(false); editingPost.set(null)"
+    (published)="onPostPublished($event)"
+  />
+
+  <app-confirm-delete-modal
+    [isOpen]="postToDelete() !== null"
+    title="Delete Community Post"
+    message="Are you sure you want to permanently remove this post from the CeylonGo Travel Community?"
+    [isBusy]="isDeletingPost()"
+    [errorMessage]="deleteErrorMessage()"
+    (cancel)="postToDelete.set(null)"
+    (confirm)="confirmDeletePost()"
+  />
+
+  <app-report-content-modal
+    [target]="reportTarget()"
+    actorMode="traveler"
+    (closed)="reportTarget.set(null)"
+    (reported)="onActionFeedback({ kind: 'info', message: 'Report submitted for moderation review.' })"
+  />
+
+  <app-photo-lightbox-modal
+    [photos]="lightboxPhotos()"
+    [isOpen]="isLightboxOpen()"
+    [initialIndex]="lightboxIndex()"
+    (close)="isLightboxOpen.set(false)"
+  />
+
+  @if (toast(); as t) {
+    <div class="toast-banner" [class.error]="t.kind === 'error'" role="status">
+      {{ t.message }}
+    </div>
+  }
+</div>

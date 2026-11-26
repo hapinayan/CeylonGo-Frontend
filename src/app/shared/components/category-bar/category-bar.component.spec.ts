@@ -17,53 +17,31 @@ describe('CategoryBarComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders all 7 category pills', () => {
-    const pills = fixture.nativeElement.querySelectorAll('.category-pill');
-    expect(pills.length).toBe(7);
+  it('renders all 9 blue outline icon category cards', () => {
+    const cards = fixture.nativeElement.querySelectorAll('.category-icon-card');
+    expect(cards.length).toBe(9);
+    const svgs = fixture.nativeElement.querySelectorAll('.category-icon-card svg');
+    expect(svgs.length).toBe(9);
   });
 
-  it('emits selected category on pill click', () => {
-    let selected: string | null = null;
+  it('emits selected category when a category icon card is clicked', () => {
+    let selected: string | null = 'initial';
     component.categorySelected.subscribe((cat) => {
       selected = cat;
     });
 
-    component.select('Handicrafts');
-    expect(selected).toBe('Handicrafts');
+    const pottery = component.categories[2];
+    component.select(pottery);
+    expect(selected).toBe('Pottery & Ceramics');
 
-    component.select('');
+    component.select(component.categories[0]);
     expect(selected).toBeNull();
   });
 
-  it('marks "All" as active when selectedCategory is null', () => {
+  it('marks All Artisans selected when selectedCategory is null', () => {
     component.selectedCategory = null;
     fixture.detectChanges();
-    expect(component.isSelected('')).toBe(true);
-  });
-
-  it('renders More dropdown when extra categories are supplied from data source', () => {
-    component.allCategories = ['Handicrafts', 'Pottery & Ceramics', 'Brass & Metalware', 'Spices & Herbal Products'];
-    fixture.detectChanges();
-
-    expect(component.extraCategories()).toContain('Brass & Metalware');
-    expect(component.extraCategories()).toContain('Spices & Herbal Products');
-
-    const moreBtn = fixture.nativeElement.querySelector('.more-btn');
-    expect(moreBtn).toBeTruthy();
-    expect(moreBtn.textContent).toContain('More');
-  });
-
-  it('selects category from More dropdown and emits value', () => {
-    component.allCategories = ['Handicrafts', 'Brass & Metalware'];
-    fixture.detectChanges();
-
-    let selected: string | null = null;
-    component.categorySelected.subscribe((cat) => {
-      selected = cat;
-    });
-
-    component.selectFromMore('Brass & Metalware');
-    expect(selected).toBe('Brass & Metalware');
-    expect(component.showMoreDropdown()).toBe(false);
+    expect(component.isSelected(component.categories[0])).toBe(true);
+    expect(component.isSelected(component.categories[2])).toBe(false);
   });
 });

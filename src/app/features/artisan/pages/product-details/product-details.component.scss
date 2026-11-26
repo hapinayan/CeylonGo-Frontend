@@ -5,24 +5,25 @@
 }
 
 .content-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 var(--cg-page-padding, 32px);
+  box-sizing: border-box;
 }
 
-/* TOP STICKY BAR */
+/* PAGE SUBHEADER */
 .top-nav-bar {
-  position: sticky;
-  top: 0;
-  z-index: 90;
   background: #ffffff;
   border-bottom: 1px solid #eef2f6;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 
   .bar-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0.75rem 1.5rem;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0.75rem var(--cg-page-padding, 32px);
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;

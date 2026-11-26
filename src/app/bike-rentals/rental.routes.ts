@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, Injectable } from '@angular/core';
 import { RouterOutlet, Routes } from '@angular/router';
-import { Footer } from '../shared/components/footer/footer';
-import { TravelerNavbar } from '../shared/components/traveler-navbar/traveler-navbar';
-import { TravelerAuthModal } from '../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { previewBookingRoutes } from './rental-booking-routes';
 
 @Injectable()
@@ -11,9 +8,9 @@ export class RentalScroll {
 }
 
 @Component({
-  imports: [RouterOutlet, TravelerNavbar, Footer, TravelerAuthModal],
+  imports: [RouterOutlet],
   providers: [RentalScroll],
-  template: '<app-traveler-navbar /><router-outlet /><app-footer /><app-traveler-auth-modal />',
+  template: '<router-outlet />',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class RentalShell {}

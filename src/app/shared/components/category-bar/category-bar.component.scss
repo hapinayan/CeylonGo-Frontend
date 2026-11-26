@@ -1,125 +1,70 @@
-.category-pills-bar {
+.category-cards-scroll {
   display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  padding: 0.25rem 0 0.5rem 0;
-  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.35rem 0.25rem;
+  scrollbar-width: thin;
 
-  @media (max-width: 960px) {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.5rem;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+  @media (max-width: 1120px) {
+    justify-content: flex-start;
   }
 }
 
-.category-pill {
-  display: inline-flex;
+.category-icon-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 9999px;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
   cursor: pointer;
-  padding: 0.55rem 1.15rem;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 600;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  flex: 0 0 auto;
+  width: 112px;
 
-  &:hover:not(.active) {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    color: #1e293b;
+  &:focus-visible .category-icon-box {
+    outline: 2px solid #0066ff;
+    outline-offset: 2px;
+  }
+
+  .category-icon-box {
+    width: 108px;
+    height: 68px;
+    border-radius: 14px;
+    background: #edf5ff;
+    border: 1.5px solid #dbeafe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+  }
+
+  .category-card-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #082b5c;
+    text-align: center;
+  }
+
+  &:hover .category-icon-box {
+    border-color: #93c5fd;
+    background: #e2eeff;
     transform: translateY(-1px);
   }
 
-  &.active {
-    background: #1255B5;
-    border-color: #1255B5;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(18, 85, 181, 0.25);
-    font-weight: 700;
-  }
-}
-
-.more-dropdown-wrapper {
-  position: relative;
-  display: inline-flex;
-
-  .more-btn {
-    .dropdown-chevron {
-      transition: transform 0.2s ease;
-
-      &.open {
-        transform: rotate(180deg);
-      }
+  &.selected {
+    .category-icon-box {
+      border: 2px solid #0066ff;
+      background: #e2eeff;
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.12);
     }
-  }
 
-  .dropdown-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    min-width: 200px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    padding: 0.4rem;
-    z-index: 50;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    animation: fadeInDown 0.15s ease-out;
-
-    .dropdown-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: transparent;
-      border: none;
-      border-radius: 8px;
-      padding: 0.55rem 0.85rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.15s ease;
-
-      &:hover:not(.active) {
-        background: #f1f5f9;
-        color: #080f50;
-      }
-
-      &.active {
-        background: #ebf3ff;
-        color: #1255B5;
-        font-weight: 700;
-      }
+    .category-card-label {
+      color: #0066ff;
+      font-weight: 700;
     }
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

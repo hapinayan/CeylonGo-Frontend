@@ -6,6 +6,8 @@ import { HomestayDetails, HomestayPage } from '../core/models/homestay.models';
 import { ActivityDetails } from '../experiences/models/activity';
 import { TravelApi } from '../experiences/services/travel-api';
 import { RentalApi, SavedRental } from '../bike-rentals/rental-api';
+import { ArtisanWishlistItemResponse } from '../features/artisan/models/artisan.models';
+import { FavoriteService } from '../features/artisan/services/favorite.service';
 import { SavedListing, WishlistKind, listingLocation } from './wishlist-model';
 
 interface Page<T> { items: T[]; page: number; total: number; page_size: number; total_pages?: number }
@@ -122,6 +124,23 @@ export const adaptWishlist = {
       detail: isAvailable ? ['/bicycles', id] : undefined,
     };
   },
+  artisan: (row: ArtisanWishlistItemResponse): SavedListing => {
+    const l = row.listing;
+    return {
+      kind: 'artisan',
+      id: row.artisan_listing_id,
+      title: l?.title ?? 'Artisan Business #' + row.artisan_listing_id,
+      savedAt: row.created_at ?? '',
+      location: listingLocation(l?.city, l?.district),
+      image: l?.cover_image_url ?? undefined,
+      price: price(l?.price),
+      currency: l?.currency || 'LKR',
+      unit: 'starting',
+      rating: l?.average_rating ?? null,
+      reviews: l?.total_reviews ?? undefined,
+      detail: row.is_available ? ['/artisans', row.artisan_listing_id] : undefined,
+    };
+  },
 };
 
 function allPages<T>(read: (page: number) => Observable<Page<T>>): Observable<T[]> {
@@ -137,6 +156,7 @@ export class TravelerWishlistApi {
   private readonly http = inject(HttpClient);
   private readonly travel = inject(TravelApi);
   private readonly rental = inject(RentalApi);
+  private readonly artisanFavorites = inject(FavoriteService);
   private readonly base = environment.apiBaseUrl;
   readonly homestayRevision = signal(0);
 
@@ -163,6 +183,10 @@ export class TravelerWishlistApi {
       case 'rental':
         return allPages(page => this.rental.savedList(page, 50)).pipe(
           map(rows => rows.map(adaptWishlist.rental)),
+        );
+      case 'artisan':
+        return allPages(page => this.artisanFavorites.getBusinessWishlist(page, 50)).pipe(
+          map(rows => rows.map(adaptWishlist.artisan)),
         );
     }
   }
@@ -191,6 +215,7 @@ export class TravelerWishlistApi {
       case 'eco': return this.travel.unsave(item.id);
       case 'guide': return this.http.delete(this.base + '/tour-guides/' + item.id + '/wishlist');
       case 'rental': return this.rental.toggleSaved(item.id, true);
+      case 'artisan': return this.artisanFavorites.removeSavedBusiness(item.id);
     }
   }
 }

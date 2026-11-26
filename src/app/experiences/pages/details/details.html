@@ -1,6 +1,4 @@
 <div class="experiences-shell">
-  <app-traveler-header />
-
   <main class="discover experience-details-flow">
     @switch (state().status) {
       @case ('loading') {
@@ -35,12 +33,6 @@
 
         <!-- 1. Page Header -->
         <header class="detail-header">
-          <nav aria-label="Breadcrumb">
-            <a routerLink="/experiences" class="back-link">
-              <app-experience-icon name="previous" /> Back to Experiences
-            </a>
-          </nav>
-
           <div class="detail-header-row">
             <div class="detail-title-col">
               @if (categoryLabel) {
@@ -383,7 +375,4 @@
       }
     }
   </main>
-
-  <app-footer />
-  <app-traveler-auth-modal />
 </div>

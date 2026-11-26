@@ -11,11 +11,9 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { TravelerNavbar } from '../../shared/components/traveler-navbar/traveler-navbar';
-import { Footer } from '../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthModalService } from '../../core/services/auth-modal.service';
+import { AiPlannerService } from '../../features/ai-planner/services/ai-planner.service';
 
 export interface ExperienceCategory {
   id: string;
@@ -25,6 +23,7 @@ export interface ExperienceCategory {
   region: string;
   filterParam: string;
   targetCategory?: string;
+  route?: string;
 }
 
 export interface PopularDestination {
@@ -86,7 +85,7 @@ export interface PromotionCard {
 @Component({
   selector: 'app-traveler-home',
   standalone: true,
-  imports: [CommonModule, TravelerNavbar, Footer, TravelerAuthModal],
+  imports: [CommonModule],
   templateUrl: './traveler-home.html',
   styleUrls: ['./traveler-home.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,6 +96,7 @@ export class TravelerHome implements OnInit {
   private readonly elementRef = inject(ElementRef);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
+  private readonly aiPlannerService = inject(AiPlannerService);
 
   readonly toastMessage = signal<string | null>(null);
 
@@ -183,6 +183,7 @@ export class TravelerHome implements OnInit {
       alt: 'Traditional Northern Sri Lankan palmyra leaf weaving and handicraft creation in Jaffna',
       region: 'Northern Province (Jaffna)',
       filterParam: 'artisan',
+      route: '/artisans/discover',
     },
     {
       id: 'heritage',
@@ -533,28 +534,25 @@ export class TravelerHome implements OnInit {
 
     this.isGenerating.set(true);
 
-    const msg = `Generating custom AI itinerary for ${dest} (${dur})...`;
+    const msg = `Preparing custom AI itinerary for ${dest} (${dur})...`;
     this.showToast(msg);
-
-    // Transfer selected destination and duration to query params / state
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { destination: dest, duration: dur, planner: 'quick' },
-      queryParamsHandling: 'merge',
-    }).then(() => {
-      setTimeout(() => {
-        this.isGenerating.set(false);
-        this.showToast(`Itinerary parameters ready for ${dest} (${dur})! Connecting with CeylonGo AI Itinerary engine.`);
-      }, 700);
+    this.aiPlannerService.setPendingQuickDraft({
+      destination: dest,
+      duration: dur,
     });
+
+    this.router
+      .navigate(['/ai-planner'], {
+        queryParams: { destination: dest, duration: dur },
+      })
+      .finally(() => {
+        this.isGenerating.set(false);
+      });
   }
 
   onPlanTripWithAI(): void {
-    this.showToast('Launching CeylonGo AI Trip Planner...');
-    const plannerSection = document.getElementById('ai-planner');
-    if (plannerSection && typeof plannerSection.scrollIntoView === 'function') {
-      plannerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    this.showToast('Opening CeylonGo AI Trip Planner...');
+    this.router.navigate(['/ai-planner']);
   }
 
   onCategoryScroll(): void {
@@ -579,15 +577,16 @@ export class TravelerHome implements OnInit {
   }
 
   onCategoryClick(cat: ExperienceCategory): void {
-    if (cat.targetCategory) {
+    if (cat.route) {
+      // Connect to registered category module discovery route (e.g. Artisans)
+      this.router.navigate([cat.route]);
+    } else if (cat.targetCategory) {
       // Connect to existing Experiences discovery page with selected category filter
       this.router.navigate(['/experiences'], {
         queryParams: { category: cat.targetCategory },
       });
     } else {
-      // Verified: Artisan & Handicrafts, Heritage & Landmarks, Village Experiences
-      // do not have dedicated categories in the existing Experiences catalog.
-      // Do not create misleading category mappings. Navigate to all experiences.
+      // Heritage & Landmarks, Village Experiences: navigate to all experiences.
       this.router.navigate(['/experiences']);
     }
   }
@@ -599,12 +598,7 @@ export class TravelerHome implements OnInit {
   }
 
   onExploreCommunity(): void {
-    this.showToast('Travel Community features are coming soon in the next release!');
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { section: 'community' },
-      queryParamsHandling: 'merge',
-    });
+    this.router.navigate(['/community']);
   }
 
   scrollDestinations(direction: number): void {

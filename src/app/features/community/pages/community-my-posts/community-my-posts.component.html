@@ -1,0 +1,153 @@
+<div class="community-page-shell">
+  <main class="community-main" id="main-content">
+    <div class="community-grid">
+      <aside class="sticky-col left-col" aria-label="Community Navigation">
+        <div class="left-nav-card">
+          <div class="profile-summary">
+            <div class="profile-avatar">{{ userInitials() }}</div>
+            <div class="profile-text">
+              <strong>{{ currentUser()?.full_name || 'Traveler' }}</strong>
+              <span>Manage your stories</span>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <a routerLink="/community" class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h10" />
+              </svg>
+              <span>News Feed</span>
+            </a>
+            <a routerLink="/community/my-posts" class="nav-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span>My Posts</span>
+            </a>
+            <a routerLink="/community/saved" class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+              </svg>
+              <span>Saved Posts</span>
+            </a>
+          </nav>
+
+          <button type="button" class="create-post-cta" (click)="openCreateModal()">
+            + Create Post
+          </button>
+        </div>
+      </aside>
+
+      <section class="center-feed-col" aria-label="My Community Posts">
+        <header class="page-banner">
+          <div>
+            <h1>My Posts</h1>
+            <p>View, update, or remove your published stories and photographs.</p>
+          </div>
+          <span class="count-pill">{{ totalPosts() }} Total</span>
+        </header>
+
+        @if (isLoading()) {
+          <div class="feed-list" aria-busy="true">
+            @for (i of [1, 2]; track i) {
+              <div class="skeleton-card">
+                <div class="skel-line short"></div>
+                <div class="skel-line medium"></div>
+              </div>
+            }
+          </div>
+        } @else if (errorMessage()) {
+          <div class="state-card" role="alert">
+            <h3>Could not load your posts</h3>
+            <p>{{ errorMessage() }}</p>
+            <button type="button" class="btn-primary-inline" (click)="loadMyPosts(currentPage())">Retry</button>
+          </div>
+        } @else if (posts().length === 0) {
+          <div class="state-card">
+            <h3>You haven't shared any posts yet</h3>
+            <p>Share your favourite destinations, tips, or photographs with the CeylonGo community.</p>
+            <button type="button" class="btn-primary-inline" (click)="openCreateModal()">
+              Create Your First Post
+            </button>
+          </div>
+        } @else {
+          <div class="feed-list">
+            @for (post of posts(); track post.id) {
+              <app-community-post-card
+                [post]="post"
+                actorMode="traveler"
+                [currentUserId]="currentUser()?.id ?? null"
+                [isAuthenticated]="isAuthenticated()"
+                (postChanged)="onPostChanged($event)"
+                (editRequested)="onEditPost($event)"
+                (deleteRequested)="deleteError.set(null); postToDelete.set($event)"
+                (photoClicked)="onOpenLightbox($event)"
+                (actionFeedback)="showToast($event.kind, $event.message)"
+              />
+            }
+          </div>
+
+          @if (totalPages() > 1) {
+            <nav class="pagination-bar" aria-label="My posts pages">
+              <button
+                type="button"
+                class="page-btn"
+                (click)="loadMyPosts(currentPage() - 1)"
+                [disabled]="currentPage() <= 1"
+              >
+                Previous
+              </button>
+              <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+              <button
+                type="button"
+                class="page-btn"
+                (click)="loadMyPosts(currentPage() + 1)"
+                [disabled]="currentPage() >= totalPages()"
+              >
+                Next
+              </button>
+            </nav>
+          }
+        }
+      </section>
+
+      <div class="sticky-col right-col">
+        <app-community-explore-sidebar />
+      </div>
+    </div>
+  </main>
+
+  <app-create-post-modal
+    [isOpen]="isComposerOpen()"
+    [initialPost]="editingPost()"
+    actorMode="traveler"
+    [authorName]="currentUser()?.full_name || 'Traveler'"
+    authorSubtitle="Traveler"
+    (closed)="isComposerOpen.set(false); editingPost.set(null)"
+    (published)="onPostPublished($event)"
+  />
+
+  <app-confirm-delete-modal
+    [isOpen]="postToDelete() !== null"
+    title="Delete Community Post"
+    message="Are you sure you want to permanently remove this post?"
+    [isBusy]="isDeleting()"
+    [errorMessage]="deleteError()"
+    (cancel)="postToDelete.set(null)"
+    (confirm)="confirmDelete()"
+  />
+
+  <app-photo-lightbox-modal
+    [photos]="lightboxPhotos()"
+    [isOpen]="isLightboxOpen()"
+    [initialIndex]="lightboxIndex()"
+    (close)="isLightboxOpen.set(false)"
+  />
+
+  @if (toast(); as t) {
+    <div class="toast-banner" [class.error]="t.kind === 'error'" role="status">
+      {{ t.message }}
+    </div>
+  }
+</div>

@@ -6,11 +6,8 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { combineLatest, map, of, switchMap, tap } from 'rxjs';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { ExperienceIcon } from '../../components/icon';
 import { ExperiencePaymentStatus } from '../../components/payment-status';
-import { TravelerHeader } from '../../components/traveler-header';
 import { ActivityBookingDetailResponse, ActivityDetails } from '../../models/activity';
 import { ActivitiesApi, extractApiErrorMessage } from '../../services/activities-api';
 import { TRAVEL_SOURCE } from '../../services/travel-api';
@@ -30,26 +27,18 @@ interface BookingDetailView {
 
 @Component({
   imports: [
-    TravelerHeader,
     RouterLink,
     DatePipe,
     DecimalPipe,
     ReactiveFormsModule,
     ExperiencePaymentStatus,
     ExperienceIcon,
-    Footer,
-    TravelerAuthModal,
   ],
   styleUrls: ['../discover/discover.scss', './traveler.scss'],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="experiences-shell">
-      <app-traveler-header />
       <main class="discover traveler-workflow">
-        <a routerLink="/experiences/bookings" class="workflow-back-link">
-          <app-experience-icon name="previous" /> Back to My Experience Bookings
-        </a>
-
         <div class="workflow-page-header">
           <h1>Booking details</h1>
           <p class="workflow-lead-p">View your booking status, schedule, and recorded payment information.</p>
@@ -228,8 +217,6 @@ interface BookingDetailView {
           }
         }
       </main>
-      <app-footer />
-      <app-traveler-auth-modal />
     </div>
   `,
 })

@@ -12,11 +12,14 @@ export interface ArtisanListingSummary {
   id: number;
   provider_profile_id: number;
   title: string;
+  description?: string | null;
   craft_category: string;
   district: string;
   city: string;
   latitude: number | null;
   longitude: number | null;
+  price?: number | null;
+  currency?: string;
   cover_image_url: string | null;
   is_active: boolean;
   is_verified: boolean;
@@ -55,6 +58,9 @@ export interface ArtisanListingResponse {
   provider_profile_id: number;
   title: string;
   craft_category: string;
+  business_type?: string | null;
+  business_background?: string | null;
+  artisan_information?: string | null;
   description: string | null;
   district: string;
   city: string;
@@ -62,10 +68,15 @@ export interface ArtisanListingResponse {
   latitude: number | null;
   longitude: number | null;
   phone: string | null;
+  whatsapp_number?: string | null;
   email: string | null;
   website_url: string | null;
+  social_links?: Record<string, string> | null;
   opening_hours: string | null;
   cover_image_url: string | null;
+  price?: number | null;
+  currency?: string;
+  units?: { id: number; listing_id?: number; label: string; capacity: number; is_active: boolean; notes?: string | null }[];
   is_active: boolean;
   is_verified: boolean;
   is_featured: boolean;
@@ -104,17 +115,21 @@ export interface ArtisanProductImage {
 export interface ShowcaseItemSummary {
   id: number;
   artisan_listing_id: number;
+  listing_title?: string | null;
   title: string;
-  item_type: 'product' | 'service';
+  category?: string | null;
+  description?: string | null;
+  materials?: string | null;
+  item_type?: 'product' | 'service';
   price: number | null;
   currency: string;
   image_url: string | null;
   is_available: boolean;
-  is_featured: boolean;
+  is_featured?: boolean;
   is_active: boolean;
-  stock_quantity: number;
-  sku: string | null;
-  is_custom_order_available: boolean;
+  stock_quantity?: number;
+  sku?: string | null;
+  is_custom_order_available?: boolean;
   approval_status: string;
 }
 
@@ -122,18 +137,19 @@ export interface ShowcaseItemResponse {
   id: number;
   artisan_listing_id: number;
   title: string;
-  item_type: 'product' | 'service';
+  category?: string | null;
+  item_type?: 'product' | 'service';
   description: string | null;
   price: number | null;
   currency: string;
   image_url: string | null;
   materials: string | null;
-  duration_minutes: number | null;
+  duration_minutes?: number | null;
   is_available: boolean;
-  stock_quantity: number;
-  sku: string | null;
-  is_custom_order_available: boolean;
-  is_featured: boolean;
+  stock_quantity?: number;
+  sku?: string | null;
+  is_custom_order_available?: boolean;
+  is_featured?: boolean;
   is_active: boolean;
   approval_status: string;
   listing_title?: string | null;
@@ -207,6 +223,8 @@ export interface ArtisanWishlistSavedListingSummary {
   craft_category: string;
   district: string;
   city: string;
+  price?: number | null;
+  currency?: string;
   cover_image_url: string | null;
   approval_status: string;
   is_active: boolean;
@@ -217,12 +235,12 @@ export interface ArtisanWishlistSavedListingSummary {
 export interface ArtisanWishlistItemResponse {
   id: number;
   user_id: number;
-  listing_reference_id: number;
+  listing_reference_id?: number;
   artisan_listing_id: number;
-  notes: string | null;
-  created_at: string;
+  notes?: string | null;
+  created_at?: string;
   is_available: boolean;
-  listing: ArtisanWishlistSavedListingSummary | null;
+  listing: (ArtisanWishlistSavedListingSummary & Partial<ArtisanListingResponse>) | null;
 }
 
 export interface ArtisanWishlistPagination {
@@ -243,6 +261,11 @@ export interface ArtisanFilterParams {
   search?: string | null;
   district?: string | null;
   category?: string | null;
+  business_type?: string | null;
+  sort?: string | null;
+  sort_by?: string | null;
+  min_price?: number | null;
+  max_price?: number | null;
   is_featured?: boolean | null;
   page?: number;
   page_size?: number;

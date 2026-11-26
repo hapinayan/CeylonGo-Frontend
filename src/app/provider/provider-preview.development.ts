@@ -1,4 +1,5 @@
 import { ProviderUser } from '../core/models/provider-auth.models';
+import { CommunityPostDetails } from '../features/community/models/community.models';
 import {
   AvailabilitySlotResponse,
   HomestayBookingDetails,
@@ -610,6 +611,93 @@ export const PREVIEW_LISTINGS: ReviewListing[] = [
     homestay_metadata: null,
     rooms: [],
   },
+  {
+    listing: {
+      id: 9007,
+      provider_id: 900,
+      category: 'artisan',
+      title: 'Sample: Ruhunu Heritage Pottery Studio',
+      description: 'Hand-thrown terracotta vessels and traditional Sri Lankan clay lamps crafted by third-generation potters.',
+      district: 'Matara',
+      locality: 'Matara',
+      latitude: '5.954900',
+      longitude: '80.555000',
+      price: '2400.00',
+      currency: 'LKR',
+      approval_status: 'approved',
+      is_active: true,
+      media: [
+        {
+          id: 9171,
+          storage_key: 'preview/artisan-pottery-1.svg',
+          sort_order: 0,
+          alt_text: 'Ruhunu Heritage Pottery Studio',
+          image_url: makeSvgPreviewUrl('Ruhunu Pottery Studio', '#0066FF'),
+        },
+      ],
+      units: [
+        { id: 9701, label: 'Traditional Clay Curd Pot', capacity: 1, is_active: true },
+        { id: 9702, label: 'Hand-painted Terracotta Lamp', capacity: 1, is_active: true },
+      ],
+      created_at: '2026-11-23T09:00:00Z',
+    },
+    verification_status: 'approved',
+    submitted_at: '2026-11-23T10:00:00Z',
+    decided_at: '2026-11-24T11:00:00Z',
+    decision_reason: null,
+    details: {
+      province: 'Southern',
+      address: 'No. 18, Pottery Village Lane, Matara',
+      links: [{ kind: 'maps', url: 'https://maps.google.com/' }],
+      notes: 'Sample approved Artisan listing.',
+      files: [{ id: 'prev-art-1', kind: 'business_certificate', media_type: 'application/pdf' }],
+    },
+    homestay_metadata: null,
+    rooms: [],
+  },
+  {
+    listing: {
+      id: 9008,
+      provider_id: 900,
+      category: 'artisan',
+      title: 'Sample: Ambalangoda Kolam Mask Workshop',
+      description: 'Hand-carved ceremonial Kaduru wood masks finished with natural mineral pigments.',
+      district: 'Galle',
+      locality: 'Ambalangoda',
+      latitude: '6.235500',
+      longitude: '80.053800',
+      price: '4800.00',
+      currency: 'LKR',
+      approval_status: 'more_evidence_required',
+      is_active: false,
+      media: [
+        {
+          id: 9181,
+          storage_key: 'preview/artisan-mask-1.svg',
+          sort_order: 0,
+          alt_text: 'Ambalangoda Mask Workshop',
+          image_url: makeSvgPreviewUrl('Ambalangoda Masks', '#0EA5E9'),
+        },
+      ],
+      units: [
+        { id: 9703, label: 'Gini Raksha Carved Wall Mask', capacity: 1, is_active: true },
+      ],
+      created_at: '2026-11-24T09:00:00Z',
+    },
+    verification_status: 'more_evidence_required',
+    submitted_at: '2026-11-24T10:00:00Z',
+    decided_at: '2026-11-25T09:30:00Z',
+    decision_reason: 'Please upload an additional workshop photograph showing craft production tools.',
+    details: {
+      province: 'Southern',
+      address: 'Main Street, Ambalangoda',
+      links: [{ kind: 'facebook', url: 'https://facebook.com/' }],
+      notes: 'Sample Artisan listing requesting additional workshop evidence.',
+      files: [{ id: 'prev-art-2', kind: 'workshop', media_type: 'image/jpeg' }],
+    },
+    homestay_metadata: null,
+    rooms: [],
+  },
 ];
 
 export const PREVIEW_SLOTS: Record<number, AvailabilitySlotResponse[]> = {
@@ -980,3 +1068,66 @@ export function createPreviewPhotoBlob(): Blob {
     '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="#082B5C"/><text x="50%" y="50%" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="24" text-anchor="middle">Sample Preview Photo</text></svg>';
   return new Blob([svg], { type: 'image/svg+xml' });
 }
+
+export const PREVIEW_COMMUNITY_POSTS: CommunityPostDetails[] = [
+  {
+    id: 9901,
+    author_id: 900,
+    author_name: 'Nadee Fernando',
+    author_type: 'provider',
+    author: {
+      id: 900,
+      full_name: 'Nadee Fernando',
+      author_type: 'provider',
+      provider_profile_id: 900,
+      provider_business_name: 'Ceylon Horizon Homestay (Preview)',
+      provider_district: 'Badulla',
+      is_verified_provider: true,
+      member_since: '2026-11-01T08:00:00Z',
+    },
+    body: 'Morning mist over the Badulla tea ridges today — our guesthouse veranda overlooks the Nine Arches trail.',
+    visibility: 'visible',
+    created_at: '2026-11-26T07:30:00Z',
+    updated_at: '2026-11-26T07:30:00Z',
+    likes_count: 4,
+    comments_count: 1,
+    viewer_has_liked: false,
+    viewer_has_saved: false,
+    media: [
+      {
+        id: 9911,
+        post_id: 9901,
+        media_type: 'image',
+        image_url: makeSvgPreviewUrl('Ella Tea Valley Veranda', '#0066FF'),
+        alt_text: 'Sample Ella valley view',
+        display_order: 0,
+        created_at: '2026-11-26T07:30:00Z',
+      },
+    ],
+  },
+  {
+    id: 9902,
+    author_id: 704,
+    author_name: 'Kasun Perera (Sample)',
+    author_type: 'traveler',
+    author: {
+      id: 704,
+      full_name: 'Kasun Perera (Sample)',
+      author_type: 'traveler',
+      provider_profile_id: null,
+      provider_business_name: null,
+      provider_district: null,
+      is_verified_provider: false,
+      member_since: '2026-11-05T10:00:00Z',
+    },
+    body: 'Loved exploring Galle Fort craft workshops and cycling by the ramparts before sunset.',
+    visibility: 'visible',
+    created_at: '2026-11-25T16:45:00Z',
+    updated_at: '2026-11-25T16:45:00Z',
+    likes_count: 2,
+    comments_count: 0,
+    viewer_has_liked: false,
+    viewer_has_saved: false,
+    media: [],
+  },
+];

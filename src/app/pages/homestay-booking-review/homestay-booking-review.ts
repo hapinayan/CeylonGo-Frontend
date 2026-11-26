@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -14,18 +14,19 @@ import {
 import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
-import { TravelerAuthModal } from '../../shared/components/traveler-auth-modal/traveler-auth-modal';
+import { TravelerBackNavigationService } from '../../core/services/traveler-back-navigation.service';
 
 @Component({
   selector: 'app-homestay-booking-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TravelerAuthModal],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './homestay-booking-review.html',
   styleUrl: './homestay-booking-review.scss',
 })
-export class HomestayBookingReview implements OnInit {
+export class HomestayBookingReview implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly backNav = inject(TravelerBackNavigationService);
   readonly homestayService = inject(HomestayService);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
@@ -390,6 +391,7 @@ export class HomestayBookingReview implements OnInit {
 
         this.confirmationData.set(confirmation);
         this.isConfirmed.set(true);
+        this.backNav.markBookingConfirmed();
         this.isSubmitting.set(false);
         this.homestayService.clearBookingDraft();
         this.showToast('Booking request submitted to host!');
@@ -414,10 +416,15 @@ export class HomestayBookingReview implements OnInit {
 
         this.confirmationData.set(confirmation);
         this.isConfirmed.set(true);
+        this.backNav.markBookingConfirmed();
         this.isSubmitting.set(false);
         this.homestayService.clearBookingDraft();
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    this.backNav.clearBookingConfirmed();
   }
 
   showToast(message: string): void {

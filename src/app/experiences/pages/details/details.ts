@@ -11,12 +11,9 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { BookingPanel } from '../../components/booking-panel';
 import { ExperienceIcon } from '../../components/icon';
 import { SaveControl } from '../../components/save-control';
-import { TravelerHeader } from '../../components/traveler-header';
 import { ActivityDetails, ActivitySlotDetails } from '../../models/activity';
 import { Experience } from '../../models/catalog';
 import {
@@ -54,12 +51,9 @@ type DetailState =
     RouterLink,
     DatePipe,
     DecimalPipe,
-    TravelerHeader,
     ExperienceIcon,
     BookingPanel,
     SaveControl,
-    Footer,
-    TravelerAuthModal,
   ],
   templateUrl: './details.html',
   styleUrls: ['../discover/discover.scss', './details.scss', '../traveler/traveler.scss'],

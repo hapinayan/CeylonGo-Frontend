@@ -17,18 +17,11 @@
     } @else {
       @let vehicle = $any(vehicleState()).vehicle;
 
-      <div class="booking-topbar">
-        <a
-          class="back-link"
-          [routerLink]="['/bicycles', vehicle.id]"
-          [queryParams]="preview() ? { preview: '1' } : null">
-          &larr; Back to Vehicle Details
-        </a>
-
-        @if (preview()) {
+      @if (preview()) {
+        <div class="booking-topbar">
           <span class="preview-badge">Preview Mode — Demo Submission Only</span>
-        }
-      </div>
+        </div>
+      }
 
       <ol class="booking-stepper" aria-label="Booking progress">
         <li [class.active]="step() === 'review'" [class.done]="step() !== 'review'">

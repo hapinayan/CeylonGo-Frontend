@@ -1,192 +1,392 @@
-<app-traveler-navbar [variant]="detail() ? 'default' : 'bookings'" (bookingSearchRequested)="focusSearch()" />
-<main class="account-layout" [class.dashboard]="!detail()">
-  <app-traveler-account-sidebar [account]="account()" [preview]="preview()" [premium]="!detail()" active="bookings" (signedOut)="logout()" />
+<app-traveler-account-layout
+  [account]="account()"
+  [preview]="preview()"
+  active="bookings"
+  contentLabel="Traveler bookings"
+>
+  @if (detail()) {
+    <app-account-page-header
+      title="Booking Details"
+      description="Review reservation schedule, payment status, and booking records."
+      headingId="booking-heading"
+    />
+  } @else {
+    <app-account-page-header
+      title="My Bookings"
+      description="View and manage your travel bookings."
+      headingId="booking-heading"
+    />
+  }
 
-  <section class="content" aria-labelledby="booking-heading">
-    @if (preview() && detail()) {
-      <p class="preview-note" role="note"><strong>Development preview</strong> · All booking records, amounts and photos shown here are illustrative.</p>
+  @let view = screen();
+  @switch (view.kind) {
+    @case ('restricted') {
+      <div class="state-banner warning" role="status">
+        An active traveler account is required to view bookings.
+      </div>
     }
-    @if (detail()) {
-      <a class="back" routerLink="/my-bookings" queryParamsHandling="preserve">← Back to My Bookings</a>
-      <h1 id="booking-heading">Booking Details</h1>
-    } @else {
-      <h1 id="booking-heading">My Bookings</h1>
-      <p class="introduction">View and manage all your bookings across CeylonGo.</p>
+    @case ('loading') {
+      <app-account-loading-skeleton [variant]="detail() ? 'card' : 'list'" [count]="detail() ? 2 : 3" />
+    }
+    @case ('missing') {
+      <app-account-empty-state
+        icon="calendar"
+        heading="Booking not found"
+        description="This booking could not be located on your account."
+        actionLabel="Back to My Bookings"
+        [actionRoute]="['/my-bookings']"
+      />
+    }
+    @case ('unauthorized') {
+      <div class="state-banner error" role="alert">Sign in again to view this booking.</div>
+    }
+    @case ('denied') {
+      <div class="state-banner error" role="alert">Your account cannot access this booking.</div>
+    }
+    @case ('error') {
+      <div class="state-banner error" role="alert">
+        <span>Booking details couldn’t load.</span>
+        <button type="button" class="btn-retry" (click)="retry()">Try again</button>
+      </div>
     }
 
-    @let view = screen();
-    @switch (view.kind) {
-      @case ('restricted') { <p class="notice" role="status">An active traveler account is required to view bookings.</p> }
-      @case ('loading') { <p class="notice" role="status">Loading bookings…</p> }
-      @case ('missing') { <p class="notice" role="status">This booking was not found.</p> }
-      @case ('unauthorized') { <p class="notice" role="alert">Sign in again to view this booking.</p> }
-      @case ('denied') { <p class="notice" role="alert">Your account cannot access this booking.</p> }
-      @case ('error') {
-        <div class="notice" role="alert">Booking details couldn’t load. <button type="button" (click)="retry()">Try again</button></div>
+    @case ('detail') {
+      @let b = view.booking;
+
+      @if (cancelSuccessMessage()) {
+        <div class="state-banner success" role="status">{{ cancelSuccessMessage() }}</div>
       }
-      @case ('detail') {
-        @let b = view.booking;
-        <article class="detail-panel">
-          <header class="detail-header">
-            <div><p class="service"><app-experience-icon [name]="icons[b.service]" /> {{ labels[b.service] }}</p>
-              <h2>{{ b.title }}</h2>
-              <p class="reference">Booking {{ b.reference || '#' + b.id }}</p>
-            </div>
-            <span class="badge" [attr.data-status]="b.status"><span class="visually-hidden">Booking status: </span>{{ label(b.status) }}</span>
-          </header>
-          <div class="detail-grid">
-            <section aria-labelledby="service-details">
-              <h3 id="service-details">{{ labels[b.service] }} details</h3>
-              <dl>
+
+      <article class="detail-card">
+        <header class="detail-header">
+          <div class="detail-title-group">
+            <span class="category-chip">
+              <app-experience-icon [name]="icons[b.service]" />
+              <span>{{ categoryLabelFor(b) }}</span>
+            </span>
+            <h2>{{ b.title }}</h2>
+            <p class="reference-line">Booking Reference: <strong>{{ b.reference || '#' + b.id }}</strong></p>
+          </div>
+          <app-account-status-badge [status]="b.status" />
+        </header>
+
+        <div class="detail-panels-grid">
+          <section class="info-subcard" aria-labelledby="service-details">
+            <h3 id="service-details">{{ categoryLabelFor(b) }} Summary</h3>
+            <dl class="spec-list">
+              <div>
                 <dt>{{ b.datesLabel || 'Booking dates' }}</dt>
                 <dd>
                   @if (b.start) {
-                    {{ date(b.start) | date:'d MMM yyyy':'+0530' }}
-                    @if (b.end && b.end !== b.start) { &ndash; {{ date(b.end) | date:'d MMM yyyy':'+0530' }} }
-                  } @else { Unavailable }
+                    {{ date(b.start) | date: 'd MMM yyyy' : '+0530' }}
+                    @if (b.end && b.end !== b.start) {
+                      &ndash; {{ date(b.end) | date: 'd MMM yyyy' : '+0530' }}
+                    }
+                  } @else {
+                    Unavailable
+                  }
                 </dd>
-                @if (b.location) { <dt>Location</dt><dd>{{ b.location }}</dd> }
-                @if (b.quantity) { <dt>{{ b.quantityLabel || 'Quantity' }}</dt><dd>{{ b.quantity }}</dd> }
-                @if (account(); as traveler) { <dt>Booked by</dt><dd>{{ traveler.full_name }}</dd> }
-                @for (fact of b.facts ?? []; track fact.label) {
-                  <dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>
-                }
-              </dl>
-            </section>
-            <section class="payment-panel" aria-labelledby="payment-details">
-              <h3 id="payment-details">Payment details</h3>
-              <dl>
-                <dt>Booking total</dt><dd class="amount">{{ b.currency }} {{ b.amount | number:'1.2-2' }}</dd>
-                <dt>Payment status</dt><dd class="status-text">{{ b.paymentStatus ? label(b.paymentStatus) : 'Unavailable' }}</dd>
-                @if (b.paymentMethod) { <dt>Payment method</dt><dd class="status-text">{{ label(b.paymentMethod) }}</dd> }
-              </dl>
-            </section>
-          </div>
-          @if (b.cancellation?.policy || b.cancellation?.cutoffHours != null || b.cancellation?.reason || b.cancellation?.at || b.refundEstimate) {
-            <section class="detail-section" aria-labelledby="cancellation-policy">
-              <h3 id="cancellation-policy">Cancellation information</h3>
-              @if (b.cancellation?.policy; as policy) { <p>{{ policy }}</p> }
-              @if (b.cancellation?.cutoffHours != null) { <p>Free cancellation window on record: {{ b.cancellation?.cutoffHours }} hours before the booking starts.</p> }
-              @if (b.cancellation?.reason; as reason) { <p>Recorded reason: {{ reason }}</p> }
-              @if (b.cancellation?.at; as at) { <p>Cancelled on {{ date(at) | date:'d MMM yyyy':'+0530' }}.</p> }
-              @if (b.refundEstimate; as estimate) {
-                <p>Server refund eligibility estimate: {{ estimate.currency }} {{ estimate.amount | number:'1.2-2' }}. {{ estimate.note }}</p>
-              }
-            </section>
-          }
-          @if (!preview() && b.contactId) {
-            @let provider = contact.state();
-            <section class="detail-section" aria-labelledby="provider-contact">
-              <h3 id="provider-contact">Provider contact</h3>
-              @if (provider.kind === 'ready' && provider.data; as info) {
-                <p>{{ info.name }} &middot; {{ info.phone }}</p>
-              } @else {
-                @if (provider.kind === 'unavailable' || provider.kind === 'ready') { <p role="status">Provider contact is unavailable.</p> }
-                <button class="secondary-button" type="button" [disabled]="provider.kind === 'loading'" (click)="contact.load()">
-                  {{ provider.kind === 'loading' ? 'Loading provider contact' : 'View provider contact' }}
-                </button>
-              }
-            </section>
-          }
-          @if (isSampleCancellation(b)) {
-            <p id="sample-cancel-result" class="notice sample-result" role="status" tabindex="-1">Sample cancellation recorded. No payment or refund was made.</p>
-          } @else if (canCancelSample(b)) {
-            <section class="detail-section">
-              <button class="secondary-button sample-action" type="button" (click)="confirmDialog.showModal()">Simulate cancellation</button>
-              <dialog #confirmDialog aria-labelledby="sample-cancel-title" aria-describedby="sample-cancel-message">
-                <h3 id="sample-cancel-title">Cancel this sample booking?</h3>
-                <p id="sample-cancel-message">This only updates the demonstration. No provider is contacted and no payment or refund is made.</p>
-                <div class="dialog-actions">
-                  <button class="secondary-button" type="button" autofocus (click)="confirmDialog.close()">Keep sample booking</button>
-                  <button class="button" type="button" (click)="confirmSampleCancellation(confirmDialog, b)">Confirm simulated cancellation</button>
+              </div>
+              @if (b.createdAt) {
+                <div>
+                  <dt>Booked On</dt>
+                  <dd>{{ date(b.createdAt) | date: 'd MMM yyyy, h:mm a' : '+0530' }}</dd>
                 </div>
-              </dialog>
-            </section>
-          }
-        </article>
-      }
-      @case ('list') {
-        <div class="toolbar">
-          <nav class="filters" aria-label="Filter bookings by status">
-            @for (tab of tabs; track tab.key) {
-              <a routerLink="." [queryParams]="{ status: tab.key === 'all' ? null : tab.key }" queryParamsHandling="merge"
-                [attr.aria-current]="filter() === tab.key ? 'true' : null">{{ tab.name }} (<span>{{ counts()[tab.key] }}</span>)</a>
-            }
-          </nav>
-          <form role="search" (submit)="searchFor(field.value, $event)">
-            <label class="visually-hidden" for="booking-search">Search bookings</label>
-            <span class="visually-hidden" id="booking-search-hint">Search by booking reference, service, title or location.</span>
-            <input #field id="booking-search" type="search" maxlength="120" [value]="search()" placeholder="Search by booking ID, service or location" aria-describedby="booking-search-hint" />
-            <button type="submit" aria-label="Search"><app-experience-icon name="search" /></button>
-          </form>
+              }
+              @if (b.location) {
+                <div>
+                  <dt>Location</dt>
+                  <dd>{{ b.location }}</dd>
+                </div>
+              }
+              @if (b.quantity) {
+                <div>
+                  <dt>{{ b.quantityLabel || 'Quantity' }}</dt>
+                  <dd>{{ b.quantity }}</dd>
+                </div>
+              }
+              @if (account(); as traveler) {
+                <div>
+                  <dt>Traveler</dt>
+                  <dd>{{ traveler.full_name }}</dd>
+                </div>
+              }
+              @for (fact of b.facts ?? []; track fact.label) {
+                <div>
+                  <dt>{{ fact.label }}</dt>
+                  <dd>{{ fact.value }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <section class="info-subcard payment-box" aria-labelledby="payment-details">
+            <h3 id="payment-details">Price &amp; Payment</h3>
+            <dl class="spec-list">
+              <div>
+                <dt>Booking Status</dt>
+                <dd><app-account-status-badge [status]="b.status" /></dd>
+              </div>
+              <div>
+                <dt>Payment Status</dt>
+                <dd><app-account-status-badge [status]="b.paymentStatus || 'unpaid'" /></dd>
+              </div>
+              @if (b.paymentMethod) {
+                <div>
+                  <dt>Payment Method</dt>
+                  <dd class="cap">{{ label(b.paymentMethod) }}</dd>
+                </div>
+              }
+              <div class="total-row">
+                <dt>Total Amount</dt>
+                <dd class="amount-lg">{{ b.currency }} {{ b.amount | number: '1.2-2' }}</dd>
+              </div>
+            </dl>
+          </section>
         </div>
-        @if (preview()) {
-          <p class="preview-note" role="note"><strong>Development preview</strong> · Sample records, amounts and photos.</p>
+
+        @if (b.cancellation?.policy || b.cancellation?.cutoffHours != null || b.cancellation?.reason || b.cancellation?.at || b.refundEstimate) {
+          <section class="detail-extra-box" aria-labelledby="cancellation-policy">
+            <h3 id="cancellation-policy">Cancellation Information</h3>
+            @if (b.cancellation?.policy; as policy) { <p>{{ policy }}</p> }
+            @if (b.cancellation?.cutoffHours != null) {
+              <p>Free cancellation window: {{ b.cancellation?.cutoffHours }} hours prior to start.</p>
+            }
+            @if (b.cancellation?.reason; as reason) { <p>Recorded reason: {{ reason }}</p> }
+            @if (b.cancellation?.at; as at) {
+              <p>Cancelled on {{ date(at) | date: 'd MMM yyyy' : '+0530' }}.</p>
+            }
+            @if (b.refundEstimate; as estimate) {
+              <p>Server refund estimate: {{ estimate.currency }} {{ estimate.amount | number: '1.2-2' }}. {{ estimate.note }}</p>
+            }
+          </section>
         }
-        <div class="service-notices">
-          @for (section of view.sections; track section.service) {
-            @if (section.kind === 'failed') {
-              <p class="notice" role="status">{{ labels[section.service] }} bookings couldn’t load. <button type="button" (click)="retryService(section.service)">Retry</button>
-                @if (section.status === 401) { <span>Sign in again to view this service.</span> }
-                @if (section.status === 403) { <span>Your account cannot access this service.</span> }
-              </p>
+
+        @if (!preview() && b.contactId) {
+          @let provider = contact.state();
+          <section class="detail-extra-box" aria-labelledby="provider-contact">
+            <h3 id="provider-contact">Service Provider Contact</h3>
+            @if (provider.kind === 'ready' && provider.data; as info) {
+              <p>{{ info.name }} &middot; {{ info.phone }}</p>
+            } @else {
+              @if (provider.kind === 'unavailable' || provider.kind === 'ready') {
+                <p role="status">Provider contact is unavailable.</p>
+              }
+              <button type="button" class="btn-outline" [disabled]="provider.kind === 'loading'" (click)="contact.load()">
+                {{ provider.kind === 'loading' ? 'Loading...' : 'View provider contact' }}
+              </button>
             }
+          </section>
+        }
+
+        @if (canCancelLiveBooking(b)) {
+          <div class="detail-footer-actions">
+            <a routerLink="/my-bookings" class="btn-outline">Back to Bookings</a>
+            <button type="button" class="btn-danger-outline" (click)="openCancelDialog()">
+              Cancel Booking
+            </button>
+          </div>
+        } @else {
+          <div class="detail-footer-actions">
+            <a routerLink="/my-bookings" class="btn-outline">Back to Bookings</a>
+          </div>
+        }
+      </article>
+
+      <app-account-confirm-dialog
+        [open]="cancelDialogOpen()"
+        title="Cancel this booking?"
+        message="This will notify the service provider and cancel your reservation request. This action cannot be undone."
+        confirmLabel="Confirm Cancellation"
+        cancelLabel="Keep Booking"
+        busyLabel="Cancelling..."
+        [destructive]="true"
+        [busy]="cancelBusy()"
+        [errorMessage]="cancelError()"
+        [showReasonInput]="true"
+        reasonLabel="Cancellation reason (optional)"
+        reasonPlaceholder="Share a brief reason for cancelling..."
+        (confirmed)="confirmLiveCancellation(b, $event)"
+        (cancelled)="cancelDialogOpen.set(false)"
+      />
+    }
+
+    @case ('list') {
+      <div class="bookings-toolbar-card">
+        <nav class="filters" aria-label="Filter bookings by status">
+          @for (tab of tabs; track tab.key) {
+            <a
+              routerLink="."
+              class="filter-tab"
+              [class.active]="filter() === tab.key"
+              [queryParams]="{ status: tab.key === 'all' ? null : tab.key }"
+              queryParamsHandling="merge"
+              [attr.aria-current]="filter() === tab.key ? 'true' : null"
+            >
+              {{ tab.name }} <span>({{ counts()[tab.key] }})</span>
+            </a>
           }
-          @if (limited().length) {
-            <p class="scope">Search and counts include only loaded bookings. Showing up to the first 20 for {{ limited().join(', ') }}.</p>
-          }
+        </nav>
+
+        <div class="controls-row">
+          <form class="search-form" role="search" (submit)="searchFor(field.value, $event)">
+            <label class="visually-hidden" for="booking-search">Search bookings</label>
+            <input
+              #field
+              id="booking-search"
+              type="search"
+              maxlength="120"
+              [value]="search()"
+              placeholder="Search reference, service or title"
+            />
+            <button type="submit" class="search-submit-btn" aria-label="Search bookings">
+              <app-experience-icon name="search" />
+            </button>
+          </form>
+
+          <select
+            aria-label="Filter by category"
+            [value]="categoryFilter()"
+            (change)="updateQuery('category', $any($event.target).value)"
+          >
+            <option value="all">All Categories</option>
+            <option value="homestay">Homestays</option>
+            <option value="activity">Adventures &amp; Activities</option>
+            <option value="guide">Tour Guides</option>
+            <option value="bike">Motorbikes &amp; Scooters</option>
+            <option value="bicycle">Bicycles</option>
+          </select>
+
+          <select
+            aria-label="Sort bookings"
+            [value]="sortOrder()"
+            (change)="updateQuery('sort', $any($event.target).value)"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
         </div>
+      </div>
+
+      <div class="service-notices">
+        @for (section of view.sections; track section.service) {
+          @if (section.kind === 'failed') {
+            <div class="state-banner warning" role="status">
+              <span>{{ labels[section.service] }} bookings couldn’t load.</span>
+              @if (section.status === 401) {
+                <span>Sign in again to view this service.</span>
+              }
+              @if (section.status === 403) {
+                <span>Your account cannot access this service.</span>
+              }
+              <button type="button" class="btn-retry" (click)="retryService(section.service)">Retry</button>
+            </div>
+          }
+        }
+        @if (limited().length) {
+          <p class="scope-note">Showing up to the first 20 records for {{ limited().join(', ') }}.</p>
+        }
+      </div>
+
+      @if (loadingServices() && !visible().length) {
+        <app-account-loading-skeleton variant="list" [count]="3" />
+      } @else {
         <div class="booking-list">
           @for (booking of visible(); track key(booking)) {
             <article class="booking-card">
-              <div class="thumbnail">
-                @if (booking.image) { <img [src]="booking.image" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="$any($event.target).hidden = true" /> }
-                <span aria-hidden="true"><app-experience-icon [name]="icons[booking.service]" /> {{ labels[booking.service] }}</span>
+              <div class="booking-thumb">
+                @if (booking.image) {
+                  <img [src]="booking.image" [alt]="booking.title" loading="lazy" (error)="$any($event.target).hidden = true" />
+                } @else {
+                  <div class="thumb-placeholder" aria-hidden="true">
+                    <app-experience-icon [name]="icons[booking.service]" />
+                  </div>
+                }
               </div>
-              <div class="booking-copy">
-                <p class="service"><app-experience-icon [name]="icons[booking.service]" /> {{ labels[booking.service] }} <span>· {{ booking.reference || '#' + booking.id }}</span></p>
+
+              <div class="booking-info">
+                <div class="top-meta">
+                  <span class="cat-pill">
+                    <app-experience-icon [name]="icons[booking.service]" />
+                    {{ categoryLabelFor(booking) }}
+                  </span>
+                  <span class="ref-code">{{ booking.reference || '#' + booking.id }}</span>
+                </div>
+
                 <h2>{{ booking.title }}</h2>
-                <div class="metadata">
-                  @if (booking.location) { <span><app-experience-icon name="pin" /> {{ booking.location }}</span> }
-                  <span><app-experience-icon name="calendar" />
+
+                <div class="meta-line">
+                  @if (booking.location) {
+                    <span><app-experience-icon name="pin" /> {{ booking.location }}</span>
+                  }
+                  <span>
+                    <app-experience-icon name="calendar" />
                     @if (booking.start) {
-                      {{ date(booking.start) | date:'d MMM yyyy':'+0530' }} @if (booking.end && booking.end !== booking.start) { &ndash; {{ date(booking.end) | date:'d MMM yyyy':'+0530' }} }
-                    } @else { Booking dates unavailable }
+                      {{ date(booking.start) | date: 'd MMM yyyy' : '+0530' }}
+                      @if (booking.end && booking.end !== booking.start) {
+                        &ndash; {{ date(booking.end) | date: 'd MMM yyyy' : '+0530' }}
+                      }
+                    } @else {
+                      Schedule unavailable
+                    }
                   </span>
-                  @if (booking.quantity) { <span><app-experience-icon name="user" /> {{ booking.quantity }}</span> }
+                  @if (booking.quantity) {
+                    <span><app-experience-icon name="user" /> {{ booking.quantity }}</span>
+                  }
+                  @if (booking.createdAt) {
+                    <span>Booked {{ date(booking.createdAt) | date: 'd MMM yyyy' : '+0530' }}</span>
+                  }
+                </div>
+
+                <div class="badges-row">
+                  <div class="badge-pair">
+                    <small>Booking</small>
+                    <app-account-status-badge [status]="booking.status" />
+                  </div>
+                  <div class="badge-pair">
+                    <small>Payment</small>
+                    <app-account-status-badge [status]="booking.paymentStatus || 'unpaid'" />
+                  </div>
                 </div>
               </div>
+
               <div class="booking-actions">
-                <div class="booking-summary">
-                  <strong class="amount">{{ booking.currency }} {{ booking.amount | number:'1.0-2' }}</strong>
-                  <span class="badge" [attr.data-status]="booking.status">
-                    @switch (booking.status) {
-                      @case ('confirmed') { <app-experience-icon name="check-circle" /> }
-                      @case ('approved') { <app-experience-icon name="check-circle" /> }
-                      @case ('completed') { <app-experience-icon name="check-circle" /> }
-                      @case ('cancelled') { <app-experience-icon name="x-circle" /> }
-                      @case ('upcoming') { <app-experience-icon name="calendar" /> }
-                      @default { <app-experience-icon name="clock" /> }
-                    }
-                    {{ label(booking.status) }}
-                  </span>
+                <div class="price-block">
+                  <span class="price-caption">Total</span>
+                  <strong class="amount">{{ booking.currency }} {{ booking.amount | number: '1.0-2' }}</strong>
                 </div>
-                <a class="button" [routerLink]="[booking.service, booking.id]" queryParamsHandling="preserve" (click)="rememberPosition()">View Details <app-experience-icon name="next" /></a>
+                <a
+                  class="btn-view-details"
+                  [routerLink]="[booking.service, booking.id]"
+                  queryParamsHandling="preserve"
+                  (click)="rememberPosition()"
+                >
+                  <span>View Details</span>
+                  <app-experience-icon name="next" />
+                </a>
               </div>
             </article>
           } @empty {
-            @if (loadingServices()) {
-              <p class="notice" role="status">Loading bookings&hellip;</p>
-            } @else if (!rows().length) {
-              <p class="notice" role="status">No bookings are available to show.</p>
+            @if (!rows().length) {
+              <app-account-empty-state
+                icon="calendar"
+                heading="No bookings yet."
+                description="Your upcoming adventures and stays will appear here."
+                actionLabel="Explore Experiences"
+                [actionRoute]="['/experiences']"
+              />
             } @else {
-              <p class="notice" role="status">No bookings match your search or filter.</p>
+              <app-account-empty-state
+                icon="search"
+                heading="No matching bookings"
+                description="No bookings match your active status, category, or search filters."
+                actionLabel="Clear Filters"
+                (actionClicked)="clearFilters()"
+              />
             }
           }
         </div>
       }
     }
-  </section>
-</main>
-<app-footer />
-<app-traveler-auth-modal />
+  }
+</app-traveler-account-layout>

@@ -6,9 +6,11 @@
 }
 
 .container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 24px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 var(--cg-page-padding, 32px);
+  box-sizing: border-box;
 }
 
 .sr-only {

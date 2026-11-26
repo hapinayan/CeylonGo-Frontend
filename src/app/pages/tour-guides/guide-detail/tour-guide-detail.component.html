@@ -1,6 +1,4 @@
 <div class="guide-detail-page">
-  <app-traveler-navbar />
-
   <main class="detail-main">
     @if (isLoading()) {
       <div class="state-box" role="status">
@@ -21,14 +19,6 @@
       <div class="detail-container">
         <!-- 1. Compact Guide Header -->
         <header class="profile-top-header">
-          <a routerLink="/tour-guides" class="back-link">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Back to Tour Guides</span>
-          </a>
-
           <div class="top-title-row">
             <div class="top-title-left">
               <div class="name-badge-line">
@@ -560,9 +550,6 @@
       </div>
     }
   </main>
-
-  <app-footer />
-  <app-traveler-auth-modal />
 </div>
 
 <!-- PHOTO GALLERY VIEWER MODAL -->

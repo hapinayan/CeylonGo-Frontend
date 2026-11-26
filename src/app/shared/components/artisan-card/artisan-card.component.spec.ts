@@ -5,7 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ArtisanListingSummary } from '../../../features/artisan/models/artisan.models';
 import { FavoriteService } from '../../../features/artisan/services/favorite.service';
-import { ArtisanCardComponent } from './artisan-card.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
+import { ArtisanCardComponent, NEUTRAL_ARTISAN_PLACEHOLDER } from './artisan-card.component';
 
 describe('ArtisanCardComponent', () => {
   let component: ArtisanCardComponent;
@@ -15,16 +17,25 @@ describe('ArtisanCardComponent', () => {
     isBusinessSaved: vi.fn().mockReturnValue(false),
     toggleBusinessWishlist: vi.fn().mockReturnValue(of({ isSaved: true })),
   };
+  const authServiceMock = {
+    isAuthenticated: vi.fn().mockReturnValue(true),
+  };
+  const authModalMock = {
+    open: vi.fn(),
+  };
 
   const mockListing: ArtisanListingSummary = {
     id: 1,
     provider_profile_id: 10,
     title: 'Kandy Heritage Crafts',
+    description: 'Hand-carved ceremonial masks and brassware.',
     craft_category: 'Woodcarving & Masks',
     district: 'Kandy',
     city: 'Kandy',
     latitude: 7.2906,
     longitude: 80.6337,
+    price: 2500,
+    currency: 'LKR',
     cover_image_url: '/images/s2.jpeg',
     is_active: true,
     is_verified: true,
@@ -36,12 +47,17 @@ describe('ArtisanCardComponent', () => {
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
+    favoriteServiceMock.toggleBusinessWishlist.mockClear();
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authModalMock.open.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [ArtisanCardComponent],
       providers: [
         provideRouter([]),
         { provide: FavoriteService, useValue: favoriteServiceMock },
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: AuthModalService, useValue: authModalMock },
       ],
     }).compileComponents();
 
@@ -55,36 +71,30 @@ describe('ArtisanCardComponent', () => {
     TestBed.resetTestingModule();
   });
 
-  it('renders business title, verified badge, and location', () => {
-    const title = fixture.nativeElement.querySelector('.card-title');
-    expect(title.textContent).toContain('Kandy Heritage Crafts');
-
-    const badge = fixture.nativeElement.querySelector('app-verified-badge');
-    expect(badge).toBeTruthy();
-
-    const location = fixture.nativeElement.querySelector('.location-text');
-    expect(location.textContent).toContain('Kandy');
+  it('renders business title, verified badge, location, description, and View Details link', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.card-title')?.textContent).toContain('Kandy Heritage Crafts');
+    expect(el.querySelector('app-verified-badge')).toBeTruthy();
+    expect(el.querySelector('.location-text')?.textContent).toContain('Kandy');
+    expect(el.querySelector('.card-desc')?.textContent).toContain('Hand-carved');
+    expect(el.querySelector('.view-details-btn')?.textContent?.trim()).toBe('View Details');
   });
 
-  it('triggers wishlist toggle on heart click without navigating', () => {
+  it('triggers wishlist toggle when authenticated and opens login modal for guests', () => {
     const event = new MouseEvent('click');
-    const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
-    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-
     component.toggleWishlist(event);
-
-    expect(preventDefaultSpy).toHaveBeenCalled();
-    expect(stopPropagationSpy).toHaveBeenCalled();
     expect(favoriteServiceMock.toggleBusinessWishlist).toHaveBeenCalledWith(1);
+
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    component.toggleWishlist(new MouseEvent('click'));
+    expect(authModalMock.open).toHaveBeenCalledWith('login', undefined, { type: 'wishlist' });
   });
 
-  it('applies list-layout class when layout is list', () => {
-    const testFixture = TestBed.createComponent(ArtisanCardComponent);
-    const testComponent = testFixture.componentInstance;
-    testComponent.listing = mockListing;
-    testComponent.layout = 'list';
-    testFixture.detectChanges();
-    const card = testFixture.nativeElement.querySelector('.artisan-card');
-    expect(card.classList.contains('list-layout')).toBe(true);
+  it('uses neutral placeholder when no cover image is provided', () => {
+    const noImgFixture = TestBed.createComponent(ArtisanCardComponent);
+    noImgFixture.componentInstance.listing = { ...mockListing, cover_image_url: null };
+    noImgFixture.detectChanges();
+    const img = noImgFixture.nativeElement.querySelector('.card-img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe(NEUTRAL_ARTISAN_PLACEHOLDER);
   });
 });

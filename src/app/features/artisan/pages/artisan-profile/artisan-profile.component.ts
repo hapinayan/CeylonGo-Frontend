@@ -1,8 +1,20 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import * as L from 'leaflet';
 
 import {
+  ArtisanBusinessHours,
   ArtisanListingResponse,
   ArtisanListingSummary,
   ArtisanReviewPaginationResponse,
@@ -14,17 +26,10 @@ import { ProductService } from '../../services/product.service';
 import { ReviewService } from '../../services/review.service';
 import { FavoriteService } from '../../services/favorite.service';
 import { ArtisanNavigationService } from '../../services/artisan-navigation.service';
-import {
-  VERIFIED_ARTISAN_PROFILES,
-  VERIFIED_ARTISAN_PROFILE,
-  VERIFIED_ARTISAN_SUMMARIES,
-  VERIFIED_SHOWCASE_PRODUCTS,
-  getVerifiedReviewsForListing,
-  getVerifiedReviewSummaryForListing,
-} from '../../fixtures/artisan-test-fixtures';
-import { RatingStarsComponent } from '../../../../shared/components/rating-stars/rating-stars.component';
+import { AuthService } from '../../../../core/services/auth.service';
+import { AuthModalService } from '../../../../core/services/auth-modal.service';
 import { VerifiedBadgeComponent } from '../../../../shared/components/verified-badge/verified-badge.component';
-import { ArtisanCardComponent } from '../../../../shared/components/artisan-card/artisan-card.component';
+import { ArtisanCardComponent, NEUTRAL_ARTISAN_PLACEHOLDER } from '../../../../shared/components/artisan-card/artisan-card.component';
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 
 @Component({
@@ -33,7 +38,6 @@ import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
   imports: [
     CommonModule,
     RouterLink,
-    RatingStarsComponent,
     VerifiedBadgeComponent,
     ArtisanCardComponent,
     LkrCurrencyPipe,
@@ -41,234 +45,181 @@ import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
   templateUrl: './artisan-profile.component.html',
   styleUrl: './artisan-profile.component.scss',
 })
-export class ArtisanProfileComponent implements OnInit {
+export class ArtisanProfileComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly artisanService = inject(ArtisanService);
   private readonly productService = inject(ProductService);
   private readonly reviewService = inject(ReviewService);
   private readonly favoriteService = inject(FavoriteService);
+  private readonly authService = inject(AuthService);
+  private readonly authModalService = inject(AuthModalService);
   private readonly navService = inject(ArtisanNavigationService);
 
-  readonly listingId = signal<number>(1);
+  private mapContainerRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('artisanMapContainer')
+  set artisanMapContainer(ref: ElementRef<HTMLDivElement> | undefined) {
+    this.mapContainerRef = ref;
+    if (ref && !this.isLoading() && !this.hasError()) {
+      setTimeout(() => this.initMap(), 50);
+    }
+  }
+
+  private map?: L.Map;
+
+  readonly listingId = signal<number>(0);
   readonly listing = signal<ArtisanListingResponse | null>(null);
+  readonly businessHours = signal<ArtisanBusinessHours[]>([]);
   readonly products = signal<ShowcaseItemSummary[]>([]);
   readonly reviews = signal<ArtisanReviewPaginationResponse | null>(null);
   readonly reviewSummary = signal<ArtisanReviewSummaryResponse | null>(null);
   readonly relatedArtisans = signal<ArtisanListingSummary[]>([]);
 
+  readonly socialEntries = computed(() => {
+    const links = this.listing()?.social_links;
+    if (!links) return [] as { label: string; url: string }[];
+    return Object.entries(links)
+      .filter(([, url]) => typeof url === 'string' && url.trim().length > 0)
+      .map(([key, url]) => ({
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        url,
+      }));
+  });
+
   readonly isLoading = signal<boolean>(true);
   readonly hasError = signal<boolean>(false);
-  readonly isFixtureMode = signal<boolean>(false);
-  readonly activeTab = signal<'overview' | 'products' | 'reviews' | 'location'>('overview');
+  readonly isPhotoModalOpen = signal<boolean>(false);
+  readonly toastMessage = signal<string | null>(null);
 
-  // FOLLOW STATE (PERSISTENT SET OF FOLLOWED BUSINESS IDs)
-  readonly followedBusinesses = signal<Set<number>>(new Set<number>());
-  readonly isFollowLoading = signal<boolean>(false);
+  readonly isSaved = computed(() => this.favoriteService.isBusinessSaved(this.listingId()));
 
-  readonly isFollowing = computed(() => {
-    return this.followedBusinesses().has(this.listingId());
-  });
-
-  readonly followToastMessage = signal<string | null>(null);
-  readonly shareToastMessage = signal<string | null>(null);
-
-  readonly isSaved = computed(() => {
-    return this.favoriteService.isBusinessSaved(this.listingId());
-  });
-
-  readonly queryParams = computed(() => {
-    const isDemo =
-      this.isFixtureMode() ||
-      this.route.snapshot?.queryParamMap?.get('demo') === 'true' ||
-      this.route.snapshot?.queryParamMap?.get('preview') === 'true';
-    return isDemo ? { demo: 'true' } : {};
-  });
-
-  // AUTHORITATIVE RATING & REVIEW STATS
   readonly totalReviewCount = computed(() => {
     const summary = this.reviewSummary();
-    if (summary && summary.total_reviews !== undefined && summary.total_reviews !== null) {
-      return summary.total_reviews;
-    }
-    const reviews = this.reviews();
-    if (reviews && reviews.total !== undefined && reviews.total !== null) {
-      return reviews.total;
-    }
+    if (summary?.total_reviews != null) return summary.total_reviews;
+    const rev = this.reviews();
+    if (rev?.total != null) return rev.total;
     return this.listing()?.total_reviews ?? 0;
   });
 
   readonly averageRating = computed(() => {
-    if (this.totalReviewCount() === 0) {
-      return 0;
-    }
+    if (this.totalReviewCount() === 0) return null;
     const summary = this.reviewSummary();
-    if (summary && summary.average_rating !== undefined && summary.average_rating !== null) {
-      return summary.average_rating;
-    }
-    const reviews = this.reviews();
-    if (reviews && reviews.average_rating !== undefined && reviews.average_rating !== null) {
-      return reviews.average_rating;
-    }
-    return this.listing()?.average_rating ?? 0;
+    if (summary?.average_rating != null) return summary.average_rating;
+    return this.listing()?.average_rating ?? null;
   });
 
-  readonly ratingDistribution = computed(() => {
-    const total = this.totalReviewCount();
-    if (total === 0) {
-      return [
-        { stars: 5, count: 0, pct: 0 },
-        { stars: 4, count: 0, pct: 0 },
-        { stars: 3, count: 0, pct: 0 },
-        { stars: 2, count: 0, pct: 0 },
-        { stars: 1, count: 0, pct: 0 },
-      ];
-    }
-
-    const summary = this.reviewSummary();
-    const breakdown = summary?.rating_breakdown;
-
-    let five = breakdown ? Number(breakdown['5'] ?? 0) : 0;
-    let four = breakdown ? Number(breakdown['4'] ?? 0) : 0;
-    let three = breakdown ? Number(breakdown['3'] ?? 0) : 0;
-    let two = breakdown ? Number(breakdown['2'] ?? 0) : 0;
-    let one = breakdown ? Number(breakdown['1'] ?? 0) : 0;
-
-    // If breakdown was not populated from summary but reviews items exist, calculate from items
-    if (
-      five === 0 &&
-      four === 0 &&
-      three === 0 &&
-      two === 0 &&
-      one === 0 &&
-      (this.reviews()?.items?.length ?? 0) > 0
-    ) {
-      const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-      for (const r of this.reviews()?.items || []) {
-        const star = Math.min(5, Math.max(1, Math.round(r.rating)));
-        counts[star] = (counts[star] || 0) + 1;
+  readonly galleryPhotos = computed<string[]>(() => {
+    const l = this.listing();
+    if (!l) return [];
+    const urls: string[] = [];
+    if (l.cover_image_url) urls.push(l.cover_image_url);
+    for (const img of [...(l.business_images ?? []), ...(l.images ?? [])]) {
+      if (img.image_url && !urls.includes(img.image_url)) {
+        urls.push(img.image_url);
       }
-      five = counts[5];
-      four = counts[4];
-      three = counts[3];
-      two = counts[2];
-      one = counts[1];
     }
-
-    const calcPct = (count: number) => (total > 0 ? Math.round((count / total) * 100) : 0);
-
-    return [
-      { stars: 5, count: five, pct: calcPct(five) },
-      { stars: 4, count: four, pct: calcPct(four) },
-      { stars: 3, count: three, pct: calcPct(three) },
-      { stars: 2, count: two, pct: calcPct(two) },
-      { stars: 1, count: one, pct: calcPct(one) },
-    ];
+    return urls;
   });
 
-  // RESPONSIVE COVER IMAGE
-  readonly displayCoverImage = computed(() => {
+  readonly mainPhoto = computed(() => this.galleryPhotos()[0] || NEUTRAL_ARTISAN_PLACEHOLDER);
+  readonly secondaryPhotos = computed(() => this.galleryPhotos().slice(1, 3));
+
+  readonly hasValidCoordinates = computed(() => {
     const l = this.listing();
-    if (l?.cover_image_url) return l.cover_image_url;
-    const cat = l?.craft_category?.toLowerCase() || '';
-    if (cat.includes('pottery') || cat.includes('ceramic')) return '/images/artisan/ruhunu_pottery_cover.jpg';
-    if (cat.includes('batik') || cat.includes('textile')) return '/images/artisan/lanka_batik_cover.jpg';
-    if (cat.includes('garden') || cat.includes('herbal')) return '/images/artisan/matale_garden_cover.jpg';
-    if (cat.includes('spice') || cat.includes('local')) return '/images/artisan/ceylon_spices_cover.jpg';
-    if (cat.includes('weaving') || cat.includes('handmade') || cat.includes('handloom')) return '/images/artisan/dumbara_cover.jpg';
-    if (cat.includes('jewel') || cat.includes('gem')) return '/images/artisan/gem_filigree_cover.jpg';
-    if (cat.includes('brass') || cat.includes('metal')) return '/images/artisan/pilimathalawa_cover.jpg';
-    if (cat.includes('wood') || cat.includes('mask')) return '/images/artisan/ambalangoda_cover.jpg';
-    return '/images/artisan/kandy_cover.jpg';
+    return l?.latitude != null && l?.longitude != null && Number.isFinite(l.latitude) && Number.isFinite(l.longitude);
   });
 
-  // BUSINESS SPECIFIC AVATAR
-  readonly displayAvatar = computed(() => {
+  readonly googleMapsUrl = computed(() => {
     const l = this.listing();
-    if (l?.business_images && l.business_images.length > 0) return l.business_images[0].image_url;
-    if (l?.images && l.images.length > 0) return l.images[0].image_url;
-    const cat = l?.craft_category?.toLowerCase() || '';
-    if (cat.includes('pottery') || cat.includes('ceramic')) return '/images/artisan/avatar_pottery.jpg';
-    if (cat.includes('batik') || cat.includes('textile')) return '/images/artisan/avatar_batik.jpg';
-    if (cat.includes('garden') || cat.includes('herbal')) return '/images/artisan/avatar_garden.jpg';
-    if (cat.includes('spice') || cat.includes('local')) return '/images/artisan/avatar_spices.jpg';
-    if (cat.includes('weaving') || cat.includes('handmade') || cat.includes('handloom')) return '/images/artisan/avatar_weaving.jpg';
-    if (cat.includes('jewel') || cat.includes('gem')) return '/images/artisan/avatar_gem.jpg';
-    if (cat.includes('brass') || cat.includes('metal')) return '/images/artisan/avatar_brass.jpg';
-    if (cat.includes('wood') || cat.includes('mask')) return '/images/artisan/avatar_woodcarver.jpg';
-    return '/images/artisan/avatar_kandy.jpg';
+    if (!l) return '';
+    if (this.hasValidCoordinates()) {
+      return `https://www.google.com/maps/search/?api=1&query=${l.latitude},${l.longitude}`;
+    }
+    const q = encodeURIComponent([l.title, l.city, l.district, 'Sri Lanka'].filter(Boolean).join(', '));
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
   });
+
+  readonly hasContactMethods = computed(() => {
+    const l = this.listing();
+    return !!(
+      l?.phone ||
+      l?.whatsapp_number ||
+      l?.whatsapp_link ||
+      l?.email ||
+      l?.website_url ||
+      this.socialEntries().length > 0
+    );
+  });
+
+  readonly dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   ngOnInit(): void {
-    // Restore followed state from localStorage if available
-    this.restoreFollowState();
-
-    this.route.queryParamMap.subscribe((queryParams) => {
-      const tab = queryParams.get('tab');
-      if (tab === 'overview' || tab === 'products' || tab === 'reviews' || tab === 'location') {
-        this.activeTab.set(tab);
-      }
-    });
-
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
-      if (id) {
-        this.listingId.set(id);
+      if (id > 0) {
         this.navService.setLastArtisanId(id);
         this.loadProfileData(id);
       } else {
-        this.navService.setLastArtisanId(1);
-        this.loadProfileData(1);
+        this.isLoading.set(false);
+        this.hasError.set(true);
       }
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
   }
 
-  private restoreFollowState(): void {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('ceylongo_followed_artisans');
-        if (stored) {
-          const ids: number[] = JSON.parse(stored);
-          this.followedBusinesses.set(new Set(ids));
-        }
-      } catch {
-        // Safe fallback
-      }
+  ngAfterViewInit(): void {
+    if (this.hasValidCoordinates() && this.mapContainerRef) {
+      this.initMap();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
+      this.map = undefined;
     }
   }
 
   loadProfileData(id: number): void {
     this.listingId.set(id);
-    // Reset stale review, product, and listing data immediately when navigating between different artisan profiles
     this.listing.set(null);
+    this.businessHours.set([]);
     this.products.set([]);
     this.reviews.set(null);
     this.reviewSummary.set(null);
-
-    const isDemoRequested =
-      this.isFixtureMode() ||
-      this.route.snapshot?.queryParamMap?.get('demo') === 'true' ||
-      this.route.snapshot?.queryParamMap?.get('preview') === 'true';
-
-    if (isDemoRequested) {
-      this.loadVerifiedFixtures();
-      this.loadRelatedArtisans();
-      return;
-    }
-
     this.isLoading.set(true);
     this.hasError.set(false);
+
+    if (this.map) {
+      this.map.remove();
+      this.map = undefined;
+    }
+
+    if (this.authService.isAuthenticated()) {
+      this.favoriteService.checkBusinessWishlist?.(id)?.subscribe();
+    }
 
     this.artisanService.getListingById(id).subscribe({
       next: (data) => {
         if (data && data.title) {
           this.listing.set(data);
-          this.isFixtureMode.set(false);
+          this.businessHours.set(Array.isArray(data.business_hours) ? data.business_hours : []);
           this.isLoading.set(false);
-          this.loadRelatedArtisans();
+          this.loadRelatedArtisans(id, data.craft_category, data.district);
+          this.artisanService.getBusinessHours?.(id)?.subscribe((hours) => {
+            if (Array.isArray(hours) && hours.length > 0) {
+              this.businessHours.set(hours);
+            }
+          });
+          this.productService
+            .getProductsByListing(id, 1, 20)
+            .subscribe((res) => {
+              this.products.set(res?.items ?? []);
+            });
+          if (this.hasValidCoordinates()) {
+            setTimeout(() => this.initMap(), 50);
+          }
         } else {
           this.hasError.set(true);
           this.isLoading.set(false);
@@ -280,224 +231,132 @@ export class ArtisanProfileComponent implements OnInit {
       },
     });
 
-    // Load showcase items
-    this.productService.getProductsByListing(id).subscribe({
-      next: (res) => {
-        if (res && res.items) {
-          this.products.set(res.items);
-        }
-      },
-      error: () => {},
-    });
-
-    // Load reviews and summary
     this.reviewService.getListingReviews(id).subscribe({
       next: (res) => this.reviews.set(res),
       error: () => {},
     });
 
     this.reviewService.getListingReviewSummary(id).subscribe({
-      next: (sum: ArtisanReviewSummaryResponse) => this.reviewSummary.set(sum),
+      next: (sum) => this.reviewSummary.set(sum),
       error: () => {},
     });
   }
 
-  private loadRelatedArtisans(): void {
-    const curId = this.listingId();
-    const curCategory = this.listing()?.craft_category?.toLowerCase() || '';
-    const curDistrict = this.listing()?.district?.toLowerCase() || '';
-
-    // Filter out current artisan
-    const all = VERIFIED_ARTISAN_SUMMARIES.filter((item: ArtisanListingSummary) => item.id !== curId);
-
-    // Prioritize 1: same category, 2: same district, 3: general
-    const sorted = [...all].sort((a, b) => {
-      const aCat = a.craft_category.toLowerCase() === curCategory ? 2 : 0;
-      const bCat = b.craft_category.toLowerCase() === curCategory ? 2 : 0;
-      const aDist = a.district.toLowerCase() === curDistrict ? 1 : 0;
-      const bDist = b.district.toLowerCase() === curDistrict ? 1 : 0;
-
-      return (bCat + bDist) - (aCat + aDist);
-    });
-
-    this.relatedArtisans.set(sorted.slice(0, 4));
-  }
-
-  isProductSaved(productId: number): boolean {
-    return this.favoriteService.isProductFavorite(productId);
-  }
-
-  toggleProductFavorite(event: MouseEvent, productId: number): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.favoriteService.toggleProductFavorite(productId).subscribe({
-      error: () => {},
+  private loadRelatedArtisans(currentId: number, category: string, district: string): void {
+    this.artisanService.getListings({ page: 1, page_size: 20 }).subscribe({
+      next: (res) => {
+        const candidates = (res?.items ?? []).filter((item) => item.id !== currentId);
+        const sorted = [...candidates].sort((a, b) => {
+          const aScore = (a.craft_category === category ? 2 : 0) + (a.district === district ? 1 : 0);
+          const bScore = (b.craft_category === category ? 2 : 0) + (b.district === district ? 1 : 0);
+          return bScore - aScore;
+        });
+        this.relatedArtisans.set(sorted.slice(0, 4));
+      },
+      error: () => this.relatedArtisans.set([]),
     });
   }
 
-  formatLocation(city: string | null | undefined, district: string | null | undefined): string {
-    const raw = (city || district || '').trim();
-    if (!raw) return 'Sri Lanka';
-    const cleaned = raw.replace(/,?\s*Sri Lanka/gi, '').trim();
-    return cleaned ? `${cleaned}, Sri Lanka` : 'Sri Lanka';
-  }
-
-  setTab(tab: 'overview' | 'products' | 'reviews' | 'location'): void {
-    this.activeTab.set(tab);
-    const query: Record<string, string> = { tab };
-    if (this.queryParams().demo) {
-      query['demo'] = 'true';
+  private initMap(): void {
+    const l = this.listing();
+    if (!l || !this.hasValidCoordinates() || !this.mapContainerRef) return;
+    if (this.map) {
+      this.map.remove();
+      this.map = undefined;
     }
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: query,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
+
+    const lat = Number(l.latitude);
+    const lng = Number(l.longitude);
+
+    try {
+      this.map = L.map(this.mapContainerRef.nativeElement, {
+        center: [lat, lng],
+        zoom: 13,
+        scrollWheelZoom: false,
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(this.map);
+
+      L.circleMarker([lat, lng], {
+        radius: 8,
+        color: '#082B5C',
+        fillColor: '#0066FF',
+        fillOpacity: 0.9,
+        weight: 2,
+      })
+        .bindPopup(`<strong>${l.title}</strong><br>${this.formatLocation(l.city, l.district)}`)
+        .addTo(this.map);
+
+      setTimeout(() => this.map?.invalidateSize(), 150);
+    } catch {
+      // Safe no-op in headless/unit test environments without layout boxes
+    }
   }
 
   toggleWishlist(): void {
     const id = this.listingId();
     if (!id) return;
+
+    if (!this.authService.isAuthenticated()) {
+      this.authModalService.open('login', undefined, {
+        type: 'wishlist',
+      });
+      return;
+    }
+
     this.favoriteService.toggleBusinessWishlist(id).subscribe({
-      error: () => {},
+      next: (res) => {
+        this.showToast(res.isSaved ? 'Saved artisan to wishlist.' : 'Removed from wishlist.');
+      },
+      error: () => {
+        this.showToast('Could not update wishlist. Please try again.');
+      },
     });
-  }
-
-  onFollowToggle(): void {
-    const id = this.listingId();
-    if (!id || this.isFollowLoading()) return;
-
-    this.isFollowLoading.set(true);
-    const current = new Set(this.followedBusinesses());
-    const isNowFollowing = !current.has(id);
-
-    if (isNowFollowing) {
-      current.add(id);
-    } else {
-      current.delete(id);
-    }
-
-    this.followedBusinesses.set(current);
-    if (typeof localStorage !== 'undefined') {
-      try {
-        localStorage.setItem('ceylongo_followed_artisans', JSON.stringify(Array.from(current)));
-      } catch {
-        // Safe fallback
-      }
-    }
-
-    const currentTitle = this.listing()?.title || 'Artisan';
-    const msg = isNowFollowing
-      ? `You are now following ${currentTitle}`
-      : `Unfollowed ${currentTitle}`;
-    this.followToastMessage.set(msg);
-
-    setTimeout(() => {
-      this.isFollowLoading.set(false);
-      this.followToastMessage.set(null);
-    }, 2500);
   }
 
   onShareClick(): void {
-    const url = window.location.href;
-    if (navigator?.clipboard?.writeText) {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (url && navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(url).then(() => {
-        this.shareToastMessage.set('Profile link copied to clipboard!');
-        setTimeout(() => {
-          this.shareToastMessage.set(null);
-        }, 2500);
+        this.showToast('Profile link copied to clipboard.');
       });
     } else {
-      this.shareToastMessage.set('Profile link ready to share');
-      setTimeout(() => {
-        this.shareToastMessage.set(null);
-      }, 2500);
+      this.showToast('Profile link ready to share.');
     }
   }
 
-  getProductImage(prod: ShowcaseItemSummary): string {
-    if (prod.image_url) return prod.image_url;
-    const title = prod.title?.toLowerCase() || '';
-    if (title.includes('mask')) return '/images/artisan/product_mask_main.jpg';
-    if (title.includes('pot') || title.includes('clay')) return '/images/artisan/product_clay_pot.jpg';
-    if (title.includes('batik')) return '/images/artisan/product_batik_art.jpg';
-    if (title.includes('spice') || title.includes('cinnamon')) return '/images/artisan/product_cinnamon_pack.jpg';
-    if (title.includes('runner') || title.includes('handloom')) return '/images/artisan/product_dumbara_runner.jpg';
-    if (title.includes('ring') || title.includes('gem')) return '/images/artisan/product_sapphire_ring.jpg';
-    if (title.includes('lamp') || title.includes('brass')) return '/images/artisan/product_brass_lamp.jpg';
-    return '/images/artisan/product_mask_main.jpg';
+  openPhotoModal(): void {
+    this.isPhotoModalOpen.set(true);
   }
 
-  onProductImageError(event: Event, prod: ShowcaseItemSummary): void {
-    const img = event.target as HTMLImageElement;
-    img.src = '/images/artisan/product_mask_main.jpg';
-  }
-
-  onCoverError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.src = '/images/artisan/kandy_cover.jpg';
-  }
-
-  onAvatarError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.src = '/images/artisan/avatar_kandy.jpg';
+  closePhotoModal(): void {
+    this.isPhotoModalOpen.set(false);
   }
 
   goBack(): void {
-    const isDemo =
-      this.isFixtureMode() ||
-      this.route.snapshot?.queryParamMap?.get('demo') === 'true' ||
-      this.route.snapshot?.queryParamMap?.get('preview') === 'true';
-
-    this.navService.navigateBackFromProfile(isDemo);
+    this.navService.navigateBackFromProfile(false);
   }
 
-  private loadVerifiedFixtures(): void {
-    const id = this.listingId();
-    const profile = VERIFIED_ARTISAN_PROFILES[id] || VERIFIED_ARTISAN_PROFILE;
-    this.listing.set(profile);
-    this.isFixtureMode.set(true);
-    this.isLoading.set(false);
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.src !== NEUTRAL_ARTISAN_PLACEHOLDER) {
+      target.src = NEUTRAL_ARTISAN_PLACEHOLDER;
+    }
+  }
 
-    const matchingProducts = VERIFIED_SHOWCASE_PRODUCTS.filter((p) => p.artisan_listing_id === id);
-    const displayProducts = matchingProducts.length > 0
-      ? matchingProducts
-      : VERIFIED_SHOWCASE_PRODUCTS.filter((p) => p.artisan_listing_id === 1);
+  formatLocation(city: string | null | undefined, district: string | null | undefined): string {
+    const cleanCity = (city || '').trim();
+    const cleanDistrict = (district || '').trim();
+    if (cleanCity && cleanDistrict && cleanCity.toLowerCase() !== cleanDistrict.toLowerCase()) {
+      return `${cleanCity}, ${cleanDistrict}`;
+    }
+    return cleanCity || cleanDistrict || 'Sri Lanka';
+  }
 
-    this.products.set(
-      displayProducts.map((p) => ({
-        id: p.id,
-        artisan_listing_id: p.artisan_listing_id,
-        title: p.title,
-        item_type: p.item_type,
-        price: p.price,
-        currency: p.currency,
-        image_url: p.image_url,
-        is_available: p.is_available,
-        is_featured: p.is_featured,
-        is_active: p.is_active,
-        stock_quantity: p.stock_quantity,
-        sku: p.sku,
-        is_custom_order_available: p.is_custom_order_available,
-        approval_status: p.approval_status,
-      }))
-    );
-
-    // Authoritative artisan-specific reviews and summary
-    const demoReviews = getVerifiedReviewsForListing(id);
-    const summary = getVerifiedReviewSummaryForListing(id);
-
-    this.reviews.set({
-      items: demoReviews,
-      total: demoReviews.length,
-      page: 1,
-      page_size: 10,
-      total_pages: demoReviews.length > 0 ? 1 : 0,
-      average_rating: summary.average_rating,
-      total_reviews: summary.total_reviews,
-    });
-
-    this.reviewSummary.set(summary);
+  private showToast(msg: string): void {
+    this.toastMessage.set(msg);
+    setTimeout(() => this.toastMessage.set(null), 3000);
   }
 }

@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 import { ANONYMOUS_API_REQUEST } from '../core/interceptors/auth.interceptor';
 import { AuthModalService } from '../core/services/auth-modal.service';
 import { AuthService } from '../core/services/auth.service';
+import { TravelerLayoutComponent } from '../layouts/traveler-layout/traveler-layout.component';
 import { previewBookingRoutes } from './rental-booking-routes.development';
 import { RentalDetails } from './rental-details';
 import { RentalDiscover } from './rental-discover';
@@ -34,10 +35,32 @@ describe('Rental discovery', () => {
     open.mockClear();
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([{ path: 'bicycles', component: RentalDiscover }, { path: 'bicycles/:id', component: RentalDetails }]),
+        provideRouter([
+          {
+            path: '',
+            component: TravelerLayoutComponent,
+            children: [
+              { path: 'bicycles', component: RentalDiscover },
+              { path: 'bicycles/:id', component: RentalDetails },
+            ],
+          },
+        ]),
         provideHttpClient(), provideHttpClientTesting(), RentalScroll,
         { provide: AuthService, useValue: { currentUser: user, isAuthenticated: () => !!user() } },
-        { provide: AuthModalService, useValue: { open } },
+        {
+          provide: AuthModalService,
+          useValue: {
+            open,
+            isOpen: signal(false),
+            currentStep: signal('entry'),
+            userEmail: signal(''),
+            intentMode: signal('login'),
+            registeredFullName: signal(''),
+            registrationId: signal(null),
+            resetToken: signal(null),
+            pendingAction: signal(null),
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -137,7 +160,7 @@ describe('Rental discovery', () => {
       http.expectOne(req => req.url === base + '/12/reviews').flush({ items: [], total: 0 });
       harness.detectChanges();
       expect(page().textContent).toContain('No published reviews yet.');
-      await click('Back to rentals');
+      await click('Back');
       const back = list('bike', [vehicle], 12);
       expect(back.request.params.get('city')).toBe('Galle');
       expect(back.request.params.get('page')).toBe('2');

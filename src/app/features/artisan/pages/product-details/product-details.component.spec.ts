@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,6 +34,7 @@ describe('ProductDetailsComponent', () => {
 
   const productServiceMock = {
     getProductById: vi.fn().mockReturnValue(of(mockProduct)),
+    getProductsByListing: vi.fn().mockReturnValue(of({ items: [], total: 0, page: 1, page_size: 10, total_pages: 1 })),
   };
 
   const artisanServiceMock = {
@@ -51,6 +54,8 @@ describe('ProductDetailsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ProductDetailsComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         provideRouter([]),
         { provide: ProductService, useValue: productServiceMock },
         { provide: ArtisanService, useValue: artisanServiceMock },

@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../core/services/auth.service';
+import { TravelerBackNavigationService } from '../core/services/traveler-back-navigation.service';
 import { User } from '../core/models/auth.models';
 import { adapt, SharedBookingResponse } from './booking-api';
 import { bookingGroup, bookingKey, matchesBooking, uniqueBookings } from './booking-model';
@@ -57,7 +58,7 @@ const rentalRow: SharedBookingResponse = {
   ],
 };
 
-const sharedCategories = ['homestay', 'adventure', 'guide', 'bike', 'bicycle', 'artisan'];
+const sharedCategories = ['homestay', 'adventure', 'guide', 'bike', 'bicycle'];
 
 describe('Traveler Bookings', () => {
   const identity = signal<User | null>(null);
@@ -99,18 +100,17 @@ describe('Traveler Bookings', () => {
   it('uses shared GET /bookings/my categories, keeps loaded results on partial failure, and retries only that service', async () => {
     identity.set(user(1));
     await harness.navigateByUrl('/my-bookings?status=completed&q=RB-4');
-    expect(body()).toContain('Loading bookings');
+    expect(harness.routeNativeElement!.querySelector('[aria-busy="true"]')).toBeTruthy();
     expectShared('homestay').flush([homestayRow]);
     expectShared('adventure').flush([]);
     expectShared('guide').flush(null, { status: 503, statusText: 'Unavailable' });
     expectShared('bike').flush([rentalRow]);
     expectShared('bicycle').flush([]);
-    expectShared('artisan').flush([]);
     harness.detectChanges();
     expect(body()).toContain('RB-4');
     expect(body()).not.toContain('HS-4');
     expect(body()).toContain('Tour Guide bookings');
-    expect([...harness.routeNativeElement!.querySelectorAll('.filters span')].map(node => node.textContent)).toEqual(['2', '1', '1', '0']);
+    expect([...harness.routeNativeElement!.querySelectorAll('.filters span')].map(node => node.textContent)).toEqual(['(2)', '(1)', '(0)', '(1)', '(0)']);
 
     harness.routeNativeElement!.querySelector<HTMLButtonElement>('.service-notices button')!.click();
     expectShared('guide').flush([]);
@@ -135,7 +135,9 @@ describe('Traveler Bookings', () => {
     expect(body()).toContain('Booking Details');
     expect(body()).toContain('demo succeeded');
     expect(body()).toContain('simulated');
-    expect(harness.routeNativeElement!.querySelector('.back')!.getAttribute('href')).toBe('/my-bookings?status=completed&q=RB-4');
+    expect(harness.routeNativeElement!.querySelector('.back')).toBeNull();
+    const backNav = TestBed.inject(TravelerBackNavigationService);
+    expect(backNav.resolveFallbackUrl(TestBed.inject(Router).url)).toBe('/my-bookings?status=completed&q=RB-4');
     http.verify();
   });
 
@@ -166,7 +168,7 @@ describe('Traveler Bookings', () => {
       expectShared(cat).flush([]);
     }
     harness.detectChanges();
-    expect(body()).toContain('No bookings are available');
+    expect(body()).toContain('No bookings yet.');
     http.verify();
   });
 
@@ -182,6 +184,29 @@ describe('Traveler Bookings', () => {
     http.expectOne(base + '/bookings/4').flush(null, { status: 401, statusText: 'Unauthorized' });
     harness.detectChanges();
     expect(body()).toContain('Sign in again to view this booking');
+    http.verify();
+  });
+
+  it('permits live cancellation via confirmation dialog and PATCH /bookings/{id}/status', async () => {
+    identity.set(user(1));
+    await harness.navigateByUrl('/my-bookings/homestay/4');
+    http.expectOne(base + '/bookings/4').flush(homestayRow);
+    harness.detectChanges();
+
+    const cancelBtn = harness.routeNativeElement!.querySelector('.btn-danger-outline') as HTMLButtonElement;
+    expect(cancelBtn).toBeTruthy();
+    cancelBtn.click();
+    harness.detectChanges();
+
+    const confirmBtn = harness.routeNativeElement!.querySelector('app-account-confirm-dialog .btn-primary') as HTMLButtonElement;
+    confirmBtn.click();
+
+    const patchReq = http.expectOne({ method: 'PATCH', url: base + '/bookings/4/status' });
+    expect(patchReq.request.body).toEqual({ to_status: 'cancelled', reason: null });
+    patchReq.flush({ ...homestayRow, status: 'cancelled' });
+    harness.detectChanges();
+    expect(body()).toContain('Booking cancelled successfully.');
+    expect(body()).toContain('cancelled');
     http.verify();
   });
 

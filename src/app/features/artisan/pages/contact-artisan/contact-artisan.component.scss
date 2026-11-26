@@ -5,18 +5,17 @@
   color: #0f172a;
 }
 
-/* TOP STICKY BAR */
+/* PAGE SUBHEADER */
 .top-nav-bar {
-  position: sticky;
-  top: 0;
-  z-index: 90;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
 
   .bar-inner {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 0.75rem 1.5rem;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0.75rem var(--cg-page-padding, 32px);
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     gap: 1.25rem;
@@ -57,14 +56,10 @@
 }
 
 .content-container {
-  max-width: 920px;
+  max-width: 960px;
   margin: 1.5rem auto 3rem;
-  padding: 0 1.5rem;
-
-  @media (max-width: 640px) {
-    padding: 0 1rem;
-    margin-top: 1rem;
-  }
+  padding: 0 var(--cg-page-padding, 32px);
+  box-sizing: border-box;
 }
 
 .contact-card {

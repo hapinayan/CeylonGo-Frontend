@@ -10,75 +10,203 @@ import { travelerAuthGuard } from './core/guards/traveler-auth.guard';
 
 export const routes: Routes = [
 
-  // UNIFIED HOMEPAGE (CANONICAL)
+  // UNIFIED TRAVELER LAYOUT SHELL (COMMON NAVBAR + BACK + OUTLET + FOOTER)
   {
     path: '',
     loadComponent: () =>
-      import('./pages/traveler-home/traveler-home')
-        .then(m => m.TravelerHome),
-    pathMatch: 'full'
-  },
-  {
-    path: 'home',
-    redirectTo: '',
-    pathMatch: 'full'
-  },
+      import('./layouts/traveler-layout/traveler-layout.component')
+        .then(m => m.TravelerLayoutComponent),
+    children: [
+      // UNIFIED HOMEPAGE (CANONICAL)
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/traveler-home/traveler-home')
+            .then(m => m.TravelerHome),
+        pathMatch: 'full'
+      },
+      {
+        path: 'home',
+        redirectTo: '',
+        pathMatch: 'full'
+      },
 
-  // HOMESTAY DISCOVERY & BOOKING
-  {
-    path: 'homestays',
-    loadComponent: () =>
-      import('./pages/homestay-discovery/homestay-discovery')
-        .then(m => m.HomestayDiscovery)
-  },
-  {
-    path: 'homestays/:id/booking',
-    loadComponent: () =>
-      import('./pages/homestay-booking-review/homestay-booking-review')
-        .then(m => m.HomestayBookingReview)
-  },
-  {
-    path: 'homestays/:id',
-    loadComponent: () =>
-      import('./pages/homestay-detail/homestay-detail')
-        .then(m => m.HomestayDetail)
-  },
-  {
-    path: 'homestay',
-    redirectTo: 'homestays',
-    pathMatch: 'full'
-  },
-  {
-    path: 'explore',
-    redirectTo: 'homestays',
-    pathMatch: 'full'
-  },
-  {
-    path: 'stays',
-    redirectTo: 'homestays',
-    pathMatch: 'full'
-  },
-  {
-    path: 'bike-rentals',
-    redirectTo: 'bicycles',
-    pathMatch: 'full'
-  },
-  {
-    path: 'rentals',
-    redirectTo: 'bicycles',
-    pathMatch: 'full'
-  },
+      // HOMESTAY DISCOVERY & BOOKING
+      {
+        path: 'homestays',
+        loadComponent: () =>
+          import('./pages/homestay-discovery/homestay-discovery')
+            .then(m => m.HomestayDiscovery)
+      },
+      {
+        path: 'homestays/:id/booking',
+        loadComponent: () =>
+          import('./pages/homestay-booking-review/homestay-booking-review')
+            .then(m => m.HomestayBookingReview)
+      },
+      {
+        path: 'homestays/:id',
+        loadComponent: () =>
+          import('./pages/homestay-detail/homestay-detail')
+            .then(m => m.HomestayDetail)
+      },
+      {
+        path: 'homestay',
+        redirectTo: 'homestays',
+        pathMatch: 'full'
+      },
+      {
+        path: 'explore',
+        redirectTo: 'homestays',
+        pathMatch: 'full'
+      },
+      {
+        path: 'stays',
+        redirectTo: 'homestays',
+        pathMatch: 'full'
+      },
+      {
+        path: 'bike-rentals',
+        redirectTo: 'bicycles',
+        pathMatch: 'full'
+      },
+      {
+        path: 'rentals',
+        redirectTo: 'bicycles',
+        pathMatch: 'full'
+      },
 
-  // LEGACY TRAVELER HOMEPAGE REDIRECT
-  {
-    path: 'traveler/home',
-    redirectTo: '',
-    pathMatch: 'full'
-  },
-  {
-    path: 'traveler',
-    redirectTo: '',
-    pathMatch: 'full'
+      // LEGACY TRAVELER HOMEPAGE REDIRECT
+      {
+        path: 'traveler/home',
+        redirectTo: '',
+        pathMatch: 'full'
+      },
+      {
+        path: 'traveler',
+        redirectTo: '',
+        pathMatch: 'full'
+      },
+
+      // LOCAL TOUR GUIDES DISCOVER, PROFILE & BOOKING PAGES
+      {
+        path: 'tour-guides/:id/booking',
+        loadComponent: () =>
+          import('./pages/tour-guides/guide-booking/tour-guide-booking.component')
+            .then((m) => m.TourGuideBookingComponent),
+      },
+      {
+        path: 'tour-guides/:id',
+        loadComponent: () =>
+          import('./pages/tour-guides/guide-detail/tour-guide-detail.component')
+            .then((m) => m.TourGuideDetailComponent),
+      },
+      {
+        path: 'tour-guides',
+        loadComponent: () =>
+          import('./pages/tour-guides/tour-guides.component')
+            .then((m) => m.TourGuidesComponent),
+      },
+      {
+        path: 'tour-guide',
+        redirectTo: 'tour-guides',
+        pathMatch: 'full',
+      },
+
+      // TRAVEL COMMUNITY & SOCIAL FEED MODULE
+      {
+        path: 'community',
+        loadChildren: () =>
+          import('./features/community/community.routes')
+            .then(m => m.communityRoutes)
+      },
+
+      // AI SMART TRAVEL PLANNER & BOOKING AGENT MODULE
+      {
+        path: 'ai-planner',
+        loadChildren: () =>
+          import('./features/ai-planner/ai-planner.routes')
+            .then(m => m.aiPlannerRoutes)
+      },
+
+      // ARTISAN TRAVELER MODULE
+      {
+        path: 'artisans',
+        loadChildren: () =>
+          import('./features/artisan/artisan.routes')
+            .then(m => m.artisanRoutes)
+      },
+
+      // EXPERIENCES MODULE
+      {
+        path: 'experiences',
+        loadChildren: () =>
+          import('./experiences/experiences.routes')
+            .then(m => m.experiencesRoutes)
+      },
+
+      // BIKE & BICYCLE RENTAL MODULE
+      {
+        path: 'bicycles',
+        loadChildren: () =>
+          import('./bike-rentals/rental.routes')
+            .then(module => module.rentalRoutes)
+      },
+
+      // TRAVELER ACCOUNT MANAGEMENT (PROFILE, BOOKINGS, WISHLIST, NOTIFICATIONS, SETTINGS)
+      {
+        path: 'profile',
+        canActivate: [travelerAuthGuard],
+        title: 'My Profile | CeylonGo',
+        loadComponent: () =>
+          import('./traveler-account/traveler-profile.component')
+            .then(m => m.TravelerProfileComponent),
+      },
+      {
+        path: 'my-bookings',
+        loadChildren: () =>
+          import('./traveler-bookings/booking.routes')
+            .then(module => module.travelerBookingRoutes)
+      },
+      {
+        path: 'wishlist',
+        loadChildren: () =>
+          import('./traveler-wishlist/wishlist.routes')
+            .then(module => module.travelerWishlistRoutes)
+      },
+      {
+        path: 'notifications',
+        canActivate: [travelerAuthGuard],
+        title: 'Notifications | CeylonGo',
+        loadComponent: () =>
+          import('./traveler-account/traveler-notifications.component')
+            .then(m => m.TravelerNotificationsComponent),
+      },
+      {
+        path: 'settings',
+        canActivate: [travelerAuthGuard],
+        title: 'Account Settings | CeylonGo',
+        loadComponent: () =>
+          import('./traveler-account/traveler-settings.component')
+            .then(m => m.TravelerSettingsComponent),
+      },
+
+      // TERMS AND CONDITIONS
+      {
+        path: 'terms',
+        loadComponent: () =>
+          import('./pages/terms/terms')
+            .then(m => m.Terms)
+      },
+
+      // PRIVACY POLICY
+      {
+        path: 'privacy',
+        loadComponent: () =>
+          import('./pages/privacy/privacy')
+            .then(m => m.Privacy)
+      },
+    ]
   },
 
   // LEGACY MARKETING HOMEPAGE PRESERVED FOR REFERENCE
@@ -331,6 +459,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'artisans/new',
+        loadComponent: () =>
+          import('./provider/artisans/wizard/artisan-wizard').then(
+            (m) => m.ArtisanWizard
+          ),
+      },
+      {
+        path: 'artisans/:id/edit',
+        loadComponent: () =>
+          import('./provider/artisans/wizard/artisan-wizard').then(
+            (m) => m.ArtisanWizard
+          ),
+      },
+      {
+        path: 'artisans/products',
+        loadComponent: () =>
+          import('./provider/artisans/products/artisan-products').then(
+            (m) => m.ArtisanProducts
+          ),
+      },
+      {
         path: 'listings',
         loadComponent: () =>
           import('./provider/listings/provider-listings').then(
@@ -375,15 +524,11 @@ export const routes: Routes = [
       },
       {
         path: 'community',
+        title: 'Provider Community Feed | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
+          import('./provider/community/provider-community.component').then(
+            (m) => m.ProviderCommunityComponent
           ),
-        data: {
-          title: 'Provider Community Feed',
-          description:
-            'Connect with fellow hosts, tour guides, and local artisans across Sri Lanka.',
-        },
       },
       {
         path: 'payouts',
@@ -424,61 +569,6 @@ export const routes: Routes = [
     ],
   },
 
-  // LOCAL TOUR GUIDES DISCOVER, PROFILE & BOOKING PAGES
-  {
-    path: 'tour-guides/:id/booking',
-    loadComponent: () =>
-      import('./pages/tour-guides/guide-booking/tour-guide-booking.component')
-        .then((m) => m.TourGuideBookingComponent),
-  },
-  {
-    path: 'tour-guides/:id',
-    loadComponent: () =>
-      import('./pages/tour-guides/guide-detail/tour-guide-detail.component')
-        .then((m) => m.TourGuideDetailComponent),
-  },
-
-  // ARTISAN TRAVELER MODULE
-  {
-    path: 'artisans',
-    loadChildren: () =>
-      import('./features/artisan/artisan.routes')
-        .then(m => m.artisanRoutes)
-  },
-
-  // LOCAL TOUR GUIDES DISCOVER PAGE
-  {
-    path: 'tour-guides',
-    loadComponent: () =>
-      import('./pages/tour-guides/tour-guides.component')
-        .then((m) => m.TourGuidesComponent),
-  },
-  {
-    path: 'tour-guide',
-    redirectTo: 'tour-guides',
-    pathMatch: 'full',
-  },
-
-  // EXPERIENCES MODULE
-  {
-    path: 'experiences',
-    loadChildren: () =>
-      import('./experiences/experiences.routes')
-        .then(m => m.experiencesRoutes)
-  },
-
-  // BIKE & BICYCLE RENTAL MODULE
-  {
-    path: 'bicycles',
-    loadChildren: () =>
-      import('./bike-rentals/rental.routes')
-        .then(module => module.rentalRoutes)
-  },
-
-  { path: 'my-bookings', loadChildren: () => import('./traveler-bookings/booking.routes').then(module => module.travelerBookingRoutes) },
-
-  { path: 'wishlist', loadChildren: () => import('./traveler-wishlist/wishlist.routes').then(module => module.travelerWishlistRoutes) },
-
   // CEYLONGO ADMIN MODULE (PHASES 01–08)
   {
     path: 'admin',
@@ -486,7 +576,6 @@ export const routes: Routes = [
       import('./admin/admin.routes')
         .then(m => m.ADMIN_ROUTES)
   },
-
   // UNKNOWN URL - GO TO HOMEPAGE
   {
     path: '**',

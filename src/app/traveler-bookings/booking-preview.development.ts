@@ -9,17 +9,16 @@ const examples: [BookingService, string, string, string, number, string, number,
   ['activity', 'Yala Wildlife Safari', 'Yala', '/images/experiences/wildlife-safari.webp', 8500, 'completed', -7, -7],
   ['guide', 'Kandy Cultural Heritage Walk', 'Kandy', '/images/experiences/cultural-village.webp', 9000, 'pending', 21, 21],
   ['rental', 'Ella Bicycle Rental', 'Ella', '/images/traveler-home/rent-bicycle.webp', 3000, 'cancelled', 3, 5],
-  ['artisan', 'Sri Lankan Artisan Showcase', 'Colombo', '/images/artisan/ruhunu_pottery.jpg', 7500, 'completed', -14, -14],
 ];
 
 export const bookingExamples: TravelerBooking[] = examples.map(([service, title, location, image, amount, status, start, end], index) => ({
   service, id: 1, reference: 'SAMPLE-' + year + '-' + (index + 1), title, location, image, amount, status, start: date(start), end: date(end), currency: 'LKR',
-  paymentStatus: index === 2 || index === 5 ? 'paid' : 'unpaid',
+  paymentStatus: index === 2 ? 'paid' : 'unpaid',
   datesLabel: ({ homestay: 'Check-in and check-out', activity: 'Activity date', eco: 'Experience schedule',
-    guide: 'Guide schedule', rental: 'Pickup and return', artisan: 'Pickup date' })[service],
+    guide: 'Guide schedule', rental: 'Pickup and return' })[service],
   quantityLabel: ({ homestay: 'Guests', activity: 'Participants', eco: 'Participants', guide: 'Party size',
-    rental: 'Vehicles', artisan: 'Reserved items' })[service],
-  quantity: service === 'rental' ? '1 vehicle' : service === 'artisan' ? '1 item' : '2 travelers',
+    rental: 'Vehicles' })[service],
+  quantity: service === 'rental' ? '1 vehicle' : '2 travelers',
 }));
 
 export function canSimulateCancellation(row: TravelerBooking): boolean {

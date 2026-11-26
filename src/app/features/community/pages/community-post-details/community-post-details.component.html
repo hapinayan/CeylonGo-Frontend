@@ -1,0 +1,202 @@
+<div class="community-page-shell">
+  <main class="community-main details-main" id="main-content">
+    <div class="details-layout">
+      <div class="details-center">
+        @if (isLoadingPost()) {
+          <div class="skeleton-card" aria-busy="true">
+            <div class="skel-line short"></div>
+            <div class="skel-line medium"></div>
+            <div class="skel-line tall"></div>
+          </div>
+        } @else if (postError()) {
+          <div class="state-card" role="alert">
+            <h3>Post Unavailable</h3>
+            <p>{{ postError() }}</p>
+            <div class="error-actions">
+              <button type="button" class="btn-primary-inline" (click)="loadPostAndComments()">Retry</button>
+              <a routerLink="/community" class="page-btn">Return to Feed</a>
+            </div>
+          </div>
+        } @else if (post(); as activePost) {
+          <app-community-post-card
+            [post]="activePost"
+            actorMode="traveler"
+            [currentUserId]="currentUser()?.id ?? null"
+            [isAuthenticated]="isAuthenticated()"
+            [inlineCommentsOnly]="true"
+            (postChanged)="post.set($event)"
+            (editRequested)="isEditPostOpen.set(true)"
+            (deleteRequested)="requestDeletePost($event)"
+            (reportRequested)="reportPost($event)"
+            (commentClicked)="focusCommentComposer()"
+            (photoClicked)="onOpenLightbox($event)"
+            (authRequired)="onAuthRequired($event)"
+            (actionFeedback)="showToast($event.kind, $event.message)"
+          />
+
+          <section class="comments-card" aria-label="Post Comments">
+            <header class="comments-head">
+              <h2>Comments ({{ activePost.comments_count }})</h2>
+            </header>
+
+            <form class="comment-composer" (submit)="$event.preventDefault(); submitComment()">
+              <label for="commentBodyInput" class="sr-only">Write a comment</label>
+              <textarea
+                id="commentBodyInput"
+                rows="3"
+                maxlength="1500"
+                [(ngModel)]="newCommentBody"
+                name="newCommentBody"
+                [disabled]="isSubmittingComment()"
+                [placeholder]="
+                  isAuthenticated()
+                    ? 'Add a helpful comment or question...'
+                    : 'Sign in to join the conversation...'
+                "
+              ></textarea>
+              <div class="composer-foot">
+                <span class="char-hint">{{ newCommentBody.length }} / 1500</span>
+                <button type="submit" class="btn-primary-inline" [disabled]="isSubmittingComment()">
+                  {{ isSubmittingComment() ? 'Posting...' : isAuthenticated() ? 'Post Comment' : 'Sign In to Comment' }}
+                </button>
+              </div>
+              @if (commentFormError()) {
+                <p class="form-error" role="alert">{{ commentFormError() }}</p>
+              }
+            </form>
+
+            @if (isLoadingComments()) {
+              <p class="loading-comments">Loading comments...</p>
+            } @else if (commentsError()) {
+              <div class="comments-error" role="alert">
+                <span>{{ commentsError() }}</span>
+                <button type="button" class="page-btn" (click)="loadComments(commentsPage())">Retry</button>
+              </div>
+            } @else if (comments().length === 0) {
+              <p class="empty-comments">No comments yet. Start the discussion above.</p>
+            } @else {
+              <ul class="comment-list">
+                @for (comment of comments(); track comment.id) {
+                  <li class="comment-item">
+                    <div class="comment-top">
+                      <div>
+                        <strong>{{ comment.author.provider_business_name || comment.author_name }}</strong>
+                        <span class="comment-badge" [class.provider]="comment.author_type === 'provider'">
+                          {{ commentAuthorLabel(comment) }}
+                        </span>
+                        <span class="comment-time">
+                          · {{ comment.created_at | date: 'mediumDate' }}
+                          @if (wasCommentEdited(comment)) {
+                            · Edited
+                          }
+                        </span>
+                      </div>
+
+                      <div class="comment-actions">
+                        @if (isCommentOwner(comment)) {
+                          <button type="button" (click)="startEditComment(comment)">Edit</button>
+                          <button type="button" class="danger" (click)="requestDeleteComment(comment)">Delete</button>
+                        } @else {
+                          <button type="button" (click)="reportComment(comment)">Report</button>
+                        }
+                      </div>
+                    </div>
+
+                    @if (editingCommentId() === comment.id) {
+                      <div class="edit-comment-box">
+                        <textarea rows="2" maxlength="1500" [(ngModel)]="editingCommentBody"></textarea>
+                        <div class="edit-actions">
+                          <button type="button" class="page-btn" (click)="cancelEditComment()">Cancel</button>
+                          <button
+                            type="button"
+                            class="btn-primary-inline"
+                            (click)="saveEditComment(comment)"
+                            [disabled]="isSavingCommentEdit()"
+                          >
+                            {{ isSavingCommentEdit() ? 'Saving...' : 'Save' }}
+                          </button>
+                        </div>
+                      </div>
+                    } @else {
+                      <p class="comment-body">{{ comment.body }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+
+              @if (commentsTotalPages() > 1) {
+                <nav class="pagination-bar" aria-label="Comments pagination">
+                  <button
+                    type="button"
+                    class="page-btn"
+                    (click)="loadComments(commentsPage() - 1)"
+                    [disabled]="commentsPage() <= 1"
+                  >
+                    Previous
+                  </button>
+                  <span>Page {{ commentsPage() }} of {{ commentsTotalPages() }}</span>
+                  <button
+                    type="button"
+                    class="page-btn"
+                    (click)="loadComments(commentsPage() + 1)"
+                    [disabled]="commentsPage() >= commentsTotalPages()"
+                  >
+                    Next
+                  </button>
+                </nav>
+              }
+            }
+          </section>
+        }
+      </div>
+
+      <aside class="details-side">
+        <app-community-explore-sidebar />
+      </aside>
+    </div>
+  </main>
+
+  <app-create-post-modal
+    [isOpen]="isEditPostOpen()"
+    [initialPost]="post()"
+    actorMode="traveler"
+    [authorName]="currentUser()?.full_name || 'Traveler'"
+    authorSubtitle="Traveler"
+    (closed)="isEditPostOpen.set(false)"
+    (published)="post.set($event); isEditPostOpen.set(false); showToast('info', 'Post updated.')"
+  />
+
+  <app-confirm-delete-modal
+    [isOpen]="deleteModalTarget() !== null"
+    [title]="deleteModalTarget()?.type === 'comment' ? 'Delete Comment' : 'Delete Post'"
+    [message]="
+      deleteModalTarget()?.type === 'comment'
+        ? 'Delete this comment permanently?'
+        : 'Delete this community post permanently?'
+    "
+    [isBusy]="isDeleting()"
+    [errorMessage]="deleteError()"
+    (cancel)="deleteModalTarget.set(null)"
+    (confirm)="confirmDelete()"
+  />
+
+  <app-report-content-modal
+    [target]="reportTarget()"
+    actorMode="traveler"
+    (closed)="reportTarget.set(null)"
+    (reported)="showToast('info', 'Report submitted for moderator review.')"
+  />
+
+  <app-photo-lightbox-modal
+    [photos]="lightboxPhotos()"
+    [isOpen]="isLightboxOpen()"
+    [initialIndex]="lightboxIndex()"
+    (close)="isLightboxOpen.set(false)"
+  />
+
+  @if (toast(); as t) {
+    <div class="toast-banner" [class.error]="t.kind === 'error'" role="status">
+      {{ t.message }}
+    </div>
+  }
+</div>

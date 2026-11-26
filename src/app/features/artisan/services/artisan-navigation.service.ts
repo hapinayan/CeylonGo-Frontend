@@ -34,7 +34,7 @@ export class ArtisanNavigationService {
     this.historyStack.push(this.currentUrl);
 
     this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      ?.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.previousUrl = this.currentUrl;
         this.currentUrl = event.urlAfterRedirects || event.url;

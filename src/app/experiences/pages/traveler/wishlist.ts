@@ -3,12 +3,9 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { of, switchMap, map } from 'rxjs';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
-import { Footer } from '../../../shared/components/footer/footer';
-import { TravelerAuthModal } from '../../../shared/components/traveler-auth-modal/traveler-auth-modal';
 import { ExperienceCard } from '../../components/experience-card';
 import { ExperienceIcon } from '../../components/icon';
 import { Pagination } from '../../components/pagination';
-import { TravelerHeader } from '../../components/traveler-header';
 import { toActivityCard } from '../../services/activities-api';
 import { TRAVEL_SOURCE } from '../../services/travel-api';
 import { TravelSession } from '../../services/travel-session';
@@ -17,24 +14,15 @@ import { loadState } from '../../services/workflow-state';
 
 @Component({
   imports: [
-    TravelerHeader,
-    RouterLink,
     ExperienceCard,
     Pagination,
     ExperienceIcon,
-    Footer,
-    TravelerAuthModal,
   ],
   styleUrls: ['../discover/discover.scss', './traveler.scss'],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="experiences-shell">
-      <app-traveler-header />
       <main class="discover traveler-workflow">
-        <a routerLink="/experiences" class="workflow-back-link">
-          <app-experience-icon name="previous" /> Back to Discover
-        </a>
-
         <div class="workflow-page-header">
           <div class="header-title-wrap">
             <h1>Saved Experiences</h1>
@@ -112,8 +100,6 @@ import { loadState } from '../../services/workflow-state';
           }
         }
       </main>
-      <app-footer />
-      <app-traveler-auth-modal />
     </div>
   `,
 })
