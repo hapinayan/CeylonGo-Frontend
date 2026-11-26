@@ -55,7 +55,12 @@ describe('AdminDashboardService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should fetch dashboard metrics via GET /api/v1/admin/dashboard', () => {
+  it('should fetch dashboard metrics via GET /api/v1/admin/dashboard when preview mode is disabled', () => {
+    const originalMode = environment.features?.adminPreviewMode;
+    if (environment.features) {
+      environment.features.adminPreviewMode = false;
+    }
+
     service.getDashboard().subscribe((data) => {
       expect(data).toEqual(mockResponse);
       expect(data.providers?.total_profiles).toBe(50);
@@ -66,5 +71,29 @@ describe('AdminDashboardService', () => {
     const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/dashboard`);
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
+
+    if (environment.features) {
+      environment.features.adminPreviewMode = originalMode;
+    }
+  });
+
+  it('should return demo metrics directly when preview mode is enabled', () => {
+    const originalMode = environment.features?.adminPreviewMode;
+    if (environment.features) {
+      environment.features.adminPreviewMode = true;
+    }
+
+    service.getDashboard().subscribe((data) => {
+      expect(data.providers?.total_profiles).toBe(48);
+      expect(data.bookings.homestay).toBe(124);
+      expect(data.pending_approvals?.homestay_listings).toBe(4);
+    });
+
+    // No HTTP request should be made
+    httpMock.expectNone(`${environment.apiBaseUrl}/admin/dashboard`);
+
+    if (environment.features) {
+      environment.features.adminPreviewMode = originalMode;
+    }
   });
 });

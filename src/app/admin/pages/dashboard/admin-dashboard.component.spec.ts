@@ -91,10 +91,10 @@ describe('AdminDashboardComponent', () => {
   it('should calculate total pending review queue items accurately', () => {
     fixture.detectChanges();
 
-    // 3 + 2 + 1 + 4 + 6 + 2 = 18 pending approvals
-    expect(component.totalPendingApprovals).toBe(18);
+    // 5 providers + 3 homestays + 6 rentals + 2 guides + 2 activities + 4 artisans = 22 total pending
+    expect(component.totalPendingApprovals).toBe(22);
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('18 Pending Items');
+    expect(compiled.textContent).toContain('22 Pending Items');
   });
 
   it('should render traveler eligibility checks accurately', () => {

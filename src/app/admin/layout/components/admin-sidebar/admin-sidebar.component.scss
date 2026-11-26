@@ -1,5 +1,5 @@
 .sidebar-wrapper {
-  width: 260px;
+  width: 272px;
   height: 100vh;
   background: #0f2c59;
   color: #f8fafc;
@@ -73,6 +73,10 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+
+    svg, path {
+      pointer-events: none;
+    }
 
     &:hover {
       color: #ffffff;
@@ -189,6 +193,18 @@
       padding: 0.15rem 0.4rem;
       border-radius: 4px;
       flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+
+    .active-badge {
+      font-size: 0.625rem;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
     }
 
     &.active-link {

@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { environment } from '../../../../../environments/environment';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 @Component({
@@ -17,6 +18,8 @@ export class AdminLoginComponent {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  readonly isPreviewMode = signal<boolean>(!environment.production && !!environment.features?.adminPreviewMode);
 
   readonly loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -81,6 +84,48 @@ export class AdminLoginComponent {
     );
 
     return isAllowed ? trimmed : '/admin/dashboard';
+  }
+
+  loginAsDemoSuperAdmin(): void {
+    if (environment.production || !environment.features?.adminPreviewMode) {
+      console.warn('Demo authentication is disabled in production environments.');
+      return;
+    }
+    const demoToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMSIsImV4cCI6MjUwMDAwMDAwMH0.demo_signature';
+    const demoUser = {
+      id: 11,
+      full_name: 'CeylonGo Super Admin',
+      email: 'admin@ceylongo.com',
+      role: 'super_admin',
+      admin_role: 'super_admin',
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    this.adminAuthService.setSession(demoToken, demoUser);
+    const returnUrl = this.getSafeReturnUrl(this.route.snapshot.queryParams['returnUrl']);
+    this.router.navigateByUrl(returnUrl);
+  }
+
+  loginAsDemoOperationalAdmin(): void {
+    if (environment.production || !environment.features?.adminPreviewMode) {
+      console.warn('Demo authentication is disabled in production environments.');
+      return;
+    }
+    const demoToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiIsImV4cCI6MjUwMDAwMDAwMH0.demo_signature';
+    const demoUser = {
+      id: 12,
+      full_name: 'Operational Manager',
+      email: 'ops@ceylongo.com',
+      role: 'operations_admin',
+      admin_role: 'operations_admin',
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    this.adminAuthService.setSession(demoToken, demoUser);
+    const returnUrl = this.getSafeReturnUrl(this.route.snapshot.queryParams['returnUrl']);
+    this.router.navigateByUrl(returnUrl);
   }
 
   onSubmit(): void {

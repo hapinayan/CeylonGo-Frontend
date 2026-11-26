@@ -65,7 +65,7 @@
                         routerLinkActive="active"
                         class="nav-link active-link"
                         (click)="onNavClick(item)"
-                        [title]="item.label"
+                        [title]="item.tooltip || item.label"
                       >
                         <span class="nav-icon" [ngSwitch]="item.icon">
                           <svg *ngSwitchCase="'dashboard'" viewBox="0 0 20 20" fill="currentColor">
@@ -74,12 +74,15 @@
                         </span>
                         @if (!collapsed()) {
                           <span class="nav-label">{{ item.label }}</span>
+                          @if (item.badge) {
+                            <span class="active-badge">{{ item.badge }}</span>
+                          }
                         }
                       </a>
                     } @else {
                       <div
                         class="nav-link disabled-link"
-                        [title]="item.label + ' (' + (item.badge || 'Upcoming') + ')'"
+                        [title]="item.tooltip || (item.label + ' (Upcoming)')"
                       >
                         <span class="nav-icon" [ngSwitch]="item.icon">
                           <svg *ngSwitchCase="'users'" viewBox="0 0 20 20" fill="currentColor">

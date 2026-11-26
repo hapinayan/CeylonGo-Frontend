@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { environment } from '../../../../environments/environment';
 import { AdminDashboardResponse } from '../../core/models/admin-dashboard.models';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AdminDashboardService } from '../../core/services/admin-dashboard.service';
@@ -21,6 +22,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly currentUser = this.adminAuthService.currentUser;
   readonly isSuperAdmin = this.adminAuthService.isSuperAdmin;
   readonly roleDisplayName = this.adminAuthService.roleDisplayName;
+  readonly isDemoPreview = signal<boolean>(!environment.production && !!environment.features?.adminPreviewMode);
 
   readonly dashboardData = signal<AdminDashboardResponse | null>(null);
   readonly isLoading = signal<boolean>(true);
@@ -68,15 +70,17 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   get totalPendingApprovals(): number {
-    const p = this.dashboardData()?.pending_approvals;
-    if (!p) return 0;
+    const data = this.dashboardData();
+    if (!data) return 0;
+    const p = data.pending_approvals;
+    const providerPending = data.providers?.pending_applications || 0;
     return (
-      (p.homestay_listings || 0) +
-      (p.activity_listings || 0) +
-      (p.eco_experience_listings || 0) +
-      (p.artisan_listings || 0) +
-      (p.rental_vehicles || 0) +
-      (p.tour_guide_profiles || 0)
+      providerPending +
+      (p?.homestay_listings || 0) +
+      (p?.rental_vehicles || 0) +
+      (p?.tour_guide_profiles || 0) +
+      (p?.activity_listings || 0) +
+      (p?.artisan_listings || 0)
     );
   }
 

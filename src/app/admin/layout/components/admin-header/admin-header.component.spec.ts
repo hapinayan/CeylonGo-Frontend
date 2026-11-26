@@ -87,4 +87,20 @@ describe('AdminHeaderComponent', () => {
     component.onDocumentClick(new MouseEvent('click'));
     expect(component.isMenuOpen()).toBe(false);
   });
+
+  it('should emit openMobileDrawer when mobile menu button is clicked', () => {
+    const openDrawerSpy = vi.fn();
+    component.openMobileDrawer.subscribe(openDrawerSpy);
+
+    const menuBtn = fixture.nativeElement.querySelector('.mobile-menu-btn') as HTMLButtonElement;
+    expect(menuBtn).toBeTruthy();
+    menuBtn.click();
+
+    expect(openDrawerSpy).toHaveBeenCalled();
+  });
+
+  it('should not contain desktop collapse button, preventing desktop control duplication', () => {
+    const desktopCollapseBtn = fixture.nativeElement.querySelector('.desktop-collapse-btn');
+    expect(desktopCollapseBtn).toBeNull();
+  });
 });

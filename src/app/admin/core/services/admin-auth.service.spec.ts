@@ -32,6 +32,7 @@ describe('AdminAuthService', () => {
   };
 
   beforeEach(() => {
+    sessionStorage.clear();
     routerMock = { navigateByUrl: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -49,6 +50,7 @@ describe('AdminAuthService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    sessionStorage.clear();
   });
 
   it('should be created', () => {
@@ -203,6 +205,20 @@ describe('AdminAuthService', () => {
       expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/admin/login');
     });
 
+    it('should identify synthetic demo sessions and skip backend reconciliation', () => {
+      service.setSession('demo-token-signature', mockAdminUser);
+      expect(service.isDemoSession()).toBe(true);
+
+      let returnedUser: AdminUser | null = null;
+      service.reconcileSession().subscribe((user) => {
+        returnedUser = user;
+      });
+
+      // No network request should be dispatched for demo sessions
+      httpMock.expectNone(`${environment.apiBaseUrl}/admin/auth/me`);
+      expect(returnedUser).toEqual(mockAdminUser);
+    });
+
     it('should handle network error (status 0) without clearing session immediately or elevating permissions', () => {
       const validToken = makeJwt({ sub: 'ops@ceylongo.com', exp: Math.floor(Date.now() / 1000) + 3600 });
       service.setSession(validToken, mockOperationalUser);
@@ -220,6 +236,54 @@ describe('AdminAuthService', () => {
       expect(service.isAuthenticated()).toBe(true);
       expect(service.isSuperAdmin()).toBe(false);
       expect(service.isReconciling()).toBe(false);
+    });
+
+    it('should reject synthetic demo tokens when in production environment', () => {
+      const origProd = environment.production;
+      const origMode = environment.features?.adminPreviewMode;
+      try {
+        (environment as { production: boolean }).production = true;
+        if (environment.features) {
+          environment.features.adminPreviewMode = false;
+        }
+
+        service.setSession('demo-token-123', mockAdminUser);
+        expect(service.isAuthenticated()).toBe(false);
+        expect(service.isDemoSession()).toBe(false);
+        expect(sessionStorage.getItem(ADMIN_TOKEN_KEY)).toBeNull();
+      } finally {
+        (environment as { production: boolean }).production = origProd;
+        if (environment.features) {
+          environment.features.adminPreviewMode = origMode;
+        }
+      }
+    });
+
+    it('should purge previously stored demo tokens on startup in production mode', () => {
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, 'demo-synthetic-token');
+      sessionStorage.setItem(ADMIN_USER_KEY, JSON.stringify(mockAdminUser));
+
+      const origProd = environment.production;
+      try {
+        (environment as { production: boolean }).production = true;
+
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+          providers: [
+            AdminAuthService,
+            provideHttpClient(),
+            provideHttpClientTesting(),
+            { provide: Router, useValue: routerMock },
+          ],
+        });
+        const freshService = TestBed.inject(AdminAuthService);
+
+        expect(freshService.getToken()).toBeNull();
+        expect(sessionStorage.getItem(ADMIN_TOKEN_KEY)).toBeNull();
+        expect(sessionStorage.getItem(ADMIN_USER_KEY)).toBeNull();
+      } finally {
+        (environment as { production: boolean }).production = origProd;
+      }
     });
   });
 });

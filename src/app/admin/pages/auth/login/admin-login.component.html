@@ -139,6 +139,34 @@
           </svg>
         }
       </button>
+
+      <!-- Isolated Development UI Preview Controls -->
+      @if (isPreviewMode()) {
+        <div class="demo-preview-panel" style="margin-top: 1.5rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+          <div style="font-size: 0.8125rem; font-weight: 600; color: #166534; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.375rem;">
+            <span>⚡ Isolated UI Preview Mode (Coordinator Inspection)</span>
+          </div>
+          <p style="font-size: 0.75rem; color: #15803d; margin: 0 0 0.75rem 0; line-height: 1.4;">
+            Use these one-click buttons to preview the complete dashboard layout and role-specific views without console scripts:
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <button
+              type="button"
+              (click)="loginAsDemoSuperAdmin()"
+              style="padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; background: #1e40af; color: #fff; border: none; border-radius: 6px; cursor: pointer; text-align: center;"
+            >
+              👑 Preview Super Admin
+            </button>
+            <button
+              type="button"
+              (click)="loginAsDemoOperationalAdmin()"
+              style="padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; background: #0f766e; color: #fff; border: none; border-radius: 6px; cursor: pointer; text-align: center;"
+            >
+              💼 Preview Operational Admin
+            </button>
+          </div>
+        </div>
+      }
     </form>
 
     <div class="login-footer">

@@ -7,28 +7,25 @@
     (closeDrawer)="closeMobileDrawer()"
   />
 
-  <!-- Mobile Drawer Overlay -->
+  <!-- Mobile Drawer Overlay & Sidebar -->
   @if (isMobileDrawerOpen()) {
     <div
       class="mobile-backdrop"
       (click)="closeMobileDrawer()"
       aria-hidden="true"
     ></div>
+    <div class="mobile-drawer drawer-open">
+      <app-admin-sidebar
+        [collapsed]="false"
+        (toggleCollapse)="closeMobileDrawer()"
+        (closeDrawer)="closeMobileDrawer()"
+      />
+    </div>
   }
-
-  <!-- Mobile Drawer Sidebar -->
-  <div class="mobile-drawer" [class.drawer-open]="isMobileDrawerOpen()">
-    <app-admin-sidebar
-      [collapsed]="false"
-      (toggleCollapse)="closeMobileDrawer()"
-      (closeDrawer)="closeMobileDrawer()"
-    />
-  </div>
 
   <!-- Main View Area -->
   <div class="main-canvas">
     <app-admin-header
-      (toggleSidebar)="toggleSidebar()"
       (openMobileDrawer)="openMobileDrawer()"
     />
 

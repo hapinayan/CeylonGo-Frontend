@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AdminTokenResponse } from '../../../core/models/admin-auth.models';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
+import { environment } from '../../../../../environments/environment';
 import { AdminLoginComponent } from './admin-login.component';
 
 describe('AdminLoginComponent', () => {
@@ -12,6 +13,7 @@ describe('AdminLoginComponent', () => {
   let fixture: ComponentFixture<AdminLoginComponent>;
   let adminAuthServiceMock: {
     login: ReturnType<typeof vi.fn>;
+    setSession: ReturnType<typeof vi.fn>;
   };
   let routerMock: {
     navigateByUrl: ReturnType<typeof vi.fn>;
@@ -33,6 +35,7 @@ describe('AdminLoginComponent', () => {
   beforeEach(async () => {
     adminAuthServiceMock = {
       login: vi.fn(),
+      setSession: vi.fn(),
     };
     routerMock = {
       navigateByUrl: vi.fn(),
@@ -154,6 +157,51 @@ describe('AdminLoginComponent', () => {
 
     expect(component.isLoading()).toBe(false);
     expect(component.errorMessage()).toContain('Unable to connect to CeylonGo backend server');
+  });
+
+  describe('Isolated Demo Preview Mode', () => {
+    it('should set Super Admin session and navigate to dashboard', () => {
+      adminAuthServiceMock.setSession = vi.fn();
+      component.loginAsDemoSuperAdmin();
+      expect(adminAuthServiceMock.setSession).toHaveBeenCalledWith(
+        expect.stringContaining('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
+        expect.objectContaining({ role: 'super_admin' })
+      );
+      expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
+    });
+
+    it('should set Operational Admin session and navigate to dashboard', () => {
+      adminAuthServiceMock.setSession = vi.fn();
+      component.loginAsDemoOperationalAdmin();
+      expect(adminAuthServiceMock.setSession).toHaveBeenCalledWith(
+        expect.stringContaining('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
+        expect.objectContaining({ role: 'operations_admin' })
+      );
+      expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
+    });
+
+    it('should refuse synthetic demo login in production mode', () => {
+      const origProd = environment.production;
+      const origMode = environment.features?.adminPreviewMode;
+      try {
+        (environment as { production: boolean }).production = true;
+        if (environment.features) {
+          environment.features.adminPreviewMode = false;
+        }
+
+        adminAuthServiceMock.setSession = vi.fn();
+        component.loginAsDemoSuperAdmin();
+        expect(adminAuthServiceMock.setSession).not.toHaveBeenCalled();
+
+        component.loginAsDemoOperationalAdmin();
+        expect(adminAuthServiceMock.setSession).not.toHaveBeenCalled();
+      } finally {
+        (environment as { production: boolean }).production = origProd;
+        if (environment.features) {
+          environment.features.adminPreviewMode = origMode;
+        }
+      }
+    });
   });
 
   describe('returnUrl validation (FINDING-SEC-01)', () => {

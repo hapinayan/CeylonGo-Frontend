@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, inject, output, signal } from '@angular/core';
 
+import { environment } from '../../../../../environments/environment';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 @Component({
@@ -14,12 +15,12 @@ export class AdminHeaderComponent {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly elementRef = inject(ElementRef);
 
-  readonly toggleSidebar = output<void>();
   readonly openMobileDrawer = output<void>();
 
   readonly currentUser = this.adminAuthService.currentUser;
   readonly isSuperAdmin = this.adminAuthService.isSuperAdmin;
   readonly roleDisplayName = this.adminAuthService.roleDisplayName;
+  readonly isDemoPreview = signal<boolean>(!environment.production && !!environment.features?.adminPreviewMode);
 
   readonly isMenuOpen = signal<boolean>(false);
 

@@ -43,13 +43,13 @@ describe('AdminSidebarComponent', () => {
     expect(dashboardLink?.textContent).toContain('Dashboard');
   });
 
-  it('should render future phase modules as disabled with phase badges', () => {
+  it('should render future phase modules as disabled with upcoming badges', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const disabledLinks = compiled.querySelectorAll('.disabled-link');
     expect(disabledLinks.length).toBeGreaterThan(5);
 
     const firstBadge = compiled.querySelector('.phase-badge');
-    expect(firstBadge?.textContent).toContain('Phase 2');
+    expect(firstBadge?.textContent).toContain('Upcoming');
   });
 
   it('should hide Super Admin administration group when user is not super admin', () => {

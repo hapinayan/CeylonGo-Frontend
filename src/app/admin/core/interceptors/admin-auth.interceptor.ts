@@ -33,8 +33,11 @@ export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
   const adminAuthService = inject(AdminAuthService);
   const token = adminAuthService.getToken();
 
+  // Synthetic demo preview credentials must never be transmitted to real backend endpoints
+  const isDemo = adminAuthService.isDemoSession();
+
   let outgoingReq = req;
-  if (token && !req.headers.has('Authorization')) {
+  if (token && !isDemo && !req.headers.has('Authorization')) {
     outgoingReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,

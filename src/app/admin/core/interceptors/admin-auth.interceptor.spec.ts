@@ -13,12 +13,14 @@ describe('adminAuthInterceptor', () => {
   let adminAuthServiceMock: {
     getToken: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
+    isDemoSession: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     adminAuthServiceMock = {
       getToken: vi.fn(),
       logout: vi.fn(),
+      isDemoSession: vi.fn().mockReturnValue(false),
     };
 
     TestBed.configureTestingModule({
@@ -93,5 +95,16 @@ describe('adminAuthInterceptor', () => {
     req.flush({ detail: 'Invalid credentials' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(adminAuthServiceMock.logout).not.toHaveBeenCalled();
+  });
+
+  it('should not attach synthetic demo token to outgoing requests to protect backend', () => {
+    adminAuthServiceMock.getToken.mockReturnValue('demo-preview-token-super-admin');
+    adminAuthServiceMock.isDemoSession.mockReturnValue(true);
+
+    httpClient.get(`${environment.apiBaseUrl}/admin/dashboard`).subscribe();
+
+    const req = httpTesting.expectOne(`${environment.apiBaseUrl}/admin/dashboard`);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
   });
 });

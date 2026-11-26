@@ -1,4 +1,15 @@
 <div class="dashboard-container">
+  <!-- Demo Mode Banner -->
+  @if (isDemoPreview()) {
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.625rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.8125rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-weight: 700; background: #3b82f6; color: white; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.6875rem; text-transform: uppercase;">UI Preview Mode</span>
+        <span>Simulated platform metrics displayed for user interface and layout inspection.</span>
+      </div>
+      <span style="font-weight: 500; color: #2563eb;">Role: {{ roleDisplayName() }}</span>
+    </div>
+  }
+
   <!-- Top Welcome & Refresh Bar -->
   <div class="dashboard-header">
     <div class="header-titles">
@@ -13,7 +24,12 @@
         </span>
       </div>
       <p class="page-subtitle">
-        Welcome back, <strong>{{ currentUser()?.full_name || 'Administrator' }}</strong>. Live metrics aggregated from verified backend registries.
+        Welcome back, <strong>{{ currentUser()?.full_name || 'Administrator' }}</strong>.
+        @if (isDemoPreview()) {
+          <span>Demonstration metrics displayed for layout and interface verification.</span>
+        } @else {
+          <span>Live metrics aggregated from verified backend registries.</span>
+        }
       </p>
     </div>
 
@@ -183,7 +199,7 @@
           </div>
           <p class="queue-desc">New provider registrations awaiting NIC and business review.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 04/05</span>
+            <span class="phase-info">Provider Verification Queue</span>
           </div>
         </div>
 
@@ -197,7 +213,7 @@
           </div>
           <p class="queue-desc">Submitted properties awaiting photo and room capacity checks.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 06</span>
+            <span class="phase-info">Homestay Verification Queue</span>
           </div>
         </div>
 
@@ -211,7 +227,7 @@
           </div>
           <p class="queue-desc">Bikes and bicycles awaiting inspection and insurance review.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 08</span>
+            <span class="phase-info">Rental Fleet Verification Queue</span>
           </div>
         </div>
 
@@ -225,7 +241,7 @@
           </div>
           <p class="queue-desc">Guides awaiting license credential documents verification.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 09</span>
+            <span class="phase-info">Tour Guide Verification Queue</span>
           </div>
         </div>
 
@@ -239,7 +255,7 @@
           </div>
           <p class="queue-desc">Activity listings awaiting safety protocol checks.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 07</span>
+            <span class="phase-info">Adventure Activity Queue</span>
           </div>
         </div>
 
@@ -253,7 +269,7 @@
           </div>
           <p class="queue-desc">Local handicraft and artisan listings for catalog review.</p>
           <div class="queue-footer">
-            <span class="phase-info">Reviewable in Module 10</span>
+            <span class="phase-info">Artisan Verification Queue</span>
           </div>
         </div>
       </div>

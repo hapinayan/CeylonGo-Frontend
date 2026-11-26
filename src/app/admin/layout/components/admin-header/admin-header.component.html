@@ -1,6 +1,6 @@
 <header class="admin-header">
   <div class="header-left">
-    <!-- Mobile hamburger button -->
+    <!-- Tablet & Mobile hamburger button (opens navigation drawer) -->
     <button
       type="button"
       class="mobile-menu-btn"
@@ -26,10 +26,17 @@
 
   <div class="header-right">
     <!-- Active Environment Badge -->
-    <div class="env-badge" title="Connected to Backend API">
-      <span class="env-dot"></span>
-      <span class="env-text">Live System</span>
-    </div>
+    @if (isDemoPreview()) {
+      <div class="env-badge demo-badge" title="Running in Isolated Demonstration Preview Mode">
+        <span class="env-dot demo-dot"></span>
+        <span class="env-text">Demo Preview</span>
+      </div>
+    } @else {
+      <div class="env-badge" title="Connected to Backend API">
+        <span class="env-dot"></span>
+        <span class="env-text">Live System</span>
+      </div>
+    }
 
     <!-- User Profile Dropdown -->
     <div class="user-menu-container">
