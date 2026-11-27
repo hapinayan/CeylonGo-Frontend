@@ -1,3 +1,4 @@
+import { RecommendationSettings } from '../recommendations/recommendation-settings';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -19,6 +20,7 @@ import { TravelerAccountService } from './traveler-account.service';
   selector: 'app-traveler-settings',
   standalone: true,
   imports: [
+    RecommendationSettings,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -35,6 +37,8 @@ import { TravelerAccountService } from './traveler-account.service';
         description="Manage your account, security and preferences."
         headingId="settings-heading"
       />
+
+      <app-recommendation-settings />
 
       <!-- Section A: Account Information -->
       <section class="settings-card" aria-labelledby="section-account-info">

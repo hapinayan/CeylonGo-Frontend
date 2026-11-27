@@ -1,3 +1,5 @@
+import { tap } from 'rxjs';
+import { RecommendationService } from '../recommendations/recommendation.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
@@ -11,6 +13,7 @@ import { NotificationSettings, TravelerPreferences } from './traveler-account.mo
 })
 export class TravelerAccountService {
   private readonly http = inject(HttpClient);
+  private readonly recommendations = inject(RecommendationService);
   private readonly authService = inject(AuthService);
   private readonly travelerBaseUrl = `${environment.apiBaseUrl}/traveler`;
 
@@ -50,7 +53,8 @@ export class TravelerAccountService {
     } catch (err) {
       return throwError(() => err);
     }
-    return this.http.put<TravelerPreferences>(`${this.travelerBaseUrl}/preferences`, payload, opts);
+    return this.http.put<TravelerPreferences>(`${this.travelerBaseUrl}/preferences`, payload, opts)
+      .pipe(tap(() => this.recommendations.invalidate()));
   }
 
   getNotificationSettings(): Observable<NotificationSettings> {

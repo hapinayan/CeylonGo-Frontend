@@ -557,7 +557,10 @@
         </div>
       </div>
     }
-  </main>
+    @if (!isLoading() && guide() && !guide()!.isPreviewSample) {
+    <app-recommendations [sourceId]="+guide()!.id" [category]="'guide'" />
+  }
+</main>
 </div>
 
 <!-- PHOTO GALLERY VIEWER MODAL -->

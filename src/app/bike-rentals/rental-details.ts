@@ -1,3 +1,4 @@
+import { Recommendations } from '../recommendations/recommendations';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -29,6 +30,7 @@ type ReviewsState =
 @Component({
   selector: 'app-rental-details',
   imports: [
+    Recommendations,
     RouterLink,
     RentalWishlist,
     RentalDatePicker,

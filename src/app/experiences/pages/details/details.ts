@@ -1,3 +1,4 @@
+import { Recommendations } from '../../../recommendations/recommendations';
 import { DOCUMENT, DatePipe, DecimalPipe, ViewportScroller } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -49,6 +50,7 @@ type DetailState =
 
 @Component({
   imports: [
+    Recommendations,
     RouterLink,
     DatePipe,
     DecimalPipe,

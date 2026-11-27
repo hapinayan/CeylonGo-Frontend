@@ -385,5 +385,8 @@
         </dialog>
       }
     }
-  </main>
+    @if (state().status === 'ready') {
+    <app-recommendations [sourceId]="$any(state()).detail.activity.id" [category]="'adventure'" />
+  }
+</main>
 </div>

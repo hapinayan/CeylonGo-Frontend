@@ -1,3 +1,4 @@
+import { RecommendationService } from '../../../../recommendations/recommendation.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +27,7 @@ import { CategoryBarComponent } from '../../../../shared/components/category-bar
   styleUrl: './artisan-discovery.component.scss',
 })
 export class ArtisanDiscoveryComponent implements OnInit {
+  private readonly recommendations = inject(RecommendationService);
   private readonly artisanService = inject(ArtisanService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -159,6 +161,8 @@ export class ArtisanDiscoveryComponent implements OnInit {
   }
 
   onSearchSubmit(): void {
+    this.recommendations.search({ category: 'artisan', search_query: this.searchLocation(),
+      district: this.selectedDistrict() ?? undefined });
     this.currentPage.set(1);
     this.syncQueryParams();
   }
@@ -188,6 +192,8 @@ export class ArtisanDiscoveryComponent implements OnInit {
   }
 
   applyModalFilters(): void {
+    this.recommendations.search({ category: 'artisan', search_query: this.searchLocation(),
+      district: this.draftDistrict ?? undefined });
     this.selectedCategory.set(this.draftCategory);
     this.selectedDistrict.set(this.draftDistrict);
     this.maxPrice.set(

@@ -341,4 +341,7 @@
       }
     }
   </div>
+  @if (vehicleState().status === 'ready' && !preview() && ($any(vehicleState()).vehicle.vehicle_type === 'bike' || $any(vehicleState()).vehicle.vehicle_type === 'bicycle')) {
+    <app-recommendations [sourceId]="$any(vehicleState()).vehicle.id" [category]="$any(vehicleState()).vehicle.vehicle_type" />
+  }
 </main>

@@ -1,3 +1,4 @@
+import { Recommendations } from '../../recommendations/recommendations';
 import {
   Component,
   signal,
@@ -85,7 +86,7 @@ export interface PromotionCard {
 @Component({
   selector: 'app-traveler-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [Recommendations, CommonModule, RouterLink],
   templateUrl: './traveler-home.html',
   styleUrls: ['./traveler-home.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

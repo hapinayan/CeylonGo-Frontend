@@ -1,3 +1,4 @@
+import { Recommendations } from '../../../recommendations/recommendations';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +19,7 @@ import { ServiceWeatherCardComponent } from '../../../shared/components/service-
   selector: 'app-tour-guide-detail',
   standalone: true,
   imports: [
+    Recommendations,
     CommonModule,
     FormsModule,
     RouterModule,

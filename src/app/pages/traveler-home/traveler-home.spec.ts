@@ -26,6 +26,7 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
   const currentUserSignal = signal<User | null>(mockUser);
   const authServiceMock = {
     currentUser: currentUserSignal,
+    getToken: vi.fn(() => null),
     isAuthenticated: vi.fn(() => true),
     getCurrentUser: vi.fn(),
     logout: vi.fn(),
@@ -58,9 +59,9 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
   });
 
   // =========================================================================
-  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (7 CONTENT SECTIONS INSIDE LAYOUT)
+  // HOMEPAGE STRUCTURE & EXACT SECTION ORDER (8 CONTENT SECTIONS INSIDE LAYOUT)
   // =========================================================================
-  it('should render all 7 homepage content sections in the exact specified order', () => {
+  it('should render all 8 homepage content sections in the exact specified order', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     // Section 02: AI Trip Planner Hero
@@ -93,14 +94,15 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
 
     // Verify DOM sequence order inside <main>
     const mainChildren = Array.from(compiled.querySelector('main')?.children || []);
-    expect(mainChildren.length).toBe(7);
+    expect(mainChildren.length).toBe(8);
     expect(mainChildren[0]?.id).toBe('ai-planner');
     expect(mainChildren[1]?.id).toBe('experience-categories');
     expect(mainChildren[2]?.id).toBe('popular-destinations');
-    expect(mainChildren[3]?.id).toBe('explore-more');
-    expect(mainChildren[4]?.id).toBe('travel-community');
-    expect(mainChildren[5]?.id).toBe('special-offers');
-    expect(mainChildren[6]?.id).toBe('why-ceylongo');
+    expect(mainChildren[3]?.tagName.toLowerCase()).toBe('app-recommendations');
+    expect(mainChildren[4]?.id).toBe('explore-more');
+    expect(mainChildren[5]?.id).toBe('travel-community');
+    expect(mainChildren[6]?.id).toBe('special-offers');
+    expect(mainChildren[7]?.id).toBe('why-ceylongo');
   });
 
   // =========================================================================

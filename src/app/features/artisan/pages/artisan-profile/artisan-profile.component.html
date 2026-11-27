@@ -338,4 +338,7 @@
       </div>
     </div>
   }
+  @if (!isLoading() && !hasError() && listing()) {
+    <app-recommendations [sourceId]="listing()!.id" [category]="'artisan'" />
+  }
 </main>

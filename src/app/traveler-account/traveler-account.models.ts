@@ -9,7 +9,10 @@ export type TravelerInterest =
   | 'beaches'
   | 'village_experiences'
   | 'artisan_handicrafts'
-  | 'cycling';
+  | 'cycling'
+  | 'mountains_hiking'
+  | 'photography'
+  | 'relaxation';
 
 export type AccommodationPreference = 'homestay' | 'guesthouse' | 'hotel' | 'hostel' | 'other';
 
@@ -58,6 +61,9 @@ export const INTEREST_OPTIONS: ReadonlyArray<{ value: TravelerInterest; label: s
   { value: 'village_experiences', label: 'Village Experiences' },
   { value: 'artisan_handicrafts', label: 'Artisan Handicrafts' },
   { value: 'cycling', label: 'Cycling' },
+  { value: 'mountains_hiking', label: 'Mountains & Hiking' },
+  { value: 'photography', label: 'Photography' },
+  { value: 'relaxation', label: 'Relaxation' },
 ];
 
 export const ACCOMMODATION_OPTIONS: ReadonlyArray<{ value: AccommodationPreference; label: string }> = [

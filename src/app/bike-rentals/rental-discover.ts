@@ -1,3 +1,4 @@
+import { RecommendationService } from '../recommendations/recommendation.service';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -73,6 +74,7 @@ function queryFrom(params: ParamMap): RentalQuery {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RentalDiscover {
+  private readonly recommendations = inject(RecommendationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(RentalApi);
@@ -195,6 +197,7 @@ export class RentalDiscover {
       return;
     }
     this.dateError.set('');
+    this.trackSearch(cityVal, this.query().category, this.query().price);
     this.navigate({
       city: cityVal.trim() || null,
       pickup: pickupVal || null,
@@ -205,6 +208,7 @@ export class RentalDiscover {
   }
 
   selectCategory(category: RentalCategory): void {
+    this.trackSearch(this.query().city, category, this.query().price, true);
     this.navigate({ category: category || null, type: null, page: null });
   }
 
@@ -227,6 +231,7 @@ export class RentalDiscover {
   }
 
   applyFilters(): void {
+    this.trackSearch(this.draftCity(), this.draftCategory(), this.draftPrice(), true);
     this.filtersOpen.set(false);
     this.navigate({
       city: this.draftCity().trim() || null,
@@ -236,6 +241,20 @@ export class RentalDiscover {
       available: this.draftAvailableOnly() ? '1' : null,
       page: null,
     });
+  }
+
+  private trackSearch(city: string, category: RentalCategory, price: string, categoryApplied = false) {
+    if (this.preview()) return;
+    const [min, max] = PRICE_RANGES[price] ?? [];
+    const bounds = this.recommendations.price('per_day', min, max);
+    const subtype = category === 'motorcycle' || category === 'scooter' ? category : undefined;
+    const service = category === 'bicycle' ? 'bicycle' : category === 'bike' || subtype ? 'bike' : undefined;
+    if (categoryApplied && service && !city.trim() && !bounds && !subtype) {
+      this.recommendations.track({ event_type: 'search', category: service });
+      return;
+    }
+    this.recommendations.search({ category: service, destination: city,
+      filters: subtype ? { ...bounds, rental_subtype: subtype } : bounds });
   }
 
   clearFilters(): void {
