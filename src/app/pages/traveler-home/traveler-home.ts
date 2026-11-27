@@ -8,13 +8,17 @@ import {
   HostListener,
   ElementRef,
   ViewChild,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AiPlannerService } from '../../features/ai-planner/services/ai-planner.service';
+import { ArtisanListingSummary } from '../../features/artisan/models/artisan.models';
+import { ArtisanService } from '../../features/artisan/services/artisan.service';
 
 export interface ExperienceCategory {
   id: string;
@@ -35,18 +39,6 @@ export interface PopularDestination {
   tag?: string;
 }
 
-export interface SpecialOfferItem {
-  id: string;
-  title: string;
-  category: string;
-  categoryLabel: string;
-  discount: string;
-  location: string;
-  description: string;
-  image: string;
-  isDemo?: boolean;
-}
-
 export interface WhyCeylonGoPoint {
   id: string;
   title: string;
@@ -65,24 +57,6 @@ export interface ExploreMoreCard {
   icon?: string;
 }
 
-export interface PromotionCategory {
-  id: string;
-  title: string;
-}
-
-export interface PromotionCard {
-  id: string;
-  title: string;
-  providerName: string;
-  location: string;
-  image: string;
-  originalPrice?: number;
-  discountedPrice?: number;
-  discountPercent?: number;
-  validityPeriod?: string;
-  category: string;
-}
-
 @Component({
   selector: 'app-traveler-home',
   standalone: true,
@@ -94,10 +68,11 @@ export interface PromotionCard {
 export class TravelerHome implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly elementRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
   private readonly aiPlannerService = inject(AiPlannerService);
+  private readonly artisanService = inject(ArtisanService);
 
   readonly toastMessage = signal<string | null>(null);
 
@@ -217,49 +192,10 @@ export class TravelerHome implements OnInit {
   readonly categoryScrollPosition = signal<number>(0);
 
   // =========================================================================
-  // SECTION 04: EXPLORE MORE WITH CEYLONGO (EXACTLY 3 LARGE 16:9 PHOTO CARDS)
-  // =========================================================================
-  readonly exploreCards: readonly ExploreMoreCard[] = [
-    {
-      id: 'homestays',
-      title: 'Find Homestays',
-      description: 'Stay local. Feel at home.',
-      image: '/images/traveler-home/find-homestays.webp',
-      alt: 'Beautiful traditional Sri Lankan homestay with tropical garden and welcoming veranda',
-      ctaText: 'Explore Stays →',
-      route: '/homestays',
-      icon: 'homestay',
-    },
-    {
-      id: 'tour-guides',
-      title: 'Find Your Tour Guide',
-      description: 'Discover Sri Lanka through local eyes.',
-      image: '/images/traveler-home/find-tour-guide.webp',
-      alt: 'Friendly Sri Lankan local tour guide interacting with international tourists at heritage site',
-      ctaText: 'Find a Guide →',
-      route: '/tour-guides',
-      icon: 'guide',
-    },
-    {
-      id: 'bicycles',
-      title: 'Rent a Bike or Bicycle',
-      description: 'Your journey. Your pace.',
-      image: '/images/traveler-home/rent-bicycle.webp',
-      alt: 'Bicycles and scooter parked in beautiful Sri Lankan coastal setting',
-      ctaText: 'Explore Rentals →',
-      route: '/bicycles',
-      icon: 'rental',
-    },
-  ];
-
-  // =========================================================================
-  // SECTION 06: SPECIAL OFFERS & PROMOTIONS (3 CATEGORIES + HONEST EMPTY STATE)
-  // =========================================================================
-
-  // =========================================================================
-  // SECTION 04: POPULAR DESTINATIONS (PRIORITIZING NORTH & EAST)
+  // SECTION 04: POPULAR DESTINATIONS (9 DESTINATIONS PRIORITIZING NORTH & EAST)
   // =========================================================================
   @ViewChild('destinationsTrack') destinationsTrack?: ElementRef<HTMLDivElement>;
+  readonly destinationScrollPosition = signal<number>(0);
 
   readonly popularDestinations: readonly PopularDestination[] = [
     {
@@ -328,67 +264,49 @@ export class TravelerHome implements OnInit {
   ];
 
   // =========================================================================
-  // SECTION 07: SAMPLE DEMO OFFERS (FALLBACK WHEN NO LIVE PROMOTIONS)
+  // SECTION 06: STAY, DISCOVER & RIDE (3 SERVICE CARDS)
   // =========================================================================
-  readonly demoOffers: readonly SpecialOfferItem[] = [
+  readonly exploreCards: readonly ExploreMoreCard[] = [
     {
-      id: 'demo-offer-1',
-      title: 'Jaffna Homestay Escape',
-      category: 'homestays',
-      categoryLabel: 'Homestay Offer',
-      discount: '20% OFF',
-      location: 'Jaffna',
-      description: 'Experience authentic northern hospitality.',
-      image: '/images/destinations/jaffna.webp',
-      isDemo: true,
+      id: 'homestays',
+      title: 'Find Homestays',
+      description: 'Stay local. Feel at home.',
+      image: '/images/traveler-home/find-homestays.webp',
+      alt: 'Beautiful traditional Sri Lankan homestay with tropical garden and welcoming veranda',
+      ctaText: 'Explore Stays →',
+      route: '/homestays',
+      icon: 'homestay',
     },
     {
-      id: 'demo-offer-2',
-      title: 'Trincomalee Bike Adventure',
-      category: 'rentals',
-      categoryLabel: 'Rental Offer',
-      discount: '15% OFF',
-      location: 'Trincomalee',
-      description: 'Explore the beautiful eastern coastline.',
+      id: 'tour-guides',
+      title: 'Find Your Tour Guide',
+      description: 'Discover Sri Lanka through local eyes.',
+      image: '/images/traveler-home/find-tour-guide.webp',
+      alt: 'Friendly Sri Lankan local tour guide interacting with international tourists at heritage site',
+      ctaText: 'Find a Guide →',
+      route: '/tour-guides',
+      icon: 'guide',
+    },
+    {
+      id: 'bicycles',
+      title: 'Rent a Bike or Bicycle',
+      description: 'Your journey. Your pace.',
       image: '/images/traveler-home/rent-bicycle.webp',
-      isDemo: true,
-    },
-    {
-      id: 'demo-offer-3',
-      title: 'Batticaloa Lagoon Experience',
-      category: 'experiences',
-      categoryLabel: 'Experience Offer',
-      discount: '25% OFF',
-      location: 'Batticaloa',
-      description: 'Discover scenic lagoons and local adventures.',
-      image: '/images/destinations/batticaloa.webp',
-      isDemo: true,
+      alt: 'Bicycles and scooter parked in beautiful Sri Lankan coastal setting',
+      ctaText: 'Explore Rentals →',
+      route: '/bicycles',
+      icon: 'rental',
     },
   ];
 
-  get displayedOffers(): readonly SpecialOfferItem[] {
-    const realOffers: SpecialOfferItem[] = this.promotions().map(p => ({
-      id: String(p.id),
-      title: p.title,
-      category: p.category,
-      categoryLabel: p.category === 'homestays' ? 'Homestay Offer' : (p.category === 'rentals' ? 'Rental Offer' : 'Experience Offer'),
-      discount: p.discountPercent ? `${p.discountPercent}% OFF` : 'Special Deal',
-      location: p.location,
-      description: p.providerName,
-      image: p.image,
-      isDemo: false,
-    }));
-
-    const source = realOffers.length > 0 ? realOffers : this.demoOffers;
-    const cat = this.selectedPromotionCategory();
-    if (cat === 'all') {
-      return source;
-    }
-    return source.filter(o => o.category === cat);
-  }
+  // =========================================================================
+  // SECTION 07: MEET OUR LOCAL ARTISANS (REAL API DATA ONLY)
+  // =========================================================================
+  readonly artisanListings = signal<ArtisanListingSummary[]>([]);
+  readonly failedArtisanImages = signal<ReadonlySet<number>>(new Set());
 
   // =========================================================================
-  // SECTION 08: WHY CEYLONGO? (5 UNIQUE SELLING POINTS)
+  // SECTION 09: WHY CEYLONGO? (5 UNIQUE SELLING POINTS)
   // =========================================================================
   readonly whyCeylonGoPoints: readonly WhyCeylonGoPoint[] = [
     {
@@ -423,26 +341,62 @@ export class TravelerHome implements OnInit {
     },
   ];
 
-  readonly promotionCategories: readonly PromotionCategory[] = [
-    { id: 'all', title: 'All Offers' },
-    { id: 'homestays', title: 'Homestay Offers' },
-    { id: 'rentals', title: 'Rental Offers' },
-    { id: 'experiences', title: 'Experience Offers' },
-  ];
-
-  readonly selectedPromotionCategory = signal<string>('all');
-  readonly promotions = signal<PromotionCard[]>([]);
-
   ngOnInit(): void {
-    // Check if query params have initial destination/duration for quick planner
-    this.route.queryParams.subscribe((params) => {
-      if (params['destination'] && this.destinations.includes(params['destination'])) {
-        this.selectedDestination.set(params['destination']);
-      }
-      if (params['duration'] && this.durations.includes(params['duration'])) {
-        this.selectedDuration.set(params['duration']);
-      }
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (params['destination'] && this.destinations.includes(params['destination'])) {
+          this.selectedDestination.set(params['destination']);
+        }
+        if (params['duration'] && this.durations.includes(params['duration'])) {
+          this.selectedDuration.set(params['duration']);
+        }
+      });
+
+    this.loadLocalArtisans();
+  }
+
+  private loadLocalArtisans(): void {
+    this.artisanService
+      .getListings({ page: 1, page_size: 4 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          const eligible = (page?.items ?? []).filter(
+            (item) =>
+              item.is_active !== false &&
+              (!item.approval_status || item.approval_status.toLowerCase() === 'approved'),
+          );
+          this.artisanListings.set(eligible.slice(0, 4));
+        },
+        error: () => {
+          this.artisanListings.set([]);
+        },
+      });
+  }
+
+  onArtisanImageError(listingId: number): void {
+    this.failedArtisanImages.update((prev) => {
+      const next = new Set(prev);
+      next.add(listingId);
+      return next;
     });
+  }
+
+  artisanLocation(item: ArtisanListingSummary): string {
+    const parts = [item.city, item.district]
+      .map((v) => v?.trim())
+      .filter((v): v is string => Boolean(v));
+    if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+      return parts[0];
+    }
+    return parts.join(', ') || 'Sri Lanka';
+  }
+
+  artisanShortDescription(item: ArtisanListingSummary): string {
+    const raw = (item.description ?? '').trim();
+    if (!raw) return '';
+    return raw.split('\n')[0].trim();
   }
 
   @HostListener('document:click', ['$event'])
@@ -517,9 +471,8 @@ export class TravelerHome implements OnInit {
       return;
     }
 
-        this.quickPlannerError.set(null);
+    this.quickPlannerError.set(null);
 
-    // If traveler is not authenticated, prompt login contextually and resume on success
     if (!this.authService.isAuthenticated()) {
       this.authModalService.open('login', undefined, {
         type: 'generate-trip',
@@ -579,15 +532,12 @@ export class TravelerHome implements OnInit {
 
   onCategoryClick(cat: ExperienceCategory): void {
     if (cat.route) {
-      // Connect to registered category module discovery route (e.g. Artisans)
       this.router.navigate([cat.route]);
     } else if (cat.targetCategory) {
-      // Connect to existing Experiences discovery page with selected category filter
       this.router.navigate(['/experiences'], {
         queryParams: { category: cat.targetCategory },
       });
     } else {
-      // Heritage & Landmarks, Village Experiences: navigate to all experiences.
       this.router.navigate(['/experiences']);
     }
   }
@@ -602,15 +552,24 @@ export class TravelerHome implements OnInit {
     this.router.navigate(['/community']);
   }
 
+  onDestinationsScroll(): void {
+    if (this.destinationsTrack?.nativeElement) {
+      this.destinationScrollPosition.set(this.destinationsTrack.nativeElement.scrollLeft);
+    }
+  }
+
   scrollDestinations(direction: number): void {
     if (this.destinationsTrack?.nativeElement) {
-      const scrollAmount = 340 * direction;
+      const scrollAmount = 360 * direction;
       const el = this.destinationsTrack.nativeElement;
       if (typeof el.scrollBy === 'function') {
         el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
       } else {
         el.scrollLeft += scrollAmount;
       }
+      setTimeout(() => {
+        this.onDestinationsScroll();
+      }, 350);
     }
   }
 
@@ -619,29 +578,6 @@ export class TravelerHome implements OnInit {
     this.router.navigate(['/homestays'], {
       queryParams: { location: dest.name },
     });
-  }
-
-  selectPromotionCategory(catId: string): void {
-    this.selectedPromotionCategory.set(catId);
-  }
-
-  onViewOffer(promo: PromotionCard | SpecialOfferItem): void {
-    if ('isDemo' in promo && promo.isDemo) {
-      this.showToast(`Demo Offer: Special discount preview for ${promo.title} (${promo.location}). Live booking coming soon!`);
-    } else {
-      this.showToast(`Viewing offer: ${promo.title}`);
-    }
-    if (promo.category === 'homestays') {
-      this.router.navigate(['/homestays'], {
-        queryParams: { location: promo.location },
-      });
-    } else if (promo.category === 'rentals') {
-      this.router.navigate(['/bicycles'], {
-        queryParams: { city: promo.location },
-      });
-    } else if (promo.category === 'experiences') {
-      this.router.navigate(['/experiences']);
-    }
   }
 
   private showToast(msg: string): void {
