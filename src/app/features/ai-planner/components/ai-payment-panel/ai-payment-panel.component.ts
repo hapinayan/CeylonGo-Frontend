@@ -1,18 +1,16 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { generateRequestUuid } from '../../../../core/utils/uuid.util';
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 import {
   AiBookingDetailResponse,
   AiPaymentResponse,
   formatBookingStatusMessage,
 } from '../../models/ai-planner.models';
-import {
-  AiPlannerService,
-  formatAiPlannerError,
-  makeIdempotencyKey,
-} from '../../services/ai-planner.service';
+import { AiPlannerService, formatAiPlannerError } from '../../services/ai-planner.service';
 
 @Component({
   selector: 'app-ai-payment-panel',
@@ -56,7 +54,7 @@ import {
               (click)="payOnlineDemo('success')"
               [disabled]="isPaying()"
             >
-              {{ isPaying() ? 'Processing...' : 'Online Payment (Academic Demo)' }}
+              {{ isPaying() && lastOperation() === 'simulate' ? 'Processing...' : 'Online Payment (Academic Demo)' }}
             </button>
             <button
               type="button"
@@ -64,7 +62,7 @@ import {
               (click)="selectAtLocation()"
               [disabled]="isPaying()"
             >
-              Pay at Location
+              {{ isPaying() && lastOperation() === 'at_location' ? 'Saving...' : 'Pay at Location' }}
             </button>
           </div>
         </div>
@@ -73,9 +71,9 @@ import {
       @if (errorMessage()) {
         <div class="pay-error" role="alert">
           <p>{{ errorMessage() }}</p>
-          @if (latestPayment()?.status === 'failed' || !isPaymentResolved()) {
-            <button type="button" class="btn-retry" (click)="payOnlineDemo('success')" [disabled]="isPaying()">
-              Retry Demo Payment
+          @if (!isPaymentResolved()) {
+            <button type="button" class="btn-retry" (click)="retryFailedOperation()" [disabled]="isPaying()">
+              {{ lastOperation() === 'at_location' ? 'Retry Pay at Location' : 'Retry Demo Payment' }}
             </button>
           }
         </div>
@@ -105,11 +103,12 @@ import {
       justify-content: space-between;
       align-items: flex-start;
       gap: 0.75rem;
+      flex-wrap: wrap;
 
       h3 {
         margin: 0.2rem 0 0;
         color: #082b5c;
-        font-size: 0.98rem;
+        font-size: 1rem;
         font-weight: 700;
       }
     }
@@ -120,24 +119,24 @@ import {
       border-radius: 999px;
       background: #082b5c;
       color: #ffffff;
-      font-size: 0.73rem;
+      font-size: 0.72rem;
       font-weight: 700;
     }
 
     .amount {
       color: #0066ff;
-      font-size: 1rem;
-      white-space: nowrap;
+      font-size: 1.05rem;
+      font-weight: 700;
     }
 
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.55rem;
-      padding: 0.65rem;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.65rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
 
       span {
         display: block;
@@ -148,17 +147,18 @@ import {
       strong {
         color: #0f172a;
         font-size: 0.85rem;
+        text-transform: capitalize;
       }
     }
 
     .payment-selector {
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.65rem;
     }
 
     .demo-notice {
-      padding: 0.55rem 0.75rem;
+      padding: 0.6rem 0.75rem;
       border-radius: 9px;
       background: #eaf2ff;
       color: #082b5c;
@@ -168,7 +168,7 @@ import {
     .pay-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.55rem;
     }
 
     .btn-primary {
@@ -250,15 +250,36 @@ export class AiPaymentPanelComponent implements OnChanges {
   readonly errorMessage = signal<string | null>(null);
   readonly latestPayment = signal<AiPaymentResponse | null>(null);
   readonly attemptNo = signal(1);
+  readonly lastOperation = signal<'simulate' | 'at_location'>('simulate');
+
+  private trackedBookingId: number | null = null;
+  private pendingSimulateKey: string | null = null;
+  private pendingSimulateAttempt: number | null = null;
+  private pendingSimulateOutcome: 'success' | 'failure' | null = null;
+  private pendingAtLocationKey: string | null = null;
 
   get statusMessage(): string {
     return formatBookingStatusMessage(this.booking?.status);
   }
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
     const payments = this.booking?.payments ?? [];
     if (payments.length > 0) {
       this.latestPayment.set(payments[payments.length - 1]);
+      const maxAttempt = payments.reduce((m, p) => Math.max(m, p.attempt_no || 1), 0);
+      this.attemptNo.set(maxAttempt + 1);
+    } else if (changes['booking'] && this.booking?.id !== this.trackedBookingId) {
+      this.latestPayment.set(null);
+      this.attemptNo.set(1);
+    }
+
+    if (this.booking?.id !== this.trackedBookingId) {
+      this.trackedBookingId = this.booking?.id ?? null;
+      this.pendingSimulateKey = null;
+      this.pendingSimulateAttempt = null;
+      this.pendingSimulateOutcome = null;
+      this.pendingAtLocationKey = null;
+      this.errorMessage.set(null);
     }
   }
 
@@ -282,47 +303,128 @@ export class AiPaymentPanelComponent implements OnChanges {
   }
 
   payOnlineDemo(outcome: 'success' | 'failure' = 'success'): void {
-    if (this.isPaying()) return;
+    if (this.isPaying() || this.isPaymentResolved()) return;
+
+    // Switching payment operation invalidates any prior at-location retry key.
+    this.pendingAtLocationKey = null;
+    this.lastOperation.set('simulate');
     this.isPaying.set(true);
     this.errorMessage.set(null);
 
-    const attempt = this.attemptNo();
-    this.attemptNo.set(attempt + 1);
-    const reqKey = makeIdempotencyKey('pay');
+    const canReuseRetry =
+      this.pendingSimulateKey !== null &&
+      this.pendingSimulateAttempt !== null &&
+      this.pendingSimulateOutcome === outcome;
+
+    const reqKey = canReuseRetry ? this.pendingSimulateKey! : generateRequestUuid();
+    const attempt = canReuseRetry ? this.pendingSimulateAttempt! : this.attemptNo();
+
+    this.pendingSimulateKey = reqKey;
+    this.pendingSimulateAttempt = attempt;
+    this.pendingSimulateOutcome = outcome;
 
     this.aiService.simulatePayment(this.booking.id, reqKey, attempt, outcome).subscribe({
       next: (payment) => {
         this.isPaying.set(false);
+        this.pendingSimulateKey = null;
+        this.pendingSimulateAttempt = null;
+        this.pendingSimulateOutcome = null;
         this.latestPayment.set(payment);
         this.paymentUpdated.emit(payment);
+
         if (payment.status.toLowerCase().includes('fail')) {
+          // Recorded failed payment requires a fresh attempt_no and new UUID on the next attempt.
+          this.attemptNo.set(attempt + 1);
           this.errorMessage.set(
             'Academic Demo payment failed. You can safely retry payment or choose Pay at Location.',
           );
         }
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.isPaying.set(false);
+        if (err?.status === 409) {
+          this.pendingSimulateKey = null;
+          this.pendingSimulateAttempt = null;
+          this.pendingSimulateOutcome = null;
+          this.syncAuthoritativeBookingAfterConflict(err);
+          return;
+        }
+        if (err?.status >= 400 && err?.status < 500) {
+          // Invalid client payload must use a fresh key once corrected; keep attemptNo intact.
+          this.pendingSimulateKey = null;
+          this.pendingSimulateAttempt = null;
+          this.pendingSimulateOutcome = null;
+        }
+        // On status 0 or 5xx, keep pendingSimulateKey & pendingSimulateAttempt so identical retry reuses the same key.
         this.errorMessage.set(formatAiPlannerError(err, 'Payment simulation failed.').message);
       },
     });
   }
 
   selectAtLocation(): void {
-    if (this.isPaying()) return;
+    if (this.isPaying() || this.isPaymentResolved()) return;
+
+    // Switching payment operation clears any pending online simulation retry key.
+    this.pendingSimulateKey = null;
+    this.pendingSimulateAttempt = null;
+    this.pendingSimulateOutcome = null;
+    this.lastOperation.set('at_location');
     this.isPaying.set(true);
     this.errorMessage.set(null);
 
-    const reqKey = makeIdempotencyKey('loc');
+    const reqKey = this.pendingAtLocationKey ?? generateRequestUuid();
+    this.pendingAtLocationKey = reqKey;
+
     this.aiService.payAtLocation(this.booking.id, reqKey).subscribe({
       next: (payment) => {
         this.isPaying.set(false);
+        this.pendingAtLocationKey = null;
         this.latestPayment.set(payment);
         this.paymentUpdated.emit(payment);
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.isPaying.set(false);
+        if (err?.status === 409) {
+          this.pendingAtLocationKey = null;
+          this.syncAuthoritativeBookingAfterConflict(err);
+          return;
+        }
+        if (err?.status >= 400 && err?.status < 500) {
+          this.pendingAtLocationKey = null;
+        }
+        // On status 0 or 5xx, keep pendingAtLocationKey so identical retry reuses the same key.
         this.errorMessage.set(formatAiPlannerError(err, 'Could not record Pay at Location selection.').message);
+      },
+    });
+  }
+
+  retryFailedOperation(): void {
+    if (this.lastOperation() === 'at_location') {
+      this.selectAtLocation();
+    } else {
+      this.payOnlineDemo('success');
+    }
+  }
+
+  private syncAuthoritativeBookingAfterConflict(err: HttpErrorResponse): void {
+    this.aiService.getBookingDetail(this.booking.id).subscribe({
+      next: (detail) => {
+        const payments = detail?.payments ?? [];
+        if (payments.length > 0) {
+          const latest = payments[payments.length - 1];
+          this.latestPayment.set(latest);
+          const maxAttempt = payments.reduce((m, p) => Math.max(m, p.attempt_no || 1), 0);
+          this.attemptNo.set(maxAttempt + 1);
+          if (latest.status === 'demo_succeeded' || latest.method === 'at_location') {
+            this.paymentUpdated.emit(latest);
+            this.errorMessage.set(null);
+            return;
+          }
+        }
+        this.errorMessage.set(formatAiPlannerError(err, 'Payment state updated. Please review before retrying.').message);
+      },
+      error: () => {
+        this.errorMessage.set(formatAiPlannerError(err, 'Payment state conflict. Please refresh booking status.').message);
       },
     });
   }

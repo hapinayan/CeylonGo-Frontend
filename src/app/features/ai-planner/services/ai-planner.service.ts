@@ -5,6 +5,7 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ANONYMOUS_API_REQUEST } from '../../../core/interceptors/auth.interceptor';
 import { AuthService } from '../../../core/services/auth.service';
+import { generateRequestUuid } from '../../../core/utils/uuid.util';
 import {
   AiBookingConfirmRequest,
   AiBookingDetailResponse,
@@ -63,11 +64,8 @@ export function resolveAiMediaUrl(value: string | null | undefined): string | nu
   }
 }
 
-export function makeIdempotencyKey(prefix = 'ai'): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`.slice(0, 36);
-  }
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`.slice(0, 36);
+export function makeIdempotencyKey(_prefix?: string): string {
+  return generateRequestUuid();
 }
 
 export function formatAiPlannerError(err: unknown, fallback = 'Something went wrong.'): AiFormattedError {
@@ -179,6 +177,14 @@ export function formatAiPlannerError(err: unknown, fallback = 'Something went wr
       message: (detailText || 'CeylonGo AI service is temporarily unavailable.') + waitHint,
       retryAfterSeconds,
       code: 'unavailable',
+    };
+  }
+  if (status >= 500) {
+    return {
+      status,
+      message: detailText || `Server error (HTTP ${status}) while processing your request. Please try again.`,
+      retryAfterSeconds,
+      code: 'unknown',
     };
   }
 
@@ -353,6 +359,16 @@ export class AiPlannerService {
       return throwError(() => err);
     }
     return this.http.post<AiBookingDetailResponse>(`${this.aiBaseUrl}/bookings/confirm`, payload, opts);
+  }
+
+  getBookingDetail(bookingId: number): Observable<AiBookingDetailResponse> {
+    let opts: { headers: HttpHeaders };
+    try {
+      opts = this.requireTravelerAuthHeaders();
+    } catch (err) {
+      return throwError(() => err);
+    }
+    return this.http.get<AiBookingDetailResponse>(`${environment.apiBaseUrl}/bookings/${bookingId}`, opts);
   }
 
   simulatePayment(

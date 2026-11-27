@@ -1,7 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
+import { ProviderAccountService } from '../../core/services/provider-account.service';
 import { ProviderAuthService } from '../../core/services/provider-auth.service';
 import { ProviderPreviewService } from '../provider-preview.service';
 
@@ -20,6 +22,8 @@ interface NavItem {
   styleUrl: './provider-layout.scss',
 })
 export class ProviderLayout implements OnInit {
+  readonly account = inject(ProviderAccountService);
+  private readonly destroy = inject(DestroyRef);
   private readonly providerAuthService = inject(ProviderAuthService);
   private readonly previewService = inject(ProviderPreviewService);
   private readonly route = inject(ActivatedRoute);
@@ -38,37 +42,42 @@ export class ProviderLayout implements OnInit {
   });
 
   readonly businessName = computed(() => {
-    return this.user()?.business_name || 'Ceylon Horizon Homestay';
+    return this.account.profile()?.business_name || this.user()?.business_name || 'Service provider';
   });
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/provider/dashboard', icon: 'dashboard' },
     { label: 'My Profile', route: '/provider/profile', icon: 'person' },
-    { label: 'Manage Listings', route: '/provider/listings', icon: 'inventory_2' },
+    { label: 'My Services', route: '/provider/listings', icon: 'inventory_2' },
     { label: 'Add New Service', route: '/provider/services/new', icon: 'add_circle' },
-    { label: 'Rooms and Availability', route: '/provider/rooms', icon: 'meeting_room' },
-    { label: 'Activity Availability', route: '/provider/activities/availability', icon: 'event_available' },
-    { label: 'Tour Packages', route: '/provider/guides/packages', icon: 'tour_packages' },
-    { label: 'Guide Availability', route: '/provider/guides/availability', icon: 'guide_schedule' },
-    { label: 'Fleet & Availability', route: '/provider/rentals/availability', icon: 'rental_fleet' },
-    { label: 'Artisan Products', route: '/provider/artisans/products', icon: 'artisan_products' },
+    { label: 'Availability', route: '/provider/availability', icon: 'event_available' },
     { label: 'Bookings', route: '/provider/bookings', icon: 'calendar_month' },
-    { label: 'Promotions', route: '/provider/promotions', icon: 'loyalty' },
-    { label: 'Community Feed', route: '/provider/community', icon: 'forum' },
-    { label: 'Payouts', route: '/provider/payouts', icon: 'payments' },
+    { label: 'Wallet', route: '/provider/wallet', icon: 'account_balance_wallet' },
+    { label: 'Community', route: '/provider/community', icon: 'forum' },
     { label: 'Settings', route: '/provider/settings', icon: 'settings' },
-    { label: 'Help and Support', route: '/provider/help', icon: 'help_outline' },
+    { label: 'Help & Support', route: '/provider/help', icon: 'help_outline' },
   ];
 
   ngOnInit(): void {
     const param = this.route.snapshot.queryParamMap.get('preview');
     this.previewService.syncFromNavigation(this.router.url, param ?? undefined);
+    if (!this.isPreview()) this.account.getProfile().pipe(
+      takeUntilDestroyed(this.destroy),
+    ).subscribe({
+      error: (error) => {
+        if (error.status === 401 || error.status === 403) {
+          this.providerAuthService.clearSession();
+          void this.router.navigate(['/provider/login']);
+        }
+      },
+    });
   }
 
   toggleMobileSidebar(): void {
     this.isSidebarOpenMobile.update((open) => !open);
   }
 
+  @HostListener('document:keydown.escape')
   closeMobileSidebar(): void {
     this.isSidebarOpenMobile.set(false);
   }
@@ -83,6 +92,7 @@ export class ProviderLayout implements OnInit {
       void this.router.navigate(['/provider/login']);
       return;
     }
+    this.account.clear();
     this.providerAuthService.logout();
     void this.router.navigate(['/provider/login']);
   }

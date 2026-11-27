@@ -20,6 +20,7 @@ export const routes: Routes = [
       // UNIFIED HOMEPAGE (CANONICAL)
       {
         path: '',
+        title: 'CeylonGo — Discover Local. Feel at Home.',
         loadComponent: () =>
           import('./pages/traveler-home/traveler-home')
             .then(m => m.TravelerHome),
@@ -145,6 +146,22 @@ export const routes: Routes = [
             .then(m => m.experiencesRoutes)
       },
 
+      // LIVE WEATHER & INTERACTIVE MAP MODULES
+      {
+        path: 'weather',
+        title: 'Sri Lanka Live Weather | CeylonGo',
+        loadComponent: () =>
+          import('./pages/live-weather/live-weather')
+            .then(m => m.LiveWeatherComponent)
+      },
+      {
+        path: 'map',
+        title: 'Explore Sri Lanka Map | CeylonGo',
+        loadComponent: () =>
+          import('./pages/interactive-map/interactive-map')
+            .then(m => m.InteractiveMapComponent)
+      },
+
       // BIKE & BICYCLE RENTAL MODULE
       {
         path: 'bicycles',
@@ -205,6 +222,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/privacy/privacy')
             .then(m => m.Privacy)
+      },
+
+      // ABOUT US
+      {
+        path: 'about',
+        title: 'About Us | CeylonGo',
+        loadComponent: () =>
+          import('./pages/about/about.component')
+            .then(m => m.AboutComponent),
+      },
+
+      // CONTACT US
+      {
+        path: 'contact',
+        title: 'Contact Us | CeylonGo',
+        loadComponent: () =>
+          import('./pages/contact/contact.component')
+            .then(m => m.ContactComponent),
       },
     ]
   },
@@ -347,6 +382,7 @@ export const routes: Routes = [
   {
     path: 'provider/dashboard',
     canActivate: [providerAuthGuard],
+    canActivateChild: [providerAuthGuard],
     loadComponent: () =>
       import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
     children: [
@@ -364,6 +400,7 @@ export const routes: Routes = [
   {
     path: 'provider',
     canActivate: [providerAuthGuard],
+    canActivateChild: [providerAuthGuard],
     loadComponent: () =>
       import('./provider/layout/provider-layout').then((m) => m.ProviderLayout),
     children: [
@@ -499,73 +536,49 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'profile',
+        path: 'wallet',
+        title: 'Provider Wallet | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
+          import('./provider/wallet/provider-wallet').then(
+            (m) => m.ProviderWallet
           ),
-        data: {
-          title: 'My Provider Profile',
-          description:
-            'Manage your verified business credentials, contact phone, and registered district.',
-        },
       },
       {
-        path: 'promotions',
+        path: 'profile',
+        title: 'My Provider Profile | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
-          ),
-        data: {
-          title: 'Promotions & Discounts',
-          description:
-            'Create seasonal promotional codes and discounts for upcoming holidays in Sri Lanka.',
-        },
+          import('./provider/account/provider-profile').then((m) => m.ProviderProfilePage),
+        canDeactivate: [(page: { canLeave: () => boolean }) => page.canLeave()],
       },
       {
         path: 'community',
-        title: 'Provider Community Feed | CeylonGo',
+        title: 'Provider Community | CeylonGo',
         loadComponent: () =>
           import('./provider/community/provider-community.component').then(
             (m) => m.ProviderCommunityComponent
           ),
       },
       {
-        path: 'payouts',
+        path: 'settings',
+        title: 'Provider Settings | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
-          ),
-        data: {
-          title: 'Payouts & Financial Settlements',
-          description:
-            'View your earnings, bank account details, and completed payouts in LKR.',
-        },
+          import('./provider/account/provider-settings').then((m) => m.ProviderSettingsPage),
       },
       {
-        path: 'settings',
+        path: 'availability',
+        title: 'Provider Availability | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
-          ),
-        data: {
-          title: 'Provider Account Settings',
-          description:
-            'Configure notifications, password, language preferences, and business policies.',
-        },
+          import('./provider/account/provider-guidance').then((m) => m.ProviderAvailabilityPage),
       },
       {
         path: 'help',
+        title: 'Provider Help | CeylonGo',
         loadComponent: () =>
-          import('./provider/placeholder/provider-placeholder').then(
-            (m) => m.ProviderPlaceholder
-          ),
-        data: {
-          title: 'Help & Host Support',
-          description:
-            'Access host guides, FAQs, and contact CeylonGo support representatives.',
-        },
+          import('./provider/account/provider-guidance').then((m) => m.ProviderHelpPage),
       },
+      { path: 'promotions', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'payouts', redirectTo: 'wallet', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
 

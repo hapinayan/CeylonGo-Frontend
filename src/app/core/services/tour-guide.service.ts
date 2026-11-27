@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { generateRequestUuid } from '../utils/uuid.util';
 import {
   AVAILABLE_LANGUAGES,
   POPULAR_LOCATIONS,
@@ -474,9 +475,11 @@ export class TourGuideService {
         return payment$.pipe(
           map((payment) => {
             if (payment.status === 'demo_failed') {
-              throw new Error(
+              const failedErr = new Error(
                 'Academic Demo Online Payment simulated failure. Your booking reservation has not been duplicated—you may safely retry or switch to Pay at Location.'
-              );
+              ) as Error & { isDemoFailed?: boolean };
+              failedErr.isDemoFailed = true;
+              throw failedErr;
             }
 
             const record: TourGuideBookingRecord = {
@@ -523,8 +526,12 @@ export class TourGuideService {
           const detail =
             typeof err.error?.detail === 'string'
               ? err.error.detail
-              : err.message || 'Booking request failed.';
-          return throwError(() => new Error(detail));
+              : err.status >= 500
+                ? `Server error (HTTP ${err.status}) while processing request.`
+                : err.message || 'Booking request failed.';
+          const wrapped = new Error(detail) as Error & { httpStatus?: number };
+          wrapped.httpStatus = err.status;
+          return throwError(() => wrapped);
         }
         return throwError(() => err);
       })
@@ -566,10 +573,7 @@ export class TourGuideService {
   }
 
   createRequestKey(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `tg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`.slice(0, 36);
+    return generateRequestUuid();
   }
 
   // Filter / Pagination / Navigation Helpers

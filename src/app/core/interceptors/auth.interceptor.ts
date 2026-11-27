@@ -64,7 +64,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           !path.includes('/providers/login') &&
           !path.includes('/providers/password/setup')
         ) {
-          providerAuthService.logout();
+          providerAuthService.clearSession();
         } else if (
           !isProviderApi &&
           !path.includes('/auth/login') &&

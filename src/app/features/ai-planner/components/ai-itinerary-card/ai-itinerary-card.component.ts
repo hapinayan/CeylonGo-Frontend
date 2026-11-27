@@ -2,7 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
-import { AiItinerary, AiListingResult } from '../../models/ai-planner.models';
+import { AiItinerary, AiItineraryWeather, AiListingResult } from '../../models/ai-planner.models';
 import { AiBudgetSummaryComponent } from '../ai-budget-summary/ai-budget-summary.component';
 import { AiDayScheduleComponent } from '../ai-day-schedule/ai-day-schedule.component';
 import { AiRouteMapComponent } from '../ai-route-map/ai-route-map.component';
@@ -59,6 +59,7 @@ import { AiRouteMapComponent } from '../ai-route-map/ai-route-map.component';
         @for (day of itinerary.plan.days; track day.day; let idx = $index) {
           <app-ai-day-schedule
             [day]="day"
+            [dayWeather]="weatherForDay(day.day)"
             [listings]="itinerary.listings"
             [initiallyExpanded]="idx < 2"
             (listingSelected)="listingSelected.emit($event)"
@@ -184,5 +185,11 @@ export class AiItineraryCardComponent {
 
   get primaryDestination(): string {
     return this.itinerary?.plan?.days?.[0]?.destination || '';
+  }
+
+  weatherForDay(dayNumber: number): AiItineraryWeather | null {
+    const entries = this.itinerary?.weather;
+    if (!Array.isArray(entries) || entries.length === 0) return null;
+    return entries.find((item) => item.day === dayNumber) ?? null;
   }
 }

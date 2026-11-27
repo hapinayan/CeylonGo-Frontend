@@ -1,3 +1,4 @@
+import { Recommendations } from '../../../recommendations/recommendations';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -12,15 +13,18 @@ import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TourGuideService } from '../../../core/services/tour-guide.service';
 import { LocationPickerComponent } from '../../../shared/components/location-picker/location-picker.component';
+import { ServiceWeatherCardComponent } from '../../../shared/components/service-weather-card/service-weather-card';
 
 @Component({
   selector: 'app-tour-guide-detail',
   standalone: true,
   imports: [
+    Recommendations,
     CommonModule,
     FormsModule,
     RouterModule,
     LocationPickerComponent,
+    ServiceWeatherCardComponent,
   ],
   templateUrl: './tour-guide-detail.component.html',
   styleUrl: './tour-guide-detail.component.scss',

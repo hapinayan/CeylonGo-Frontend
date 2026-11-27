@@ -128,6 +128,7 @@ describe('Provider Preview Mode', () => {
       getProfile: vi.fn(),
       logout: vi.fn(),
       getToken: vi.fn().mockReturnValue(null),
+      providerToken: () => null,
     };
 
     beforeEach(async () => {
@@ -172,7 +173,7 @@ describe('Provider Preview Mode', () => {
       expect(dashEl.textContent).toContain('Preview Mode');
       expect(dashEl.textContent).toContain('Sample: Knuckles Sunrise Forest Trek');
 
-      dashboardFixture.componentInstance.onLogout();
+      layoutFixture.componentInstance.onLogout();
       expect(authStub.logout).not.toHaveBeenCalled();
       expect(previewStub.disable).toHaveBeenCalled();
     });

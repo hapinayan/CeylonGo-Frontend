@@ -514,3 +514,9 @@
   padding: 0.2rem 0.65rem;
   border-radius: 999px;
 }
+
+.avatar-circle img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.sidebar-account { display: flex; align-items: center; gap: .65rem; padding: .75rem 1rem; }
+.sidebar-account .avatar-circle { flex: none; overflow: hidden; }
+.sidebar-identity { min-width: 0; }
+.sidebar-identity strong, .sidebar-identity small { display: block; overflow-wrap: anywhere; }

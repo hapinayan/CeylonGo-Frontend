@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Navbar } from './navbar';
 
 describe('Navbar Component (Airbnb-Inspired Blue & White)', () => {
@@ -56,13 +57,20 @@ describe('Navbar Component (Airbnb-Inspired Blue & White)', () => {
     ]);
   });
 
-  it('should display informational feedback toast when Contact Us is clicked', () => {
+  it('should navigate to /contact when Contact Us is clicked', () => {
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate');
     component.onContactUs(new MouseEvent('click'));
-    fixture.detectChanges();
+    expect(component.activeSection()).toBe('contact');
+    expect(navSpy).toHaveBeenCalledWith(['/contact']);
+  });
 
-    expect(component.infoToast()).toContain('Contact Us: support@ceylongo.com');
-    const toast = fixture.nativeElement.querySelector('.navbar-toast');
-    expect(toast?.textContent).toContain('support@ceylongo.com');
+  it('should navigate to /about when About is clicked', () => {
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate');
+    component.onAbout(new MouseEvent('click'));
+    expect(component.activeSection()).toBe('about');
+    expect(navSpy).toHaveBeenCalledWith(['/about']);
   });
 
   it('should not render any language selector in the navbar', () => {

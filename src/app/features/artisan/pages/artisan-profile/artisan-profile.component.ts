@@ -1,3 +1,4 @@
+import { Recommendations } from '../../../../recommendations/recommendations';
 import {
   AfterViewInit,
   Component,
@@ -30,16 +31,19 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { AuthModalService } from '../../../../core/services/auth-modal.service';
 import { VerifiedBadgeComponent } from '../../../../shared/components/verified-badge/verified-badge.component';
 import { ArtisanCardComponent, NEUTRAL_ARTISAN_PLACEHOLDER } from '../../../../shared/components/artisan-card/artisan-card.component';
+import { ServiceWeatherCardComponent } from '../../../../shared/components/service-weather-card/service-weather-card';
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 
 @Component({
   selector: 'app-artisan-profile',
   standalone: true,
   imports: [
+    Recommendations,
     CommonModule,
     RouterLink,
     VerifiedBadgeComponent,
     ArtisanCardComponent,
+    ServiceWeatherCardComponent,
     LkrCurrencyPipe,
   ],
   templateUrl: './artisan-profile.component.html',

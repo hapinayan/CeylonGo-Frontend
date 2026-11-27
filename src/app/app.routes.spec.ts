@@ -219,5 +219,45 @@ describe('App Routing Configuration', () => {
       expect(route?.canActivate?.length).toBeGreaterThan(0);
     }
   });
+
+  it('should expose public "/weather" and "/map" routes under TravelerLayoutComponent', async () => {
+    const weatherRoute = findAppRoute('weather');
+    const mapRoute = findAppRoute('map');
+
+    expect(weatherRoute).toBeDefined();
+    expect(weatherRoute?.canActivate).toBeUndefined();
+    expect(mapRoute).toBeDefined();
+    expect(mapRoute?.canActivate).toBeUndefined();
+
+    await router.navigateByUrl('/weather');
+    expect(router.url).toBe('/weather');
+
+    await router.navigateByUrl('/map');
+    expect(router.url).toBe('/map');
+  }, 15000);
+
+  it('should navigate to "/about" and lazily resolve AboutComponent without authentication', async () => {
+    await router.navigateByUrl('/about');
+    expect(router.url).toBe('/about');
+
+    const aboutRoute = findAppRoute('about');
+    expect(aboutRoute).toBeDefined();
+    expect(aboutRoute?.canActivate).toBeUndefined();
+
+    const { AboutComponent } = await import('./pages/about/about.component');
+    expect(await (aboutRoute!.loadComponent as Function)()).toBe(AboutComponent);
+  });
+
+  it('should navigate to "/contact" and lazily resolve ContactComponent without authentication', async () => {
+    await router.navigateByUrl('/contact');
+    expect(router.url).toBe('/contact');
+
+    const contactRoute = findAppRoute('contact');
+    expect(contactRoute).toBeDefined();
+    expect(contactRoute?.canActivate).toBeUndefined();
+
+    const { ContactComponent } = await import('./pages/contact/contact.component');
+    expect(await (contactRoute!.loadComponent as Function)()).toBe(ContactComponent);
+  });
 });
 

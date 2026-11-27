@@ -222,6 +222,11 @@
               <div class="pickup-map-wrap">
                 <app-location-picker [latitude]="coords.lat" [longitude]="coords.lng" />
               </div>
+              <app-service-weather-card
+                [locationName]="vehicle.location?.city || vehicle.city || vehicle.district || 'Pickup Location'"
+                [latitude]="coords.lat"
+                [longitude]="coords.lng"
+              />
             }
           </section>
 
@@ -336,4 +341,7 @@
       }
     }
   </div>
+  @if (vehicleState().status === 'ready' && !preview() && ($any(vehicleState()).vehicle.vehicle_type === 'bike' || $any(vehicleState()).vehicle.vehicle_type === 'bicycle')) {
+    <app-recommendations [sourceId]="$any(vehicleState()).vehicle.id" [category]="$any(vehicleState()).vehicle.vehicle_type" />
+  }
 </main>

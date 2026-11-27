@@ -116,6 +116,14 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
+        path: 'wallets',
+        data: { breadcrumb: 'Wallet & Commission' },
+        loadComponent: () =>
+          import('./pages/wallets/admin-wallets.component').then(
+            (m) => m.AdminWalletsComponent
+          ),
+      },
+      {
         path: 'community',
         data: { breadcrumb: 'Community Moderation' },
         loadComponent: () =>

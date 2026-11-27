@@ -1,3 +1,4 @@
+import { Recommendations } from '../../recommendations/recommendations';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,11 +14,12 @@ import {
 import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
+import { ServiceWeatherCardComponent } from '../../shared/components/service-weather-card/service-weather-card';
 
 @Component({
   selector: 'app-homestay-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [Recommendations, CommonModule, FormsModule, RouterLink, ServiceWeatherCardComponent],
   templateUrl: './homestay-detail.html',
   styleUrl: './homestay-detail.scss',
 })

@@ -33,6 +33,7 @@ export class ProviderLoginPlaceholder implements OnInit, AfterViewInit, OnDestro
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly providerOtpService = inject(ProviderOtpService);
+  readonly passwordChanged = computed(() => this.route.snapshot.queryParamMap.get('passwordChanged') === 'true');
   private readonly stateService = inject(ProviderRegistrationStateService);
   private readonly providerAuthService = inject(ProviderAuthService);
 

@@ -1,3 +1,4 @@
+import { RecommendationService } from '../../recommendations/recommendation.service';
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +31,7 @@ import { HomestayMapComponent } from './components/homestay-map/homestay-map.com
   styleUrl: './homestay-discovery.scss',
 })
 export class HomestayDiscovery implements OnInit {
+  private readonly recommendations = inject(RecommendationService);
   private readonly homestayService = inject(HomestayService);
   private readonly authService = inject(AuthService);
   private readonly authModalService = inject(AuthModalService);
@@ -211,6 +213,7 @@ export class HomestayDiscovery implements OnInit {
   }
 
   onSearch(): void {
+    this.recommendations.search({category: 'homestay', destination: this.locationQuery()});
     this.beforeIdHistory.set([]);
     this.currentBeforeId.set(null);
     this.guestDropdownOpen.set(false);
@@ -218,6 +221,7 @@ export class HomestayDiscovery implements OnInit {
   }
 
   selectLocation(city: string): void {
+    this.recommendations.search({category: 'homestay', destination: city});
     this.locationQuery.set(city);
     this.currentPage.set(1);
     this.fetchHomestays();
@@ -292,6 +296,8 @@ export class HomestayDiscovery implements OnInit {
   }
 
   applyModalFilters(): void {
+    this.recommendations.search({category: 'homestay', destination: this.locationQuery(),
+      filters: this.recommendations.price('per_night', this.minPrice(), this.maxPrice())});
     this.filterModalOpen.set(false);
     this.currentPage.set(1);
     this.fetchHomestays();

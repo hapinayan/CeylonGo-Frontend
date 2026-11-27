@@ -102,6 +102,26 @@ describe('TravelerNavbar Component — Phase 10B Refinement', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/experiences']);
   });
 
+  it('should navigate to /contact when Contact Us link is clicked', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('.desktop-nav .nav-link');
+    const contactLink = Array.from(links).find((l) => l.textContent?.trim() === 'Contact Us') as HTMLAnchorElement;
+    expect(contactLink).toBeTruthy();
+
+    contactLink.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/contact']);
+  });
+
+  it('should navigate to /about when About link is clicked', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('.desktop-nav .nav-link');
+    const aboutLink = Array.from(links).find((l) => l.textContent?.trim() === 'About') as HTMLAnchorElement;
+    expect(aboutLink).toBeTruthy();
+
+    aboutLink.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/about']);
+  });
+
   it('should highlight Home as the active navigation item initially', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const activeLink = compiled.querySelector('.desktop-nav .nav-link.active');

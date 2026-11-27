@@ -132,12 +132,12 @@
       <h3 class="empty-title">No service listings found</h3>
       <p class="empty-desc">
         @if (selectedFilter() === 'all') {
-          You haven't listed any services yet. Start by creating your first homestay draft.
+          You haven't listed any services yet. Start by creating your first service listing.
         } @else {
           No listings match the filter "{{ selectedFilter() }}".
         }
       </p>
-      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-create-first">Create New Homestay</a>
+      <a routerLink="/provider/services/new" [queryParams]="previewQueryParams()" class="btn-create-first">Add New Service</a>
     </div>
   } @else {
     <div class="listings-grid">
