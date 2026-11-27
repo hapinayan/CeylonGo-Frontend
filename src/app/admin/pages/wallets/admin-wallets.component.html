@@ -1,0 +1,264 @@
+<div class="admin-wallets-page">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-tags">
+        <span class="read-only-badge">Read-Only Monitoring</span>
+        <span class="scope-badge">Admin &amp; Super Admin</span>
+      </div>
+      <h1 class="page-title">Wallet &amp; Commission Monitoring</h1>
+      <p class="page-subtitle">
+        Platform-wide provider wallet balances, simulated top-ups, 10% commission collections, refunds, and per-provider ledger history.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadOverview()"
+        [disabled]="isLoadingSummary() || isLoadingDirectory()"
+      >
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  @if (!canView()) {
+    <div class="auth-warning-banner" role="alert">
+      <strong>Access Restricted:</strong> Administrative or Super Admin authorization is required to inspect provider wallet balances and commission ledgers.
+    </div>
+  }
+
+  <!-- Platform Totals KPIs -->
+  @if (summaryError()) {
+    <div class="error-banner" role="alert">
+      <span>{{ summaryError() }}</span>
+      <button type="button" class="btn-retry" (click)="loadSummary()">Retry</button>
+    </div>
+  }
+
+  @if (isLoadingSummary()) {
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <span>Loading platform wallet &amp; commission totals...</span>
+    </div>
+  } @else if (summary(); as totals) {
+    <section class="kpi-grid" aria-label="Platform Wallet Summary">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Wallet Balances</span>
+        <span class="kpi-value text-navy">{{ formatLkr(totals.total_wallet_balances) }}</span>
+        <span class="kpi-sub">{{ totals.total_provider_wallets }} initialized provider wallet(s)</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Total Provider Top-Ups</span>
+        <span class="kpi-value text-green">{{ formatLkr(totals.total_top_ups) }}</span>
+        <span class="kpi-sub">Successful simulated credits</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Gross Commission Collected</span>
+        <span class="kpi-value text-blue">{{ formatLkr(totals.gross_commission_collected) }}</span>
+        <span class="kpi-sub">Total deducted across confirmations</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Commission Refunds</span>
+        <span class="kpi-value text-amber">{{ formatLkr(totals.commission_refunds) }}</span>
+        <span class="kpi-sub">Credited back on cancelled bookings</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Net Commission Revenue</span>
+        <span class="kpi-value text-navy">{{ formatLkr(totals.net_commission_revenue) }}</span>
+        <span class="kpi-sub">Gross collected minus refunds</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Commission-Free Bookings</span>
+        <span class="kpi-value text-blue">{{ totals.total_commission_free_bookings }}</span>
+        <span class="kpi-sub">Introductory free bookings used</span>
+      </div>
+    </section>
+  }
+
+  <!-- Provider Wallet Directory -->
+  <section class="directory-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Provider Wallet Directory</h2>
+        <p class="card-subtitle">
+          Select a provider to inspect individual wallet metrics and transaction history. Manual balance editing and withdrawals are disabled.
+        </p>
+      </div>
+      <span class="count-pill">{{ directoryTotal() }} wallet{{ directoryTotal() === 1 ? '' : 's' }}</span>
+    </div>
+
+    @if (directoryError()) {
+      <div class="error-banner m-4" role="alert">
+        <span>{{ directoryError() }}</span>
+        <button type="button" class="btn-retry" (click)="loadDirectory()">Retry</button>
+      </div>
+    }
+
+    @if (isLoadingDirectory()) {
+      <div class="loading-card compact">
+        <div class="spinner"></div>
+        <span>Loading provider wallet directory...</span>
+      </div>
+    } @else if (!directoryError() && wallets().length === 0) {
+      <div class="empty-card">
+        <p class="empty-title">No provider wallets initialized yet</p>
+        <p class="empty-desc">Provider wallets appear automatically when an approved provider opens their wallet or confirms a booking.</p>
+      </div>
+    } @else if (wallets().length > 0) {
+      <div class="table-responsive">
+        <table class="data-table" aria-label="Provider Wallet Directory">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th class="text-right">Available Balance</th>
+              <th>Free Bookings</th>
+              <th class="text-right">Total Top-Ups</th>
+              <th class="text-right">Net Commission Paid</th>
+              <th class="text-right">Refunds</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (w of wallets(); track w.provider_id) {
+              <tr [class.selected-row]="selectedProviderId() === w.provider_id">
+                <td>
+                  <div class="provider-cell">
+                    <span class="provider-name">{{ w.business_name || ('Provider #' + w.provider_id) }}</span>
+                    <span class="provider-meta">
+                      ID #{{ w.provider_id }}
+                      @if (w.district) {
+                        · {{ w.district }}
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td class="text-right font-bold text-navy">{{ formatLkr(w.balance) }}</td>
+                <td>
+                  <span class="free-pill">
+                    {{ w.free_bookings_used }}/3 used · {{ w.free_bookings_remaining }} left
+                  </span>
+                </td>
+                <td class="text-right text-green">{{ formatLkr(w.total_top_ups) }}</td>
+                <td class="text-right font-semibold">{{ formatLkr(w.net_commission_paid) }}</td>
+                <td class="text-right text-sky">{{ formatLkr(w.total_commission_refunded) }}</td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    class="btn-inspect"
+                    [class.active]="selectedProviderId() === w.provider_id"
+                    (click)="selectProvider(w.provider_id)"
+                  >
+                    {{ selectedProviderId() === w.provider_id ? 'Inspecting' : 'View Details' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-footer" *ngIf="directoryTotal() > directoryPageSize">
+        <span class="pagination-info">
+          Page {{ directoryPage() }} of {{ directoryTotalPages() }} · {{ directoryTotal() }} total wallets
+        </span>
+        <div class="pagination-btns">
+          <button
+            type="button"
+            class="btn-page"
+            [disabled]="directoryPage() <= 1 || isLoadingDirectory()"
+            (click)="goToDirectoryPage(directoryPage() - 1)"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            class="btn-page"
+            [disabled]="directoryPage() >= directoryTotalPages() || isLoadingDirectory()"
+            (click)="goToDirectoryPage(directoryPage() + 1)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Individual Provider Wallet Detail & Transaction History -->
+  @if (selectedProviderId(); as providerId) {
+    <section class="detail-section" aria-label="Selected Provider Wallet Details">
+      <div class="detail-header">
+        <div>
+          <span class="detail-eyebrow">Individual Provider Wallet</span>
+          <h2 class="detail-title">{{ providerLabel(providerId) }}</h2>
+        </div>
+        <button type="button" class="btn-close-detail" (click)="clearSelection()">Close Details</button>
+      </div>
+
+      @if (detailError()) {
+        <div class="error-banner" role="alert">
+          <span>{{ detailError() }}</span>
+          <button type="button" class="btn-retry" (click)="loadProviderDetail(providerId)">Retry</button>
+        </div>
+      }
+
+      @if (isLoadingDetail()) {
+        <div class="loading-card compact">
+          <div class="spinner"></div>
+          <span>Loading provider wallet summary...</span>
+        </div>
+      } @else if (selectedWalletDetail(); as detail) {
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi">
+            <span class="d-label">Current Balance</span>
+            <strong class="d-val text-navy">{{ formatLkr(detail.balance) }}</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Commission Rate</span>
+            <strong class="d-val">{{ formatRate(detail.commission_rate) }}</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Free Bookings Used / Remaining</span>
+            <strong class="d-val text-blue">{{ detail.free_bookings_used }} / 3 ({{ detail.free_bookings_remaining }} left)</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Total Top-Ups</span>
+            <strong class="d-val text-green">{{ formatLkr(detail.total_top_ups) }}</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Gross Commission Deducted</span>
+            <strong class="d-val">{{ formatLkr(detail.total_commission_deducted) }}</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Commission Refunds</span>
+            <strong class="d-val text-sky">{{ formatLkr(detail.total_commission_refunded) }}</strong>
+          </div>
+          <div class="detail-kpi">
+            <span class="d-label">Net Commission Paid</span>
+            <strong class="d-val text-navy">{{ formatLkr(detail.net_commission_paid) }}</strong>
+          </div>
+        </div>
+      }
+
+      <app-wallet-transactions-table
+        [transactions]="transactions()"
+        [total]="transactionsTotal()"
+        [page]="transactionsPage()"
+        [pageSize]="transactionsPageSize"
+        [selectedType]="selectedTransactionType()"
+        [isLoading]="isLoadingTransactions()"
+        [errorMessage]="transactionsError()"
+        emptyMessage="No ledger transactions recorded for this provider yet."
+        (typeFilterChange)="onTransactionTypeChange($event)"
+        (pageChange)="onTransactionPageChange($event)"
+        (retry)="retrySelectedTransactions()"
+      />
+    </section>
+  }
+</div>

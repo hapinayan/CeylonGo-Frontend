@@ -156,6 +156,15 @@ export class AdminSidebarComponent {
           isImplemented: true,
         },
         {
+          id: 'wallets',
+          label: 'Wallet & Commission',
+          route: '/admin/wallets',
+          icon: 'wallet',
+          badge: 'Active',
+          tooltip: 'Provider wallet balances, commission revenue & ledger history',
+          isImplemented: true,
+        },
+        {
           id: 'community',
           label: 'Community Moderation',
           route: '/admin/community',
