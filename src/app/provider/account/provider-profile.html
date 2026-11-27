@@ -1,0 +1,107 @@
+﻿<section class="account-page">
+  <header><h1>My Profile</h1><p>Manage your contact details and verified business information.</p></header>
+  @if (preview()) { <article class="card">Sign in with an approved provider account to manage your profile.</article> }
+  @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+  @if (notice()) { <p class="message success" role="status">{{ notice() }}</p> }
+  @if (loading()) { <div class="skeleton" role="status" aria-label="Loading profile"></div> }
+  @if (!preview() && !loading() && !account.profile()) {
+    <button type="button" (click)="refresh()">Retry profile</button>
+  }
+  @if (account.profile(); as profile) {
+    <article class="card identity">
+      <div class="avatar">
+        @if (selectedPhoto() || account.avatar(); as image) { <img [src]="image" alt="Provider profile photo"> }
+        @else { <span aria-hidden="true">{{ profile.full_name.slice(0, 1).toUpperCase() }}</span> }
+      </div>
+      <div><h2>{{ profile.full_name }}</h2><p>{{ profile.business_name }}</p>
+        <span class="badge">{{ profile.approval_status | titlecase }}</span>
+      </div>
+      <div class="actions">
+        @if (!editing()) { <button type="button" (click)="startEdit(profile)">Edit profile</button> }
+        <label class="secondary file">Choose photo<input type="file" accept="image/jpeg,image/png,image/webp"
+          [disabled]="photoBusy() || saving()" (change)="choosePhoto($any($event.target))"></label>
+        @if (profile.avatar_url) {
+          <button type="button" class="secondary" [disabled]="photoBusy() || saving()"
+            (click)="removePrompt.set(true)">Remove photo</button>
+        }
+      </div>
+      @if (selectedPhoto()) {
+        <div class="actions"><button type="button" [disabled]="photoBusy() || saving()" (click)="upload()">
+          {{ photoBusy() ? (progress() === null ? 'Uploading…' : 'Uploading ' + progress() + '%') : 'Save photo' }}
+        </button><button class="secondary" type="button" [disabled]="photoBusy()" (click)="clearPhoto()">Cancel photo</button></div>
+      }
+      @if (removePrompt()) {
+        <div class="confirm" role="group" aria-label="Confirm photo removal">
+          <p>Remove your profile photo?</p><div class="actions">
+            <button type="button" (click)="remove()">Remove</button>
+            <button type="button" class="secondary" (click)="removePrompt.set(false)">Keep photo</button>
+          </div>
+        </div>
+      }
+    </article>
+    @if (profile.profile_change; as change) {
+      <article class="card">
+        <div class="section-heading"><h2>Profile change review</h2><span class="badge">{{ change.status | titlecase }}</span></div>
+        @if (change.status === 'pending') { <p>Your verified information remains active until an admin approves these changes.</p> }
+        @if (change.decision_reason) { <p>{{ change.decision_reason }}</p> }
+        <dl class="details">
+          @for (field of change.changes | keyvalue; track field.key) {
+            <div><dt>{{ fieldLabel(field.key) }}</dt>
+              <dd>Current: {{ display(field.key, $any(profile)[field.key]) }}</dd>
+              <dd>Requested: {{ display(field.key, field.value) }}</dd>
+            </div>
+          }
+        </dl>
+        <button type="button" class="secondary" [disabled]="loading() || editing()" (click)="refresh()">Refresh review status</button>
+      </article>
+    }
+    <form [formGroup]="form" (ngSubmit)="save(profile)">
+      @for (group of groups; track group.title) {
+        <article class="card">
+          <h2>{{ group.title }}</h2>
+          <div class="field-grid">
+            @if (group.title === 'Personal information') {
+              <label>Email address<input type="email" [value]="profile.email" readonly></label>
+            }
+            @for (field of group.fields; track field.key) {
+              <div>
+                @if (editing()) {
+                  <label [for]="field.key">{{ field.label }} @if (field.review) { <small>Admin review</small> }</label>
+                  @if (field.key === 'business_category') {
+                    <select [id]="field.key" [formControlName]="field.key">
+                      <option value="">Select a category</option>
+                      @for (category of categories; track category[0]) { <option [value]="category[0]">{{ category[1] }}</option> }
+                    </select>
+                  } @else if (field.multiline) {
+                    <textarea [id]="field.key" [formControlName]="field.key" rows="3"></textarea>
+                  } @else {
+                    <input [id]="field.key" [formControlName]="field.key" [maxLength]="field.max">
+                  }
+                  @if (form.controls[field.key].invalid) { <small>Maximum {{ field.max }} characters.</small> }
+                } @else {
+                  <div class="field-title">{{ field.label }}</div>
+                  <p>{{ display(field.key, profile[field.key]) }}</p>
+                }
+              </div>
+            }
+          </div>
+        </article>
+      }
+      @if (editing()) {
+        <div class="actions">
+          <button type="submit" [disabled]="saving() || photoBusy() || form.invalid">{{ saving() ? 'Saving…' : 'Save changes' }}</button>
+          <button type="button" class="secondary" [disabled]="saving()" (click)="cancel()">Cancel</button>
+        </div>
+      }
+    </form>
+    <article class="card">
+      <h2>Verification</h2>
+      <dl class="details">
+        <div><dt>Account approval</dt><dd>{{ profile.approval_status | titlecase }}</dd></div>
+        <div><dt>Verification status</dt><dd>{{ profile.verification_status | titlecase }}</dd></div>
+        <div><dt>Registration date</dt><dd>{{ profile.created_at | date:'mediumDate' }}</dd></div>
+        @if (profile.decision_reason) { <div><dt>Decision reason</dt><dd>{{ profile.decision_reason }}</dd></div> }
+      </dl>
+    </article>
+  }
+</section>

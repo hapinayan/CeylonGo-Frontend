@@ -280,7 +280,18 @@
                     <span>{{ detail.locationLabel }}</span>
                   </div>
                 </div>
+                <app-service-weather-card
+                  [locationName]="detail.locationLabel || listing.title"
+                  [latitude]="listing.latitude"
+                  [longitude]="listing.longitude"
+                />
               </section>
+            } @else {
+              <app-service-weather-card
+                [locationName]="listing.title"
+                [latitude]="listing.latitude"
+                [longitude]="listing.longitude"
+              />
             }
 
             @if (listing.provider_name) {

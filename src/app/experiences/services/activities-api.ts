@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ANONYMOUS_API_REQUEST } from '../../core/interceptors/auth.interceptor';
+import { generateRequestUuid } from '../../core/utils/uuid.util';
 import {
   ActivityBookingCreateRequest,
   ActivityBookingDetailResponse,
@@ -212,9 +213,5 @@ export function extractApiErrorMessage(err: unknown, fallback: string): string {
 }
 
 export function newRequestKey(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  const random = Math.random().toString(36).slice(2, 12);
-  return `cg-${Date.now()}-${random}`;
+  return generateRequestUuid();
 }

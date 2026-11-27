@@ -81,6 +81,17 @@ export interface AiPlan {
   alternatives?: string[];
 }
 
+import { DailyForecast } from '../../../core/models/weather-map.models';
+
+export interface AiItineraryWeather {
+  day: number;
+  destination: string;
+  source: string;
+  fetched_at: string;
+  stale: boolean;
+  forecast: DailyForecast;
+}
+
 export interface AiItinerary {
   plan: AiPlan;
   listings: AiListingResult[];
@@ -89,6 +100,7 @@ export interface AiItinerary {
   estimated_other_lkr: string;
   estimated_total_lkr: string;
   remaining_budget_lkr: string;
+  weather?: AiItineraryWeather[] | null;
 }
 
 export interface AiBookingProposal {

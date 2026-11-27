@@ -30,6 +30,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { AuthModalService } from '../../../../core/services/auth-modal.service';
 import { VerifiedBadgeComponent } from '../../../../shared/components/verified-badge/verified-badge.component';
 import { ArtisanCardComponent, NEUTRAL_ARTISAN_PLACEHOLDER } from '../../../../shared/components/artisan-card/artisan-card.component';
+import { ServiceWeatherCardComponent } from '../../../../shared/components/service-weather-card/service-weather-card';
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 
 @Component({
@@ -40,6 +41,7 @@ import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
     RouterLink,
     VerifiedBadgeComponent,
     ArtisanCardComponent,
+    ServiceWeatherCardComponent,
     LkrCurrencyPipe,
   ],
   templateUrl: './artisan-profile.component.html',

@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, combineLatest, map, of, startWith, Subject, switchMap } from 'rxjs';
 import { LocationPickerComponent } from '../shared/components/location-picker/location-picker.component';
+import { ServiceWeatherCardComponent } from '../shared/components/service-weather-card/service-weather-card';
 import { RentalApi } from './rental-api';
 import { CheckedRentalDates, RentalDatePicker } from './rental-date-picker';
 import { RentalReviews, RentalVehicle, formatLkr } from './rental-models';
@@ -27,7 +28,13 @@ type ReviewsState =
 
 @Component({
   selector: 'app-rental-details',
-  imports: [RouterLink, RentalWishlist, RentalDatePicker, LocationPickerComponent],
+  imports: [
+    RouterLink,
+    RentalWishlist,
+    RentalDatePicker,
+    LocationPickerComponent,
+    ServiceWeatherCardComponent,
+  ],
   templateUrl: './rental-details.html',
   styleUrl: './rental-details.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

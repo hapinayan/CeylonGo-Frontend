@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
 import {
   AiBookingDetailResponse,
   AiBookingProposal,
+  AiBookingStatus,
   AiListingResult,
   AiPaymentResponse,
   AiQuote,
@@ -13,6 +15,7 @@ import {
   formatBookingStatusMessage,
   parseSafeAiTextBlocks,
 } from '../../models/ai-planner.models';
+import { AiPlannerService, formatAiPlannerError } from '../../services/ai-planner.service';
 import { AiBookingProposalCardComponent } from '../ai-booking-proposal-card/ai-booking-proposal-card.component';
 import { AiItineraryCardComponent } from '../ai-itinerary-card/ai-itinerary-card.component';
 import { AiPaymentPanelComponent } from '../ai-payment-panel/ai-payment-panel.component';
@@ -154,8 +157,23 @@ import { AiServiceCardComponent } from '../ai-service-card/ai-service-card.compo
                     Total: {{ b.total_lkr | lkrCurrency }}
                     @if (b.payment_status) { · Payment: {{ b.payment_status }} }
                   </small>
+                  @if (bookingLoadError()) {
+                    <small class="load-err">{{ bookingLoadError() }}</small>
+                  }
                 </div>
-                <a routerLink="/my-bookings" class="my-bookings-link">View My Bookings</a>
+                <div class="persisted-actions">
+                  @if (isBookingPayable(b)) {
+                    <button
+                      type="button"
+                      class="complete-payment-btn"
+                      (click)="loadExistingBookingForPayment(b)"
+                      [disabled]="loadingBookingId() === b.booking_id"
+                    >
+                      {{ loadingBookingId() === b.booking_id ? 'Loading...' : 'Complete Payment' }}
+                    </button>
+                  }
+                  <a routerLink="/my-bookings" class="my-bookings-link">View My Bookings</a>
+                </div>
               </div>
             }
           }
@@ -351,6 +369,33 @@ import { AiServiceCardComponent } from '../ai-service-card/ai-service-card.compo
       text-decoration: none;
     }
 
+    .persisted-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .complete-payment-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 0.44rem 0.85rem;
+      background: #0066ff;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover:not(:disabled) { background: #0052cc; }
+      &:disabled { opacity: 0.6; cursor: wait; }
+    }
+
+    .load-err {
+      display: block;
+      color: #b91c1c;
+      margin-top: 0.25rem;
+    }
+
     @media (max-width: 640px) {
       .user-bubble {
         max-width: 90%;
@@ -359,6 +404,8 @@ import { AiServiceCardComponent } from '../ai-service-card/ai-service-card.compo
   `],
 })
 export class AiMessageComponent {
+  private readonly aiService = inject(AiPlannerService, { optional: true });
+
   @Input({ required: true }) turn!: AiTurn;
   @Input() extraProposal: AiBookingProposal | null = null;
   @Input() savingTurnId: number | null = null;
@@ -375,6 +422,8 @@ export class AiMessageComponent {
   readonly servicesExpanded = signal(false);
   readonly proposalDismissed = signal(false);
   readonly confirmedBookingDetail = signal<AiBookingDetailResponse | null>(null);
+  readonly loadingBookingId = signal<number | null>(null);
+  readonly bookingLoadError = signal<string | null>(null);
 
   readonly assistantBlocks = computed(() => parseSafeAiTextBlocks(this.turn?.assistant_message || ''));
 
@@ -410,6 +459,34 @@ export class AiMessageComponent {
     return formatBookingStatusMessage(status);
   }
 
+  isBookingPayable(b: AiBookingStatus): boolean {
+    const status = (b.status || '').toLowerCase();
+    const payStatus = (b.payment_status || '').toLowerCase();
+    const method = (b.payment_method || '').toLowerCase();
+    if (['cancelled', 'rejected', 'completed', 'expired'].includes(status)) return false;
+    if (payStatus === 'demo_succeeded' || payStatus === 'paid' || method === 'at_location') return false;
+    return true;
+  }
+
+  loadExistingBookingForPayment(b: AiBookingStatus): void {
+    if (!this.aiService || this.loadingBookingId() === b.booking_id) return;
+    this.loadingBookingId.set(b.booking_id);
+    this.bookingLoadError.set(null);
+
+    this.aiService.getBookingDetail(b.booking_id).subscribe({
+      next: (detail) => {
+        this.loadingBookingId.set(null);
+        this.confirmedBookingDetail.set(detail);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loadingBookingId.set(null);
+        this.bookingLoadError.set(
+          formatAiPlannerError(err, `Could not load Booking #${b.booking_id} for payment.`).message,
+        );
+      },
+    });
+  }
+
   onBookingConfirmed(detail: AiBookingDetailResponse): void {
     this.confirmedBookingDetail.set(detail);
     this.bookingConfirmed.emit(detail);
@@ -419,5 +496,12 @@ export class AiMessageComponent {
     this.confirmedBookingDetail.update((cur) =>
       cur ? { ...cur, payments: [...(cur.payments ?? []), payment] } : cur,
     );
+    if (this.turn?.bookings?.length) {
+      const target = this.turn.bookings.find((b) => b.booking_id === payment.booking_id);
+      if (target) {
+        target.payment_status = payment.status;
+        target.payment_method = payment.method;
+      }
+    }
   }
 }

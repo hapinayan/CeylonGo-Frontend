@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 
+import { weatherConditionGlyph, weatherIconUrl } from '../../../../core/models/weather-map.models';
 import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
-import { AiListingResult, AiPlanDay } from '../../models/ai-planner.models';
+import { AiItineraryWeather, AiListingResult, AiPlanDay } from '../../models/ai-planner.models';
 
 @Component({
   selector: 'app-ai-day-schedule',
@@ -33,6 +34,60 @@ import { AiListingResult, AiPlanDay } from '../../models/ai-planner.models';
               <li><span class="slot-label">Transport:</span> {{ day.transport }}</li>
             }
           </ul>
+
+          @if (dayWeather?.forecast; as forecast) {
+            <div class="day-weather-card" data-testid="ai-day-weather">
+              <div class="weather-head">
+                <div class="weather-title-wrap">
+                  @if (weatherIconUrl(forecast.condition.icon); as iconSrc) {
+                    <img
+                      [src]="iconSrc"
+                      [alt]="forecast.condition.description || forecast.condition.name || 'Forecast icon'"
+                      class="weather-icon"
+                      width="32"
+                      height="32"
+                    />
+                  } @else {
+                    <span class="weather-glyph" aria-hidden="true">{{ weatherConditionGlyph(forecast.condition.icon) }}</span>
+                  }
+                  <div>
+                    <strong>{{ forecast.condition.description || forecast.condition.name || 'Forecast' }}</strong>
+                    <span class="weather-meta">
+                      {{ dayWeather?.destination || day.destination }} &middot; {{ forecast.date }}
+                    </span>
+                  </div>
+                </div>
+                <div class="weather-badges">
+                  <span class="temp-pill">
+                    {{ forecast.min_temperature_c | number: '1.0-0' }}&deg;C &ndash; {{ forecast.max_temperature_c | number: '1.0-0' }}&deg;C
+                  </span>
+                  @if (forecast.rain_probability_percent !== null && forecast.rain_probability_percent !== undefined) {
+                    <span class="rain-pill">
+                      Rain {{ forecast.rain_probability_percent | number: '1.0-0' }}%
+                    </span>
+                  }
+                  @if (dayWeather?.stale) {
+                    <span class="stale-pill">Cached</span>
+                  }
+                </div>
+              </div>
+
+              @if (forecast.cautions.length > 0) {
+                <ul class="weather-cautions">
+                  @for (caution of forecast.cautions; track caution) {
+                    <li>{{ caution }}</li>
+                  }
+                </ul>
+              }
+
+              <div class="weather-foot">
+                <span>Source: {{ dayWeather?.source }}</span>
+                @if (dayWeather?.fetched_at) {
+                  <span>Updated: {{ dayWeather?.fetched_at | date: 'MMM d, HH:mm' : 'GMT+0530' }} (GMT+0530)</span>
+                }
+              </div>
+            </div>
+          }
 
           <div class="day-expenses">
             <span>Food (Est.): {{ day.estimated_food_lkr | lkrCurrency }}</span>
@@ -175,12 +230,113 @@ import { AiListingResult, AiPlanDay } from '../../models/ai-planner.models';
         background: #dbeafe;
       }
     }
+
+    .day-weather-card {
+      padding: 0.65rem 0.8rem;
+      border-radius: 10px;
+      background: #f8fbff;
+      border: 1px solid #dbeafe;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .weather-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .weather-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      strong {
+        display: block;
+        color: #082b5c;
+        font-size: 0.84rem;
+      }
+    }
+
+    .weather-icon {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .weather-glyph {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .weather-meta {
+      display: block;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .weather-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .temp-pill,
+    .rain-pill,
+    .stale-pill {
+      padding: 0.16rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .temp-pill {
+      background: #eaf2ff;
+      color: #0052cc;
+    }
+
+    .rain-pill {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .stale-pill {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .weather-cautions {
+      margin: 0;
+      padding-left: 1.1rem;
+      font-size: 0.77rem;
+      color: #92400e;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .weather-foot {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: #64748b;
+    }
   `],
 })
 export class AiDayScheduleComponent {
   @Input({ required: true }) day!: AiPlanDay;
+  @Input() dayWeather: AiItineraryWeather | null = null;
   @Input() listings: AiListingResult[] = [];
   @Input() initiallyExpanded = true;
+
+  readonly weatherIconUrl = weatherIconUrl;
+  readonly weatherConditionGlyph = weatherConditionGlyph;
 
   @Output() listingSelected = new EventEmitter<AiListingResult>();
 

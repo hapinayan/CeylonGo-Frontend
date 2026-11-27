@@ -61,6 +61,10 @@ describe('AdminSidebarComponent', () => {
     const homestaysLink = compiled.querySelector('a.nav-link[href="/admin/homestays"]');
     expect(homestaysLink).toBeTruthy();
     expect(homestaysLink?.textContent).toContain('Homestays');
+
+    const walletsLink = compiled.querySelector('a.nav-link[href="/admin/wallets"]');
+    expect(walletsLink).toBeTruthy();
+    expect(walletsLink?.textContent).toContain('Wallet & Commission');
   });
 
   it('should render all modules as active and implemented routes across all phases', () => {

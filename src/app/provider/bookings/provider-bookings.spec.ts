@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProviderBookings } from './provider-bookings';
 import { ProviderService } from '../../core/services/provider.service';
 import { HomestayBookingDetails } from '../../core/models/provider.models';
+import { WalletService } from '../../core/services/wallet.service';
+import { CommissionPreview } from '../../core/models/wallet.models';
 
 describe('ProviderBookings Component', () => {
   let component: ProviderBookings;
@@ -73,6 +75,23 @@ describe('ProviderBookings Component', () => {
     updateBookingStatus: ReturnType<typeof vi.fn>;
   };
 
+  let walletServiceMock: {
+    getBookingCommissionPreview: ReturnType<typeof vi.fn>;
+    generateRequestKey: ReturnType<typeof vi.fn>;
+    topUpWallet: ReturnType<typeof vi.fn>;
+  };
+
+  const allowedPreview: CommissionPreview = {
+    booking_amount: '18500.00',
+    commission_rate: '0.10',
+    required_commission: '1850.00',
+    free_booking_eligible: false,
+    wallet_balance: '5000.00',
+    shortfall: '0.00',
+    confirmation_allowed: true,
+    currency: 'LKR',
+  };
+
   beforeEach(async () => {
     providerServiceMock = {
       getProviderBookings: vi.fn().mockReturnValue(of(mockBookings)),
@@ -108,7 +127,15 @@ describe('ProviderBookings Component', () => {
       getProviderBooking: vi.fn().mockImplementation((id: number) =>
         of(mockBookings.find((b) => b.id === id) || null)
       ),
-      updateBookingStatus: vi.fn().mockReturnValue(of({ success: true })),
+      updateBookingStatus: vi.fn().mockImplementation(
+        (id: number, payload: { to_status: string }) => of({ id, status: payload.to_status })
+      ),
+    };
+
+    walletServiceMock = {
+      getBookingCommissionPreview: vi.fn().mockReturnValue(of(allowedPreview)),
+      generateRequestKey: vi.fn().mockReturnValue('33333333-3333-4333-8333-333333333333'),
+      topUpWallet: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -116,6 +143,7 @@ describe('ProviderBookings Component', () => {
       providers: [
         provideRouter([]),
         { provide: ProviderService, useValue: providerServiceMock },
+        { provide: WalletService, useValue: walletServiceMock },
       ],
     }).compileComponents();
 
@@ -279,5 +307,131 @@ describe('ProviderBookings Component', () => {
     expect(compiled.textContent).toContain('Tour Package: Ella Heritage Walk');
     expect(compiled.textContent).toContain('Pay at Location');
     expect(compiled.textContent).toContain('Unpaid');
+  });
+
+  it('displays commission preview breakdown and remaining balance before confirming', () => {
+    const booking = mockBookings[0];
+    component.promptAction(booking, 'confirm');
+    fixture.detectChanges();
+
+    expect(walletServiceMock.getBookingCommissionPreview).toHaveBeenCalledWith(101);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Wallet & Commission Preview');
+    expect(el.textContent).toContain('LKR 18,500.00');
+    expect(el.textContent).toContain('10%');
+    expect(el.textContent).toContain('LKR 1,850.00');
+    expect(el.textContent).toContain('LKR 5,000.00');
+    expect(el.textContent).toContain('LKR 3,150.00');
+  });
+
+  it('clearly displays commission-free booking eligibility benefit', () => {
+    walletServiceMock.getBookingCommissionPreview.mockReturnValueOnce(
+      of({
+        booking_amount: '18500.00',
+        commission_rate: '0.10',
+        required_commission: '0.00',
+        free_booking_eligible: true,
+        wallet_balance: '0.00',
+        shortfall: '0.00',
+        confirmation_allowed: true,
+        currency: 'LKR',
+      })
+    );
+
+    component.promptAction(mockBookings[0], 'confirm');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Commission-Free Booking Eligible');
+    expect(el.textContent).toContain('Eligible (Free)');
+  });
+
+  it('blocks confirmation on insufficient balance, opens top-up recovery, and refreshes preview on top-up', () => {
+    walletServiceMock.getBookingCommissionPreview.mockReturnValueOnce(
+      of({
+        booking_amount: '18500.00',
+        commission_rate: '0.10',
+        required_commission: '1850.00',
+        free_booking_eligible: false,
+        wallet_balance: '500.00',
+        shortfall: '1350.00',
+        confirmation_allowed: false,
+        currency: 'LKR',
+      })
+    );
+
+    component.promptAction(mockBookings[0], 'confirm');
+    fixture.detectChanges();
+
+    expect(component.hasInsufficientBalance()).toBe(true);
+    expect(component.requiredTopupAmount()).toBe(1350);
+
+    // Attempting to confirm keeps booking pending and does not call updateBookingStatus
+    component.confirmAction();
+    expect(providerServiceMock.updateBookingStatus).not.toHaveBeenCalled();
+    expect(component.bookings().find((b) => b.id === 101)?.status).toBe('pending');
+
+    // Open Top Up Wallet from booking modal and simulate top-up completion
+    component.openTopupFromBooking();
+    expect(component.isTopupModalOpen()).toBe(true);
+
+    walletServiceMock.getBookingCommissionPreview.mockReturnValueOnce(of(allowedPreview));
+    component.onBookingTopUpSucceeded({
+      success: true,
+      currency: 'LKR',
+      balance: '5000.00',
+      message: 'Simulated top-up succeeded',
+      transaction: {
+        id: 1,
+        booking_id: null,
+        deduction_id: null,
+        transaction_type: 'top_up',
+        amount: '4500.00',
+        balance_before: '500.00',
+        balance_after: '5000.00',
+        commission_rate: null,
+        booking_amount: null,
+        request_key: '33333333-3333-4333-8333-333333333333',
+        simulate_outcome: 'success',
+        description: 'Simulated top-up succeeded',
+        created_at: '2026-11-27T08:00:00Z',
+      },
+    });
+    fixture.detectChanges();
+
+    expect(component.isTopupModalOpen()).toBe(false);
+    expect(component.hasInsufficientBalance()).toBe(false);
+
+    // Retry confirmation now succeeds
+    component.confirmAction();
+    expect(providerServiceMock.updateBookingStatus).toHaveBeenCalledWith(101, {
+      to_status: 'confirmed',
+      reason: null,
+    });
+    expect(component.bookings().find((b) => b.id === 101)?.status).toBe('confirmed');
+  });
+
+  it('keeps booking pending and prompts top-up if backend returns 409 insufficient_wallet_balance', () => {
+    component.promptAction(mockBookings[0], 'confirm');
+    providerServiceMock.updateBookingStatus.mockReturnValueOnce(
+      throwError(() => ({
+        status: 409,
+        error: {
+          detail: {
+            code: 'insufficient_wallet_balance',
+            message: 'Top up your wallet before confirming this booking.',
+            currency: 'LKR',
+            current_balance: '0.00',
+            required_commission: '1850.00',
+            shortfall: '1850.00',
+          },
+        },
+      }))
+    );
+
+    component.confirmAction();
+    expect(component.bookings().find((b) => b.id === 101)?.status).toBe('pending');
+    expect(component.insufficientBalance()?.shortfall).toBe('1850.00');
+    expect(component.actionErrorMessage()).toContain('Top up your wallet');
   });
 });

@@ -402,8 +402,14 @@ export class TourGuideBookingComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isSubmitting.set(false);
-          this.paymentAttemptNo.update((n) => n + 1);
-          this.paymentRequestKey.set(this.guideService.createRequestKey());
+          const status = Number(err?.httpStatus ?? err?.status ?? 0);
+          if (err?.isDemoFailed || (status >= 400 && status < 500)) {
+            if (err?.isDemoFailed) {
+              this.paymentAttemptNo.update((n) => n + 1);
+            }
+            this.paymentRequestKey.set(this.guideService.createRequestKey());
+          }
+          // On network disconnect (0) or 5xx server errors, preserve paymentRequestKey & paymentAttemptNo for safe idempotent retry.
           const msg =
             err?.message || 'Booking submission failed. Please retry safely.';
           this.paymentError.set(msg);

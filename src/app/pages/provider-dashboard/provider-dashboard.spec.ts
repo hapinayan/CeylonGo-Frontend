@@ -1,92 +1,55 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
+﻿import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { describe, expect, it, vi } from 'vitest';
 import { ProviderDashboard } from './provider-dashboard';
 import { ProviderAuthService } from '../../core/services/provider-auth.service';
 import { ProviderService } from '../../core/services/provider.service';
+import {
+  ProviderAccountService, ProviderDashboardData,
+} from '../../core/services/provider-account.service';
 
-describe('ProviderDashboard Component', () => {
-  let component: ProviderDashboard;
-  let fixture: ComponentFixture<ProviderDashboard>;
-  let router: Router;
-  let providerAuthServiceMock: {
-    currentProviderUser: ReturnType<typeof vi.fn>;
-    getToken: ReturnType<typeof vi.fn>;
-    logout: ReturnType<typeof vi.fn>;
-    getProfile?: ReturnType<typeof vi.fn>;
-  };
-  let providerServiceMock: {
-    getDashboardStats: ReturnType<typeof vi.fn>;
-    getMyBookings: ReturnType<typeof vi.fn>;
-    getMyListings: ReturnType<typeof vi.fn>;
-  };
+const data: ProviderDashboardData = {
+  total_services: 4, published_services: 3, pending_verification_services: 1, rejected_services: 0,
+  total_bookings: 12, pending_bookings: 2, confirmed_bookings: 1, completed_bookings: 8,
+  cancelled_bookings: 1, recent_bookings: [], upcoming_bookings: [], wallet_balance: '2500.00',
+  currency: 'LKR', free_bookings_remaining: 2, net_commission_paid: '125.00',
+};
 
-  beforeEach(async () => {
-    providerAuthServiceMock = {
-      currentProviderUser: vi.fn().mockReturnValue({
-        id: 1,
-        email: 'safari@ceylongo.com',
-        full_name: 'Safari Guide',
-        role: 'provider',
-        is_active: true,
-        business_name: 'Yala Eco Safari',
-        provider_type: 'safari',
-        district: 'Hambantota',
-        approval_status: 'approved',
-      }),
-      getToken: vi.fn().mockReturnValue('mock-token'),
-      logout: vi.fn(),
-      getProfile: vi.fn().mockReturnValue(of({ verification_status: 'approved' })),
-    };
-
-    providerServiceMock = {
-      getDashboardStats: vi.fn().mockReturnValue(
-        of({
-          total_listings: 4,
-          published_listings: 3,
-          pending_approvals: 1,
-          total_bookings: 12,
-        })
-      ),
-      getMyBookings: vi.fn().mockReturnValue(of([])),
-      getMyListings: vi.fn().mockReturnValue(of([])),
-    };
-
-    await TestBed.configureTestingModule({
+describe('Provider dashboard', () => {
+  function setup(dashboard = vi.fn(() => of(data))) {
+    TestBed.configureTestingModule({
       imports: [ProviderDashboard],
       providers: [
         provideRouter([]),
-        { provide: ProviderAuthService, useValue: providerAuthServiceMock },
-        { provide: ProviderService, useValue: providerServiceMock },
+        { provide: ProviderAccountService, useValue: { dashboard, avatar: () => null, profile: () => null } },
+        { provide: ProviderAuthService, useValue: { currentProviderUser: () => ({ business_name: 'Ella Trails' }) } },
+        { provide: ProviderService, useValue: {} },
       ],
-    }).compileComponents();
-
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    fixture = TestBed.createComponent(ProviderDashboard);
-    component = fixture.componentInstance;
+    });
+    const fixture = TestBed.createComponent(ProviderDashboard);
     fixture.detectChanges();
+    return fixture;
+  }
+
+  it('uses the backend totals and booking lists', () => {
+    const dashboard = vi.fn(() => of(data));
+    const fixture = setup(dashboard);
+    const result: HTMLElement = fixture.nativeElement;
+    expect(dashboard).toHaveBeenCalledOnce();
+    expect(result.textContent).toContain('Ella Trails');
+    expect(result.textContent).toContain('No upcoming bookings');
+    expect(result.textContent).toContain('2,500');
+    expect(fixture.componentInstance.data()?.total_bookings).toBe(12);
   });
 
-  it('should render provider dashboard with business details', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.title')?.textContent).toContain('Provider Dashboard');
-    expect(compiled.querySelector('.subtitle')?.textContent).toContain('Yala Eco Safari');
-    expect(compiled.textContent).toContain('safari@ceylongo.com');
-    expect(compiled.textContent).toContain('Hambantota');
-    expect(compiled.textContent).toContain('Total Listings');
-    expect(compiled.textContent).toContain('4');
-  });
-
-  it('should call logout and navigate to /provider/login when Sign Out is clicked', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const logoutBtn = compiled.querySelector('.btn-logout') as HTMLButtonElement;
-    logoutBtn.click();
-
-    expect(providerAuthServiceMock.logout).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/provider/login']);
+  it('offers a retry on network failure', () => {
+    const dashboard = vi.fn().mockReturnValueOnce(throwError(() => ({ status: 0 })))
+      .mockReturnValueOnce(of(data));
+    const fixture = setup(dashboard);
+    expect(fixture.nativeElement.textContent).toContain('unreachable');
+    fixture.nativeElement.querySelector('button').click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.data()?.total_services).toBe(4);
   });
 });

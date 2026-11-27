@@ -2,12 +2,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { EMPTY } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { environment } from '../../../../environments/environment';
 import { MvpGuideDetails, MvpGuideSlot } from '../../../core/models/tour-guide.models';
 import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { LiveWeatherService } from '../../../core/services/live-weather.service';
 import { TourGuideDetailComponent } from './tour-guide-detail.component';
 
 describe('TourGuideDetailComponent (Live Backend Integration)', () => {
@@ -113,6 +115,13 @@ describe('TourGuideDetailComponent (Live Backend Integration)', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        {
+          provide: LiveWeatherService,
+          useValue: {
+            getCurrentWeather: vi.fn().mockReturnValue(EMPTY),
+            getForecast: vi.fn().mockReturnValue(EMPTY),
+          },
+        },
         {
           provide: ActivatedRoute,
           useValue: {

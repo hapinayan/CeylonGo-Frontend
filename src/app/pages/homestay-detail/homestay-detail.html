@@ -403,6 +403,12 @@
                   </ul>
                 </div>
               }
+
+              <app-service-weather-card
+                [locationName]="homestay()!.city || homestay()!.district || homestay()!.location"
+                [latitude]="homestay()!.latitude"
+                [longitude]="homestay()!.longitude"
+              />
             </section>
 
             <!-- Guest Reviews Section -->
