@@ -1,3 +1,4 @@
+import { RecommendationService } from '../../recommendations/recommendation.service';
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +24,7 @@ import { TourGuideService } from '../../core/services/tour-guide.service';
   styleUrl: './tour-guides.component.scss',
 })
 export class TourGuidesComponent implements OnInit {
+  private readonly recommendations = inject(RecommendationService);
   readonly guideService = inject(TourGuideService);
   private readonly authService = inject(AuthService);
   private readonly authModalService = inject(AuthModalService);
@@ -164,6 +166,7 @@ export class TourGuidesComponent implements OnInit {
 
   executeSearch(): void {
     const destination = this.searchLocationInput().trim();
+    this.recommendations.search({ category: 'guide', destination });
     this.guideService.updateFilter({
       location: destination,
       date: this.selectedDateInput() || null,
@@ -242,6 +245,7 @@ export class TourGuidesComponent implements OnInit {
 
   applyModalFilters(): void {
     const loc = this.tempLocation().trim();
+    this.recommendations.search({ category: 'guide', destination: loc });
     this.searchLocationInput.set(loc);
     this.guideService.updateFilter({
       location: loc,

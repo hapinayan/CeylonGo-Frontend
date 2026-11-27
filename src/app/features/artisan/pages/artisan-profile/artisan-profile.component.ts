@@ -1,3 +1,4 @@
+import { Recommendations } from '../../../../recommendations/recommendations';
 import {
   AfterViewInit,
   Component,
@@ -37,6 +38,7 @@ import { LkrCurrencyPipe } from '../../../../shared/pipes/lkr-currency.pipe';
   selector: 'app-artisan-profile',
   standalone: true,
   imports: [
+    Recommendations,
     CommonModule,
     RouterLink,
     VerifiedBadgeComponent,

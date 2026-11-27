@@ -1,3 +1,4 @@
+import { RecommendationService } from '../../../recommendations/recommendation.service';
 import { ViewportScroller } from '@angular/common';
 import {
   afterRenderEffect,
@@ -41,6 +42,7 @@ type ResultsState =
   encapsulation: ViewEncapsulation.None,
 })
 export class Discover {
+  private readonly recommendations = inject(RecommendationService);
   private readonly api = inject(ActivitiesApi);
   private readonly view = inject(DiscoverViewState);
   private readonly viewport = inject(ViewportScroller);
@@ -211,6 +213,13 @@ export class Discover {
     this.offsetHistory.set([0]);
   }
 
+  private trackSearch() {
+    const category = this.category();
+    const filters = this.recommendations.price('per_participant', this.minPrice(), this.maxPrice());
+    this.recommendations.search({ category: 'adventure', destination: this.destination(),
+      filters: category === 'all' ? filters : { ...filters, activity_category: category } });
+  }
+
   search(): void {
     this.searchForm.markAllAsTouched();
     if (this.searchForm.invalid) return;
@@ -220,6 +229,7 @@ export class Discover {
     const rawTravelers = this.searchForm.controls.travelers.value;
 
     this.destination.set(rawLocation);
+    this.trackSearch();
     this.date.set(rawDate);
     this.participants.set(rawTravelers != null && Number.isInteger(rawTravelers) ? rawTravelers : null);
     this.resetPagination();
@@ -228,6 +238,7 @@ export class Discover {
   selectCategory(category: Category): void {
     if (this.category() === category) return;
     this.category.set(category);
+    this.trackSearch();
     this.resetPagination();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -260,6 +271,7 @@ export class Discover {
     this.priceError.set('');
     this.minPrice.set(minPrice ?? null);
     this.maxPrice.set(maxPrice ?? null);
+    this.trackSearch();
     this.resetPagination();
   }
 
