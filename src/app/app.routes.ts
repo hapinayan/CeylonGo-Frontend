@@ -20,6 +20,7 @@ export const routes: Routes = [
       // UNIFIED HOMEPAGE (CANONICAL)
       {
         path: '',
+        title: 'CeylonGo — Discover Local. Feel at Home.',
         loadComponent: () =>
           import('./pages/traveler-home/traveler-home')
             .then(m => m.TravelerHome),
