@@ -32,6 +32,10 @@ describe('AdminSidebarComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    TestBed.resetTestingModule();
+  });
+
   it('should create sidebar component', () => {
     expect(component).toBeTruthy();
   });
