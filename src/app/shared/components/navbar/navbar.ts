@@ -74,11 +74,13 @@ export class Navbar {
     event.preventDefault();
     this.closeMobileMenu();
     this.activeSection.set('contact');
-    this.infoToast.set('Contact Us: support@ceylongo.com | +94 11 234 5678');
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        this.infoToast.set(null);
-      }, 4000);
-    }
+    this.router.navigate(['/contact']);
+  }
+
+  onAbout(event: Event): void {
+    event.preventDefault();
+    this.closeMobileMenu();
+    this.activeSection.set('about');
+    this.router.navigate(['/about']);
   }
 }

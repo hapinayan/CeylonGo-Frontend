@@ -47,7 +47,7 @@
         </li>
         <li>
           <a
-            href="#contact"
+            routerLink="/contact"
             (click)="onContactUs($event)"
             class="nav-link"
             [class.active]="activeSection() === 'contact'"
@@ -57,10 +57,10 @@
         </li>
         <li>
           <a
-            href="#why-ceylongo"
-            (click)="scrollToSection($event, 'why-ceylongo')"
+            routerLink="/about"
+            (click)="onAbout($event)"
             class="nav-link"
-            [class.active]="activeSection() === 'why-ceylongo'"
+            [class.active]="activeSection() === 'about'"
           >
             About
           </a>
@@ -166,12 +166,12 @@
           </a>
         </li>
         <li>
-          <a href="#contact" (click)="onContactUs($event)" class="mobile-nav-link">
+          <a routerLink="/contact" (click)="onContactUs($event)" class="mobile-nav-link">
             Contact Us
           </a>
         </li>
         <li>
-          <a href="#why-ceylongo" (click)="scrollToSection($event, 'why-ceylongo')" class="mobile-nav-link">
+          <a routerLink="/about" (click)="onAbout($event)" class="mobile-nav-link">
             About
           </a>
         </li>

@@ -346,7 +346,13 @@ export class TravelerNavbar implements OnInit {
 
     if (sectionId === 'contact') {
       this.activeSection.set('contact');
-      this.showToast('Contact Us: support@ceylongo.com | +94 11 234 5678');
+      this.router.navigate(['/contact']);
+      return;
+    }
+
+    if (sectionId === 'about') {
+      this.activeSection.set('about');
+      this.router.navigate(['/about']);
       return;
     }
 
