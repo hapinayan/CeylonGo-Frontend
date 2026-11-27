@@ -1,0 +1,200 @@
+<div class="interactive-map-page">
+  <!-- Top Filter Bar -->
+  <header class="map-toolbar">
+    <div class="toolbar-top">
+      <div class="title-group">
+        <span class="eyebrow-pill">Interactive Discovery Map</span>
+        <h1 class="page-title">Explore Sri Lanka on the Map</h1>
+      </div>
+
+      <div class="toolbar-actions">
+        <a routerLink="/weather" class="btn-weather-link">Live Weather →</a>
+        <button
+          type="button"
+          class="btn-outline"
+          (click)="useCurrentLocation()"
+          [disabled]="isLocating()"
+        >
+          {{ isLocating() ? 'Locating...' : 'My Location' }}
+        </button>
+        <button type="button" class="btn-outline" (click)="resetFiltersAndView()">
+          Reset Map
+        </button>
+      </div>
+    </div>
+
+    <div class="filters-row">
+      <form class="search-box" (submit)="$event.preventDefault(); submitKeywordSearch()">
+        <input
+          type="search"
+          class="search-input"
+          name="mapSearch"
+          placeholder="Search listing title, town, or district..."
+          aria-label="Search map listings by keyword"
+          [ngModel]="searchKeyword"
+          (ngModelChange)="onSearchInput($event)"
+          maxlength="100"
+        />
+        <button type="submit" class="btn-search">Search</button>
+      </form>
+
+      <select
+        class="district-select"
+        aria-label="Filter by district"
+        [ngModel]="selectedDistrict()"
+        (ngModelChange)="onDistrictChange($event)"
+      >
+        <option value="">All Districts</option>
+        @for (d of availableDistricts(); track d) {
+          <option [value]="d">{{ d }}</option>
+        }
+      </select>
+
+      <label class="bbox-toggle">
+        <input
+          type="checkbox"
+          [ngModel]="searchOnMove()"
+          (ngModelChange)="toggleSearchOnMove($event)"
+        />
+        <span>Search as I move map</span>
+      </label>
+
+      <button type="button" class="btn-area-search" (click)="searchCurrentArea()">
+        Search This Area
+      </button>
+    </div>
+
+    <!-- Category Filter Chips -->
+    <div class="category-chips-row" role="tablist" aria-label="Filter map markers by category">
+      @for (cat of categoryOptions; track cat.id) {
+        <button
+          type="button"
+          role="tab"
+          class="category-chip"
+          [class.active]="selectedCategory() === cat.id"
+          [attr.aria-selected]="selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)"
+        >
+          {{ cat.label }}
+        </button>
+      }
+    </div>
+
+    @if (locationMessage()) {
+      <div class="info-banner" role="status">{{ locationMessage() }}</div>
+    }
+    @if (isResultCapped()) {
+      <div class="info-banner" role="status">
+        Showing up to {{ markers().length }} markers. Zoom in or pan and click <strong>Search This Area</strong> to inspect more listings.
+      </div>
+    }
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <button type="button" class="btn-retry" (click)="loadMarkers()">Retry</button>
+      </div>
+    }
+  </header>
+
+  <!-- Mobile List / Map Toggle -->
+  <div class="mobile-view-toggle">
+    <button
+      type="button"
+      [class.active]="mobileView() === 'map'"
+      (click)="setMobileView('map')"
+    >
+      Map View
+    </button>
+    <button
+      type="button"
+      [class.active]="mobileView() === 'list'"
+      (click)="setMobileView('list')"
+    >
+      Service List ({{ markers().length }})
+    </button>
+  </div>
+
+  <!-- Split View: Sidebar List + Leaflet Map -->
+  <div class="split-workspace">
+    <aside class="listings-panel" [class.mobile-hidden]="mobileView() !== 'list'" aria-label="Discoverable services">
+      <div class="panel-header">
+        <strong>{{ markers().length }} Service{{ markers().length === 1 ? '' : 's' }} Found</strong>
+        @if (isLoading()) {
+          <span class="loading-tag">Updating...</span>
+        }
+      </div>
+
+      @if (isLoading() && markers().length === 0) {
+        <div class="panel-state">
+          <div class="spinner"></div>
+          <span>Loading published services across Sri Lanka...</span>
+        </div>
+      } @else if (!isLoading() && markers().length === 0) {
+        <div class="panel-state">
+          <p class="empty-title">No services match these filters</p>
+          <p class="empty-sub">Try clearing the district/category filter or resetting the map view.</p>
+          <button type="button" class="btn-reset-empty" (click)="resetFiltersAndView()">Reset Filters</button>
+        </div>
+      } @else {
+        <div class="cards-scroll">
+          @for (item of markers(); track item.listing_id) {
+            <article
+              class="map-service-card"
+              [class.selected]="selectedListingId() === item.listing_id"
+              (click)="focusMarker(item)"
+            >
+              <div class="card-thumb">
+                @if (resolveImage(item.cover_image_url); as img) {
+                  <img [src]="img" [alt]="item.title" loading="lazy" />
+                } @else {
+                  <div class="thumb-placeholder" [style.background]="categoryBg(item.category)" [style.color]="categoryColor(item.category)">
+                    {{ categoryLabel(item.category) }}
+                  </div>
+                }
+              </div>
+
+              <div class="card-info">
+                <span
+                  class="cat-pill"
+                  [style.background]="categoryBg(item.category)"
+                  [style.color]="categoryColor(item.category)"
+                >
+                  {{ categoryLabel(item.category) }}
+                </span>
+                <h3 class="card-title">{{ item.title }}</h3>
+                <p class="card-district">{{ item.district || 'Sri Lanka' }}</p>
+
+                @if (priceText(item); as price) {
+                  <p class="card-price">{{ price }}</p>
+                }
+
+                <div class="card-actions" (click)="$event.stopPropagation()">
+                  <button type="button" class="btn-card-details" (click)="navigateToDetail(item)">
+                    View Details
+                  </button>
+                  <a
+                    [href]="directionsLink(item)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-card-directions"
+                  >
+                    Directions
+                  </a>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </aside>
+
+    <section class="map-panel" [class.mobile-hidden]="mobileView() !== 'map'" aria-label="Interactive Sri Lanka Map">
+      <div #mapContainer class="leaflet-canvas"></div>
+      @if (tileError()) {
+        <div class="tile-warning">
+          Map tiles had trouble loading. Service coordinates and links remain active.
+        </div>
+      }
+    </section>
+  </div>
+</div>

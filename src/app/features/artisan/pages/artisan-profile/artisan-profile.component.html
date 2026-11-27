@@ -183,6 +183,11 @@
 
             @if (hasValidCoordinates()) {
               <div #artisanMapContainer class="leaflet-map-box" aria-label="Artisan workshop location map"></div>
+              <app-service-weather-card
+                [locationName]="l.city || l.district || l.title"
+                [latitude]="l.latitude"
+                [longitude]="l.longitude"
+              />
             } @else {
               <p class="empty-inline-note">Exact map coordinates are not published for this workshop.</p>
             }

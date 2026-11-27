@@ -1,0 +1,177 @@
+<div class="wallet-shell">
+  <!-- Header -->
+  <div class="wallet-header">
+    <div class="header-left">
+      <div class="header-pre">
+        <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <span class="badge">Commission &amp; Wallet</span>
+        <span class="demo-pill">Academic Demo — Simulated Wallet</span>
+      </div>
+      <h1 class="page-title">Provider Wallet</h1>
+      <p class="page-subtitle">
+        Manage your LKR wallet balance, simulated top-ups, commission-free booking allowance, and full ledger history.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadWalletData()"
+        [disabled]="isLoadingSummary() || isLoadingTransactions()"
+      >
+        Refresh
+      </button>
+      <button
+        type="button"
+        class="btn-topup-primary"
+        (click)="openTopupModal()"
+        [disabled]="isPreview() || isLoadingSummary()"
+      >
+        + Top Up Wallet
+      </button>
+    </div>
+  </div>
+
+  @if (isPreview()) {
+    <div class="wallet-warning-banner" role="status">
+      <div>
+        <strong>Preview Mode Active:</strong> Live wallet balances and simulated top-ups require an authenticated provider session and are disabled in Preview Mode.
+      </div>
+    </div>
+  }
+
+  @if (statusMessage()) {
+    <div class="wallet-success-banner" role="status">
+      <span>{{ statusMessage() }}</span>
+      <button type="button" class="btn-dismiss" (click)="statusMessage.set(null)">✕</button>
+    </div>
+  }
+
+  @if (summaryError()) {
+    <div class="wallet-error-banner" role="alert">
+      <span>{{ summaryError() }}</span>
+      @if (!isPreview()) {
+        <button type="button" class="btn-retry" (click)="loadWalletData()">Retry</button>
+      }
+    </div>
+  }
+
+  @if (isLoadingSummary()) {
+    <div class="wallet-loading-card">
+      <div class="spinner"></div>
+      <span>Loading live provider wallet summary...</span>
+    </div>
+  } @else if (summary(); as wallet) {
+    <!-- Hero Balance & Free Booking Allowance -->
+    <div class="wallet-hero-grid">
+      <div class="balance-hero-card">
+        <div class="balance-meta-row">
+          <span class="balance-label">Available Wallet Balance</span>
+          <span class="currency-pill">{{ wallet.currency }}</span>
+        </div>
+        <div class="balance-amount">{{ formatLkr(wallet.balance) }}</div>
+        <p class="balance-caption">
+          Platform commission rate: <strong>{{ formatRate(wallet.commission_rate) }}</strong> per confirmed booking after your free booking allowance.
+        </p>
+        <div class="balance-actions">
+          <button type="button" class="btn-topup-hero" (click)="openTopupModal()">
+            Top Up Wallet
+          </button>
+          <a routerLink="/provider/bookings" class="btn-bookings-link">
+            Review Bookings
+          </a>
+        </div>
+      </div>
+
+      <div class="allowance-card">
+        <div class="allowance-header">
+          <div>
+            <span class="allowance-label">Commission-Free Allowance</span>
+            <h3 class="allowance-title">{{ wallet.free_bookings_used }} of 3 Free Bookings Used</h3>
+          </div>
+          <span class="remaining-badge" [class.exhausted]="wallet.free_bookings_remaining === 0">
+            {{ wallet.free_bookings_remaining }} remaining
+          </span>
+        </div>
+
+        <div class="progress-track" role="progressbar" [attr.aria-valuenow]="wallet.free_bookings_used" aria-valuemin="0" aria-valuemax="3">
+          <div class="progress-fill" [style.width.%]="freeAllowancePercent(wallet.free_bookings_used)"></div>
+        </div>
+
+        <p class="allowance-desc">
+          @if (wallet.free_bookings_remaining > 0) {
+            Your next <strong>{{ wallet.free_bookings_remaining }}</strong> confirmed booking{{ wallet.free_bookings_remaining === 1 ? '' : 's' }} will incur <strong>LKR 0.00</strong> commission.
+          } @else {
+            All 3 introductory commission-free bookings have been used. Subsequent confirmed bookings deduct <strong>{{ formatRate(wallet.commission_rate) }}</strong> commission from your wallet.
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Financial KPIs -->
+    <div class="wallet-kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Commission Rate</span>
+        <span class="kpi-value text-navy">{{ formatRate(wallet.commission_rate) }}</span>
+        <span class="kpi-sub">Applied after 3 free bookings</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Free Bookings Remaining</span>
+        <span class="kpi-value text-blue">{{ wallet.free_bookings_remaining }} / 3</span>
+        <span class="kpi-sub">{{ wallet.free_bookings_used }} used out of 3</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Total Wallet Top-Ups</span>
+        <span class="kpi-value text-green">{{ formatLkr(wallet.total_top_ups) }}</span>
+        <span class="kpi-sub">Successful simulated credits</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Total Commission Paid</span>
+        <span class="kpi-value text-navy">{{ formatLkr(wallet.net_commission_paid) }}</span>
+        <span class="kpi-sub">
+          Gross deducted: {{ formatLkr(wallet.total_commission_deducted) }}
+        </span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Commission Refunds</span>
+        <span class="kpi-value text-sky">{{ formatLkr(wallet.total_commission_refunded) }}</span>
+        <span class="kpi-sub">Returned on cancelled bookings</span>
+      </div>
+    </div>
+  }
+
+  <!-- Transaction History -->
+  @if (!isPreview()) {
+    <app-wallet-transactions-table
+      [transactions]="transactions()"
+      [total]="totalTransactions()"
+      [page]="page()"
+      [pageSize]="pageSize"
+      [selectedType]="selectedTransactionType()"
+      [isLoading]="isLoadingTransactions()"
+      [errorMessage]="transactionsError()"
+      emptyMessage="Top up your wallet or confirm a booking to see ledger entries here."
+      (typeFilterChange)="onTypeFilterChange($event)"
+      (pageChange)="onPageChange($event)"
+      (retry)="loadTransactions()"
+    />
+  }
+
+  <!-- Top-up Modal -->
+  <app-wallet-topup-modal
+    [isOpen]="isTopupModalOpen()"
+    [currentBalance]="summary()?.balance ?? null"
+    (closed)="closeTopupModal()"
+    (topUpRecorded)="onTopUpRecorded($event)"
+  />
+</div>

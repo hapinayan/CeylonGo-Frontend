@@ -1,0 +1,80 @@
+@if (validCoords(); as coords) {
+  <section class="service-weather-card" aria-label="Local destination weather">
+    <div class="sw-header">
+      <div>
+        <span class="sw-eyebrow">Local Weather</span>
+        <h3 class="sw-title">{{ locationName() }}</h3>
+      </div>
+      <a
+        [routerLink]="['/weather']"
+        [queryParams]="{ lat: coords.latitude, lon: coords.longitude, name: locationName() }"
+        class="sw-full-link"
+      >
+        5-Day Forecast →
+      </a>
+    </div>
+
+    @if (isLoading()) {
+      <div class="sw-loading" role="status">Loading local weather conditions...</div>
+    } @else if (errorMessage() && !current()) {
+      <div class="sw-error" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <button type="button" class="sw-retry-btn" (click)="retry()">Retry</button>
+      </div>
+    } @else if (current(); as cur) {
+      <div class="sw-current-row">
+        <div class="sw-temp-block">
+          <div class="sw-icon-wrap">
+            @if (iconSrc(cur.condition.icon); as src) {
+              <img
+                [src]="src"
+                [alt]="cur.condition.description"
+                width="48"
+                height="48"
+                (error)="markIconBroken(cur.condition.icon)"
+              />
+            } @else {
+              <span aria-hidden="true">{{ glyph(cur.condition.icon) }}</span>
+            }
+          </div>
+          <div>
+            <div class="sw-temp">{{ cur.temperature_c | number: '1.0-1' }} °C</div>
+            <div class="sw-cond">{{ cur.condition.description }} · Feels like {{ cur.feels_like_c | number: '1.0-1' }} °C</div>
+          </div>
+        </div>
+
+        <div class="sw-metrics">
+          <span>Humidity: <strong>{{ cur.humidity_percent }}%</strong></span>
+          <span>Wind: <strong>{{ cur.wind_speed_kmh | number: '1.0-1' }} km/h</strong></span>
+          @if (rainProbability() != null) {
+            <span>Rain chance: <strong>{{ rainProbability() | number: '1.0-0' }}%</strong></span>
+          }
+        </div>
+      </div>
+
+      @if (upcomingDays().length > 0) {
+        <div class="sw-days-strip">
+          @for (d of upcomingDays(); track d.date) {
+            <div class="sw-day-chip">
+              <span class="d-name">{{ d.date | date: 'EEE, MMM d' }}</span>
+              <span class="d-range">{{ d.min_temperature_c | number: '1.0-0' }}–{{ d.max_temperature_c | number: '1.0-0' }} °C</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (topCautions().length > 0) {
+        <div class="sw-caution">
+          <strong>Travel Caution:</strong> {{ topCautions()[0] }}
+        </div>
+      }
+
+      <div class="sw-footer">
+        @if (cur.stale) {
+          <span>Cached snapshot · </span>
+        }
+        <span>{{ cur.source }} · Updated {{ (cur.observed_at || cur.fetched_at) | date: 'short' : 'GMT+0530' }} (Sri Lanka time)</span>
+      </div>
+    }
+  </section>
+}

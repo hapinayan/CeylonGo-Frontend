@@ -16,11 +16,14 @@
       </div>
       <h1 class="page-title">Provider Booking Management</h1>
       <p class="page-subtitle">
-        Review incoming reservation requests, participant schedules, traveler contacts, and payment statuses.
+        Review incoming reservation requests, participant schedules, traveler contacts, wallet commission checks, and payment statuses.
       </p>
     </div>
 
     <div class="header-right">
+      <a routerLink="/provider/wallet" [queryParams]="previewQueryParams()" class="wallet-quick-link">
+        Provider Wallet
+      </a>
       <div class="academic-notice-pill">
         <span class="notice-dot"></span>
         <span>Academic MVP V1.1 Live Integration</span>
@@ -118,6 +121,13 @@
       </div>
     </div>
   </div>
+
+  @if (bookingBannerMessage()) {
+    <div class="success-banner" role="status">
+      <span>{{ bookingBannerMessage() }}</span>
+      <button type="button" class="btn-banner-close" (click)="bookingBannerMessage.set(null)">✕</button>
+    </div>
+  }
 
   <!-- Error notification if any -->
   @if (errorMessage()) {
@@ -240,6 +250,7 @@
                 </td>
                 <td>
                   <div class="action-btn-group">
+                    <button type="button" [disabled]="detailsLoading()" (click)="showDetails(b.id)">View details</button>
                     @if (b.status === 'pending') {
                       <button
                         type="button"
@@ -292,6 +303,30 @@
   }
 
   <!-- Action Modal Dialog -->
+  @if (detailsLoading()) { <p role="status">Loading booking details...</p> }
+  @if (detailsError()) { <p role="alert">{{ detailsError() }}</p> }
+  @if (bookingDetails(); as detail) {
+    <section class="booking-detail-panel" aria-label="Booking details">
+      <h2>Booking {{ bookingReferenceLabel(detail) }}</h2>
+      <p>{{ listingTitle(detail) }} &middot; {{ listingsMap()[detail.listing_id]?.listing?.category || 'Service' }}</p>
+      @if (detail.traveler_contact; as traveler) {
+        <p>{{ traveler.full_name }} &middot; {{ traveler.email }} @if (traveler.phone) { &middot; {{ traveler.phone }} }</p>
+      }
+      <p>{{ detail.starts_at | date:'medium':'+0530' }} &rarr; {{ detail.ends_at | date:'medium':'+0530' }}</p>
+      <p>Quantity {{ detail.quantity }} &middot; {{ formatAmount(detail.total_amount) }}</p>
+      <p>Booking: {{ detail.status | titlecase }}</p>
+      <p>Payment: {{ paymentStatusLabel(detail) }} @if (paymentMethodLabel(detail)) { &middot; {{ paymentMethodLabel(detail) }} }</p>
+      @if (detail.status === 'pending') {
+        <button type="button" [disabled]="isPreview()" (click)="promptAction(detail, 'confirm')">Confirm</button>
+        <button type="button" [disabled]="isPreview()" (click)="promptAction(detail, 'reject')">Reject</button>
+      } @else if (detail.status === 'confirmed') {
+        <button type="button" [disabled]="isPreview()" (click)="promptAction(detail, 'complete')">Complete</button>
+        <button type="button" [disabled]="isPreview()" (click)="promptAction(detail, 'cancel')">Cancel booking</button>
+      }
+      <button type="button" (click)="bookingDetails.set(null)">Close details</button>
+    </section>
+  }
+
   @if (isActionModalOpen() && activeBooking(); as modalBooking) {
     <div class="modal-backdrop" (click)="closeActionModal()">
       <div class="modal-window" (click)="$event.stopPropagation()">
@@ -339,10 +374,95 @@
               <span class="val">{{ modalBooking.quantity }}</span>
             </div>
             <div class="row">
-              <span class="label">Total Amount:</span>
+              <span class="label">Booking Total:</span>
               <span class="val font-semibold">{{ modalBooking.currency }} {{ modalBooking.total_amount | number:'1.2-2' }}</span>
             </div>
           </div>
+
+          <!-- Wallet & Commission Preview for Confirmation -->
+          @if (actionType() === 'confirm' && !isPreview()) {
+            @if (isLoadingCommissionPreview()) {
+              <div class="commission-loading-box">
+                <div class="mini-spinner"></div>
+                <span>Checking wallet balance &amp; commission eligibility...</span>
+              </div>
+            } @else if (commissionPreviewError()) {
+              <div class="commission-error-box" role="alert">
+                <span>{{ commissionPreviewError() }}</span>
+                <button
+                  type="button"
+                  class="btn-preview-retry"
+                  (click)="loadCommissionPreview(modalBooking.id)"
+                >
+                  Retry Check
+                </button>
+              </div>
+            } @else if (commissionPreview(); as preview) {
+              <div class="commission-preview-card" [class.is-free]="preview.free_booking_eligible" [class.is-shortfall]="hasInsufficientBalance()">
+                <div class="commission-card-header">
+                  <span class="commission-card-title">Wallet &amp; Commission Preview</span>
+                  @if (preview.free_booking_eligible) {
+                    <span class="free-benefit-pill">Commission-Free Benefit</span>
+                  } @else {
+                    <span class="rate-pill">Rate: {{ formatRate(preview.commission_rate) }}</span>
+                  }
+                </div>
+
+                @if (preview.free_booking_eligible) {
+                  <div class="free-benefit-banner">
+                    <strong>Commission-Free Booking Eligible:</strong> LKR 0.00 will be deducted from your wallet for this confirmation.
+                  </div>
+                }
+
+                <div class="commission-rows">
+                  <div class="c-row">
+                    <span>Booking Total</span>
+                    <strong>{{ formatAmount(preview.booking_amount) }}</strong>
+                  </div>
+                  <div class="c-row">
+                    <span>Commission Rate</span>
+                    <strong>{{ preview.free_booking_eligible ? '0% (Free Booking)' : formatRate(preview.commission_rate) }}</strong>
+                  </div>
+                  <div class="c-row">
+                    <span>Required Commission</span>
+                    <strong>{{ formatAmount(preview.required_commission) }}</strong>
+                  </div>
+                  <div class="c-row">
+                    <span>Available Wallet Balance</span>
+                    <strong>{{ formatAmount(preview.wallet_balance) }}</strong>
+                  </div>
+                  <div class="c-row">
+                    <span>Free Booking Eligibility</span>
+                    <strong>{{ preview.free_booking_eligible ? 'Eligible (Free)' : 'Standard Commission' }}</strong>
+                  </div>
+                  <div class="c-row total-row">
+                    <span>Remaining Balance After Deduction</span>
+                    <strong>{{ formatAmount(remainingBalanceAfterDeduction()) }}</strong>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (insufficientBalance(); as shortfallInfo) {
+              <div class="insufficient-balance-box" role="alert">
+                <div class="insufficient-title">Insufficient Wallet Balance</div>
+                <p class="insufficient-desc">
+                  This booking stays <strong>pending</strong> until your wallet has enough funds. Required top-up amount:
+                  <strong>{{ formatAmount(shortfallInfo.shortfall) }}</strong>
+                  (Required commission: {{ formatAmount(shortfallInfo.required_commission) }}, current balance: {{ formatAmount(shortfallInfo.current_balance) }}).
+                </p>
+                <div class="insufficient-actions">
+                  <button
+                    type="button"
+                    class="btn-topup-inline"
+                    (click)="openTopupFromBooking()"
+                  >
+                    Top Up Wallet ({{ formatAmount(shortfallInfo.shortfall) }})
+                  </button>
+                </div>
+              </div>
+            }
+          }
 
           @if (actionType() === 'reject' || actionType() === 'cancel') {
             <div class="reject-reason-box">
@@ -370,7 +490,11 @@
             [class.btn-green]="actionType() === 'confirm' || actionType() === 'complete'"
             [class.btn-red]="actionType() === 'reject' || actionType() === 'cancel'"
             (click)="confirmAction()"
-            [disabled]="isUpdating || isPreview()"
+            [disabled]="
+              isUpdating ||
+              isPreview() ||
+              (actionType() === 'confirm' && (isLoadingCommissionPreview() || hasInsufficientBalance()))
+            "
           >
             {{ isPreview() ? 'Disabled in Preview Mode' : modalSubmitLabel() }}
           </button>
@@ -378,4 +502,13 @@
       </div>
     </div>
   }
+
+  <!-- Top-up Modal for Insufficient Balance Recovery -->
+  <app-wallet-topup-modal
+    [isOpen]="isTopupModalOpen()"
+    [currentBalance]="commissionPreview()?.wallet_balance ?? insufficientBalance()?.current_balance ?? null"
+    [suggestedAmount]="requiredTopupAmount() > 0 ? requiredTopupAmount() : null"
+    (closed)="closeTopupFromBooking()"
+    (topUpSucceeded)="onBookingTopUpSucceeded($event)"
+  />
 </div>

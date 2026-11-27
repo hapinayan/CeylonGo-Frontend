@@ -263,6 +263,16 @@ describe('Bike & Bicycle Rental Provider Module', () => {
     expect(text).toContain('2 day(s)');
 
     bookingsFix.componentInstance.promptAction(bookingsFix.componentInstance.bookings()[0], 'confirm');
+    http.expectOne({ method: 'GET', url: `${API}/provider/bookings/88/commission-preview` }).flush({
+      booking_amount: '5000.00',
+      commission_rate: '0.10',
+      required_commission: '0.00',
+      free_booking_eligible: true,
+      wallet_balance: '0.00',
+      shortfall: '0.00',
+      confirmation_allowed: true,
+      currency: 'LKR',
+    });
     bookingsFix.componentInstance.confirmAction();
     const patchBooking = http.expectOne({ method: 'PATCH', url: `${API}/bookings/88/status` });
     expect(patchBooking.request.body).toEqual({ to_status: 'confirmed', reason: null });

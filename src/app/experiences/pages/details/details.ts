@@ -14,6 +14,7 @@ import { catchError, combineLatest, distinctUntilChanged, map, of, startWith, sw
 import { BookingPanel } from '../../components/booking-panel';
 import { ExperienceIcon } from '../../components/icon';
 import { SaveControl } from '../../components/save-control';
+import { ServiceWeatherCardComponent } from '../../../shared/components/service-weather-card/service-weather-card';
 import { ActivityDetails, ActivitySlotDetails } from '../../models/activity';
 import { Experience } from '../../models/catalog';
 import {
@@ -54,6 +55,7 @@ type DetailState =
     ExperienceIcon,
     BookingPanel,
     SaveControl,
+    ServiceWeatherCardComponent,
   ],
   templateUrl: './details.html',
   styleUrls: ['../discover/discover.scss', './details.scss', '../traveler/traveler.scss'],

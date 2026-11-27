@@ -478,4 +478,15 @@ describe('TravelerHome Component — Phase 10B Unified Homepage', () => {
     component.onPlanTripWithAI();
     expect(router.navigate).toHaveBeenCalledWith(['/ai-planner']);
   });
+
+  it('should render Live Weather and Explore Map compact shortcuts inside hero action row', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const weatherLink = el.querySelector('a[href="/weather"]');
+    const mapLink = el.querySelector('a[href="/map"]');
+
+    expect(weatherLink).toBeTruthy();
+    expect(weatherLink?.textContent).toContain('Live Weather');
+    expect(mapLink).toBeTruthy();
+    expect(mapLink?.textContent).toContain('Explore Map');
+  });
 });

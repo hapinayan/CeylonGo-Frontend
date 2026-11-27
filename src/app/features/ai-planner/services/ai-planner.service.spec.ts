@@ -268,9 +268,12 @@ describe('AiPlannerService & AI Planner Domain Helpers', () => {
       }),
     ).toBe('Plan a 2 Days trip to Ella for 2 travelers with a budget of LKR 50,000 focusing on tea trails, waterfalls.');
 
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const key = makeIdempotencyKey('pay');
-    expect(key.startsWith('pay-')).toBe(true);
-    expect(key.length).toBeLessThanOrEqual(36);
+    expect(key).toMatch(uuidPattern);
+    expect(key.length).toBe(36);
+    expect(key.startsWith('pay-')).toBe(false);
+    expect(makeIdempotencyKey('loc')).toMatch(uuidPattern);
     expect(resolveAiMediaUrl('javascript:alert(1)')).toBeNull();
     expect(resolveAiMediaUrl('/images/test.png')).toBe('http://127.0.0.1:8000/images/test.png');
 
@@ -296,5 +299,52 @@ describe('AiPlannerService & AI Planner Domain Helpers', () => {
     expect(formatBookingStatusMessage('pending')).toBe(
       'Booking request submitted. Awaiting service provider confirmation.',
     );
+  });
+
+  it('formats HTTP 500 server errors accurately without reporting them as connection failures', () => {
+    const generic500 = formatAiPlannerError({ status: 500, error: {} }, 'Fallback msg');
+    expect(generic500.status).toBe(500);
+    expect(generic500.message).toContain('Server error (HTTP 500)');
+    expect(generic500.message.toLowerCase()).not.toContain('connect to the');
+
+    const detailed500 = formatAiPlannerError(
+      { status: 500, error: { detail: 'Conversion failed when converting string to uniqueidentifier' } },
+      'Fallback msg',
+    );
+    expect(detailed500.message).toBe('Conversion failed when converting string to uniqueidentifier');
+
+    const offline0 = formatAiPlannerError({ status: 0 }, 'Fallback msg');
+    expect(offline0.message).toContain('Unable to reach CeylonGo backend');
+  });
+
+  it('loads booking details for resuming unpaid existing bookings via getBookingDetail()', () => {
+    let resultId: number | undefined;
+    service.getBookingDetail(7).subscribe((res) => {
+      resultId = res.id;
+    });
+
+    const req = httpMock.expectOne(`${apiBase}/bookings/7`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer traveler-jwt-token');
+    req.flush({
+      id: 7,
+      listing_id: 14,
+      traveler_id: 501,
+      request_key: '11111111-1111-4111-8111-111111111111',
+      starts_at: '2026-12-15T14:00:00Z',
+      ends_at: '2026-12-17T11:00:00Z',
+      quantity: 1,
+      total_amount: '18000.00',
+      currency: 'LKR',
+      status: 'pending',
+      created_at: '2026-11-27T00:00:00Z',
+      booking_reference: 'CG-7',
+      slot_id: null,
+      package_id: null,
+      rental_unit_ids: null,
+      payments: [],
+    });
+
+    expect(resultId).toBe(7);
   });
 });

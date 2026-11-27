@@ -219,5 +219,21 @@ describe('App Routing Configuration', () => {
       expect(route?.canActivate?.length).toBeGreaterThan(0);
     }
   });
+
+  it('should expose public "/weather" and "/map" routes under TravelerLayoutComponent', async () => {
+    const weatherRoute = findAppRoute('weather');
+    const mapRoute = findAppRoute('map');
+
+    expect(weatherRoute).toBeDefined();
+    expect(weatherRoute?.canActivate).toBeUndefined();
+    expect(mapRoute).toBeDefined();
+    expect(mapRoute?.canActivate).toBeUndefined();
+
+    await router.navigateByUrl('/weather');
+    expect(router.url).toBe('/weather');
+
+    await router.navigateByUrl('/map');
+    expect(router.url).toBe('/map');
+  }, 15000);
 });
 

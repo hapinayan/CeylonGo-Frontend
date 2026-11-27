@@ -60,6 +60,8 @@
   }
 
   <!-- Rooms Grid -->
+  @if (error()) { <p role="alert">{{ error() }} <button type="button" (click)="loadListings()">Retry</button></p> }
+  @if (message()) { <p role="status">{{ message() }}</p> }
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
@@ -104,7 +106,8 @@
                         {{ slot.starts_at | date:'mediumDate' }} → {{ slot.ends_at | date:'mediumDate' }}
                       </span>
                       <span class="block-reason">
-                        {{ slot.is_open ? 'Open for bookings' : 'Blocked (Maintenance/Private)' }}
+                        {{ slot.is_open ? 'Open for bookings' : 'Blocked' }} ? Capacity {{ slot.capacity }}
+                        <button type="button" [disabled]="isPreview()" (click)="openBlockModal(room, slot)">Edit slot</button>
                       </span>
                     </div>
                   </div>
@@ -192,10 +195,15 @@
 
         <div class="modal-body">
           <p class="modal-sub">
-            Sets date slots via <code>POST /api/v1/provider/listings/&#123;id&#125;/availability</code>.
+            Dates use Sri Lanka local time.
+            @if (error()) { <span role="alert">{{ error() }}</span> }
           </p>
 
           <div class="form-row">
+            <label>Capacity <input type="number" min="1" [max]="selectedRoomForBlock.capacity" [(ngModel)]="slotCapacity"></label>
+            <label>Availability
+              <select [(ngModel)]="slotOpen"><option [ngValue]="true">Open</option><option [ngValue]="false">Closed</option></select>
+            </label>
             <div class="form-group">
               <label class="form-label">Start Date</label>
               <input type="date" class="form-input" [(ngModel)]="blockStartDate" />

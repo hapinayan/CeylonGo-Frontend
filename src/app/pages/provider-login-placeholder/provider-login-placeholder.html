@@ -27,6 +27,7 @@
         </div>
       }
 
+      @if (passwordChanged()) { <p role="status">Password changed. Please sign in again.</p> }
       <form
         method="POST"
         action="javascript:void(0);"

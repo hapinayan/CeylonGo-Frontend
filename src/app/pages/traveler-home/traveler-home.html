@@ -73,7 +73,7 @@
               </div>
             </div>
 
-            <!-- PRIMARY CTA BUTTON -->
+            <!-- PRIMARY CTA BUTTON & DISCOVERY SHORTCUTS -->
             <div class="hero-action-row">
               <button
                 type="button"
@@ -87,6 +87,24 @@
                 <span>Plan Your Trip with AI</span>
                 <span class="btn-arrow" aria-hidden="true">→</span>
               </button>
+
+              <div class="hero-shortcuts" aria-label="Travel utilities">
+                <a routerLink="/weather" class="btn-hero-shortcut" aria-label="Live Weather">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                  </svg>
+                  <span>Live Weather</span>
+                </a>
+                <a routerLink="/map" class="btn-hero-shortcut" aria-label="Explore Map">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                    <line x1="8" y1="2" x2="8" y2="18"/>
+                    <line x1="16" y1="6" x2="16" y2="22"/>
+                  </svg>
+                  <span>Explore Map</span>
+                </a>
+              </div>
             </div>
           </div>
 

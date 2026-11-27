@@ -394,6 +394,14 @@
                   [longitude]="g.meetingCoords?.lng ?? 80.6337"
                 ></app-location-picker>
               </div>
+
+              @if (g.meetingCoords) {
+                <app-service-weather-card
+                  [locationName]="g.location"
+                  [latitude]="g.meetingCoords.lat"
+                  [longitude]="g.meetingCoords.lng"
+                />
+              }
             </section>
 
             <!-- Reviews & Ratings -->

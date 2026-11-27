@@ -15,6 +15,7 @@ import { AuthModalService } from '../../core/services/auth-modal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HomestayService } from '../../core/services/homestay.service';
 import { TravelerBackNavigationService } from '../../core/services/traveler-back-navigation.service';
+import { generateRequestUuid } from '../../core/utils/uuid.util';
 
 @Component({
   selector: 'app-homestay-booking-review',
@@ -40,12 +41,11 @@ export class HomestayBookingReview implements OnInit, OnDestroy {
   readonly confirmationData = signal<BookingConfirmation | null>(null);
   readonly createdBooking = signal<HomestayBookingDetails | null>(null);
 
-  // Idempotency request key preserved across retries
-  readonly bookingRequestKey = signal<string>(
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `cg-req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-  );
+  // Idempotency request keys preserved across retries
+  readonly bookingRequestKey = signal<string>(generateRequestUuid());
+  private pendingPaymentKey: string | null = null;
+  private pendingPaymentMethod: 'at_location' | 'online' | null = null;
+  private pendingSimulateAttempt: number | null = null;
 
   // Payment method signal: Pay at Location or Online Academic Simulation
   readonly paymentMethod = signal<'at_location' | 'online'>('at_location');
@@ -302,14 +302,25 @@ export class HomestayBookingReview implements OnInit, OnDestroy {
     d: BookingDraft,
     h: HomestayDetail
   ): void {
-    const paymentReqKey =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `cg-pay-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    if (this.isConfirmed()) {
+      this.isSubmitting.set(false);
+      return;
+    }
 
-    if (this.paymentMethod() === 'online') {
+    const method = this.paymentMethod();
+    const attempt = this.paymentAttemptNo();
+    const canReuseRetry =
+      this.pendingPaymentMethod === method &&
+      this.pendingPaymentKey !== null &&
+      (method !== 'online' || this.pendingSimulateAttempt === attempt);
+
+    const paymentReqKey = canReuseRetry ? this.pendingPaymentKey! : generateRequestUuid();
+    this.pendingPaymentKey = paymentReqKey;
+    this.pendingPaymentMethod = method;
+    this.pendingSimulateAttempt = method === 'online' ? attempt : null;
+
+    if (method === 'online') {
       // Academic Demo Simulated Payment: POST /api/v1/payments/simulate
-      const attempt = this.paymentAttemptNo();
       const outcome = this.simulateOutcome();
 
       this.homestayService
@@ -321,10 +332,13 @@ export class HomestayBookingReview implements OnInit, OnDestroy {
         })
         .subscribe({
           next: (paymentResponse) => {
+            this.pendingPaymentKey = null;
+            this.pendingPaymentMethod = null;
+            this.pendingSimulateAttempt = null;
             if (paymentResponse.status === 'demo_succeeded') {
               this.finalizeConfirmation(booking, d, h, paymentResponse, 'Academic Demo Online Payment');
             } else {
-              // Simulated failure response
+              // Simulated failure response -> new attempt requires new UUID & attempt_no + 1
               this.isSubmitting.set(false);
               this.paymentAttemptNo.update((n) => n + 1);
               this.paymentErrorMessage.set(
@@ -335,11 +349,22 @@ export class HomestayBookingReview implements OnInit, OnDestroy {
           },
           error: (err) => {
             this.isSubmitting.set(false);
-            this.paymentAttemptNo.update((n) => n + 1);
-            const detail = err.error?.detail || 'Simulated payment service error.';
-            this.paymentErrorMessage.set(
-              typeof detail === 'string' ? detail : 'Payment simulation could not be completed.'
-            );
+            const status = err?.status ?? 0;
+            if (status >= 400 && status < 500) {
+              this.pendingPaymentKey = null;
+              this.pendingPaymentMethod = null;
+              this.pendingSimulateAttempt = null;
+            }
+            const rawDetail = err?.error?.detail;
+            const detail =
+              typeof rawDetail === 'string'
+                ? rawDetail
+                : status >= 500
+                  ? `Server error (HTTP ${status}) while processing payment.`
+                  : status === 0
+                    ? 'Unable to reach CeylonGo payment server. Check your connection and retry.'
+                    : 'Payment simulation could not be completed.';
+            this.paymentErrorMessage.set(detail);
             this.showToast('Payment simulation failed');
           },
         });
@@ -352,11 +377,35 @@ export class HomestayBookingReview implements OnInit, OnDestroy {
         })
         .subscribe({
           next: (paymentResponse) => {
+            this.pendingPaymentKey = null;
+            this.pendingPaymentMethod = null;
+            this.pendingSimulateAttempt = null;
             this.finalizeConfirmation(booking, d, h, paymentResponse, 'Pay at Location');
           },
-          error: () => {
-            // Even if recorded payment returned non-200, check authoritative booking
-            this.finalizeConfirmation(booking, d, h, undefined, 'Pay at Location');
+          error: (err) => {
+            this.isSubmitting.set(false);
+            const status = err?.status ?? 0;
+            if (status === 409) {
+              this.pendingPaymentKey = null;
+              this.pendingPaymentMethod = null;
+              this.finalizeConfirmation(booking, d, h, undefined, 'Pay at Location');
+              return;
+            }
+            if (status >= 400 && status < 500) {
+              this.pendingPaymentKey = null;
+              this.pendingPaymentMethod = null;
+            }
+            const rawDetail = err?.error?.detail;
+            const detail =
+              typeof rawDetail === 'string'
+                ? rawDetail
+                : status >= 500
+                  ? `Server error (HTTP ${status}) while recording Pay at Location.`
+                  : status === 0
+                    ? 'Unable to reach CeylonGo payment server. Check your connection and retry.'
+                    : 'Could not record Pay at Location selection.';
+            this.paymentErrorMessage.set(detail);
+            this.showToast('Payment update failed');
           },
         });
     }

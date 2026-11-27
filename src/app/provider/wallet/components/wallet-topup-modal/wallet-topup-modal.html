@@ -1,0 +1,192 @@
+@if (isOpen()) {
+  <div class="topup-backdrop" (click)="close()">
+    <div
+      class="topup-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="topupModalTitle"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="topup-header">
+        <div>
+          <span class="demo-badge">Academic Demo — Simulated Payment</span>
+          <h3 id="topupModalTitle" class="topup-title">Top Up Provider Wallet</h3>
+        </div>
+        <button
+          type="button"
+          class="btn-close-modal"
+          aria-label="Close top-up modal"
+          [disabled]="isSubmitting()"
+          (click)="close()"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="topup-body">
+        <div class="demo-notice" role="note">
+          <strong>Academic Demo — Simulated Payment:</strong> No real card information is collected and no real money transfer occurs. Use this simulator to test successful and failed wallet top-ups.
+        </div>
+
+        @if (currentBalance() !== null) {
+          <div class="balance-strip">
+            <span class="balance-strip-label">Current Available Balance</span>
+            <span class="balance-strip-value">{{ formattedCurrentBalance() }}</span>
+          </div>
+        }
+
+        <div class="form-section">
+          <span class="section-label">Quick Amount Selection</span>
+          <div class="quick-amounts-grid">
+            @for (amt of quickAmounts; track amt) {
+              <button
+                type="button"
+                class="quick-amt-btn"
+                [class.selected]="isQuickAmountSelected(amt)"
+                [disabled]="isSubmitting()"
+                (click)="selectQuickAmount(amt)"
+              >
+                LKR {{ amt | number }}
+              </button>
+            }
+          </div>
+
+          @if (suggestedAmountValue() > 0) {
+            <button
+              type="button"
+              class="shortfall-chip-btn"
+              [disabled]="isSubmitting()"
+              (click)="selectQuickAmount(suggestedAmountValue())"
+            >
+              Fill Required Shortfall: {{ formattedSuggestedAmount() }}
+            </button>
+          }
+        </div>
+
+        <div class="form-section">
+          <label class="section-label" for="customTopupAmount">Custom Amount (LKR)</label>
+          <div class="amount-input-wrap">
+            <span class="currency-prefix">LKR</span>
+            <input
+              id="customTopupAmount"
+              type="text"
+              inputmode="decimal"
+              class="amount-input"
+              placeholder="e.g. 2500.00"
+              [ngModel]="amountInput"
+              (ngModelChange)="onAmountInputChange($event)"
+              [disabled]="isSubmitting()"
+            />
+          </div>
+          <span class="input-hint">Allowed range: LKR 0.01 – LKR 1,000,000.00 (max 2 decimal places).</span>
+        </div>
+
+        <div class="form-section">
+          <span class="section-label">Simulated Payment Outcome</span>
+          <div class="outcome-grid">
+            <button
+              type="button"
+              class="outcome-btn success-opt"
+              [class.active]="simulateOutcome === 'success'"
+              [disabled]="isSubmitting()"
+              (click)="onOutcomeChange('success')"
+            >
+              <span class="outcome-title">Simulated Success</span>
+              <span class="outcome-sub">Credits wallet balance immediately</span>
+            </button>
+            <button
+              type="button"
+              class="outcome-btn failure-opt"
+              [class.active]="simulateOutcome === 'failure'"
+              [disabled]="isSubmitting()"
+              (click)="onOutcomeChange('failure')"
+            >
+              <span class="outcome-title">Simulated Failure</span>
+              <span class="outcome-sub">Records failed attempt, balance unchanged</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="idempotency-box">
+          <div class="idempotency-row">
+            <span class="idempotency-label">Request Key (UUID):</span>
+            <code class="idempotency-key">{{ requestKey() }}</code>
+          </div>
+          @if (keyConsumed() || errorMessage()) {
+            <button
+              type="button"
+              class="btn-new-key"
+              [disabled]="isSubmitting()"
+              (click)="generateNewAttemptKey()"
+            >
+              New Request Key
+            </button>
+          }
+        </div>
+
+        @if (errorMessage()) {
+          <div class="modal-alert alert-error" role="alert">
+            <span>{{ errorMessage() }}</span>
+            @if (canRetrySameKey()) {
+              <button
+                type="button"
+                class="btn-retry-inline"
+                [disabled]="isSubmitting()"
+                (click)="submitTopUp()"
+              >
+                Retry Same Request
+              </button>
+            }
+          </div>
+        }
+
+        @if (resultBanner(); as res) {
+          <div
+            class="modal-alert"
+            [class.alert-success]="res.success"
+            [class.alert-warning]="!res.success"
+            role="status"
+          >
+            <div>
+              <strong>{{ res.success ? 'Top-Up Credited' : 'Simulated Payment Failed' }}:</strong>
+              {{ res.message }}
+              <div class="result-balance-line">
+                Updated Balance: <strong>LKR {{ res.balance | number: '1.2-2' }}</strong>
+                · Ref: <code>TX-{{ res.transaction.id }}</code>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="topup-footer">
+        <button
+          type="button"
+          class="btn-modal-secondary"
+          [disabled]="isSubmitting()"
+          (click)="close()"
+        >
+          {{ resultBanner()?.success ? 'Done' : 'Cancel' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn-modal-primary"
+          [class.btn-simulate-fail]="simulateOutcome === 'failure'"
+          [disabled]="isSubmitting()"
+          (click)="submitTopUp()"
+        >
+          @if (isSubmitting()) {
+            <span>Processing Simulation...</span>
+          } @else if (canRetrySameKey()) {
+            <span>Retry Top-Up</span>
+          } @else if (simulateOutcome === 'failure') {
+            <span>Run Failed Simulation</span>
+          } @else {
+            <span>Confirm Simulated Top-Up</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

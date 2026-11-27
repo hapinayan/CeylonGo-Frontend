@@ -11,10 +11,12 @@ import {
   AiListingResult,
   AiPaymentResponse,
   AiSavedTrip,
+  AiTurn,
 } from '../models/ai-planner.models';
 import { AiPlannerService } from '../services/ai-planner.service';
 import { AiBookingProposalCardComponent } from './ai-booking-proposal-card/ai-booking-proposal-card.component';
 import { AiBudgetSummaryComponent } from './ai-budget-summary/ai-budget-summary.component';
+import { AiMessageComponent } from './ai-message/ai-message.component';
 import { AiPaymentPanelComponent } from './ai-payment-panel/ai-payment-panel.component';
 import { AiServiceCardComponent } from './ai-service-card/ai-service-card.component';
 import { AiSavedTripsComponent } from '../pages/ai-saved-trips/ai-saved-trips.component';
@@ -95,6 +97,7 @@ describe('AI Planner Itinerary, Service Cards, Booking Proposal, Payment Panel &
   let aiServiceMock: {
     resolveListingPhoto: ReturnType<typeof vi.fn>;
     confirmBooking: ReturnType<typeof vi.fn>;
+    getBookingDetail: ReturnType<typeof vi.fn>;
     simulatePayment: ReturnType<typeof vi.fn>;
     payAtLocation: ReturnType<typeof vi.fn>;
     listSavedTrips: ReturnType<typeof vi.fn>;
@@ -107,6 +110,7 @@ describe('AI Planner Itinerary, Service Cards, Booking Proposal, Payment Panel &
     aiServiceMock = {
       resolveListingPhoto: vi.fn(() => of('http://127.0.0.1:8000/uploads/sample.jpg')),
       confirmBooking: vi.fn(),
+      getBookingDetail: vi.fn(),
       simulatePayment: vi.fn(),
       payAtLocation: vi.fn(),
       listSavedTrips: vi.fn(() => of([])),
@@ -339,5 +343,253 @@ describe('AI Planner Itinerary, Service Cards, Booking Proposal, Payment Panel &
 
     listFix.componentInstance.confirmDelete(savedTrip);
     expect(aiServiceMock.deleteSavedTrip).toHaveBeenCalledWith(44);
+  });
+
+  it('sends pure RFC-4122 UUID request_key, preserves it on HTTP 500 retry, rotates only on demo_failed or mode change', async () => {
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    await TestBed.configureTestingModule({
+      imports: [AiPaymentPanelComponent],
+      providers: [provideRouter([]), { provide: AiPlannerService, useValue: aiServiceMock }],
+    }).compileComponents();
+
+    const booking: AiBookingDetailResponse = {
+      id: 7,
+      listing_id: 14,
+      traveler_id: 501,
+      request_key: '11111111-1111-4111-8111-111111111111',
+      starts_at: '2026-12-15T14:00:00Z',
+      ends_at: '2026-12-17T11:00:00Z',
+      quantity: 1,
+      total_amount: '18000.00',
+      currency: 'LKR',
+      status: 'pending',
+      created_at: '2026-11-27T00:10:00Z',
+      booking_reference: 'CG-7',
+      slot_id: null,
+      package_id: null,
+      rental_unit_ids: null,
+      payments: [],
+    };
+
+    const fixture = TestBed.createComponent(AiPaymentPanelComponent);
+    fixture.componentInstance.booking = booking;
+    fixture.detectChanges();
+
+    // 1) Simulate fails with HTTP 500: surfaces real HTTP 500 error, does NOT report connection error
+    aiServiceMock.simulatePayment.mockReturnValueOnce(
+      throwError(() => ({ status: 500, error: {} })),
+    );
+    fixture.componentInstance.payOnlineDemo('success');
+    fixture.detectChanges();
+
+    const firstKey = aiServiceMock.simulatePayment.mock.calls[0][1] as string;
+    expect(firstKey).toMatch(uuidPattern);
+    expect(firstKey.length).toBe(36);
+    expect(aiServiceMock.simulatePayment.mock.calls[0][2]).toBe(1);
+    expect(aiServiceMock.simulatePayment.mock.calls[0][3]).toBe('success');
+    expect(fixture.componentInstance.errorMessage()).toContain('HTTP 500');
+    expect(fixture.componentInstance.errorMessage()?.toLowerCase()).not.toContain('reach');
+
+    // 2) Retrying identical operation via retryFailedOperation() preserves exact request_key & attempt_no
+    const failedOutcomePayment: AiPaymentResponse = {
+      id: 81,
+      booking_id: 7,
+      request_key: firstKey,
+      attempt_no: 1,
+      method: 'online_demo',
+      status: 'demo_failed',
+      display_amount: '18000.00',
+      currency: 'LKR',
+      created_at: '2026-11-27T00:11:00Z',
+      resolved_at: '2026-11-27T00:11:00Z',
+    };
+    aiServiceMock.simulatePayment.mockReturnValueOnce(of(failedOutcomePayment));
+
+    fixture.componentInstance.retryFailedOperation();
+    fixture.detectChanges();
+
+    expect(aiServiceMock.simulatePayment).toHaveBeenCalledTimes(2);
+    expect(aiServiceMock.simulatePayment.mock.calls[1]).toEqual([7, firstKey, 1, 'success']);
+
+    // 3) Genuinely new attempt after demo_failed uses a new UUID & attempt_no = 2
+    aiServiceMock.simulatePayment.mockReturnValueOnce(
+      throwError(() => ({ status: 0 })),
+    );
+    fixture.componentInstance.payOnlineDemo('success');
+    const secondAttemptKey = aiServiceMock.simulatePayment.mock.calls[2][1] as string;
+    expect(secondAttemptKey).toMatch(uuidPattern);
+    expect(secondAttemptKey).not.toBe(firstKey);
+    expect(aiServiceMock.simulatePayment.mock.calls[2][2]).toBe(2);
+
+    // 4) Switching payment operation to pay-at-location uses its own fresh valid UUID
+    const atLocationPayment: AiPaymentResponse = {
+      id: 82,
+      booking_id: 7,
+      request_key: '22222222-2222-4222-8222-222222222222',
+      attempt_no: 1,
+      method: 'pay_at_location',
+      status: 'at_location_selected',
+      display_amount: '18000.00',
+      currency: 'LKR',
+      created_at: '2026-11-27T00:12:00Z',
+    };
+    aiServiceMock.payAtLocation.mockReturnValueOnce(of(atLocationPayment));
+    fixture.componentInstance.selectAtLocation();
+    fixture.detectChanges();
+
+    const locKey = aiServiceMock.payAtLocation.mock.calls[0][1] as string;
+    expect(locKey).toMatch(uuidPattern);
+    expect(locKey).not.toBe(firstKey);
+    expect(locKey).not.toBe(secondAttemptKey);
+    expect(fixture.componentInstance.latestPayment()?.status).toBe('at_location_selected');
+  });
+
+  it('resumes and completes payment for existing Booking #7 inside AiMessageComponent without duplicate booking creation', async () => {
+    await TestBed.configureTestingModule({
+      imports: [AiMessageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AiPlannerService, useValue: aiServiceMock },
+      ],
+    }).compileComponents();
+
+    const turnWithUnpaidBooking: AiTurn = {
+      id: 90,
+      user_message: 'Book Hilltop Heritage Villa',
+      assistant_message: 'Your booking #7 is created and awaiting payment.',
+      listings: [],
+      quotes: [],
+      bookings: [
+        {
+          booking_id: 7,
+          status: 'pending',
+          total_lkr: '18000.00',
+          payment_status: null,
+          payment_method: null,
+        },
+      ],
+      created_at: '2026-11-27T00:00:00Z',
+    };
+
+    const existingBooking7: AiBookingDetailResponse = {
+      id: 7,
+      listing_id: 14,
+      traveler_id: 501,
+      request_key: '11111111-1111-4111-8111-111111111111',
+      starts_at: '2026-12-15T14:00:00Z',
+      ends_at: '2026-12-17T11:00:00Z',
+      quantity: 1,
+      total_amount: '18000.00',
+      currency: 'LKR',
+      status: 'pending',
+      created_at: '2026-11-27T00:00:00Z',
+      booking_reference: 'CG-7',
+      slot_id: null,
+      package_id: null,
+      rental_unit_ids: null,
+      payments: [],
+    };
+    aiServiceMock.getBookingDetail.mockReturnValueOnce(of(existingBooking7));
+    aiServiceMock.simulatePayment.mockImplementation((bookingId: number, requestKey: string, attemptNo: number) =>
+      of({
+        id: 700,
+        booking_id: bookingId,
+        request_key: requestKey,
+        attempt_no: attemptNo,
+        method: 'online_demo',
+        status: 'demo_paid',
+        display_amount: '18000.00',
+        currency: 'LKR',
+        created_at: '2026-11-27T00:20:00Z',
+        resolved_at: '2026-11-27T00:20:00Z',
+      }),
+    );
+
+    const fixture = TestBed.createComponent(AiMessageComponent);
+    fixture.componentInstance.turn = turnWithUnpaidBooking;
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const resumeBtn = Array.from(el.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Complete Payment'),
+    ) as HTMLButtonElement | undefined;
+    expect(resumeBtn).toBeDefined();
+
+    resumeBtn!.click();
+    fixture.detectChanges();
+
+    expect(aiServiceMock.getBookingDetail).toHaveBeenCalledWith(7);
+    expect(aiServiceMock.confirmBooking).not.toHaveBeenCalled();
+
+    const payOnlineBtn = Array.from(el.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Online Payment (Academic Demo)'),
+    ) as HTMLButtonElement | undefined;
+    expect(payOnlineBtn).toBeDefined();
+
+    payOnlineBtn!.click();
+    fixture.detectChanges();
+
+    expect(aiServiceMock.simulatePayment).toHaveBeenCalledTimes(1);
+    expect(aiServiceMock.simulatePayment.mock.calls[0][0]).toBe(7);
+    expect(aiServiceMock.confirmBooking).not.toHaveBeenCalled();
+    expect(turnWithUnpaidBooking.bookings[0].payment_status).toBe('demo_paid');
+    expect(turnWithUnpaidBooking.bookings[0].payment_method).toBe('online_demo');
+  });
+
+  it('renders backend itinerary weather inside dated days and omits weather when absent', async () => {
+    const { AiItineraryCardComponent } = await import('./ai-itinerary-card/ai-itinerary-card.component');
+    await TestBed.configureTestingModule({
+      imports: [AiItineraryCardComponent],
+      providers: [provideRouter([]), { provide: AiPlannerService, useValue: aiServiceMock }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(AiItineraryCardComponent);
+    fixture.componentInstance.itinerary = {
+      ...sampleItinerary,
+      weather: [
+        {
+          day: 1,
+          destination: 'Ella',
+          source: 'openweather',
+          fetched_at: '2026-11-27T06:00:00Z',
+          stale: false,
+          forecast: {
+            date: '2026-11-28',
+            interval_count: 8,
+            partial: false,
+            min_temperature_c: 18,
+            max_temperature_c: 26,
+            rain_probability_percent: 45,
+            condition: {
+              code: 500,
+              name: 'Rain',
+              description: 'Light rain',
+              icon: '10d',
+            },
+            recommendations: ['Carry an umbrella'],
+            cautions: ['Slippery hiking trails after noon rain'],
+          },
+        },
+      ],
+    };
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const weatherBlocks = el.querySelectorAll('[data-testid="ai-day-weather"]');
+    expect(weatherBlocks.length).toBe(1);
+    expect(weatherBlocks[0].textContent).toContain('Light rain');
+    expect(weatherBlocks[0].textContent).toContain('18°C');
+    expect(weatherBlocks[0].textContent).toContain('26°C');
+    expect(weatherBlocks[0].textContent).toContain('Rain 45%');
+    expect(weatherBlocks[0].textContent).toContain('Slippery hiking trails after noon rain');
+    expect(weatherBlocks[0].textContent).toContain('GMT+0530');
+
+    // Undated / missing weather does not fabricate weather entries
+    const fixture2 = TestBed.createComponent(AiItineraryCardComponent);
+    fixture2.componentInstance.itinerary = { ...sampleItinerary, weather: null };
+    fixture2.detectChanges();
+    const el2 = fixture2.nativeElement as HTMLElement;
+    expect(el2.querySelectorAll('[data-testid="ai-day-weather"]').length).toBe(0);
   });
 });

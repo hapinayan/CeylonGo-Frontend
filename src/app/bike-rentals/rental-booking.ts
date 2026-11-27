@@ -6,6 +6,7 @@ import { catchError, combineLatest, firstValueFrom, map, of, startWith, Subject,
 import { AuthModalService } from '../core/services/auth-modal.service';
 import { AuthService } from '../core/services/auth.service';
 import { TravelerBackNavigationService } from '../core/services/traveler-back-navigation.service';
+import { generateRequestUuid } from '../core/utils/uuid.util';
 import { MvpBookingResponse, MvpPaymentResponse, RentalApi } from './rental-api';
 import { CheckedRentalDates, RentalDatePicker } from './rental-date-picker';
 import { previewEstimate, RentalBookingPreviewStore } from './rental-booking-preview.store';
@@ -23,10 +24,7 @@ type PaymentMethod = 'online' | 'at_location';
 type DemoOutcome = 'success' | 'failure';
 
 function makeRequestKey(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID().slice(0, 36);
-  }
-  return `rent-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`.slice(0, 36);
+  return generateRequestUuid();
 }
 
 @Component({
@@ -112,6 +110,9 @@ export class RentalBooking {
   readonly paymentAttempt = signal(1);
   private bookingRequestKey = makeRequestKey();
   private paymentRequestKey = makeRequestKey();
+  private pendingPaymentKey: string | null = null;
+  private pendingPaymentMethod: PaymentMethod | null = null;
+  private pendingSimulateAttempt: number | null = null;
 
   readonly formatLkr = formatLkr;
 
@@ -392,20 +393,32 @@ export class RentalBooking {
         this.createdBooking.set(booking);
       }
 
+      const method = this.paymentMethod();
       const attempt = this.paymentAttempt();
-      this.paymentAttempt.set(attempt + 1);
-      const payKey = makeRequestKey();
+      const canReuseRetry =
+        this.pendingPaymentMethod === method &&
+        this.pendingPaymentKey !== null &&
+        (method !== 'online' || this.pendingSimulateAttempt === attempt);
+
+      const payKey = canReuseRetry ? this.pendingPaymentKey! : makeRequestKey();
+      this.pendingPaymentKey = payKey;
+      this.pendingPaymentMethod = method;
+      this.pendingSimulateAttempt = method === 'online' ? attempt : null;
       this.paymentRequestKey = payKey;
 
       const payment = await firstValueFrom(
-        this.paymentMethod() === 'online'
+        method === 'online'
           ? this.api.simulateMvpPayment(booking.id, payKey, attempt, this.simulateOutcome())
           : this.api.payAtLocationMvp(booking.id, payKey),
       );
 
+      this.pendingPaymentKey = null;
+      this.pendingPaymentMethod = null;
+      this.pendingSimulateAttempt = null;
       this.completedPayment.set(payment);
 
-      if (this.paymentMethod() === 'online' && payment.status.toLowerCase().includes('fail')) {
+      if (method === 'online' && payment.status.toLowerCase().includes('fail')) {
+        this.paymentAttempt.set(attempt + 1);
         this.paymentError.set(
           'Simulated online payment failed. You can retry Academic Demo payment or switch to Pay at Location using your existing reservation.',
         );
@@ -416,15 +429,27 @@ export class RentalBooking {
       this.backNav?.markBookingConfirmed('/bicycles');
     } catch (err: unknown) {
       const httpErr = err as { status?: number; error?: { detail?: string | Array<{ msg?: string }> } };
+      const status = httpErr?.status ?? 0;
       const rawDetail = httpErr?.error?.detail;
       const detail = Array.isArray(rawDetail)
         ? rawDetail.map((d) => d.msg).filter(Boolean).join('; ')
         : rawDetail;
 
-      if (httpErr?.status === 409 && !this.createdBooking()) {
+      if (status >= 400 && status < 500) {
+        // Clear pending payment key on client error so corrected resubmission gets a new UUID.
+        this.pendingPaymentKey = null;
+        this.pendingPaymentMethod = null;
+        this.pendingSimulateAttempt = null;
+      }
+
+      if (status === 409 && !this.createdBooking()) {
         this.conflictNeedsRefresh.set(true);
         this.paymentError.set(
           detail || 'Availability or rental price changed. Return to Booking Details to refresh your quote.',
+        );
+      } else if (status >= 500) {
+        this.paymentError.set(
+          detail || `Server error (HTTP ${status}) while processing your request. You can safely retry with the preserved payment request.`,
         );
       } else {
         this.paymentError.set(
