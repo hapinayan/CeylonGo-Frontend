@@ -95,7 +95,7 @@
 
         <li>
           <a
-            href="#contact"
+            href="/contact"
             (click)="onNavClick('contact', $event)"
             class="nav-link"
             [class.active]="activeSection() === 'contact'"
@@ -106,7 +106,7 @@
 
         <li>
           <a
-            href="#about"
+            href="/about"
             (click)="onNavClick('about', $event)"
             class="nav-link"
             [class.active]="activeSection() === 'about'"
@@ -436,8 +436,8 @@
 
         <a href="/community" class="mobile-link" [class.active]="activeSection() === 'community'" (click)="onNavClick('community', $event)">Community</a>
         <a href="/ai-planner" class="mobile-link" [class.active]="activeSection() === 'ai-planner'" (click)="onNavClick('ai-planner', $event)">AI Trip Planner</a>
-        <a href="#contact" class="mobile-link" [class.active]="activeSection() === 'contact'" (click)="onNavClick('contact', $event)">Contact Us</a>
-        <a href="#about" class="mobile-link" [class.active]="activeSection() === 'about'" (click)="onNavClick('about', $event)">About</a>
+        <a href="/contact" class="mobile-link" [class.active]="activeSection() === 'contact'" (click)="onNavClick('contact', $event)">Contact Us</a>
+        <a href="/about" class="mobile-link" [class.active]="activeSection() === 'about'" (click)="onNavClick('about', $event)">About</a>
       </nav>
 
       <div class="mobile-actions">

@@ -67,6 +67,12 @@ describe('Footer Component', () => {
 
     const termsLinks = compiled.querySelectorAll('a[routerLink="/terms"]');
     expect(termsLinks.length).toBeGreaterThanOrEqual(1);
+
+    const aboutLinks = compiled.querySelectorAll('a[routerLink="/about"]');
+    expect(aboutLinks.length).toBeGreaterThanOrEqual(1);
+
+    const contactLinks = compiled.querySelectorAll('a[routerLink="/contact"]');
+    expect(contactLinks.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should display informational feedback toast when an unavailable link is clicked', () => {

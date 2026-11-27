@@ -206,6 +206,24 @@ export const routes: Routes = [
           import('./pages/privacy/privacy')
             .then(m => m.Privacy)
       },
+
+      // ABOUT US
+      {
+        path: 'about',
+        title: 'About Us | CeylonGo',
+        loadComponent: () =>
+          import('./pages/about/about.component')
+            .then(m => m.AboutComponent),
+      },
+
+      // CONTACT US
+      {
+        path: 'contact',
+        title: 'Contact Us | CeylonGo',
+        loadComponent: () =>
+          import('./pages/contact/contact.component')
+            .then(m => m.ContactComponent),
+      },
     ]
   },
 
