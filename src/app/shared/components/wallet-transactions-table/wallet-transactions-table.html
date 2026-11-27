@@ -1,0 +1,122 @@
+<div class="tx-history-card">
+  <div class="tx-toolbar">
+    <div class="tx-toolbar-title">
+      <h3>Transaction History</h3>
+      <span class="tx-count-pill">{{ total() }} record{{ total() === 1 ? '' : 's' }}</span>
+    </div>
+
+    <div class="tx-filter-group">
+      <label class="tx-filter-label" for="txTypeFilter">Type</label>
+      <select
+        id="txTypeFilter"
+        class="tx-filter-select"
+        aria-label="Filter transactions by type"
+        [ngModel]="selectedType()"
+        (ngModelChange)="onTypeChange($event)"
+      >
+        @for (opt of filterOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="tx-error-banner" role="alert">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="btn-tx-retry" (click)="retry.emit()">Retry</button>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="tx-loading-state">
+      <div class="tx-spinner"></div>
+      <span>Loading wallet transactions...</span>
+    </div>
+  } @else if (!errorMessage() && transactions().length === 0) {
+    <div class="tx-empty-state">
+      <div class="tx-empty-icon">Ledger</div>
+      <p class="tx-empty-title">No matching transactions</p>
+      <p class="tx-empty-desc">{{ emptyMessage() }}</p>
+    </div>
+  } @else if (transactions().length > 0) {
+    <div class="tx-table-responsive">
+      <table class="tx-table" aria-label="Wallet Transaction History">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Transaction Ref</th>
+            <th>Booking Ref</th>
+            <th>Transaction Type</th>
+            <th class="text-right">Amount</th>
+            <th class="text-right">Balance After</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of transactions(); track tx.id) {
+            <tr [class.row-failed]="tx.transaction_type === 'top_up' && tx.simulate_outcome === 'failure'">
+              <td class="col-date">
+                <span class="date-primary">{{ tx.created_at | date: 'mediumDate' : 'GMT+0530' }}</span>
+                <span class="date-sub">{{ tx.created_at | date: 'shortTime' : 'GMT+0530' }}</span>
+              </td>
+              <td>
+                <div class="ref-cell">
+                  <span class="tx-ref-code">{{ transactionRef(tx) }}</span>
+                  @if (shortRequestKey(tx); as reqPrefix) {
+                    <span class="tx-key-meta" [title]="tx.request_key || ''">Key: {{ reqPrefix }}…</span>
+                  }
+                  <span class="tx-desc-meta">{{ tx.description }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="booking-ref-cell">
+                  <span class="booking-ref-main" [class.muted]="!tx.booking_id">{{ bookingRef(tx) }}</span>
+                  @if (tx.deduction_id) {
+                    <span class="booking-ref-sub">Refund for TX-{{ tx.deduction_id }}</span>
+                  } @else if (hasCommissionMeta(tx)) {
+                    <span class="booking-ref-sub">Booking total: {{ formatAmount(tx.booking_amount) }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="tx-type-badge" [class]="typeBadgeClass(tx)">
+                  {{ typeLabel(tx) }}
+                </span>
+              </td>
+              <td class="text-right">
+                <span class="tx-amount" [class]="amountClass(tx)">{{ amountDisplay(tx) }}</span>
+              </td>
+              <td class="text-right font-semibold text-navy">
+                {{ balanceAfterDisplay(tx) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tx-pagination" *ngIf="total() > 0">
+      <span class="pagination-summary">
+        Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
+      </span>
+      <div class="pagination-actions">
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="page() <= 1 || isLoading()"
+          (click)="goToPage(page() - 1)"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="page() >= totalPages() || isLoading()"
+          (click)="goToPage(page() + 1)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  }
+</div>

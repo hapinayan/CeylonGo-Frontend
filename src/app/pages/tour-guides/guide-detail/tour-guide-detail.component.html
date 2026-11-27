@@ -1,0 +1,590 @@
+<div class="guide-detail-page">
+  <main class="detail-main">
+    @if (isLoading()) {
+      <div class="state-box" role="status">
+        <p>Loading tour guide profile...</p>
+      </div>
+    } @else if (errorMessage() || !guide()) {
+      <div class="state-box error-box" role="alert">
+        <h1>Tour Guide Not Available</h1>
+        <p>{{ errorMessage() || 'This guide profile could not be loaded.' }}</p>
+        <div class="state-actions">
+          <button type="button" class="btn-primary" (click)="retryLoad()">Retry</button>
+          <a routerLink="/tour-guides" class="btn-outline">Back to Tour Guides</a>
+        </div>
+      </div>
+    } @else {
+      @let g = guide()!;
+
+      <div class="detail-container">
+        <!-- 1. Compact Guide Header -->
+        <header class="profile-top-header">
+          <div class="top-title-row">
+            <div class="top-title-left">
+              <div class="name-badge-line">
+                <h1 class="guide-title">{{ g.name }}</h1>
+                @if (g.verified) {
+                  <span class="verified-pill" title="Verified Local Guide">
+                    <svg viewBox="0 0 24 24" fill="#0066FF">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>Verified Guide</span>
+                  </span>
+                }
+                @if (g.isPreviewSample) {
+                  <span class="preview-pill">Preview Sample Profile</span>
+                }
+              </div>
+
+              <div class="meta-summary-line">
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {{ g.location }}
+                </span>
+
+                <span class="meta-dot">·</span>
+
+                @if (g.reviewsCount > 0) {
+                  <span class="meta-rating">
+                    <span class="star">★</span>
+                    {{ g.rating | number:'1.1-1' }}
+                    <span class="review-parens">({{ g.reviewsCount }} reviews)</span>
+                  </span>
+                } @else {
+                  <span class="meta-muted">No reviews yet</span>
+                }
+
+                <span class="meta-dot">·</span>
+                <span class="meta-exp">{{ g.experienceYears }}+ years experience</span>
+              </div>
+            </div>
+
+            <div class="top-actions">
+              <button
+                type="button"
+                class="btn-icon-action"
+                [class.saved]="isFavorite()"
+                (click)="toggleWishlist($event)"
+              >
+                <svg viewBox="0 0 24 24" [attr.fill]="isFavorite() ? '#ef4444' : 'none'" [attr.stroke]="isFavorite() ? '#ef4444' : 'currentColor'" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>{{ isFavorite() ? 'Saved' : 'Save' }}</span>
+              </button>
+
+              <button type="button" class="btn-icon-action" (click)="shareProfile()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+
+          @if (shareStatus()) {
+            <p class="share-status-note">{{ shareStatus() }}</p>
+          }
+        </header>
+
+        <!-- 2. Compact Photo Gallery (240px desktop, 66% / 34%, 8px gap, no duplication) -->
+        @let photos = galleryImages();
+        <section class="photo-gallery-section" aria-label="Tour Gallery">
+          <div
+            class="gallery-grid"
+            [class.gallery-three]="photos.length >= 3"
+            [class.gallery-two]="photos.length === 2"
+            [class.gallery-one]="photos.length === 1"
+          >
+            @if (photos.length >= 1) {
+              <button
+                type="button"
+                class="gallery-tile main-tile"
+                (click)="openGalleryViewer(0)"
+                aria-label="Open photo 1"
+              >
+                <img [src]="photos[0]" [alt]="g.name + ' tour photo 1'" (error)="onImageError($event)" />
+                @if (photos.length === 1) {
+                  <span class="gallery-view-all-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    View All Photos ({{ photos.length }})
+                  </span>
+                }
+              </button>
+            }
+
+            @if (photos.length === 2) {
+              <button
+                type="button"
+                class="gallery-tile side-single-tile"
+                (click)="openGalleryViewer(1)"
+                aria-label="Open photo 2"
+              >
+                <img [src]="photos[1]" [alt]="g.name + ' tour photo 2'" (error)="onImageError($event)" />
+                <span class="gallery-view-all-chip">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                  View All Photos ({{ photos.length }})
+                </span>
+              </button>
+            }
+
+            @if (photos.length >= 3) {
+              <div class="gallery-side-stack">
+                <button
+                  type="button"
+                  class="gallery-tile"
+                  (click)="openGalleryViewer(1)"
+                  aria-label="Open photo 2"
+                >
+                  <img [src]="photos[1]" [alt]="g.name + ' tour photo 2'" (error)="onImageError($event)" />
+                </button>
+                <button
+                  type="button"
+                  class="gallery-tile bottom-right-tile"
+                  (click)="openGalleryViewer(2)"
+                  aria-label="Open photo 3"
+                >
+                  <img [src]="photos[2]" [alt]="g.name + ' tour photo 3'" (error)="onImageError($event)" />
+                  <span class="gallery-view-all-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    View All Photos ({{ photos.length }})
+                  </span>
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- 3. Two-Column Layout: 67% Left / 33% Right Sticky Booking Card (24px gap) -->
+        <div class="profile-columns">
+          <!-- LEFT COLUMN (67%) -->
+          <div class="left-content-col">
+            <!-- Combined Guide Profile + Specializations + Qualifications Card -->
+            <section class="content-card overview-card">
+              <div class="about-guide-row">
+                <img
+                  [src]="g.avatarUrl"
+                  [alt]="g.name"
+                  class="profile-avatar-circle"
+                  (error)="onImageError($event)"
+                />
+                <div class="about-guide-body">
+                  <h2 class="section-heading">About {{ g.name }}</h2>
+                  <p class="body-copy">{{ g.about }}</p>
+                  @if (g.headline) {
+                    <p class="intro-tagline">{{ g.headline }}</p>
+                  }
+
+                  <div class="inline-meta-facts">
+                    <span class="fact-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                      </svg>
+                      {{ g.languages.join(', ') }}
+                    </span>
+                    <span class="fact-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      {{ g.experienceYears }}+ years experience
+                    </span>
+                    <span class="fact-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      {{ g.location }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              @if (g.specialties && g.specialties.length > 0) {
+                <div class="card-divider"></div>
+                <div class="sub-block">
+                  <h3 class="sub-heading">Specializations</h3>
+                  <div class="spec-chips-row">
+                    @for (spec of g.specialties; track spec) {
+                      <span class="spec-chip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                          <circle cx="12" cy="12" r="9"></circle>
+                          <polyline points="9 12 11 14 15 10"></polyline>
+                        </svg>
+                        <span>{{ spec }}</span>
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div class="card-divider"></div>
+              <div class="sub-block qual-block">
+                <div class="qual-header-row">
+                  <div>
+                    <h3 class="sub-heading">Qualifications &amp; Licenses</h3>
+                    <p class="qual-status-sub">{{ g.licenseStatus || (g.verified ? 'Credential Verified' : 'Verification Pending') }}</p>
+                  </div>
+                  @if (g.verified) {
+                    <span class="qual-verified-badge">✓ Verified</span>
+                  }
+                </div>
+                @if (g.qualifications && g.qualifications.length > 0) {
+                  <ul class="qual-list">
+                    @for (qual of g.qualifications; track qual) {
+                      <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                          <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                          <line x1="7" y1="9" x2="17" y2="9"></line>
+                          <line x1="7" y1="13" x2="13" y2="13"></line>
+                        </svg>
+                        <span>{{ qual }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </section>
+
+            <!-- Tour Packages Card -->
+            <section class="content-card" id="packagesSection">
+              <h2 class="section-heading">Tour Packages ({{ packages().length }})</h2>
+
+              @if (packages().length === 0) {
+                <div class="reviews-empty-state">
+                  This guide has not published any active tour packages yet.
+                </div>
+              } @else {
+                <div class="packages-stack">
+                  @for (pkg of packages(); track pkg.id) {
+                    <article
+                      class="compact-package-card"
+                      [class.selected]="selectedPackage()?.id === pkg.id"
+                    >
+                      <img
+                        [src]="pkg.imageUrl"
+                        [alt]="pkg.name"
+                        class="pkg-thumb-sm"
+                        (error)="onImageError($event)"
+                      />
+
+                      <div class="pkg-info-col">
+                        <div class="pkg-row-top">
+                          <h3 class="pkg-title">{{ pkg.name }}</h3>
+                          <div class="pkg-price-inline">
+                            <strong>{{ pkg.currency }} {{ pkg.price | number }}</strong>
+                            <span>{{ pricingUnitLabel(pkg) }}</span>
+                          </div>
+                        </div>
+
+                        <div class="pkg-meta-line">
+                          <span>⏱ {{ pkg.durationLabel }}</span>
+                          <span>👥 {{ pkg.minGroupSize ?? 1 }} – {{ pkg.maxGroupSize }} Travelers</span>
+                        </div>
+
+                        <div class="pkg-bottom-row">
+                          <p class="pkg-desc-short">{{ pkg.shortDescription }}</p>
+                          <button
+                            type="button"
+                            class="btn-select-outline"
+                            [class.active]="selectedPackage()?.id === pkg.id"
+                            (click)="selectPackage(pkg)"
+                          >
+                            {{ selectedPackage()?.id === pkg.id ? 'Selected' : 'Select' }}
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+
+            <!-- Tour Highlights & Inclusions -->
+            <section class="content-card">
+              <h2 class="section-heading">Tour Highlights</h2>
+              <ul class="bullet-check-list">
+                @for (item of (selectedPackage()?.highlights || g.specialties || []); track item) {
+                  <li>
+                    <span class="mark-check">✓</span>
+                    <span>{{ item }}</span>
+                  </li>
+                }
+              </ul>
+
+              @if (selectedPackage(); as activePkg) {
+                <div class="card-divider"></div>
+                <div class="two-sub-cols">
+                  <div>
+                    <h3 class="sub-heading">Included Services</h3>
+                    <ul class="bullet-check-list">
+                      @for (inc of activePkg.included; track inc) {
+                        <li>
+                          <span class="mark-check">✓</span>
+                          <span>{{ inc }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="sub-heading">Excluded Services</h3>
+                    <ul class="bullet-exclude-list">
+                      @for (exc of activePkg.excluded; track exc) {
+                        <li>
+                          <span class="mark-x">×</span>
+                          <span>{{ exc }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              }
+            </section>
+
+            <!-- Meeting Point & Cancellation Policy -->
+            <section class="content-card">
+              <div class="two-sub-cols">
+                <div>
+                  <h3 class="sub-heading">
+                    <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Meeting Point
+                  </h3>
+                  <p class="body-copy">{{ g.meetingPoint || g.location }}</p>
+                </div>
+
+                <div>
+                  <h3 class="sub-heading">
+                    <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Cancellation Policy
+                  </h3>
+                  <p class="body-copy">{{ g.cancellationPolicy }}</p>
+                </div>
+              </div>
+
+              <div class="map-frame">
+                <app-location-picker
+                  [latitude]="g.meetingCoords?.lat ?? 7.2906"
+                  [longitude]="g.meetingCoords?.lng ?? 80.6337"
+                ></app-location-picker>
+              </div>
+
+              @if (g.meetingCoords) {
+                <app-service-weather-card
+                  [locationName]="g.location"
+                  [latitude]="g.meetingCoords.lat"
+                  [longitude]="g.meetingCoords.lng"
+                />
+              }
+            </section>
+
+            <!-- Reviews & Ratings -->
+            <section class="content-card">
+              <div class="reviews-header-row">
+                <h2 class="section-heading">Reviews &amp; Ratings</h2>
+                @if (g.reviewsCount > 0) {
+                  <span class="overall-rating-pill">★ {{ g.rating | number:'1.1-1' }} · {{ g.reviewsCount }} reviews</span>
+                }
+              </div>
+
+              @if (g.reviews && g.reviews.length > 0) {
+                <div class="reviews-list">
+                  @for (rev of g.reviews; track rev.id) {
+                    <article class="review-item-card">
+                      <div class="review-item-top">
+                        <strong>{{ rev.authorName }}</strong>
+                        <span class="review-score">★ {{ rev.rating | number:'1.1-1' }} · {{ rev.date }}</span>
+                      </div>
+                      <p class="review-comment">{{ rev.comment }}</p>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <div class="reviews-empty-state">
+                  No traveler reviews have been submitted for this guide yet.
+                </div>
+              }
+            </section>
+          </div>
+
+          <!-- RIGHT COLUMN (33%): Compact Sticky Booking Card -->
+          <aside class="right-booking-col" aria-label="Tour Booking Card">
+            <div class="sticky-booking-card">
+              @if (selectedPackage(); as pkg) {
+                <h2 class="booking-card-title">Book This Guide</h2>
+
+                <div class="booking-form-fields">
+                  <div class="form-field">
+                    <label for="pkgSelect">Tour Package</label>
+                    <select
+                      id="pkgSelect"
+                      class="field-control"
+                      [ngModel]="selectedPackageId()"
+                      (ngModelChange)="onPackageDropdownChange($event)"
+                    >
+                      @for (item of packages(); track item.id) {
+                        <option [value]="item.id">
+                          {{ item.name }} ({{ item.currency }} {{ item.price | number }} {{ pricingUnitLabel(item) }})
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="tourDate">Filter by Date (Optional)</label>
+                    <input
+                      id="tourDate"
+                      type="date"
+                      class="field-control"
+                      [min]="minDate"
+                      [ngModel]="selectedDate()"
+                      (ngModelChange)="onDateFilterChange($event)"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="tourSlotSelect">Available Scheduled Slots</label>
+                    @if (isLoadingSlots()) {
+                      <div class="field-control">Checking live availability...</div>
+                    } @else if (slotsError()) {
+                      <div class="validation-error">{{ slotsError() }}</div>
+                    } @else if (availableSlots().length === 0) {
+                      <div class="validation-error">
+                        No open slots scheduled for this package{{ selectedDate() ? ' on ' + selectedDate() : '' }}.
+                      </div>
+                    } @else {
+                      <select
+                        id="tourSlotSelect"
+                        class="field-control"
+                        [ngModel]="selectedSlotId()"
+                        (ngModelChange)="onSlotDropdownChange($event)"
+                      >
+                        @for (slot of availableSlots(); track slot.id) {
+                          <option [ngValue]="slot.id">{{ formatSlotLabel(slot) }}</option>
+                        }
+                      </select>
+                    }
+                  </div>
+
+                  <div class="form-field">
+                    <label>Travelers</label>
+                    <div class="stepper-box">
+                      <button
+                        type="button"
+                        class="stepper-btn"
+                        (click)="decrementTravelers()"
+                        [disabled]="travelers() <= (pkg.minGroupSize ?? 1)"
+                        aria-label="Decrease travelers"
+                      >−</button>
+                      <span class="stepper-count">{{ travelers() }}</span>
+                      <button
+                        type="button"
+                        class="stepper-btn"
+                        (click)="incrementTravelers()"
+                        [disabled]="travelers() >= pkg.maxGroupSize"
+                        aria-label="Increase travelers"
+                      >+</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Light-Blue Pricing Summary -->
+                <div class="price-breakdown">
+                  <div class="breakdown-row">
+                    @if (pkg.pricingUnit === 'per_person') {
+                      <span>Price ({{ pkg.currency }} {{ pkg.price | number }} × {{ travelers() }})</span>
+                    } @else {
+                      <span>Group rate (up to {{ selectedSlot()?.capacity ?? pkg.maxGroupSize }} travelers)</span>
+                    }
+                    <span class="row-amount">{{ pkg.currency }} {{ totalPrice() | number }}</span>
+                  </div>
+                  <div class="breakdown-row">
+                    <span>Service Fee</span>
+                    <span class="row-amount">{{ pkg.currency }} 0</span>
+                  </div>
+                  <div class="breakdown-total">
+                    <strong>Total Amount</strong>
+                    <strong class="total-amount-val">{{ pkg.currency }} {{ totalPrice() | number }}</strong>
+                  </div>
+                </div>
+
+                @if (validationError()) {
+                  <div class="validation-error" role="alert">{{ validationError() }}</div>
+                }
+
+                <button
+                  type="button"
+                  class="btn-continue-booking"
+                  (click)="continueToBooking($event)"
+                  [disabled]="isLoadingSlots() || !selectedSlot()"
+                >
+                  Continue to Booking →
+                </button>
+              } @else {
+                <h2 class="booking-card-title">Book This Guide</h2>
+                <div class="reviews-empty-state">
+                  No scheduled tour packages available for booking yet.
+                </div>
+              }
+            </div>
+          </aside>
+        </div>
+      </div>
+    }
+    @if (!isLoading() && guide() && !guide()!.isPreviewSample) {
+    <app-recommendations [sourceId]="+guide()!.id" [category]="'guide'" />
+  }
+</main>
+</div>
+
+<!-- PHOTO GALLERY VIEWER MODAL -->
+@if (isGalleryViewerOpen()) {
+  <div class="lightbox-backdrop" (click)="closeGalleryViewer()">
+    <div class="lightbox-dialog" (click)="$event.stopPropagation()">
+      <div class="lightbox-header">
+        <span>Photo {{ activePhotoIndex() + 1 }} of {{ galleryImages().length }}</span>
+        <button type="button" class="lightbox-close" (click)="closeGalleryViewer()" aria-label="Close gallery">✕</button>
+      </div>
+      <div class="lightbox-body">
+        @if (galleryImages().length > 1) {
+          <button type="button" class="lightbox-nav" (click)="prevPhoto()" aria-label="Previous photo">‹</button>
+        }
+        <img
+          [src]="galleryImages()[activePhotoIndex()]"
+          [alt]="'Gallery photo ' + (activePhotoIndex() + 1)"
+          class="lightbox-img"
+          (error)="onImageError($event)"
+        />
+        @if (galleryImages().length > 1) {
+          <button type="button" class="lightbox-nav" (click)="nextPhoto()" aria-label="Next photo">›</button>
+        }
+      </div>
+    </div>
+  </div>
+}

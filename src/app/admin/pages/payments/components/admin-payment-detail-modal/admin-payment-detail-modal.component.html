@@ -1,0 +1,62 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-header">
+      <div>
+        <span class="badge" [ngClass]="payment.payment_status">{{ payment.payment_status | uppercase }}</span>
+        <h2 id="modal-title" class="modal-title">{{ payment.transaction_reference }}</h2>
+        <p class="modal-subtitle">Booking Reference: <strong>{{ payment.booking_reference }}</strong></p>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close dialog">&times;</button>
+    </header>
+
+    <div class="modal-body">
+      <div class="financial-highlight-card">
+        <div class="metric">
+          <span class="label">Gross Amount</span>
+          <span class="val highlight">{{ payment.amount | number }} {{ payment.currency }}</span>
+        </div>
+        <div class="metric">
+          <span class="label">Platform Commission (10%)</span>
+          <span class="val">{{ payment.commission_amount | number }} {{ payment.currency }}</span>
+        </div>
+        <div class="metric">
+          <span class="label">Net Provider Payable</span>
+          <span class="val success">{{ payment.net_provider_amount | number }} {{ payment.currency }}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-group">
+          <h3>Traveler Details</h3>
+          <p><strong>Name:</strong> {{ payment.traveler_name }}</p>
+          <p><strong>Traveler ID:</strong> #{{ payment.traveler_id }}</p>
+          <p><strong>Payment Method:</strong> {{ payment.payment_method }}</p>
+        </div>
+
+        <div class="detail-group">
+          <h3>Provider & Service</h3>
+          <p><strong>Provider:</strong> {{ payment.provider_name }}</p>
+          <p><strong>Provider ID:</strong> #{{ payment.provider_id }}</p>
+          <p><strong>Category:</strong> {{ payment.category | uppercase }}</p>
+        </div>
+      </div>
+
+      <div class="detail-group full-width">
+        <h3>Reconciliation & Refund Status</h3>
+        <p><strong>Refund Status:</strong> <span class="badge" [ngClass]="payment.refund_status">{{ payment.refund_status }}</span></p>
+        <p *ngIf="payment.refund_amount"><strong>Refund Amount:</strong> {{ payment.refund_amount | number }} {{ payment.currency }}</p>
+        <p><strong>Transaction Created:</strong> {{ payment.created_at | date:'medium' }}</p>
+        <div class="security-notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>PCI-DSS Compliance: Full card numbers and gateway credentials are tokenized and never stored in admin logs.</span>
+        </div>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">Close Dossier</button>
+    </footer>
+  </div>
+</div>

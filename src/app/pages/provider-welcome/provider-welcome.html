@@ -1,0 +1,533 @@
+<div class="provider-portal-page">
+  <!-- NAVIGATION HEADER -->
+  <header class="portal-header">
+    <div class="header-inner">
+      <!-- BRAND & PORTAL IDENTITY -->
+      <div class="brand-group">
+        <a routerLink="/provider" class="logo-link" (click)="scrollTo('home', $event)">
+          <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="brand-logo" />
+        </a>
+        <span class="portal-divider" aria-hidden="true"></span>
+        <span class="portal-title">Provider Portal</span>
+      </div>
+
+      <!-- DESKTOP NAVIGATION LINKS -->
+      <nav class="nav-menu" aria-label="Provider Portal Navigation">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a
+              href="#hero"
+              class="nav-link"
+              [class.active]="activeNavSection() === 'home'"
+              (click)="scrollTo('home', $event)"
+            >
+              <span>Home</span>
+              <span class="active-indicator" aria-hidden="true"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="#how-it-works"
+              class="nav-link"
+              [class.active]="activeNavSection() === 'how-it-works'"
+              (click)="scrollTo('how-it-works', $event)"
+            >
+              <span>How It Works</span>
+              <span class="active-indicator" aria-hidden="true"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="#benefits"
+              class="nav-link"
+              [class.active]="activeNavSection() === 'benefits'"
+              (click)="scrollTo('benefits', $event)"
+            >
+              <span>Benefits</span>
+              <span class="active-indicator" aria-hidden="true"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              href="#help"
+              class="nav-link"
+              [class.active]="activeNavSection() === 'help'"
+              (click)="scrollTo('help', $event)"
+            >
+              <span>Help</span>
+              <span class="active-indicator" aria-hidden="true"></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- HEADER ACTION BUTTONS -->
+      <div class="nav-actions">
+        <a routerLink="/provider/login" class="btn-signin" aria-label="Sign In to Provider Portal">
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Sign In</span>
+        </a>
+
+        <a routerLink="/provider/register" class="btn-register" aria-label="Register as a Service Provider">
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" y1="8" x2="19" y2="14"></line>
+            <line x1="22" y1="11" x2="16" y2="11"></line>
+          </svg>
+          <span>Register</span>
+        </a>
+
+        <!-- MOBILE HAMBURGER BUTTON -->
+        <button
+          class="mobile-toggle"
+          type="button"
+          (click)="toggleMobileMenu()"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-label="Toggle navigation menu"
+        >
+          @if (!mobileMenuOpen()) {
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          } @else {
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- MOBILE NAVIGATION DRAWER -->
+    @if (mobileMenuOpen()) {
+      <div class="mobile-drawer" role="dialog" aria-modal="true">
+        <ul class="mobile-nav-list">
+          <li>
+            <a href="#hero" class="mobile-link" (click)="scrollTo('home', $event)">Home</a>
+          </li>
+          <li>
+            <a href="#how-it-works" class="mobile-link" (click)="scrollTo('how-it-works', $event)">How It Works</a>
+          </li>
+          <li>
+            <a href="#benefits" class="mobile-link" (click)="scrollTo('benefits', $event)">Benefits</a>
+          </li>
+          <li>
+            <a href="#help" class="mobile-link" (click)="scrollTo('help', $event)">Help</a>
+          </li>
+        </ul>
+        <div class="mobile-actions">
+          <a routerLink="/provider/login" class="mobile-btn-signin" (click)="closeMobileMenu()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Sign In</span>
+          </a>
+          <a routerLink="/provider/register" class="mobile-btn-register" (click)="closeMobileMenu()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            <span>Register Your Business</span>
+          </a>
+        </div>
+      </div>
+    }
+  </header>
+
+  <!-- HERO SECTION -->
+  <main>
+    <section id="hero" class="hero-section">
+      <div class="hero-container">
+        <!-- LEFT COLUMN: CONTENT -->
+        <div class="hero-content">
+          <!-- PARTNER BADGE -->
+          <div class="partner-badge">
+            <span class="badge-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m11 17 2 2a1 1 0 0 0 1.4 0l6.6-6.6a2 2 0 0 0 0-2.8l-3.2-3.2a2 2 0 0 0-2.8 0L13 8.4"></path>
+                <path d="m3 14 3.4-3.4a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L5.8 23.2a1 1 0 0 1-1.4 0L2.4 21.2a1 1 0 0 1 0-1.4L6 16"></path>
+              </svg>
+            </span>
+            <span class="badge-text">Partner with CeylonGo</span>
+          </div>
+
+          <!-- MAIN HEADLINE -->
+          <h1 class="hero-title">
+            Become a<br />
+            <span class="brand-ceylon">Ceylon</span><span class="brand-go">Go</span><br />
+            Service Provider
+          </h1>
+
+          <!-- DESCRIPTION -->
+          <p class="hero-description">
+            List your homestay, tour guide service, local business, activity or experience and reach more travelers across Sri Lanka.
+          </p>
+
+          <!-- CTA ACTIONS -->
+          <div class="hero-cta-group">
+            <a routerLink="/provider/register" class="btn-hero-primary">
+              <span>Register Your Business</span>
+              <svg class="cta-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+
+            <a routerLink="/provider/login" class="btn-hero-secondary">
+              <span>Sign In to Provider Portal</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: HERO VISUAL -->
+        <div class="hero-visual">
+          <div class="visual-wrapper">
+            <img
+              src="/images/provider-hero-new.png"
+              alt="Smiling Sri Lankan service provider in navy CeylonGo polo shirt against Sigiriya rock fortress backdrop"
+              class="hero-portrait"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDE FLOATING BENEFITS BAR -->
+      <div class="benefits-bar-wrapper">
+        <div class="benefits-card">
+          <!-- CARD TITLE -->
+          <div class="benefit-col-title">
+            <h2 class="benefits-heading">
+              Why Partner<br />with CeylonGo?
+            </h2>
+          </div>
+
+          <div class="benefit-divider" aria-hidden="true"></div>
+
+          <!-- BENEFIT 1: GET MORE BOOKINGS -->
+          <div class="benefit-item">
+            <div class="benefit-icon-wrapper orange-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9F1C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <div class="benefit-label">
+              <span>Get More</span>
+              <span>Bookings</span>
+            </div>
+          </div>
+
+          <div class="benefit-divider" aria-hidden="true"></div>
+
+          <!-- BENEFIT 2: REACH TRAVELERS -->
+          <div class="benefit-item">
+            <div class="benefit-icon-wrapper navy-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="benefit-label">
+              <span>Reach</span>
+              <span>Travelers</span>
+            </div>
+          </div>
+
+          <div class="benefit-divider" aria-hidden="true"></div>
+
+          <!-- BENEFIT 3: GROW YOUR BUSINESS -->
+          <div class="benefit-item">
+            <div class="benefit-icon-wrapper navy-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
+              </svg>
+            </div>
+            <div class="benefit-label">
+              <span>Grow Your</span>
+              <span>Business</span>
+            </div>
+          </div>
+
+          <div class="benefit-divider" aria-hidden="true"></div>
+
+          <!-- BENEFIT 4: BE PART OF SRI LANKA'S TOURISM GROWTH -->
+          <div class="benefit-item">
+            <div class="benefit-icon-wrapper orange-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9F1C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <div class="benefit-label">
+              <span>Be Part of Sri Lanka's</span>
+              <span>Tourism Growth</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section id="how-it-works" class="section-how-it-works">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-kicker">Simple Onboarding</span>
+          <h2 class="section-title">How It Works</h2>
+          <p class="section-subtitle">
+            Get your tourism business listed and verified in 4 transparent, automated steps.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <!-- STEP 1 -->
+          <div class="step-card">
+            <div class="step-badge">Step 1</div>
+            <div class="step-icon-bubble">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+            </div>
+            <h3 class="step-title">Email OTP Verification</h3>
+            <p class="step-desc">
+              Enter your official email and verify instantly with a secure 6-digit one-time password.
+            </p>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="step-card">
+            <div class="step-badge">Step 2</div>
+            <div class="step-icon-bubble">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <h3 class="step-title">Submit Details & Drafts</h3>
+            <p class="step-desc">
+              Fill in personal, business, and district address details with autosave at every step.
+            </p>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="step-card">
+            <div class="step-badge">Step 3</div>
+            <div class="step-icon-bubble">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+            <h3 class="step-title">Upload KYC Documents</h3>
+            <p class="step-desc">
+              Upload clear photos of your National Identity Card (NIC) and a verified portrait selfie.
+            </p>
+          </div>
+
+          <!-- STEP 4 -->
+          <div class="step-card">
+            <div class="step-badge">Step 4</div>
+            <div class="step-icon-bubble">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+            </div>
+            <h3 class="step-title">Admin Review & Activation</h3>
+            <p class="step-desc">
+              Fast 24-hour review by CeylonGo administrators, email approval, and password setup.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENEFITS SECTION -->
+    <section id="benefits" class="section-benefits">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-kicker">Partner Advantages</span>
+          <h2 class="section-title">Built for Local Communities</h2>
+          <p class="section-subtitle">
+            Everything local hosts, guides, and artisans need to prosper in modern tourism.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon orange">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Zero Upfront Listing Fees</h3>
+            <p class="feature-desc">
+              Join free of charge. No setup costs, recurring subscriptions, or hidden listing charges.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon navy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Global Traveler Reach</h3>
+            <p class="feature-desc">
+              Connect directly with verified domestic and international tourists exploring Sri Lanka.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon orange">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <h3 class="feature-title">AI Smart Promotion</h3>
+            <p class="feature-desc">
+              Our AI Travel Planner recommends your services automatically based on traveler itineraries.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon navy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <h3 class="feature-title">Prompt & Secure Payouts</h3>
+            <p class="feature-desc">
+              Direct, transparent bank transfers with automated statements and clear transaction tracking.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon orange">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Dedicated Local Support</h3>
+            <p class="feature-desc">
+              Our friendly Colombo and regional support teams assist you via phone and email in Sinhala, Tamil, and English.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon navy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Verified Host Badge</h3>
+            <p class="feature-desc">
+              Build instant credibility with travelers through CeylonGo's verified partner trust badge.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP & FAQ SECTION -->
+    <section id="help" class="section-help">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-kicker">Got Questions?</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+          <p class="section-subtitle">
+            Find quick answers to common questions about becoming a service provider.
+          </p>
+        </div>
+
+        <div class="faq-list">
+          @for (faq of faqs; track $index) {
+            <div class="faq-item" [class.open]="openFaqIndex() === $index">
+              <button
+                class="faq-question-btn"
+                type="button"
+                (click)="toggleFaq($index)"
+                [attr.aria-expanded]="openFaqIndex() === $index"
+              >
+                <span class="faq-question">{{ faq.question }}</span>
+                <span class="faq-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </button>
+              @if (openFaqIndex() === $index) {
+                <div class="faq-answer">
+                  <p>{{ faq.answer }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- CALL TO ACTION BANNER -->
+    <section class="section-cta">
+      <div class="cta-inner">
+        <div class="cta-content">
+          <h2 class="cta-title">Ready to Share Your Slice of Paradise?</h2>
+          <p class="cta-desc">
+            Join thousands of passionate Sri Lankan hosts, guides, and artisans growing their income with CeylonGo.
+          </p>
+        </div>
+        <div class="cta-action">
+          <a routerLink="/provider/register" class="btn-cta-white">
+            <span>Register Your Business</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="portal-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="/images/ceylongo-brand-logo.png" alt="CeylonGo" class="footer-logo" />
+        <p class="footer-tagline">Discover Local. Feel at Home.</p>
+      </div>
+
+      <div class="footer-links">
+        <a routerLink="/auth" class="footer-link">Traveler Portal</a>
+        <a routerLink="/terms" class="footer-link">Terms & Conditions</a>
+        <a routerLink="/privacy" class="footer-link">Privacy Policy</a>
+      </div>
+
+      <div class="footer-copy">
+        <p>© 2026 CeylonGo. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,447 @@
+<div class="guide-booking-page">
+  <main class="booking-main">
+    @if (isLoading()) {
+      <div class="state-card" role="status">
+        <p>Loading tour booking details...</p>
+      </div>
+    } @else if (!guide()) {
+      <div class="state-card error-card" role="alert">
+        <h1>Booking Unavailable</h1>
+        <p>{{ errorMessage() || 'Tour guide details could not be loaded.' }}</p>
+        <a routerLink="/tour-guides" class="btn-outline">Back to Tour Guides</a>
+      </div>
+    } @else {
+      @let g = guide()!;
+      @let pkg = selectedPackage()!;
+
+      <div class="booking-container">
+        <!-- Header & 3-Step Progress Indicator -->
+        <header class="booking-header">
+          <div class="title-stepper-row">
+            <div class="title-col">
+              <h1 class="page-title">Review Your Booking</h1>
+              @if (g.isPreviewSample) {
+                <span class="preview-pill">Preview Simulation</span>
+              }
+            </div>
+
+            <nav class="stepper" aria-label="Booking progress">
+              <div class="step-item" [class.active]="step() === 1" [class.completed]="step() > 1">
+                <span class="step-num">1</span>
+                <span class="step-label">Booking Details</span>
+              </div>
+              <span class="step-arrow">→</span>
+              <div class="step-item" [class.active]="step() === 2" [class.completed]="step() > 2">
+                <span class="step-num">2</span>
+                <span class="step-label">Payment</span>
+              </div>
+              <span class="step-arrow">→</span>
+              <div class="step-item" [class.active]="step() === 3">
+                <span class="step-num">3</span>
+                <span class="step-label">Confirmation</span>
+              </div>
+            </nav>
+          </div>
+        </header>
+
+        <!-- STEP 3: BOOKING CONFIRMATION -->
+        @if (step() === 3 && bookingRecord(); as rec) {
+          <section class="confirmation-card" aria-label="Booking Confirmation">
+            <div class="confirm-banner" [class.is-pending]="rec.bookingStatus === 'pending'">
+              <div class="confirm-icon">
+                {{ rec.bookingStatus === 'confirmed' ? '✓' : '⏳' }}
+              </div>
+              <h2 class="confirm-heading">{{ confirmationHeading() }}</h2>
+              @if (rec.bookingStatus === 'pending') {
+                <p class="confirm-subtitle">
+                  Your booking request has been submitted successfully and is awaiting guide confirmation.
+                </p>
+              }
+              <p class="confirm-ref">
+                Booking Reference: <strong>{{ rec.bookingReference }}</strong>
+              </p>
+            </div>
+
+            <div class="confirm-body">
+              <div class="confirm-guide-row">
+                <img [src]="rec.guideAvatarUrl" [alt]="rec.guideName" class="confirm-avatar" />
+                <div>
+                  <span class="detail-label">Tour Guide</span>
+                  <strong class="detail-val">{{ rec.guideName }}</strong>
+                </div>
+              </div>
+
+              <div class="confirm-details-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Selected Tour Package</span>
+                  <strong class="detail-val">{{ rec.packageName }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Tour Date &amp; Time</span>
+                  <strong class="detail-val">{{ rec.date }} · {{ rec.time }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Duration</span>
+                  <strong class="detail-val">{{ rec.durationLabel }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Number of Travelers</span>
+                  <strong class="detail-val">{{ rec.travelers }} {{ rec.travelers === 1 ? 'traveler' : 'travelers' }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Meeting Point</span>
+                  <strong class="detail-val">{{ rec.meetingPoint }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Payment Method</span>
+                  <strong class="detail-val">{{ paymentMethodLabel(rec) }}</strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Payment Status</span>
+                  <strong class="detail-val status-tag" [class.unpaid]="rec.paymentStatus === 'unpaid'">
+                    {{ paymentStatusLabel(rec) }}
+                  </strong>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Booking Status</span>
+                  <strong class="detail-val status-tag">{{ rec.bookingStatus | titlecase }}</strong>
+                </div>
+                <div class="detail-item full-span">
+                  <span class="detail-label">Total Amount</span>
+                  <strong class="total-confirm">{{ rec.currency }} {{ rec.totalAmount | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+
+              <div class="confirm-actions">
+                <a routerLink="/experiences/bookings" class="btn-primary">View My Bookings</a>
+                <a routerLink="/tour-guides" class="btn-outline">Continue Exploring</a>
+              </div>
+            </div>
+          </section>
+        } @else {
+          <!-- STEP 1 OR STEP 2: TWO-COLUMN 60% LEFT / 40% RIGHT -->
+          <div class="booking-columns">
+            <div class="left-col">
+              @if (step() === 1) {
+                <!-- 1. Tour Details -->
+                <section class="panel-card">
+                  <div class="panel-header">
+                    <h2>Tour Details</h2>
+                    <button type="button" class="btn-link" (click)="toggleEditSelection()">
+                      {{ isEditingSelection() ? 'Done' : 'Edit Selection' }}
+                    </button>
+                  </div>
+
+                  @if (!isEditingSelection()) {
+                    <div class="summary-grid">
+                      <div class="summary-item">
+                        <span class="label">Selected Guide</span>
+                        <strong>{{ g.name }}</strong>
+                      </div>
+                      <div class="summary-item">
+                        <span class="label">Selected Package</span>
+                        <strong>{{ pkg.name }}</strong>
+                      </div>
+                      <div class="summary-item">
+                        <span class="label">Tour Date</span>
+                        <strong>{{ date() }}</strong>
+                      </div>
+                      <div class="summary-item">
+                        <span class="label">Starting Time</span>
+                        <strong>{{ time() }}</strong>
+                      </div>
+                      <div class="summary-item">
+                        <span class="label">Duration</span>
+                        <strong>{{ pkg.durationLabel }}</strong>
+                      </div>
+                      <div class="summary-item">
+                        <span class="label">Travelers</span>
+                        <strong>{{ travelers() }} {{ travelers() === 1 ? 'Traveler' : 'Travelers' }}</strong>
+                      </div>
+                      <div class="summary-item full-span">
+                        <span class="label">Meeting Point</span>
+                        <strong>{{ pkg.meetingPoint || g.meetingPoint || g.location }}</strong>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="edit-grid">
+                      <div class="form-group full-span">
+                        <label for="bookingPkg">Tour Package</label>
+                        <select
+                          id="bookingPkg"
+                          class="form-control"
+                          [ngModel]="packageId()"
+                          (ngModelChange)="onPackageChange($event)"
+                        >
+                          @for (item of packages(); track item.id) {
+                            <option [value]="item.id">
+                              {{ item.name }} ({{ item.currency }} {{ item.price | number }} {{ pricingUnitLabel(item) }})
+                            </option>
+                          }
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="bookingDate">Filter Date (Optional)</label>
+                        <input
+                          id="bookingDate"
+                          type="date"
+                          class="form-control"
+                          [min]="minDate"
+                          [ngModel]="date()"
+                          (ngModelChange)="date.set($event); onDateOrTravelersChange()"
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label for="bookingSlotSelect">Scheduled Slot</label>
+                        @if (isLoadingSlots()) {
+                          <div class="form-control">Loading slots...</div>
+                        } @else if (availableSlots().length === 0) {
+                          <div class="form-control">No open slots available</div>
+                        } @else {
+                          <select
+                            id="bookingSlotSelect"
+                            class="form-control"
+                            [ngModel]="selectedSlotId()"
+                            (ngModelChange)="onSlotChange($event)"
+                          >
+                            @for (slot of availableSlots(); track slot.id) {
+                              <option [ngValue]="slot.id">{{ formatSlotOption(slot) }}</option>
+                            }
+                          </select>
+                        }
+                      </div>
+                      <div class="form-group">
+                        <label for="bookingTravelers">Travelers (Max {{ selectedSlot()?.capacity ?? pkg.maxGroupSize }})</label>
+                        <input
+                          id="bookingTravelers"
+                          type="number"
+                          class="form-control"
+                          min="1"
+                          [max]="selectedSlot()?.capacity ?? pkg.maxGroupSize"
+                          [ngModel]="travelers()"
+                          (ngModelChange)="travelers.set(+$event || 1); onDateOrTravelersChange()"
+                        />
+                      </div>
+                    </div>
+                  }
+                </section>
+
+                <!-- 2. Traveler Information -->
+                <section class="panel-card">
+                  <div class="panel-header">
+                    <h2>Traveler Information</h2>
+                    @if (!authService.isAuthenticated()) {
+                      <button type="button" class="btn-link" (click)="openAuthModal()">Sign In to Prefill</button>
+                    }
+                  </div>
+
+                  @if (!authService.isAuthenticated()) {
+                    <div class="auth-notice-box">
+                      <span>Sign in with your CeylonGo traveler account to confirm your reservation.</span>
+                      <button type="button" class="btn-primary-sm" (click)="openAuthModal()">Sign In</button>
+                    </div>
+                  }
+
+                  <div class="edit-grid">
+                    <div class="form-group">
+                      <label for="travName">Full Name <span class="req">*</span></label>
+                      <input id="travName" type="text" class="form-control" [(ngModel)]="travelerName" placeholder="Full Name" />
+                    </div>
+                    <div class="form-group">
+                      <label for="travEmail">Email Address <span class="req">*</span></label>
+                      <input id="travEmail" type="email" class="form-control" [(ngModel)]="travelerEmail" placeholder="you@example.com" />
+                    </div>
+                    <div class="form-group full-span">
+                      <label for="travPhone">Contact Number (optional)</label>
+                      <input id="travPhone" type="tel" class="form-control" [(ngModel)]="travelerPhone" placeholder="+94 77 ..." />
+                    </div>
+                  </div>
+                </section>
+
+                <!-- 3. Important Information & Terms -->
+                <section class="panel-card">
+                  <div class="panel-header">
+                    <h2>Important Information</h2>
+                  </div>
+
+                  <ul class="info-bullets">
+                    <li><strong>Meeting Point:</strong> {{ g.meetingPoint || g.location }}. Please arrive 10 minutes early.</li>
+                    @if (g.safetyRequirements) {
+                      <li><strong>Safety Requirements:</strong> {{ g.safetyRequirements }}</li>
+                    }
+                    <li><strong>Cancellation Policy:</strong> {{ g.cancellationPolicy }}</li>
+                  </ul>
+
+                  <label class="terms-check-row">
+                    <input type="checkbox" [(ngModel)]="termsAccepted" />
+                    <span>I accept the tour safety requirements, guide meeting instructions, and cancellation policy.</span>
+                  </label>
+                </section>
+              } @else {
+                <!-- STEP 2: PAYMENT -->
+                <section class="panel-card">
+                  <div class="panel-header">
+                    <h2>Choose Payment Method</h2>
+                    <button type="button" class="btn-link" (click)="backToDetails()">← Back to Details</button>
+                  </div>
+
+                  <div class="payment-options">
+                    <!-- Option A: Academic Demo Online Payment -->
+                    <label
+                      class="payment-option-card"
+                      [class.selected]="paymentMethod() === 'simulated'"
+                    >
+                      <input
+                        type="radio"
+                        name="guidePayMethod"
+                        value="simulated"
+                        [checked]="paymentMethod() === 'simulated'"
+                        (change)="paymentMethod.set('simulated'); paymentError.set(null)"
+                      />
+                      <div>
+                        <div class="option-title-row">
+                          <strong>Online Payment</strong>
+                          <span class="demo-tag">Academic Demo Payment</span>
+                        </div>
+                        <p class="option-desc">
+                          Simulated payment workflow for academic verification. No real card details are collected and no money is processed.
+                        </p>
+                      </div>
+                    </label>
+
+                    @if (paymentMethod() === 'simulated') {
+                      <div class="sim-controls-box">
+                        <span class="sim-label">Demo Payment Outcome:</span>
+                        <label class="sim-radio">
+                          <input
+                            type="radio"
+                            name="simOutcome"
+                            value="success"
+                            [checked]="simulateOutcome() === 'success'"
+                            (change)="simulateOutcome.set('success'); paymentError.set(null)"
+                          />
+                          <span>Simulate Successful Payment</span>
+                        </label>
+                        <label class="sim-radio">
+                          <input
+                            type="radio"
+                            name="simOutcome"
+                            value="failure"
+                            [checked]="simulateOutcome() === 'failure'"
+                            (change)="simulateOutcome.set('failure')"
+                          />
+                          <span>Simulate Payment Failure (Test Retry)</span>
+                        </label>
+                      </div>
+                    }
+
+                    <!-- Option B: Pay at Location -->
+                    <label
+                      class="payment-option-card"
+                      [class.selected]="paymentMethod() === 'at_location'"
+                    >
+                      <input
+                        type="radio"
+                        name="guidePayMethod"
+                        value="at_location"
+                        [checked]="paymentMethod() === 'at_location'"
+                        (change)="paymentMethod.set('at_location'); paymentError.set(null)"
+                      />
+                      <div>
+                        <div class="option-title-row">
+                          <strong>Pay at Location</strong>
+                          <span class="unpaid-tag">Unpaid on Booking</span>
+                        </div>
+                        <p class="option-desc">
+                          Reserve your tour now and pay the guide directly at the meeting location. Your payment status remains <strong>unpaid</strong> until settlement on arrival.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  @if (paymentError()) {
+                    <div class="error-banner" role="alert">
+                      <span>{{ paymentError() }}</span>
+                      <button type="button" class="btn-retry" (click)="confirmBooking()" [disabled]="isSubmitting()">
+                        Retry Without Duplicating
+                      </button>
+                    </div>
+                  }
+                </section>
+              }
+
+              @if (errorMessage()) {
+                <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+              }
+            </div>
+
+            <!-- RIGHT STICKY SUMMARY COLUMN (40%) -->
+            <aside class="right-col">
+              <div class="sticky-summary-card">
+                <div class="summary-guide-head">
+                  <img [src]="g.avatarUrl" [alt]="g.name" class="summary-avatar" />
+                  <div>
+                    <h3 class="summary-guide-name">{{ g.name }}</h3>
+                    <p class="summary-loc">{{ g.location }}</p>
+                  </div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-rows">
+                  <div class="s-row">
+                    <span>Package</span>
+                    <strong>{{ pkg.name }}</strong>
+                  </div>
+                  <div class="s-row">
+                    <span>Date &amp; Time</span>
+                    <strong>{{ date() }} · {{ time() }}</strong>
+                  </div>
+                  <div class="s-row">
+                    <span>Travelers</span>
+                    <strong>{{ travelers() }} {{ travelers() === 1 ? 'Traveler' : 'Travelers' }}</strong>
+                  </div>
+                  <div class="s-row">
+                    <span>Rate</span>
+                    <strong>{{ pkg.currency }} {{ pkg.price | number }} {{ pricingUnitLabel(pkg) }}</strong>
+                  </div>
+                  @if (step() === 2) {
+                    <div class="s-row">
+                      <span>Payment Method</span>
+                      <strong>{{ paymentMethod() === 'simulated' ? 'Academic Demo Payment' : 'Pay at Location (Unpaid)' }}</strong>
+                    </div>
+                  }
+                </div>
+
+                <div class="summary-total-row">
+                  <strong>Total Amount</strong>
+                  <strong>{{ pkg.currency }} {{ totalAmount() | number:'1.2-2' }}</strong>
+                </div>
+
+                @if (step() === 1) {
+                  <button
+                    type="button"
+                    class="btn-cta-primary"
+                    (click)="continueToPayment()"
+                    [disabled]="isLoadingSlots() || !selectedSlot()"
+                  >
+                    Continue to Payment
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn-cta-primary"
+                    (click)="confirmBooking()"
+                    [disabled]="isSubmitting()"
+                  >
+                    {{ isSubmitting() ? 'Submitting Request...' : 'Confirm Booking' }}
+                  </button>
+                }
+              </div>
+            </aside>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

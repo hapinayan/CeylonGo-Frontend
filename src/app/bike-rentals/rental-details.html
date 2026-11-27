@@ -1,0 +1,347 @@
+<main class="rental-details-page">
+  <div class="container">
+    @if (vehicleState().status === 'loading') {
+      <div class="state-card" role="status" aria-live="polite">
+        <p>Loading vehicle details…</p>
+      </div>
+    } @else if (vehicleState().status === 'error') {
+      @let err = $any(vehicleState());
+      <div class="state-card error" role="alert">
+        <h2>Vehicle unavailable</h2>
+        <p>{{ err.message }}</p>
+        <div class="error-actions">
+          <button type="button" class="primary-btn" (click)="retryVehicle()">Try Again</button>
+          <a class="outline-btn" [routerLink]="['/bicycles']" queryParamsHandling="preserve">Back to rentals</a>
+        </div>
+      </div>
+    } @else {
+      @let vehicle = $any(vehicleState()).vehicle;
+      @let photos = galleryPhotos(vehicle);
+
+      <header class="vehicle-header">
+        <div class="header-main">
+          <div class="title-line">
+            <h1>{{ vehicle.vehicle_name }}</h1>
+            <span class="type-badge">{{ categoryLabel(vehicle) }}</span>
+            @if (vehicle.is_provider_verified) {
+              <span class="verified-badge">Verified Provider</span>
+            }
+            @if (preview()) {
+              <span class="preview-badge">Preview Sample</span>
+            }
+          </div>
+
+          <div class="submeta-row">
+            <span>{{ vehicle.city || 'Sri Lanka' }}@if (vehicle.district) {, {{ vehicle.district }}}</span>
+            @if (vehicle.rating) {
+              <span class="dot">&bull;</span>
+              <span class="rating-inline">
+                <span class="star-icon" aria-hidden="true">★</span>
+                <strong>{{ vehicle.rating.toFixed(1) }}</strong>
+                @if (vehicle.reviewCount) {
+                  <span>({{ vehicle.reviewCount }} reviews)</span>
+                }
+              </span>
+            }
+            @if (availabilityState().status === 'ready') {
+              <span class="dot">&bull;</span>
+              <span
+                class="availability-inline"
+                [class.unavailable]="!$any(availabilityState()).available">
+                {{ $any(availabilityState()).available ? 'Available for booking' : 'Unavailable for the search dates.' }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <app-rental-wishlist [id]="vehicle.id" [preview]="preview()" />
+          <button type="button" class="share-btn" (click)="shareVehicle(vehicle)">
+            <span>Share</span>
+            @if (shareNotice()) {
+              <span class="share-toast">{{ shareNotice() }}</span>
+            }
+          </button>
+        </div>
+      </header>
+
+      <section class="gallery-section" aria-label="Vehicle photographs">
+        @if (photos.length === 0) {
+          <div class="gallery-placeholder">Photo unavailable</div>
+        } @else if (photos.length === 1) {
+          <div class="gallery-grid single">
+            <button type="button" class="gallery-item main" (click)="openLightbox(0)">
+              <img [src]="photos[0]" [alt]="vehicle.vehicle_name" />
+            </button>
+          </div>
+        } @else if (photos.length === 2) {
+          <div class="gallery-grid two-up">
+            <button type="button" class="gallery-item main" (click)="openLightbox(0)">
+              <img [src]="photos[0]" [alt]="vehicle.vehicle_name" />
+            </button>
+            <button type="button" class="gallery-item side-full" (click)="openLightbox(1)">
+              <img [src]="photos[1]" [alt]="vehicle.vehicle_name + ' photo 2'" />
+            </button>
+          </div>
+        } @else {
+          <div class="gallery-grid multi">
+            <button type="button" class="gallery-item main" (click)="openLightbox(0)">
+              <img [src]="photos[0]" [alt]="vehicle.vehicle_name" />
+            </button>
+            <div class="gallery-side-stack">
+              <button type="button" class="gallery-item side" (click)="openLightbox(1)">
+                <img [src]="photos[1]" [alt]="vehicle.vehicle_name + ' photo 2'" />
+              </button>
+              <div class="gallery-item side bottom-tile">
+                <button type="button" class="tile-trigger" (click)="openLightbox(2)">
+                  <img [src]="photos[2]" [alt]="vehicle.vehicle_name + ' photo 3'" />
+                </button>
+                <button type="button" class="view-all-photos-btn" (click)="openLightbox(0)">
+                  View All Photos ({{ photos.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <div class="details-layout">
+        <div class="details-main">
+          <section class="detail-card">
+            <h2>Vehicle Overview</h2>
+            @if (vehicle.description) {
+              <p class="overview-copy">{{ vehicle.description }}</p>
+            }
+            @if (vehicle.rental?.specifications) {
+              <p class="overview-copy"><strong>Specifications:</strong> {{ vehicle.rental!.specifications }}</p>
+            }
+            <dl class="specs-grid">
+              <div>
+                <dt>Category</dt>
+                <dd>{{ categoryLabel(vehicle) }}</dd>
+              </div>
+              @if (vehicle.brand || vehicle.model) {
+                <div>
+                  <dt>Make &amp; Model</dt>
+                  <dd>{{ vehicle.brand }} {{ vehicle.model }}</dd>
+                </div>
+              }
+              @if (vehicle.rental?.model_year ?? vehicle.model_year) {
+                <div>
+                  <dt>Model Year</dt>
+                  <dd>{{ vehicle.rental?.model_year ?? vehicle.model_year }}</dd>
+                </div>
+              }
+              @if (vehicle.rental?.transmission ?? vehicle.transmission) {
+                <div>
+                  <dt>Transmission</dt>
+                  <dd style="text-transform: capitalize;">{{ ((vehicle.rental?.transmission ?? vehicle.transmission) || '').replace('_', ' ') }}</dd>
+                </div>
+              }
+              @if (vehicle.rental?.seating_capacity ?? vehicle.seating_capacity) {
+                <div>
+                  <dt>Seating Capacity</dt>
+                  <dd>{{ vehicle.rental?.seating_capacity ?? vehicle.seating_capacity }}</dd>
+                </div>
+              }
+              @if (vehicle.rental?.fuel_type ?? vehicle.fuel_type) {
+                <div>
+                  <dt>Fuel / Power</dt>
+                  <dd>{{ vehicle.rental?.fuel_type ?? vehicle.fuel_type }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <section class="detail-card">
+            <h2>Rental Requirements</h2>
+            <ul class="requirements-list">
+              @if (isMotorized(vehicle)) {
+                <li><strong>Driving License:</strong> Valid motorcycle driving license required. The provider checks the original driving license at pickup.</li>
+              } @else {
+                <li><strong>Driving License:</strong> No driving licence required for this bicycle.</li>
+              }
+              @if (vehicle.rental?.requirements) {
+                <li><strong>Provider Requirements:</strong> {{ vehicle.rental!.requirements }}</li>
+              }
+              @if (vehicle.minimum_age) {
+                <li><strong>Minimum Rider Age:</strong> {{ vehicle.minimum_age }} years and above.</li>
+              }
+              @if (vehicle.restrictions) {
+                <li><strong>Notes:</strong> {{ vehicle.restrictions }}</li>
+              }
+            </ul>
+          </section>
+
+          <section class="detail-card">
+            <h2>Rental Terms &amp; Cancellation Policy</h2>
+            <ul class="requirements-list">
+              @if (vehicle.rental?.rental_terms) {
+                <li><strong>Rental Terms:</strong> {{ vehicle.rental!.rental_terms }}</li>
+              }
+              @if (vehicle.security_deposit) {
+                <li>
+                  <strong>Security Deposit:</strong>
+                  {{ formatLkr(vehicle.security_deposit) }}
+                </li>
+              }
+              @if (vehicle.late_return_policy) {
+                <li><strong>Late Return Policy:</strong> {{ vehicle.late_return_policy }}</li>
+              }
+              <li>
+                <strong>Cancellation Policy:</strong>
+                {{ vehicle.rental?.cancellation_policy || vehicle.cancellation_policy || 'Contact the provider for cancellation terms.' }}
+              </li>
+            </ul>
+          </section>
+
+          @let coords = pickupCoordinates(vehicle);
+          <section class="detail-card">
+            <div class="section-head-row">
+              <h2>Pickup Location</h2>
+              @if (coords) {
+                <a
+                  class="map-external-link"
+                  target="_blank"
+                  rel="noopener"
+                  [href]="'https://www.openstreetmap.org/?mlat=' + coords.lat + '&mlon=' + coords.lng + '#map=15/' + coords.lat + '/' + coords.lng">
+                  Open in Map
+                </a>
+              }
+            </div>
+            <p class="pickup-address">
+              {{ vehicle.rental?.pickup_name || vehicle.location?.location_name || vehicle.location_name || vehicle.city || 'Pickup location confirmed upon booking' }}
+              @if (vehicle.rental?.pickup_address || vehicle.location?.address || vehicle.pickup_address) {
+                <br />{{ vehicle.rental?.pickup_address || vehicle.location?.address || vehicle.pickup_address }}
+              }
+              @if (vehicle.location?.city || vehicle.city || vehicle.location?.district || vehicle.district) {
+                &middot; {{ vehicle.location?.city || vehicle.city }}@if (vehicle.location?.district || vehicle.district) {, {{ vehicle.location?.district || vehicle.district }}}
+              }
+            </p>
+            @if (coords) {
+              <div class="pickup-map-wrap">
+                <app-location-picker [latitude]="coords.lat" [longitude]="coords.lng" />
+              </div>
+              <app-service-weather-card
+                [locationName]="vehicle.location?.city || vehicle.city || vehicle.district || 'Pickup Location'"
+                [latitude]="coords.lat"
+                [longitude]="coords.lng"
+              />
+            }
+          </section>
+
+          <section class="detail-card">
+            <h2>About the Provider</h2>
+            <div class="provider-row">
+              @if (vehicle.provider_avatar_url) {
+                <img class="provider-avatar" [src]="vehicle.provider_avatar_url" [alt]="vehicle.provider_business_name || 'Provider'" />
+              } @else {
+                <div class="provider-avatar placeholder">{{ (vehicle.provider_business_name || 'P').slice(0, 1).toUpperCase() }}</div>
+              }
+              <div>
+                <p class="provider-name">{{ vehicle.provider_business_name || 'Verified Local Rental Partner' }}</p>
+                <p class="provider-meta">
+                  Pickup &amp; handover instructions are provided once your booking request is accepted.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-card">
+            <h2>Ratings &amp; Reviews</h2>
+            @if (reviewsState().status === 'loading') {
+              <p class="muted">Loading reviews…</p>
+            } @else if (reviewsState().status === 'error') {
+              <div class="inline-alert" role="alert">
+                <span>Reviews couldn’t load right now.</span>
+                <button type="button" class="text-retry-btn" (click)="retryReviews()">Retry</button>
+              </div>
+            } @else {
+              @let rev = $any(reviewsState()).data;
+              @if (!rev.items.length) {
+                <p class="muted">No published reviews yet.</p>
+              } @else {
+                <div class="reviews-list">
+                  @for (review of rev.items; track review.id) {
+                    <article class="review-card">
+                      <div class="review-head">
+                        <strong>{{ review.reviewer_name || 'Traveler' }}</strong>
+                        <span class="star-icon">★ {{ review.rating }}</span>
+                      </div>
+                      @if (review.title) {
+                        <p><strong>{{ review.title }}</strong></p>
+                      }
+                      @if (review.comment) {
+                        <p>{{ review.comment }}</p>
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            }
+          </section>
+        </div>
+
+        <aside class="booking-sidebar">
+          <div class="booking-widget-card">
+            <div class="widget-price-row">
+              <div>
+                <span class="widget-price">{{ formatLkr(vehicle.price_per_day) }}</span>
+                <span class="widget-unit"> / day</span>
+              </div>
+              <span class="widget-type">{{ categoryLabel(vehicle) }}</span>
+            </div>
+
+            @if (availabilityState().status === 'error') {
+              <div class="inline-alert" role="alert">
+                <span>Availability couldn’t be verified automatically.</span>
+                <button type="button" class="text-retry-btn" (click)="retryAvailability()">Retry</button>
+              </div>
+            }
+
+            <div class="date-picker-wrapper">
+              <app-rental-date-picker
+                [id]="vehicle.id"
+                [preview]="preview()"
+                [showQuantity]="true"
+                [pickupDate]="params().get('pickup') || ''"
+                [returnDate]="params().get('dropoff') || params().get('return') || ''"
+                (checked)="selectedDates.set($event)" />
+            </div>
+
+            <a
+              class="continue-booking-btn"
+              [routerLink]="['/bicycles', vehicle.id, 'booking']"
+              [queryParams]="bookingQueryParams(vehicle)">
+              Continue to Booking &rarr;
+            </a>
+
+            <p class="booking-disclaimer">
+              You can review requirements and choose Academic Demo payment or Pay at Location on the next step.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      @if (lightboxIndex() !== null) {
+        @let currentIdx = lightboxIndex()!;
+        <div class="lightbox-backdrop" (click)="closeLightbox()">
+          <div class="lightbox-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+            <button type="button" class="lightbox-close" aria-label="Close gallery" (click)="closeLightbox()">×</button>
+            <img [src]="photos[currentIdx]" [alt]="vehicle.vehicle_name" />
+            @if (photos.length > 1) {
+              <div class="lightbox-controls">
+                <button type="button" (click)="stepLightbox(-1, photos.length)">&larr; Prev</button>
+                <span>{{ currentIdx + 1 }} / {{ photos.length }}</span>
+                <button type="button" (click)="stepLightbox(1, photos.length)">Next &rarr;</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+  @if (vehicleState().status === 'ready' && !preview() && ($any(vehicleState()).vehicle.vehicle_type === 'bike' || $any(vehicleState()).vehicle.vehicle_type === 'bicycle')) {
+    <app-recommendations [sourceId]="$any(vehicleState()).vehicle.id" [category]="$any(vehicleState()).vehicle.vehicle_type" />
+  }
+</main>

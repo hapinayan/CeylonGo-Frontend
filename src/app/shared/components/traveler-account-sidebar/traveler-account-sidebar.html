@@ -1,0 +1,103 @@
+<aside class="account-sidebar-card" aria-label="Traveler account">
+  <div class="mobile-bar">
+    <div class="mobile-identity">
+      <app-account-profile-avatar [fullName]="displayName()" [photoUrl]="photoUrl()" size="sm" />
+      <div class="identity-text">
+        <strong>{{ displayName() }}</strong>
+        <span>{{ activeLabel() }}</span>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="mobile-menu-toggle"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-label="Toggle account navigation"
+      (click)="toggleMobileMenu()"
+    >
+      <span>Account Menu</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        @if (mobileMenuOpen()) {
+          <polyline points="18 15 12 9 6 15" />
+        } @else {
+          <polyline points="6 9 12 15 18 9" />
+        }
+      </svg>
+    </button>
+  </div>
+
+  <div class="desktop-identity">
+    <app-account-profile-avatar [fullName]="displayName()" [photoUrl]="photoUrl()" size="md" />
+    <div class="identity-text">
+      <strong [title]="displayName()">{{ displayName() }}</strong>
+      @if (account()?.email; as email) {
+        <small [title]="email">{{ email }}</small>
+      }
+    </div>
+  </div>
+
+  <nav class="account-nav" [class.mobile-open]="mobileMenuOpen()" aria-label="Account navigation">
+    <a
+      routerLink="/profile"
+      [attr.aria-current]="active() === 'profile' ? 'page' : null"
+      [class.is-active]="active() === 'profile'"
+      (click)="closeMobileMenu()"
+    >
+      <app-experience-icon name="user" />
+      <span>My Profile</span>
+    </a>
+
+    <a
+      routerLink="/my-bookings"
+      [queryParams]="preview() ? { preview: '1' } : {}"
+      [queryParamsHandling]="active() === 'bookings' ? 'preserve' : 'replace'"
+      [attr.aria-current]="active() === 'bookings' ? 'page' : null"
+      [class.is-active]="active() === 'bookings'"
+      (click)="closeMobileMenu()"
+    >
+      <app-experience-icon name="calendar" />
+      <span>My Bookings</span>
+    </a>
+
+    <a
+      routerLink="/wishlist"
+      [queryParams]="preview() ? { preview: '1' } : {}"
+      [attr.aria-current]="active() === 'wishlist' ? 'page' : null"
+      [class.is-active]="active() === 'wishlist'"
+      (click)="closeMobileMenu()"
+    >
+      <app-experience-icon name="heart" />
+      <span>Wishlist</span>
+    </a>
+
+    <a
+      routerLink="/notifications"
+      [attr.aria-current]="active() === 'notifications' ? 'page' : null"
+      [class.is-active]="active() === 'notifications'"
+      (click)="closeMobileMenu()"
+    >
+      <app-experience-icon name="bell" />
+      <span>Notifications</span>
+      @if (unreadNotifications() > 0) {
+        <span class="nav-count-pill">{{ unreadNotifications() }}</span>
+      }
+    </a>
+
+    <a
+      routerLink="/settings"
+      [attr.aria-current]="active() === 'settings' ? 'page' : null"
+      [class.is-active]="active() === 'settings'"
+      (click)="closeMobileMenu()"
+    >
+      <app-experience-icon name="settings" />
+      <span>Account Settings</span>
+    </a>
+
+    @if (account()) {
+      <div class="nav-divider" role="separator"></div>
+      <button type="button" class="nav-logout-btn" (click)="onLogout()">
+        <app-experience-icon name="logout" />
+        <span>Log out</span>
+      </button>
+    }
+  </nav>
+</aside>

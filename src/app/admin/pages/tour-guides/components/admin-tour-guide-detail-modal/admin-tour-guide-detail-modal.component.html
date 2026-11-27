@@ -1,0 +1,196 @@
+<div class="modal-backdrop" (click)="onClose()" role="presentation">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="guideDetailTitle">
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="title-group">
+        <h2 id="guideDetailTitle" class="title">{{ guideDetail.business_name }}</h2>
+        <span class="subtitle">{{ guideDetail.provider_name }} &bull; {{ guideDetail.guide.base_city }}, {{ guideDetail.guide.base_district }}</span>
+      </div>
+      <div class="header-badges">
+        <span class="status-badge" [attr.data-status]="guideDetail.guide.approval_status">
+          {{ guideDetail.guide.approval_status | uppercase }}
+        </span>
+        <span class="badge-verified" *ngIf="guideDetail.guide.verification_status === 'verified'">
+          <svg class="badge-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+          </svg>
+          Verified Guide
+        </span>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Close modal">
+        &times;
+      </button>
+    </header>
+
+    <!-- Nav Tabs -->
+    <nav class="modal-tabs">
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
+        Profile & Languages
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'credentials'" (click)="activeTab = 'credentials'">
+        Licenses & Credentials ({{ guideDetail.credentials.length }})
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'packages'" (click)="activeTab = 'packages'">
+        Packages & Rates ({{ guideDetail.packages.length }})
+      </button>
+    </nav>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Tab 1: Overview -->
+      <div *ngIf="activeTab === 'overview'" class="tab-content">
+        <section class="section">
+          <h3 class="section-title">Biography & Specializations</h3>
+          <p class="bio-text">{{ guideDetail.guide.bio }}</p>
+          <div class="meta-chips" *ngIf="guideDetail.guide.specialties">
+            <span class="chip chip-specialty" *ngFor="let s of guideDetail.guide.specialties.split(',')">
+              {{ s.trim() }}
+            </span>
+          </div>
+        </section>
+
+        <section class="section grid-2">
+          <div class="info-card">
+            <h4>Contact & Operations</h4>
+            <div class="key-value">
+              <span class="label">Email:</span>
+              <span class="value">{{ guideDetail.email }}</span>
+            </div>
+            <div class="key-value" *ngIf="guideDetail.phone">
+              <span class="label">Phone:</span>
+              <span class="value">{{ guideDetail.phone }}</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Location:</span>
+              <span class="value">{{ guideDetail.guide.base_city }}, {{ guideDetail.guide.base_district }} ({{ guideDetail.guide.province || 'Sri Lanka' }})</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Experience:</span>
+              <span class="value">{{ guideDetail.guide.years_of_experience }} years</span>
+            </div>
+            <div class="key-value">
+              <span class="label">Max Group:</span>
+              <span class="value">{{ guideDetail.guide.max_group_size }} persons</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h4>Spoken Languages</h4>
+            <div class="language-list" *ngIf="guideDetail.languages.length > 0; else noLanguages">
+              <div class="lang-pill" *ngFor="let lang of guideDetail.languages">
+                <span class="lang-code">{{ lang.language_code | uppercase }}</span>
+                <span class="lang-level">{{ lang.proficiency_level }}</span>
+              </div>
+            </div>
+            <ng-template #noLanguages>
+              <p class="muted">No language proficiencies registered.</p>
+            </ng-template>
+
+            <h4 class="mt-3">Service Areas</h4>
+            <div class="area-tags" *ngIf="guideDetail.service_areas.length > 0; else noAreas">
+              <span class="tag-area" *ngFor="let area of guideDetail.service_areas">
+                {{ area.area_name }}
+              </span>
+            </div>
+            <ng-template #noAreas>
+              <p class="muted">Standard base city operations.</p>
+            </ng-template>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab 2: Credentials -->
+      <div *ngIf="activeTab === 'credentials'" class="tab-content">
+        <div class="credentials-list" *ngIf="guideDetail.credentials.length > 0; else noCredentials">
+          <div class="credential-card" *ngFor="let cred of guideDetail.credentials">
+            <div class="cred-header">
+              <div class="cred-info">
+                <h4 class="cred-title">{{ cred.title }}</h4>
+                <span class="cred-authority">{{ cred.issuing_authority }} &bull; License #{{ cred.license_number || 'N/A' }}</span>
+              </div>
+              <span class="cred-status" [attr.data-status]="cred.verification_status">
+                {{ cred.verification_status | uppercase }}
+              </span>
+            </div>
+            <div class="cred-meta">
+              <span *ngIf="cred.expiry_date">Expires: <strong>{{ cred.expiry_date }}</strong></span>
+              <span *ngIf="!cred.expiry_date">No expiration specified</span>
+            </div>
+            <div class="cred-actions" *ngIf="canVerify">
+              <button type="button" class="btn-verify-cred" (click)="onVerifyCred(cred)">
+                Review & Verify Credential
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noCredentials>
+          <div class="empty-state">
+            <p>No license or certification documents submitted by this guide.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Tab 3: Packages -->
+      <div *ngIf="activeTab === 'packages'" class="tab-content">
+        <div class="packages-list" *ngIf="guideDetail.packages.length > 0; else noPackages">
+          <div class="package-card" *ngFor="let pkg of guideDetail.packages">
+            <div class="pkg-header">
+              <h4 class="pkg-title">{{ pkg.title }}</h4>
+              <span class="pkg-price">LKR {{ pkg.price | number }} <small>/ {{ pkg.pricing_type }}</small></span>
+            </div>
+            <p class="pkg-desc">{{ pkg.description }}</p>
+            <div class="pkg-footer">
+              <span>Duration: {{ pkg.duration_hours }} hours</span>
+              <span>Max Capacity: {{ pkg.max_participants }}</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noPackages>
+          <div class="empty-state">
+            <p>No packaged tour itineraries published. Standard daily guide rate applies.</p>
+            <p class="daily-rate-highlight">Standard Daily Rate: <strong>LKR {{ guideDetail.guide.daily_rate | number }}</strong></p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <footer class="modal-footer">
+      <div class="footer-left" *ngIf="canVerify">
+        <button type="button" class="btn-badge" (click)="onToggleBadge()">
+          {{ guideDetail.guide.verification_status === 'verified' ? 'Revoke Verified Badge' : 'Grant Verified Badge' }}
+        </button>
+      </div>
+      <div class="footer-right">
+        <button type="button" class="btn-secondary" (click)="onClose()">Close</button>
+        <button
+          *ngIf="canReview && guideDetail.guide.approval_status !== 'rejected'"
+          type="button"
+          class="btn-danger"
+          [disabled]="isProcessing"
+          (click)="onReject()"
+        >
+          Reject Guide
+        </button>
+        <button
+          *ngIf="canReview && guideDetail.guide.approval_status === 'approved'"
+          type="button"
+          class="btn-warning"
+          [disabled]="isProcessing"
+          (click)="onSuspend()"
+        >
+          Suspend Guide
+        </button>
+        <button
+          *ngIf="canReview && guideDetail.guide.approval_status !== 'approved'"
+          type="button"
+          class="btn-primary"
+          [disabled]="isProcessing"
+          (click)="onApprove()"
+        >
+          Approve Guide
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>

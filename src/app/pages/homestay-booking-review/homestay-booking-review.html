@@ -1,0 +1,425 @@
+<div class="booking-review-page">
+  <!-- LIVE INTEGRATION NOTICE BAR -->
+  <div class="demo-notice-bar" role="status">
+    <div class="demo-notice-content">
+      <span class="demo-tag" style="background-color: #16A34A;">VERIFIED INTEGRATION</span>
+      <span>Connected directly to CeylonGo backend API. Authoritative booking requests and quotes.</span>
+    </div>
+  </div>
+
+  <main class="review-main-viewport">
+    @if (isLoading()) {
+      <div class="review-container skeleton-state" aria-busy="true" aria-label="Loading booking review">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-col"></div>
+          <div class="skeleton-col"></div>
+        </div>
+      </div>
+    } @else if (isNotFound() || !homestay() || !draft()) {
+      <div class="not-found-state">
+        <h2 class="not-found-title">Booking Details Unavailable</h2>
+        <p class="not-found-text">
+          We could not load booking details for this homestay. Please select a property to start a reservation.
+        </p>
+        <a routerLink="/homestays" class="btn-back-home">Return to Homestays</a>
+      </div>
+    } @else if (isConfirmed() && confirmationData()) {
+      <!-- 5. AUTHORITATIVE BOOKING CONFIRMATION STATE -->
+      <div class="confirmation-success-card">
+        <div class="success-icon-wrap">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+
+        <span class="confirmation-badge" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">
+          AWAITING HOST CONFIRMATION
+        </span>
+        <h1 class="success-title">Booking Request Submitted!</h1>
+        <p class="success-subtitle">
+          Your reservation request is recorded with CeylonGo. It is currently awaiting approval from host
+          <strong>{{ confirmationData()!.hostName || 'Local Host' }}</strong>.
+        </p>
+
+        <!-- Booking Code Box -->
+        <div class="booking-code-box">
+          <span class="code-label">Booking Reference:</span>
+          <span class="code-val">{{ confirmationData()!.bookingReference }}</span>
+        </div>
+
+        <!-- Summary Recap -->
+        <div class="confirmation-summary-grid">
+          <div class="summary-col">
+            <span class="summary-head">Property</span>
+            <span class="summary-bold">{{ homestay()!.name }}</span>
+            <span class="summary-muted">{{ homestay()!.location }}</span>
+          </div>
+          <div class="summary-col">
+            <span class="summary-head">Dates & Guests</span>
+            <span class="summary-bold">{{ formattedCheckIn() }} – {{ formattedCheckOut() }}</span>
+            <span class="summary-muted">{{ draft()!.nights }} nights · {{ draft()!.totalGuests }} guests</span>
+          </div>
+          <div class="summary-col">
+            <span class="summary-head">Total Amount</span>
+            <span class="summary-bold text-blue">{{ confirmationData()!.currency || 'LKR' }} {{ draft()!.estimatedTotal | number }}</span>
+            <span class="summary-muted">Payment: {{ confirmationData()!.paymentMethod }}</span>
+          </div>
+          <div class="summary-col">
+            <span class="summary-head">Payment Status</span>
+            <span class="summary-bold text-green" style="text-transform: capitalize;">{{ confirmationData()!.paymentStatus || 'unpaid' }}</span>
+            <span class="summary-muted">
+              {{ confirmationData()!.paymentMethod === 'Pay at Location' ? 'Pay upon arrival' : 'Simulated demonstration' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="confirmation-actions-row">
+          <a routerLink="/homestays" class="btn-action-primary">
+            Explore More Homestays
+          </a>
+          <a [routerLink]="['/homestays', homestay()!.id]" class="btn-action-secondary">
+            View Property Page
+          </a>
+        </div>
+      </div>
+    } @else {
+      <!-- 4. ACTIVE BOOKING REVIEW -->
+      <div class="review-container">
+        <div class="review-heading-wrap">
+          <h1 class="review-title">Review Your Reservation Request</h1>
+          <p class="review-subtitle">
+            Verify your trip dates, guest count, and room selection before submitting your request.
+          </p>
+        </div>
+
+        <div class="review-layout-grid">
+          <!-- LEFT COLUMN: TRIP DETAILS & TRAVELER FORM -->
+          <div class="review-left-col">
+            <!-- Property Preview Card -->
+            <section class="card-section property-preview-card">
+              <img [src]="draft()!.homestayImage" [alt]="draft()!.homestayName" class="preview-img" />
+              <div class="preview-info">
+                <span class="preview-cat">{{ homestay()!.category_name }}</span>
+                <h2 class="preview-name">{{ draft()!.homestayName }}</h2>
+                <span class="preview-loc">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {{ draft()!.homestayLocation }}
+                </span>
+                <div class="preview-rating">
+                  @if (homestay()!.review_count > 0 && homestay()!.rating > 0) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF9F1C" stroke="#FF9F1C">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>{{ homestay()!.rating }} ({{ homestay()!.review_count }} reviews)</span>
+                  } @else {
+                    <span style="color: #64748B;">New Stay · Awaiting reviews</span>
+                  }
+                </div>
+              </div>
+            </section>
+
+            <!-- Trip Specs Card with Edit Button -->
+            <section class="card-section trip-specs-card">
+              <div class="specs-header">
+                <h3 class="card-heading">Your Trip Details</h3>
+                <button type="button" class="btn-edit-details" (click)="editBookingDetails()">
+                  Edit Details
+                </button>
+              </div>
+
+              <div class="specs-grid">
+                <div class="spec-cell">
+                  <span class="spec-label">DATES</span>
+                  <span class="spec-main">{{ formattedCheckIn() }} – {{ formattedCheckOut() }}</span>
+                  <span class="spec-sub">{{ draft()!.nights }} night{{ draft()!.nights > 1 ? 's' : '' }}</span>
+                </div>
+                <div class="spec-cell">
+                  <span class="spec-label">GUESTS</span>
+                  <span class="spec-main">
+                    {{ draft()!.totalGuests }} Guest{{ draft()!.totalGuests > 1 ? 's' : '' }}
+                  </span>
+                  <span class="spec-sub">
+                    {{ draft()!.adults }} Adult{{ draft()!.adults > 1 ? 's' : '' }}
+                    @if (draft()!.children > 0) {
+                      , {{ draft()!.children }} Child{{ draft()!.children > 1 ? 'ren' : '' }}
+                    }
+                  </span>
+                </div>
+                <div class="spec-cell full-span">
+                  <span class="spec-label">SELECTED ROOM / UNIT</span>
+                  @if (draft()!.selectedUnitLabel) {
+                    <span class="spec-main">{{ draft()!.selectedUnitLabel }}</span>
+                    <span class="spec-sub">Capacity: {{ draft()!.selectedUnitCapacity }} guests (Room ID: {{ draft()!.selectedUnitId }})</span>
+                  } @else {
+                    <span class="spec-main" style="color: #DC2626;">No room selected</span>
+                    <span class="spec-sub" style="color: #DC2626;">An inventory room selection is required by backend booking contract.</span>
+                  }
+                </div>
+              </div>
+            </section>
+
+            <!-- Traveler Information Inputs -->
+            <section class="card-section traveler-info-card">
+              <h3 class="card-heading">Traveler Information</h3>
+              <p class="card-subheading">Host will receive these details with your reservation.</p>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="review-guest-name" class="form-label">Full Name *</label>
+                  <input
+                    id="review-guest-name"
+                    type="text"
+                    class="form-input"
+                    [ngModel]="travelerName()"
+                    (ngModelChange)="travelerName.set($event)"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div class="form-field">
+                  <label for="review-guest-email" class="form-label">Email Address *</label>
+                  <input
+                    id="review-guest-email"
+                    type="email"
+                    class="form-input"
+                    [ngModel]="travelerEmail()"
+                    (ngModelChange)="travelerEmail.set($event)"
+                    placeholder="Enter your email address"
+                  />
+                </div>
+
+                <div class="form-field full-width">
+                  <label for="review-guest-phone" class="form-label">Phone Number</label>
+                  <input
+                    id="review-guest-phone"
+                    type="tel"
+                    class="form-input"
+                    [ngModel]="travelerPhone()"
+                    (ngModelChange)="travelerPhone.set($event)"
+                    placeholder="+94 77 123 4567"
+                  />
+                </div>
+
+                <div class="form-field full-width">
+                  <label for="review-special-req" class="form-label">Message or Special Requests (Optional)</label>
+                  <textarea
+                    id="review-special-req"
+                    rows="3"
+                    class="form-textarea"
+                    [ngModel]="specialRequests()"
+                    (ngModelChange)="specialRequests.set($event)"
+                    placeholder="Arriving around 3 PM by train, looking forward to staying with your family!"
+                  ></textarea>
+                </div>
+              </div>
+            </section>
+
+            <!-- Payment Method Selection Card -->
+            <section class="card-section payment-method-card">
+              <h3 class="card-heading">Select Payment Method</h3>
+              <p class="card-subheading">Choose how you would like to settle your stay.</p>
+
+              <div class="payment-options-grid">
+                <!-- Option 1: Pay at Location -->
+                <div
+                  class="payment-option-card"
+                  [class.selected]="paymentMethod() === 'at_location'"
+                  (click)="selectPaymentMethod('at_location')"
+                >
+                  <div class="option-radio">
+                    <input
+                      type="radio"
+                      id="pay-location"
+                      name="payment_choice"
+                      [checked]="paymentMethod() === 'at_location'"
+                      (change)="selectPaymentMethod('at_location')"
+                    />
+                  </div>
+                  <div class="option-details">
+                    <div class="option-title-row">
+                      <label for="pay-location" class="option-title">Pay at Location</label>
+                      <span class="badge-recommended">Recommended</span>
+                    </div>
+                    <p class="option-desc">
+                      Pay directly to the host when you check in. Status will be recorded as unpaid until arrival.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Option 2: Pay Online — Academic MVP Demo Simulation -->
+                <div
+                  class="payment-option-card"
+                  [class.selected]="paymentMethod() === 'online'"
+                  (click)="selectPaymentMethod('online')"
+                >
+                  <div class="option-radio">
+                    <input
+                      type="radio"
+                      id="pay-online"
+                      name="payment_choice"
+                      [checked]="paymentMethod() === 'online'"
+                      (change)="selectPaymentMethod('online')"
+                    />
+                  </div>
+                  <div class="option-details">
+                    <div class="option-title-row">
+                      <label for="pay-online" class="option-title">Online Payment (Academic Demo Simulation)</label>
+                      <span class="badge-pending" style="background: #e0e7ff; color: #3730a3;">Academic Demo</span>
+                    </div>
+                    <p class="option-desc">
+                      Simulate online card processing via POST /api/v1/payments/simulate. No real money or card details collected.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Academic Demo Simulation Controls when Online Payment is selected -->
+              @if (paymentMethod() === 'online') {
+                <div class="alert-info-box" style="margin-top: 16px; background: #f8fafc; border: 1px solid #cbd5e1;" role="region" aria-label="Demo simulation options">
+                  <div style="font-weight: 600; color: #1e293b; margin-bottom: 6px;">
+                    🎓 Academic MVP Payment Simulation Settings
+                  </div>
+                  <p style="margin: 0 0 10px 0; font-size: 13px; color: #475569;">
+                    This environment demonstrates payment handling without third-party card processors. Select an outcome to simulate:
+                  </p>
+
+                  <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: #15803d; font-weight: 500;">
+                      <input
+                        type="radio"
+                        name="simulate_outcome_choice"
+                        value="success"
+                        [checked]="simulateOutcome() === 'success'"
+                        (change)="setSimulateOutcome('success')"
+                      />
+                      Simulate Success (demo_succeeded)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: #b91c1c; font-weight: 500;">
+                      <input
+                        type="radio"
+                        name="simulate_outcome_choice"
+                        value="failure"
+                        [checked]="simulateOutcome() === 'failure'"
+                        (change)="setSimulateOutcome('failure')"
+                      />
+                      Simulate Failure (demo_failed)
+                    </label>
+                  </div>
+
+                  <span style="font-size: 12px; color: #64748B;">Current Payment Attempt: #{{ paymentAttemptNo() }}</span>
+                </div>
+              }
+
+              @if (paymentErrorMessage()) {
+                <div class="alert-error-box" role="alert" style="margin-top: 12px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>{{ paymentErrorMessage() }}</span>
+                </div>
+              }
+            </section>
+
+            <!-- Ground Rules & Policies -->
+            <section class="card-section policies-card">
+              <h3 class="card-heading">Ground Rules & Cancellation</h3>
+              <ul class="policies-list">
+                <li><strong>Cancellation Policy:</strong> {{ homestay()!.cancellation_policy }}</li>
+                <li><strong>Check-in:</strong> {{ homestay()!.check_in_time || '2:00 PM' }} · <strong>Check-out:</strong> {{ homestay()!.check_out_time || '11:00 AM' }}</li>
+                <li>Follow house rules and treat the host family home with respect.</li>
+              </ul>
+            </section>
+          </div>
+
+          <!-- RIGHT COLUMN: PRICE BREAKDOWN & SUBMIT -->
+          <div class="review-right-col">
+            <aside class="sticky-price-card" aria-label="Reservation pricing summary">
+              <h3 class="summary-heading">Price Summary</h3>
+
+              <div class="summary-breakdown">
+                <div class="summary-row">
+                  <span class="row-label">
+                    LKR {{ draft()!.nightlyRate | number }} × {{ draft()!.nights }} night{{ draft()!.nights > 1 ? 's' : '' }}
+                  </span>
+                  <span class="row-val">LKR {{ draft()!.basePrice | number }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="row-label text-muted">Service & Platform Fee</span>
+                  <span class="row-val text-green">Included</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row total-row">
+                  <span class="total-label">Total Booking Estimate</span>
+                  <span class="total-val">LKR {{ draft()!.estimatedTotal | number }}</span>
+                </div>
+              </div>
+
+              <!-- Guarantee Notice -->
+              <div class="direct-booking-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <div class="guarantee-text">
+                  <strong>CeylonGo Direct Stay:</strong>
+                  <span>Your reservation request is directly submitted to the host.</span>
+                </div>
+              </div>
+
+              @if (bookingErrorMessage()) {
+                <div class="alert-error-box" role="alert">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>{{ bookingErrorMessage() }}</span>
+                </div>
+              }
+
+              <!-- Submit Reservation Button -->
+              <button
+                type="button"
+                class="btn-confirm-booking"
+                [disabled]="isSubmitting() || !draft()!.selectedUnitId"
+                (click)="confirmReservation()"
+              >
+                @if (isSubmitting()) {
+                  <span class="btn-spinner"></span>
+                  <span>Submitting to Host...</span>
+                } @else if (!draft()!.selectedUnitId) {
+                  <span>Select a Room to Request</span>
+                } @else if (paymentMethod() === 'online') {
+                  <span>Submit & Simulate Payment (Attempt #{{ paymentAttemptNo() }})</span>
+                } @else {
+                  <span>Submit Booking Request</span>
+                }
+              </button>
+
+              <button
+                type="button"
+                class="btn-back-link"
+                (click)="editBookingDetails()"
+              >
+                Back to Homestay
+              </button>
+            </aside>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  @if (toastMessage()) {
+    <div class="cg-toast" role="alert">
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>

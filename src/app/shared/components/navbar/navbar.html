@@ -1,0 +1,206 @@
+<header class="navbar-header" [class.is-scrolled]="isScrolled()">
+  <div class="navbar-container">
+
+    <!-- BRAND LOGO -->
+    <a routerLink="/" class="navbar-brand" (click)="scrollToSection($event, 'hero')" aria-label="CeylonGo Homepage">
+      <img
+        src="/images/ceylongo-blue-logo.png"
+        alt="CeylonGo"
+        class="brand-logo-img"
+        width="130"
+        height="48"
+      />
+    </a>
+
+    <!-- CENTER NAVIGATION LINKS (5 OPTIONS) -->
+    <nav class="desktop-nav" aria-label="Primary Navigation">
+      <ul class="nav-list">
+        <li>
+          <a
+            href="#hero"
+            (click)="scrollToSection($event, 'hero')"
+            class="nav-link"
+            [class.active]="activeSection() === 'hero'"
+          >
+            Home
+          </a>
+        </li>
+        <li>
+          <a
+            href="#community"
+            (click)="scrollToSection($event, 'community')"
+            class="nav-link"
+            [class.active]="activeSection() === 'community'"
+          >
+            Community
+          </a>
+        </li>
+        <li>
+          <a
+            href="#ai-planner"
+            (click)="scrollToSection($event, 'ai-planner')"
+            class="nav-link"
+            [class.active]="activeSection() === 'ai-planner'"
+          >
+            AI Trip Planner
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/contact"
+            (click)="onContactUs($event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'contact'"
+          >
+            Contact Us
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/about"
+            (click)="onAbout($event)"
+            class="nav-link"
+            [class.active]="activeSection() === 'about'"
+          >
+            About
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- RIGHT ACTION ITEMS -->
+    <div class="nav-actions">
+      <!-- LOGIN BUTTON (OPENS UNIFIED AUTH MODAL) -->
+      <button
+        type="button"
+        class="btn btn-login"
+        (click)="openAuthModal('login', $event)"
+        aria-label="Log in to your account"
+      >
+        Login
+      </button>
+
+      <!-- REGISTER BUTTON (OPENS UNIFIED AUTH MODAL) -->
+      <button
+        type="button"
+        class="btn btn-register"
+        (click)="openAuthModal('register', $event)"
+        aria-label="Create a new account"
+      >
+        Register
+      </button>
+
+      <!-- MOBILE HAMBURGER BUTTON -->
+      <button
+        type="button"
+        class="mobile-toggle-btn"
+        [attr.aria-expanded]="isMobileMenuOpen()"
+        aria-label="Toggle navigation menu"
+        (click)="toggleMobileMenu()"
+      >
+        <span class="hamburger-bar" [class.open]="isMobileMenuOpen()"></span>
+        <span class="hamburger-bar" [class.open]="isMobileMenuOpen()"></span>
+        <span class="hamburger-bar" [class.open]="isMobileMenuOpen()"></span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- MOBILE MENU DRAWER & BACKDROP -->
+  @if (isMobileMenuOpen()) {
+    <div class="mobile-backdrop" (click)="closeMobileMenu()" aria-hidden="true"></div>
+  }
+
+  <div
+    class="mobile-drawer"
+    [class.open]="isMobileMenuOpen()"
+    role="dialog"
+    aria-label="Mobile Navigation"
+    [attr.aria-hidden]="!isMobileMenuOpen()"
+  >
+    <div class="mobile-drawer-header">
+      <img
+        src="/images/ceylongo-blue-logo.png"
+        alt="CeylonGo"
+        class="mobile-drawer-logo"
+        width="100"
+        height="34"
+      />
+      <button
+        type="button"
+        class="mobile-close-btn"
+        aria-label="Close navigation menu"
+        (click)="closeMobileMenu()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Mobile Primary Navigation">
+      <ul class="mobile-nav-list">
+        <li>
+          <a href="#hero" (click)="scrollToSection($event, 'hero')" class="mobile-nav-link">
+            Home
+          </a>
+        </li>
+        <li>
+          <a href="#community" (click)="scrollToSection($event, 'community')" class="mobile-nav-link">
+            Community
+          </a>
+        </li>
+        <li>
+          <a href="#ai-planner" (click)="scrollToSection($event, 'ai-planner')" class="mobile-nav-link">
+            AI Trip Planner
+          </a>
+        </li>
+        <li>
+          <a routerLink="/contact" (click)="onContactUs($event)" class="mobile-nav-link">
+            Contact Us
+          </a>
+        </li>
+        <li>
+          <a routerLink="/about" (click)="onAbout($event)" class="mobile-nav-link">
+            About
+          </a>
+        </li>
+      </ul>
+
+      <div class="mobile-actions">
+        <button
+          type="button"
+          (click)="openAuthModal('login', $event)"
+          class="btn btn-login btn-block"
+        >
+          Login
+        </button>
+        <button
+          type="button"
+          (click)="openAuthModal('register', $event)"
+          class="btn btn-register btn-block"
+        >
+          Register
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- TOAST FEEDBACK FOR CONTACT US -->
+  @if (infoToast(); as msg) {
+    <div class="navbar-toast" role="status" aria-live="polite">
+      <span class="toast-dot" aria-hidden="true"></span>
+      <span>{{ msg }}</span>
+    </div>
+  }
+</header>

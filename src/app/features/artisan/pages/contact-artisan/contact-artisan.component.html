@@ -1,0 +1,155 @@
+<div class="contact-page-wrapper">
+  <header class="top-nav-bar">
+    <div class="bar-inner">
+      <h1 class="page-title">Contact Artisan</h1>
+    </div>
+  </header>
+
+  <main class="content-container">
+    <div class="contact-card">
+      <!-- LOADING STATE -->
+      @if (isLoading()) {
+        <div class="skeleton-box" aria-busy="true">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      }
+
+      <!-- LOADED CONTENT -->
+      @if (!isLoading() && listing()) {
+        <div class="contact-layout-grid">
+          <!-- LEFT COLUMN: ARTISAN PROFILE SUMMARY -->
+          <aside class="artisan-summary-col">
+            <div class="artisan-mini-profile">
+              <div class="avatar-box">
+                <img
+                  [src]="displayAvatar()"
+                  [alt]="listing()!.title"
+                  (error)="onImageError($event)"
+                  class="avatar-img"
+                />
+              </div>
+              <div class="mini-info">
+                <div class="name-badge-row">
+                  <h2 class="artisan-name">{{ listing()!.title }}</h2>
+                  @if (listing()!.is_verified) {
+                    <app-verified-badge [size]="18" />
+                  }
+                </div>
+                <p class="artisan-location">
+                  {{ listing()!.city || listing()!.district }}, Sri Lanka
+                </p>
+                @if (listing()!.craft_category) {
+                  <span class="craft-category-badge">{{ listing()!.craft_category }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="quick-info-list">
+              <div class="info-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>Mon - Sat: 9:00 AM - 6:00 PM</span>
+              </div>
+              @if (listing()!.phone) {
+                <div class="info-row">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>{{ listing()!.phone }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- DIRECT CONTACT ACTIONS -->
+            <div class="direct-contact-section">
+              <span class="direct-title">Direct Contact</span>
+              <div class="direct-contact-grid">
+                <!-- WHATSAPP BUTTON -->
+                <button
+                  type="button"
+                  class="contact-action-btn whatsapp-btn"
+                  [disabled]="!hasWhatsApp()"
+                  (click)="openWhatsApp()"
+                  title="Continue to WhatsApp"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c4.55 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84a8.19 8.19 0 0 1-5.83 2.41c-1.47 0-2.93-.39-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.25-4.38c0-4.54 3.7-8.24 8.25-8.24M8.53 7.33c-.2-.43-.4-.44-.59-.45h-.5c-.18 0-.46.07-.7.33-.24.27-.92.9-.92 2.2 0 1.3.94 2.56 1.07 2.74.13.18 1.83 2.87 4.51 3.93 2.22.88 2.68.71 3.16.66.49-.04 1.57-.64 1.79-1.26.22-.63.22-1.16.16-1.27-.07-.12-.24-.18-.51-.31-.27-.14-1.57-.78-1.81-.87-.24-.09-.42-.13-.6.13-.18.27-.69.87-.85 1.05-.16.18-.31.2-.58.07-.27-.14-1.14-.42-2.17-1.34-.8-.72-1.34-1.6-1.5-1.87-.16-.27-.02-.42.12-.55.12-.12.27-.31.4-.47.14-.16.18-.27.27-.45.09-.18.04-.34-.02-.47-.07-.13-.59-1.46-.83-1.99" />
+                  </svg>
+                  <span>WhatsApp</span>
+                </button>
+
+                <!-- CALL BUTTON -->
+                <button
+                  type="button"
+                  class="contact-action-btn call-btn"
+                  [disabled]="!hasPhone()"
+                  (click)="callPhone()"
+                  title="Call Phone Number"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1255B5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>Call</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- RIGHT COLUMN: MESSAGE FORM -->
+          <section class="contact-form-col">
+            <h3 class="form-title">Send a Message</h3>
+            <p class="form-subtitle">Inquire about products, custom handcrafted orders, or workshop visits.</p>
+
+            <!-- PRODUCT INQUIRY CHIP (IF PRODUCT CONTEXT PRESENT) -->
+            @if (product()) {
+              <div class="product-inquiry-chip">
+                <span class="chip-label">Product Inquiry:</span>
+                <span class="chip-title">{{ product()!.title }}</span>
+                <span class="chip-qty">Qty: {{ inquiryQty() }}</span>
+              </div>
+            }
+
+            <!-- NOTICE BANNER -->
+            @if (infoBanner()) {
+              <div class="info-alert" role="status">
+                <span>{{ infoBanner() }}</span>
+              </div>
+            }
+
+            <!-- MESSAGE FORM -->
+            <form class="message-form" (ngSubmit)="onSendMessage()">
+              <div class="input-group">
+                <label for="messageTextarea" class="input-label">Your Inquiry</label>
+                <textarea
+                  id="messageTextarea"
+                  rows="5"
+                  [(ngModel)]="messageText"
+                  name="message"
+                  class="message-textarea"
+                  placeholder="Describe what you are looking for (e.g., custom dimensions, material details, bulk orders, or workshop visit date)..."
+                  maxlength="2000"
+                ></textarea>
+              </div>
+
+              @if (validationError()) {
+                <p class="error-text" role="alert">{{ validationError() }}</p>
+              }
+
+              <!-- PRIMARY SEND MESSAGE BUTTON -->
+              <button type="submit" class="send-message-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                <span>Send Message</span>
+              </button>
+            </form>
+          </section>
+        </div>
+      }
+    </div>
+  </main>
+</div>

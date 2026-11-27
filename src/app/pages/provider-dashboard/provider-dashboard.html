@@ -1,0 +1,80 @@
+<section class="account-page">
+  <header class="section-heading">
+    <div><h1>Provider Dashboard</h1><p>{{ business() || 'Manage your services, bookings and wallet.' }}</p></div>
+    @if (account.avatar(); as image) { <div class="avatar"><img [src]="image" alt="Provider profile photo"></div> }
+  </header>
+  <div class="actions" aria-label="Quick actions">
+    <a class="action-link" routerLink="/provider/services/new" [queryParams]="previewParams()">Add New Service</a>
+    <a class="secondary" routerLink="/provider/listings" [queryParams]="previewParams()">Manage Services</a>
+    <a class="secondary" routerLink="/provider/bookings" [queryParams]="previewParams()">View Bookings</a>
+    <a class="secondary" routerLink="/provider/wallet" [queryParams]="previewMode() ? previewParams() : { topUp: 'true' }">Top Up Wallet</a>
+  </div>
+  @if (previewMode()) {
+    <article class="card"><h2>Preview Mode</h2>
+      <p>{{ previewStats.total_listings }} sample services &middot; {{ previewStats.total_bookings }} sample bookings</p>
+      @for (booking of previewBookings; track booking.id) {
+        <p>{{ booking.listing_title }} &middot; {{ booking.status | titlecase }}</p>
+      }
+    </article>
+  }
+  @if (loading()) { <div class="skeleton" role="status" aria-label="Loading dashboard"></div> }
+  @if (error()) {
+    <article class="card"><p class="message error" role="alert">{{ error() }}</p>
+      <div><button type="button" [disabled]="loading()" (click)="refresh()">Retry dashboard</button></div>
+    </article>
+  }
+  @if (data(); as dashboard) {
+    <article class="card">
+      <div class="section-heading"><h2>Service overview</h2><a routerLink="/provider/listings" [queryParams]="previewParams()">View services</a></div>
+      <dl class="metrics">
+        @for (metric of serviceMetrics; track metric[0]) {
+          <div class="metric"><dt>{{ metric[1] }}</dt><dd><strong>{{ dashboard[metric[0]] }}</strong></dd></div>
+        }
+      </dl>
+    </article>
+    <article class="card">
+      <h2>Bookings overview</h2>
+      <dl class="metrics">
+        @for (metric of bookingMetrics; track metric[0]) {
+          <div class="metric"><dt>{{ metric[1] }}</dt><dd><strong>{{ dashboard[metric[0]] }}</strong></dd></div>
+        }
+      </dl>
+    </article>
+    <article class="card">
+      <div class="section-heading"><h2>Wallet</h2><a routerLink="/provider/wallet" [queryParams]="previewParams()">View wallet</a></div>
+      <dl class="metrics">
+        <div class="metric"><dt>Wallet balance</dt><dd><strong>{{ formatLkr(dashboard.wallet_balance) }}</strong></dd></div>
+        <div class="metric"><dt>Free bookings remaining</dt><dd><strong>{{ dashboard.free_bookings_remaining }}</strong></dd></div>
+        <div class="metric"><dt>Net commission paid</dt><dd><strong>{{ formatLkr(dashboard.net_commission_paid) }}</strong></dd></div>
+      </dl>
+    </article>
+    @for (list of [{ title: 'Recent bookings', rows: dashboard.recent_bookings }, { title: 'Upcoming bookings', rows: dashboard.upcoming_bookings }]; track list.title) {
+      <article class="card">
+        <h2>{{ list.title }}</h2>
+        @if (!list.rows.length) { <p>No {{ list.title.toLowerCase() }} to show.</p> }
+        @else {
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Reference</th><th>Traveler</th><th>Service</th><th>Start date</th>
+                <th>Total</th><th>Booking status</th><th>Payment status</th><th>Action</th></tr></thead>
+              <tbody>
+              @for (booking of list.rows; track booking.id) {
+                <tr>
+                  <td>{{ booking.booking_reference || '#' + booking.id }}</td>
+                  <td>{{ booking.traveler_contact?.full_name || contacts()[booking.id]?.full_name || '—' }}</td>
+                  <td>{{ titles()[booking.listing_id] || 'Service #' + booking.listing_id }}</td>
+                  <td>{{ booking.starts_at | date:'mediumDate':'+0530' }}</td>
+                  <td>{{ formatLkr(booking.total_amount) }}</td>
+                  <td><span class="badge">{{ booking.status | titlecase }}</span></td>
+                  <td>{{ paymentStatus(booking) | titlecase }}</td>
+                  <td><a routerLink="/provider/bookings" [queryParams]="previewMode() ? { bookingId: booking.id, preview: 'true' } : { bookingId: booking.id }">View details</a></td>
+                </tr>
+              }
+              </tbody>
+            </table>
+          </div>
+        }
+      </article>
+    }
+  }
+</section>

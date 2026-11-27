@@ -1,0 +1,281 @@
+import {
+  provideHttpClient,
+} from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+import { environment } from '../../../environments/environment';
+import {
+  CheckEmailResponse,
+  ForgotPasswordResponse,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  User,
+  VerifyResetTokenResponse,
+} from '../models/auth.models';
+import { AuthService } from './auth.service';
+
+describe('AuthService', () => {
+  let service: AuthService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    service = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
+    service.logout();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+    service.logout();
+  });
+
+  it('should check email registration status via /auth/check-email', () => {
+    const mockRes: CheckEmailResponse = {
+      email: 'traveler@ceylongo.lk',
+      is_registered: true,
+    };
+
+    service.checkEmail('Traveler@CeylonGo.LK').subscribe((res) => {
+      expect(res.email).toBe('traveler@ceylongo.lk');
+      expect(res.is_registered).toBe(true);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/check-email`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'traveler@ceylongo.lk' });
+    req.flush(mockRes);
+  });
+
+  it('should register a new traveler', () => {
+    const payload: RegisterRequest = {
+      full_name: 'Test Traveler',
+      email: 'traveler@ceylongo.lk',
+      password: 'Password123!',
+    };
+
+    const mockResponse: RegisterResponse = {
+      message: 'Verification code sent',
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-mock-123',
+      expires_in: 300,
+      resend_after: 60,
+      user: {
+        id: 1,
+        full_name: 'Test Traveler',
+        email: 'traveler@ceylongo.lk',
+        role: 'traveler',
+        is_active: true,
+        created_at: '2026-11-10T00:00:00',
+      },
+    };
+
+    service.register(payload).subscribe((res) => {
+      expect(res.message).toBe('Verification code sent');
+      expect(res.registration_id).toBe('reg-mock-123');
+      expect(res.user?.email).toBe('traveler@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/register`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush(mockResponse);
+  });
+
+  it('should log in and store token in memory', () => {
+    const credentials: LoginRequest = {
+      email: 'traveler@ceylongo.lk',
+      password: 'Password123!',
+    };
+
+    const mockResponse: LoginResponse = {
+      access_token: 'fake-jwt-token-12345',
+      token_type: 'bearer',
+      user: {
+        id: 1,
+        full_name: 'Test Traveler',
+        email: 'traveler@ceylongo.lk',
+        role: 'traveler',
+        is_active: true,
+        created_at: '2026-11-10T00:00:00',
+      },
+    };
+
+    service.login(credentials).subscribe((res) => {
+      expect(res.access_token).toBe('fake-jwt-token-12345');
+      expect(service.getToken()).toBe('fake-jwt-token-12345');
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.currentUser()?.full_name).toBe('Test Traveler');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/login`);
+    expect(req.request.method).toBe('POST');
+    req.flush(mockResponse);
+  });
+
+  it('should authenticate with Google ID token and store session', () => {
+    const mockResponse: LoginResponse = {
+      access_token: 'fake-google-jwt-token',
+      token_type: 'bearer',
+      user: {
+        id: 2,
+        full_name: 'Google Traveler',
+        email: 'google@ceylongo.lk',
+        role: 'traveler',
+        is_active: true,
+        created_at: '2026-11-10T00:00:00',
+      },
+    };
+
+    service.loginWithGoogle('mock_google_id_token_xyz').subscribe((res) => {
+      expect(res.access_token).toBe('fake-google-jwt-token');
+      expect(service.getToken()).toBe('fake-google-jwt-token');
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.currentUser()?.email).toBe('google@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/google`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ id_token: 'mock_google_id_token_xyz' });
+    req.flush(mockResponse);
+  });
+
+  it('should request forgot password email via /auth/forgot-password', () => {
+    const mockRes: ForgotPasswordResponse = {
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    };
+
+    service.forgotPassword('Reset@CeylonGo.LK').subscribe((res) => {
+      expect(res.message).toContain('password reset link has been sent');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/forgot-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'reset@ceylongo.lk' });
+    req.flush(mockRes);
+  });
+
+  it('should verify password reset token via /auth/verify-reset-token', () => {
+    const mockRes: VerifyResetTokenResponse = {
+      valid: true,
+      email: 'traveler@ceylongo.lk',
+      message: 'Password reset token is valid.',
+    };
+
+    service.verifyResetToken('valid_token_123').subscribe((res) => {
+      expect(res.valid).toBe(true);
+      expect(res.email).toBe('traveler@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(
+      `${environment.apiBaseUrl}/auth/verify-reset-token?token=valid_token_123`
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockRes);
+  });
+
+  it('should reset password via /auth/reset-password', () => {
+    const payload: ResetPasswordRequest = {
+      token: 'valid_token_123',
+      new_password: 'NewStrongPassword123!',
+    };
+
+    const mockRes: ResetPasswordResponse = {
+      message: 'Password has been reset successfully.',
+    };
+
+    service.resetPassword(payload).subscribe((res) => {
+      expect(res.message).toBe('Password has been reset successfully.');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/reset-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush(mockRes);
+  });
+
+  it('should fetch current user via /auth/me', () => {
+    const mockUser: User = {
+      id: 1,
+      full_name: 'Current Traveler',
+      email: 'me@ceylongo.lk',
+      role: 'traveler',
+      is_active: true,
+      created_at: '2026-11-10T00:00:00',
+    };
+
+    service.getCurrentUser().subscribe((user) => {
+      expect(user.id).toBe(1);
+      expect(user.full_name).toBe('Current Traveler');
+      expect(service.currentUser()?.email).toBe('me@ceylongo.lk');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/me`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockUser);
+  });
+
+  it('should verify email with registration_id and otp via /auth/verify-email', () => {
+    const payload = {
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-123',
+      otp: '012345',
+    };
+
+    service.verifyEmail(payload).subscribe((res) => {
+      expect(res.message).toBe('Email verified. You can now log in.');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/verify-email`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ message: 'Email verified. You can now log in.' });
+  });
+
+  it('should resend email OTP with registration_id via /auth/resend-email-otp', () => {
+    const payload = {
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-123',
+    };
+
+    service.resendEmailOtp(payload).subscribe((res) => {
+      expect(res.registration_id).toBe('reg-id-456');
+      expect(res.resend_after).toBe(60);
+      expect(res.expires_in).toBe(300);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/resend-email-otp`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({
+      message: 'Verification code sent',
+      email: 'traveler@ceylongo.lk',
+      registration_id: 'reg-id-456',
+      expires_in: 300,
+      resend_after: 60,
+    });
+  });
+
+  it('should clear token and user on logout', () => {
+    service.logout();
+    expect(service.getToken()).toBeNull();
+    expect(service.currentUser()).toBeNull();
+    expect(service.isAuthenticated()).toBe(false);
+  });
+});

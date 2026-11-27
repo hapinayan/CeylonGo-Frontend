@@ -1,0 +1,209 @@
+<div class="availability-shell">
+  <header class="page-header">
+    <div>
+      <a routerLink="/provider/listings" [queryParams]="previewQueryParams()" class="back-link">← Back to Manage Listings</a>
+      <h1 class="page-title">
+        Adventure &amp; Activity Availability
+        @if (isPreview()) {
+          <span class="status-pill" style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d;margin-left:0.5rem;">Preview Mode · Sample</span>
+        }
+      </h1>
+      <p class="page-subtitle">
+        Manage departure dates, time slots, participant capacity, and routine per-participant pricing.
+      </p>
+    </div>
+
+    <a routerLink="/provider/activities/new" [queryParams]="previewQueryParams()" class="btn-primary">+ Create Activity</a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="success-banner">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="state-card">Loading adventure activities...</div>
+  } @else if (activities().length === 0) {
+    <div class="state-card">
+      <h3>No Adventure &amp; Activities Found</h3>
+      <p>Create an adventure listing first to configure time slots and capacities.</p>
+      <a routerLink="/provider/activities/new" class="btn-primary">Start Activity Wizard</a>
+    </div>
+  } @else {
+    <!-- Activity Selector & Routine Pricing Bar -->
+    <section class="selector-card">
+      <div class="selector-grid">
+        <div class="form-group">
+          <label for="activitySelector" class="form-label">Select Activity</label>
+          <select
+            id="activitySelector"
+            class="form-input"
+            [ngModel]="selectedListingId()"
+            (ngModelChange)="selectListing($event)"
+          >
+            @for (item of activities(); track item.listing.id) {
+              <option [ngValue]="item.listing.id">
+                {{ item.listing.title || ('Draft #' + item.listing.id) }} ({{ categoryLabel(item) }})
+              </option>
+            }
+          </select>
+        </div>
+
+        @if (selectedActivity(); as act) {
+          <div class="activity-meta-pill">
+            <span>Status: <strong>{{ act.verification_status | titlecase }}</strong></span>
+            <span>Group Size: <strong>{{ minParticipants() }}–{{ maxParticipants() }} pax</strong></span>
+          </div>
+
+          <div class="routine-price-box">
+            <label for="routinePriceInput" class="form-label">LKR / Participant (Routine Update)</label>
+            <div class="price-input-row">
+              <input
+                id="routinePriceInput"
+                type="number"
+                class="form-input"
+                [(ngModel)]="routinePrice"
+                min="1"
+              />
+              <button
+                type="button"
+                class="btn-outline"
+                (click)="saveRoutinePrice()"
+                [disabled]="isSavingPrice || act.verification_status === 'suspended' || isPreview()"
+              >
+                {{ isSavingPrice ? 'Updating...' : 'Update Price' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      <p class="policy-note">
+        Routine price and slot availability updates preserve existing approval status. Editing titles, descriptions, location, safety notes, or photos triggers admin re-verification.
+      </p>
+    </section>
+
+    <!-- Add / Edit Slot Card -->
+    <section class="editor-card">
+      <h2 class="section-heading">
+        {{ editingSlotId !== null ? 'Edit Time Slot' : 'Add New Time Slot' }}
+      </h2>
+
+      <div class="slot-form-grid">
+        <div class="form-group">
+          <label for="availDate" class="form-label">Date</label>
+          <input id="availDate" type="date" class="form-input" [(ngModel)]="slotDate" />
+        </div>
+        <div class="form-group">
+          <label for="availStart" class="form-label">Start Time</label>
+          <input id="availStart" type="time" class="form-input" [(ngModel)]="slotStartTime" />
+        </div>
+        <div class="form-group">
+          <label for="availEnd" class="form-label">End Time</label>
+          <input id="availEnd" type="time" class="form-input" [(ngModel)]="slotEndTime" />
+        </div>
+        <div class="form-group">
+          <label for="availCap" class="form-label">Capacity ({{ minParticipants() }}–{{ maxParticipants() }})</label>
+          <input
+            id="availCap"
+            type="number"
+            class="form-input"
+            [(ngModel)]="slotCapacity"
+            [min]="minParticipants()"
+            [max]="maxParticipants()"
+          />
+        </div>
+        <div class="form-group checkbox-wrap">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="slotIsOpen" />
+            <span>Open for booking</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="saveSlot()"
+            [disabled]="isSaving() || isPreview()"
+          >
+            {{ editingSlotId !== null ? 'Save Changes' : '+ Add Slot' }}
+          </button>
+          @if (editingSlotId !== null) {
+            <button type="button" class="btn-outline" (click)="cancelEdit()">Cancel</button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Slot Schedule Table -->
+    <section class="slots-card">
+      <div class="slots-header">
+        <div>
+          <h2 class="section-heading">Scheduled Slots ({{ filteredSlots().length }})</h2>
+          <p class="subtext">Shows configured capacity and remaining seats based on active bookings.</p>
+        </div>
+
+        <div class="date-filter-wrap">
+          <label for="dateFilter" class="form-label">Filter Date:</label>
+          <input
+            id="dateFilter"
+            type="date"
+            class="form-input"
+            [ngModel]="filterDate()"
+            (ngModelChange)="filterDate.set($event)"
+          />
+          @if (filterDate()) {
+            <button type="button" class="btn-clear" (click)="filterDate.set('')">Show All</button>
+          }
+        </div>
+      </div>
+
+      @if (isLoadingSlots()) {
+        <div class="state-card">Loading slots...</div>
+      } @else if (filteredSlots().length === 0) {
+        <div class="empty-slots">No availability slots match this selection. Add a slot above.</div>
+      } @else {
+        <div class="table-wrap">
+          <table class="slots-table">
+            <thead>
+              <tr>
+                <th>Start (Sri Lanka Time)</th>
+                <th>End (Sri Lanka Time)</th>
+                <th>Capacity</th>
+                <th>Remaining</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (slot of filteredSlots(); track slot.id) {
+                <tr>
+                  <td>{{ formatDateTime(slot.starts_at) }}</td>
+                  <td>{{ formatDateTime(slot.ends_at) }}</td>
+                  <td>{{ slot.capacity }} pax</td>
+                  <td>
+                    <span class="remaining-pill" [class.full]="remainingCapacity(slot) === 0">
+                      {{ remainingCapacity(slot) }} / {{ slot.capacity }} left
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-pill" [class.open]="slot.is_open" [class.blocked]="!slot.is_open">
+                      {{ slot.is_open ? 'Open' : 'Blocked' }}
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <button type="button" class="link-btn" (click)="startEditSlot(slot)" [disabled]="isPreview()">Edit</button>
+                    <button type="button" class="link-btn" (click)="toggleSlotOpen(slot)" [disabled]="isPreview()">
+                      {{ slot.is_open ? 'Block' : 'Unblock' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

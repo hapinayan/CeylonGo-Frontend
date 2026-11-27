@@ -1,0 +1,38 @@
+<article class="destination-card" [attr.aria-label]="destination().name + ' - ' + destination().description">
+  <div class="card-image-wrap">
+    <img
+      [src]="destination().image"
+      [alt]="destination().name + ' landmark in Sri Lanka'"
+      class="card-image"
+      loading="lazy"
+    />
+  </div>
+
+  <div class="card-info-panel">
+    <div class="card-text-block">
+      <h3 class="destination-name">{{ destination().name }}</h3>
+      <p class="destination-desc">{{ destination().description }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="card-arrow-btn"
+      [attr.aria-label]="'Explore ' + destination().name"
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </button>
+  </div>
+</article>

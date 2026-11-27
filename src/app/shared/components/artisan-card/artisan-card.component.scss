@@ -1,0 +1,179 @@
+.artisan-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(8, 43, 92, 0.04);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(8, 43, 92, 0.08);
+    border-color: #bfdbfe;
+
+    .card-img {
+      transform: scale(1.03);
+    }
+  }
+}
+
+.card-image-box {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 185px;
+  overflow: hidden;
+  background: #edf5ff;
+
+  .card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  .category-chip {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #082b5c;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.26rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid #dbeafe;
+  }
+
+  .wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(8, 43, 92, 0.12);
+    transition: transform 0.15s ease, background 0.15s ease;
+    z-index: 2;
+
+    svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    &:hover {
+      transform: scale(1.06);
+      background: #ffffff;
+    }
+
+    &.active {
+      background: #edf5ff;
+      border-color: #93c5fd;
+    }
+  }
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0.95rem 1rem 1rem;
+  gap: 0.45rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.card-title-link {
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #082b5c;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.card-desc {
+  margin: 0.15rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footer-row {
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.price-text {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #082b5c;
+}
+
+.category-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.view-details-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.44rem 0.85rem;
+  border-radius: 8px;
+  background: #0066ff;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: #0052cc;
+  }
+}

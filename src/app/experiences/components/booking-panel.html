@@ -1,0 +1,144 @@
+<section class="traveler-workflow">
+  <h2>Check availability</h2>
+
+  @if (!hasScheduleSupport()) {
+    <p class="workflow-state" role="status">
+      Online booking is unavailable because schedule configuration is incomplete for this activity.
+    </p>
+  } @else {
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+
+    <form class="workflow-form" [formGroup]="form" (ngSubmit)="continueToBooking()">
+      <label>
+        <span class="workflow-field-heading">
+          <app-experience-icon name="calendar" /> Date in Sri Lanka
+        </span>
+        <input
+          type="date"
+          formControlName="date"
+          [min]="firstDay"
+          [max]="lastDay"
+          #dateInput
+          (change)="chooseDay(dateInput.value)"
+        />
+      </label>
+
+      <label>
+        <span class="workflow-field-heading">
+          <app-experience-icon name="group" />
+          Participants ({{ minParticipants() }}–{{ maxParticipants() }})
+        </span>
+        <div class="quantity-stepper">
+          <button
+            type="button"
+            class="stepper-btn btn-minus"
+            (click)="decrementParticipants()"
+            [disabled]="participants() <= minParticipants()"
+            aria-label="Decrease travelers"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            formControlName="participants"
+            [min]="minParticipants()"
+            [max]="maxParticipants()"
+            step="1"
+            #partInput
+            (input)="onParticipantsInput(partInput.value)"
+          />
+          <button
+            type="button"
+            class="stepper-btn btn-plus"
+            (click)="incrementParticipants()"
+            [disabled]="participants() >= maxParticipants()"
+            aria-label="Increase travelers"
+          >
+            +
+          </button>
+        </div>
+      </label>
+
+      @if (listing().activity?.minimum_age != null) {
+        <p class="slot-age-note">Minimum age: {{ listing().activity!.minimum_age }}+ years</p>
+      }
+
+      @if (slotsState(); as state) {
+        @if (state.status === 'loading') {
+          <p class="workflow-state" role="status">Loading available slots…</p>
+        } @else if (state.status === 'error') {
+          <div class="workflow-state" role="alert">
+            <p>Availability could not be loaded.</p>
+            <button type="button" class="outline-control" (click)="refreshSlots()">Retry</button>
+          </div>
+        } @else if (state.status === 'ready') {
+          @if (!state.data.length) {
+            <p class="workflow-state" role="status">No slots are scheduled for this date.</p>
+          } @else {
+            <label>
+              <span class="workflow-field-heading">
+                <app-experience-icon name="clock" /> Time slot
+              </span>
+              <select
+                [value]="selectedSlotId() ?? ''"
+                #slotSelect
+                (change)="onSlotSelect(slotSelect.value)"
+              >
+                <option value="">Choose a time slot</option>
+                @for (slot of state.data; track slot.id) {
+                  <option [value]="slot.id" [disabled]="!selectable(slot)">
+                    {{ slot.starts_at | date:'shortTime':'GMT+0530' }}–{{ slot.ends_at | date:'shortTime':'GMT+0530' }}
+                    ·
+                    @if (selectable(slot)) {
+                      {{ slot.remaining_capacity }} places left ({{ slot.currency }} {{ slot.total_amount | number:'1.2-2' }})
+                    } @else if (slot.remaining_capacity === 0) {
+                      Full / Unavailable
+                    } @else {
+                      Unavailable ({{ slot.remaining_capacity }} left)
+                    }
+                  </option>
+                }
+              </select>
+            </label>
+
+            @if (!hasAvailableSlot()) {
+              <p class="form-error" role="status">
+                No slots have enough remaining capacity for {{ participants() }}
+                {{ participants() === 1 ? 'participant' : 'participants' }} on this date.
+              </p>
+            }
+          }
+        }
+      }
+
+      @if (day()) {
+        <button type="button" class="outline-control" (click)="refreshSlots()">
+          Refresh availability
+        </button>
+      }
+
+      @if (activeSlot(); as slot) {
+        @if (selectable(slot)) {
+          <div class="workflow-estimate">
+            <span>Server-calculated total</span>
+            <strong>{{ slot.currency }} {{ slot.total_amount | number:'1.2-2' }}</strong>
+            <small>
+              For {{ participants() }} {{ participants() === 1 ? 'participant' : 'participants' }} ·
+              {{ slot.remaining_capacity }} places remaining in this slot
+            </small>
+          </div>
+        }
+      }
+
+      <button
+        class="outline-control workflow-primary"
+        type="submit"
+        [disabled]="!canContinue()"
+      >
+        Continue to booking
+      </button>
+    </form>
+  }
+</section>

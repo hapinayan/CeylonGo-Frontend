@@ -1,0 +1,95 @@
+<div class="catalog-shell">
+  <!-- Page Header -->
+  <div class="catalog-header">
+    <div class="header-pre">
+      <a routerLink="/provider/dashboard" [queryParams]="previewQueryParams()" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Back to Dashboard</span>
+      </a>
+      <span class="badge">Add New Service</span>
+      @if (isPreview()) {
+        <span class="badge">Preview Mode · Sample</span>
+      }
+    </div>
+    <h1 class="catalog-title">Choose Service Category to List</h1>
+    <p class="catalog-subtitle">
+      Select the type of tourism service or accommodation you wish to offer on CeylonGo. All listings undergo administrative verification before going live.
+    </p>
+  </div>
+
+  <!-- Service Options Grid -->
+  <div class="services-grid">
+    @for (s of services; track s.id) {
+      <div class="service-card" [class.featured]="s.id === 'homestay'">
+        @if (s.id === 'homestay') {
+          <div class="featured-badge">Featured & Complete</div>
+        }
+
+        <div class="card-top">
+          <div class="category-pill">{{ s.category }}</div>
+          <span class="status-indicator">{{ s.statusBadge }}</span>
+        </div>
+
+        <div class="card-icon-banner">
+          @if (s.id === 'homestay') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          } @else if (s.id === 'adventure') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" />
+            </svg>
+          } @else if (s.id === 'guide') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          } @else if (s.id === 'rentals') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="5.5" cy="17.5" r="3.5" />
+              <circle cx="18.5" cy="17.5" r="3.5" />
+              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+          }
+        </div>
+
+        <h3 class="service-title">{{ s.title }}</h3>
+        <p class="service-desc">{{ s.description }}</p>
+
+        <div class="features-list">
+          @for (f of s.features; track f) {
+            <div class="feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>{{ f }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="card-action">
+          <a
+            [routerLink]="s.route"
+            [queryParams]="previewQueryParams()"
+            class="btn-start"
+            [class.btn-featured]="s.id === 'homestay' || s.id === 'adventure' || s.id === 'guide' || s.id === 'rentals' || s.id === 'artisan'"
+          >
+            <span>{{ s.id === 'homestay' || s.id === 'adventure' || s.id === 'guide' || s.id === 'rentals' || s.id === 'artisan' ? 'Start 6-Step Wizard' : 'Manage Category' }}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    }
+  </div>
+</div>

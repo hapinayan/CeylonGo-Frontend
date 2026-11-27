@@ -1,0 +1,185 @@
+<app-traveler-account-layout
+  [account]="account()"
+  [preview]="preview()"
+  active="wishlist"
+  contentLabel="Traveler wishlist"
+>
+  <app-account-page-header
+    title="My Wishlist"
+    description="Keep your favourite stays and experiences in one place."
+    headingId="wishlist-heading"
+  >
+    @if (owner()) {
+      <span class="saved-count-pill" aria-live="polite">
+        {{ count() }} saved {{ count() === 1 ? 'item' : 'items' }}
+      </span>
+    }
+  </app-account-page-header>
+
+  @if (!owner()) {
+    <div class="state-banner warning" role="status">
+      Sign in with an active traveler account to see your saved items.
+    </div>
+  } @else {
+    <div class="wishlist-controls-card">
+      <div class="category-pills" role="tablist" aria-label="Filter wishlist by category">
+        <button
+          type="button"
+          class="cat-pill"
+          [class.active]="category() === 'all'"
+          (click)="updateQuery('category', 'all')"
+        >
+          All
+        </button>
+        @for (kind of kinds; track kind) {
+          <button
+            type="button"
+            class="cat-pill"
+            [class.active]="category() === kind"
+            (click)="updateQuery('category', kind)"
+          >
+            {{ labels[kind] }}
+          </button>
+        }
+      </div>
+
+      <div class="search-sort-row">
+        <form class="search-form" role="search" (submit)="$event.preventDefault(); updateQuery('q', searchField.value)">
+          <label class="visually-hidden" for="wishlist-search">Search saved places</label>
+          <input
+            id="wishlist-search"
+            #searchField
+            type="search"
+            maxlength="120"
+            [value]="search()"
+            placeholder="Search saved places..."
+          />
+          <button type="submit" class="search-btn" aria-label="Search wishlist">
+            <app-experience-icon name="search" />
+          </button>
+        </form>
+
+        <select
+          aria-label="Sort saved items"
+          [value]="sort()"
+          (change)="updateQuery('sort', $any($event.target).value)"
+        >
+          <option value="recent">Recently saved</option>
+          <option value="oldest">Oldest saved</option>
+          <option value="price">Price: Low to High</option>
+        </select>
+      </div>
+    </div>
+
+    @for (section of sections(); track section.kind) {
+      @if (section.state === 'error') {
+        <div class="state-banner warning" role="status">
+          <span>{{ labels[section.kind] }} could not load right now.</span>
+          <button type="button" class="btn-retry" (click)="retry(section.kind)">
+            Retry {{ labels[section.kind] }}
+          </button>
+        </div>
+      }
+    }
+
+    @if (loading() && !visible().length) {
+      <app-account-loading-skeleton variant="grid" [count]="3" />
+    } @else if (visible().length > 0) {
+      <div class="wishlist-grid">
+        @for (item of visible(); track key(item)) {
+          <article class="wishlist-card">
+            <div class="card-media">
+              @if (item.image) {
+                <img
+                  [src]="item.image"
+                  [alt]="item.title"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  (error)="$any($event.target).hidden = true"
+                />
+              } @else {
+                <div class="media-fallback" aria-hidden="true">
+                  <app-experience-icon [name]="icons[item.kind]" />
+                </div>
+              }
+              <span class="card-cat-badge">{{ labels[item.kind] }}</span>
+              <button
+                type="button"
+                class="heart-remove-btn remove"
+                [disabled]="mutation(item)?.busy"
+                [attr.aria-label]="'Remove ' + item.title + ' from wishlist'"
+                [title]="mutation(item)?.busy ? 'Removing...' : 'Remove from wishlist'"
+                (click)="remove(item)"
+              >
+                <app-experience-icon name="heart" />
+                <span>{{ mutation(item)?.busy ? 'Removing…' : 'Remove' }}</span>
+              </button>
+            </div>
+
+            <div class="card-body">
+              <h2>{{ item.title }}</h2>
+              <p class="loc-row">
+                <app-experience-icon name="pin" />
+                <span>{{ item.location || 'Location unavailable' }}</span>
+              </p>
+
+              @if (item.rating != null) {
+                <p class="rating-row">
+                  <app-experience-icon name="star" />
+                  <span>{{ item.rating | number: '1.1-1' }}</span>
+                  @if (item.reviews != null) {
+                    <small>({{ item.reviews }} reviews)</small>
+                  }
+                </p>
+              }
+
+              <div class="card-footer">
+                <div class="price-col">
+                  @if (item.price != null && item.currency) {
+                    <strong>{{ item.currency }} {{ item.price | number: '1.0-2' }}</strong>
+                    @if (item.unit) {
+                      <span>/{{ item.unit }}</span>
+                    }
+                  } @else {
+                    <span class="muted-price">Price unavailable</span>
+                  }
+                </div>
+
+                @if (item.detail; as target) {
+                  <a class="btn-detail-link" [routerLink]="target" (click)="remember()">
+                    <span>{{ item.kind === 'artisan' ? 'View Business' : 'View Details' }}</span>
+                    <app-experience-icon name="next" />
+                  </a>
+                } @else {
+                  <span class="unavailable-note">Details unavailable</span>
+                }
+              </div>
+
+              @if (mutation(item) && !mutation(item)?.busy) {
+                <p class="mutation-error" role="status">Could not remove this item. Please try again.</p>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      @if (count() === 0 && !hasActiveFilters()) {
+        <app-account-empty-state
+          icon="heart"
+          heading="Your wishlist is empty"
+          description="Save the places and experiences you love to plan your next adventure."
+          actionLabel="Explore Experiences"
+          [actionRoute]="['/experiences']"
+        />
+      } @else {
+        <app-account-empty-state
+          icon="search"
+          heading="No saved places match your filters"
+          description="Try clearing your category filter or searching with another keyword."
+          actionLabel="Clear Filters"
+          (actionClicked)="clearFilters()"
+        />
+      }
+    }
+  }
+</app-traveler-account-layout>

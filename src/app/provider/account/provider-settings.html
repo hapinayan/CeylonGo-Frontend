@@ -1,0 +1,87 @@
+<section class="account-page">
+  <header><h1>Settings</h1><p>Manage your dashboard and password.</p></header>
+  @if (preview()) { <article class="card">Sign in with an approved provider account to change settings.</article> }
+  @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+  @if (notice()) { <p class="message success" role="status">{{ notice() }}</p> }
+  @if (loading()) { <div class="skeleton" role="status" aria-label="Loading settings"></div> }
+  @if (!preview()) {
+    <article class="card">
+      <h2>Account information</h2>
+      <dl class="details">
+        <div><dt>Name</dt><dd>{{ account.profile()?.full_name || '—' }}</dd></div>
+        <div><dt>Email address</dt><dd>{{ account.profile()?.email || '—' }}</dd></div>
+        <div><dt>Account type</dt><dd>Service provider</dd></div>
+      </dl>
+      <div><a routerLink="/provider/profile">View your profile</a></div>
+    </article>
+    <article class="card">
+      <h2>Dashboard preferences</h2>
+      @if (ready()) {
+        <form (submit)="$event.preventDefault(); save()">
+          <label>Bookings per dashboard list
+            <input type="number" min="1" max="20" step="1" [formControl]="limit" [readonly]="saving()">
+          </label>
+          <p>Choose a whole number from 1 to 20.</p>
+          <div><button type="submit" [disabled]="limit.invalid || !limit.dirty || saving()">
+            {{ saving() ? 'Saving…' : 'Save preference' }}
+          </button></div>
+        </form>
+      } @else if (!loading()) { <div><button type="button" (click)="load()">Retry settings</button></div> }
+    </article>
+    <article class="card">
+      <h2>Security</h2>
+      @if (!passwordOpen()) {
+        <div><button type="button" (click)="passwordOpen.set(true)">Change password</button></div>
+      } @else {
+        <p>Use 12 to 128 characters. You’ll need to sign in again after saving.</p>
+        @if (passwordError()) { <p class="message error" role="alert">{{ passwordError() }}</p> }
+        <form [formGroup]="password" (ngSubmit)="change()">
+          @for (field of fields; track field.key) {
+            <div>
+              <label [for]="field.key">{{ field.label }}</label>
+              <div class="password-row">
+                <input [id]="field.key" [type]="visibility()[field.key] ? 'text' : 'password'"
+                  [autocomplete]="field.autocomplete" [formControlName]="field.key" [readonly]="changing()" maxlength="128">
+                <button type="button" class="secondary" [attr.aria-label]="(visibility()[field.key] ? 'Hide ' : 'Show ') + field.label.toLowerCase()"
+                  [attr.aria-pressed]="!!visibility()[field.key]" (click)="toggle(field.key)">
+                  {{ visibility()[field.key] ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+            </div>
+          }
+          <div class="actions">
+            <button type="submit" [disabled]="password.invalid || changing()">{{ changing() ? 'Changing…' : 'Change Password' }}</button>
+            <button type="button" class="secondary" [disabled]="changing()" (click)="closePassword()">Cancel</button>
+          </div>
+        </form>
+      }
+      <div><a routerLink="/provider/forgot-password">Forgot your password?</a></div>
+    </article>
+    <article class="card" aria-labelledby="provider-notifications-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="provider-notifications-heading">Notifications</h2>
+          <p>Review available provider notification channels.</p>
+        </div>
+        <span class="badge">Backend Unavailable</span>
+      </div>
+      <p>
+        Interactive notification preference switches are not yet enabled for provider accounts. Security and password recovery notices remain active.
+      </p>
+      <div class="field-grid">
+        @for (pref of [
+          { key: 'booking', label: 'Booking updates', desc: 'New booking requests, cancellations, and completion reminders.' },
+          { key: 'wallet', label: 'Wallet updates', desc: 'Top-up confirmations, commission deductions, and refunds.' },
+          { key: 'verification', label: 'Service verification updates', desc: 'Listing approval, evidence requests, and review decisions.' },
+          { key: 'community', label: 'Community activity', desc: 'Likes and comments on your provider community posts.' }
+        ]; track pref.key) {
+          <label class="metric">
+            <input type="checkbox" disabled aria-disabled="true" />
+            <span><strong>{{ pref.label }}</strong></span>
+            <small>{{ pref.desc }} (Unavailable)</small>
+          </label>
+        }
+      </div>
+    </article>
+  }
+</section>

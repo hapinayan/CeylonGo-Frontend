@@ -1,0 +1,36 @@
+<div class="admin-app-layout">
+  <!-- Desktop / Persistent Sidebar -->
+  <app-admin-sidebar
+    class="desktop-sidebar"
+    [collapsed]="isSidebarCollapsed()"
+    (toggleCollapse)="toggleSidebar()"
+    (closeDrawer)="closeMobileDrawer()"
+  />
+
+  <!-- Mobile Drawer Overlay & Sidebar -->
+  @if (isMobileDrawerOpen()) {
+    <div
+      class="mobile-backdrop"
+      (click)="closeMobileDrawer()"
+      aria-hidden="true"
+    ></div>
+    <div class="mobile-drawer drawer-open">
+      <app-admin-sidebar
+        [collapsed]="false"
+        (toggleCollapse)="closeMobileDrawer()"
+        (closeDrawer)="closeMobileDrawer()"
+      />
+    </div>
+  }
+
+  <!-- Main View Area -->
+  <div class="main-canvas">
+    <app-admin-header
+      (openMobileDrawer)="openMobileDrawer()"
+    />
+
+    <main class="page-content" id="admin-main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

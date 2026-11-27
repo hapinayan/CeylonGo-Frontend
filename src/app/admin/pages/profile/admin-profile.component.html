@@ -1,0 +1,92 @@
+<div class="page-container" *ngIf="profile">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Administrator Profile & Security</h1>
+      <p class="page-subtitle">Personal credentials, assigned governance roles, session security, and notification preferences.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-danger" (click)="logout()">
+        <span>Terminate Session (Logout)</span>
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="successMessage" class="banner success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="banner error">{{ errorMessage }}</div>
+
+  <div class="profile-layout">
+    <!-- User Dossier Card -->
+    <section class="card profile-card">
+      <div class="avatar-block">
+        <div class="avatar-circle">
+          {{ profile.full_name ? profile.full_name.charAt(0) : 'A' }}
+        </div>
+        <div>
+          <h2>{{ profile.full_name }}</h2>
+          <p class="role-badge">{{ profile.role | uppercase }}</p>
+          <span class="status-indicator active">Account Status: Active</span>
+        </div>
+      </div>
+
+      <div class="info-list">
+        <div class="info-item">
+          <span class="label">Official Email:</span>
+          <span class="val">{{ profile.email }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Canonical Role:</span>
+          <span class="val">{{ profile.admin_role || profile.role }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Department / Unit:</span>
+          <span class="val">{{ profile.department || 'Platform Operations' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Last Security Login:</span>
+          <span class="val">{{ profile.last_login | date:'medium' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile Edit Form -->
+    <section class="card edit-card">
+      <h2>Contact & Notification Preferences</h2>
+
+      <div class="form-group">
+        <label for="fullNameInput">Full Name:</label>
+        <input id="fullNameInput" type="text" class="input" [(ngModel)]="editFullName" />
+      </div>
+
+      <div class="form-group">
+        <label for="phoneInput">Contact Phone:</label>
+        <input id="phoneInput" type="text" class="input" [(ngModel)]="editPhone" placeholder="+94 XX XXX XXXX" />
+      </div>
+
+      <h3>Automated Alert Subscriptions</h3>
+      <div class="checkbox-group">
+        <label>
+          <input type="checkbox" [(ngModel)]="profile.notification_preferences.email_alerts" />
+          <span>Real-time email operational alerts</span>
+        </label>
+        <label>
+          <input type="checkbox" [(ngModel)]="profile.notification_preferences.verification_notifications" />
+          <span>Provider verification queue notifications</span>
+        </label>
+        <label>
+          <input type="checkbox" [(ngModel)]="profile.notification_preferences.financial_summaries" />
+          <span>Daily financial settlement digests</span>
+        </label>
+        <label>
+          <input type="checkbox" [(ngModel)]="profile.notification_preferences.security_alerts" />
+          <span>Security login anomaly notifications</span>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" (click)="saveProfile()" [disabled]="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save Profile Settings' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

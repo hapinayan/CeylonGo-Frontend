@@ -1,0 +1,210 @@
+.landing-page-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: inherit;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* DEMO BANNER */
+.demo-banner {
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  padding: 8px 16px;
+
+  .demo-banner-inner {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-inline: var(--cg-page-padding, 32px);
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    color: #1e40af;
+    font-weight: 500;
+  }
+
+  .demo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2563eb;
+    display: inline-block;
+  }
+
+  .exit-demo-link {
+    margin-left: auto;
+    color: #1d4ed8;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+/* COMPACT SPLIT HERO SECTION */
+.hero-section {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #082b5c 0%, #0f4699 60%, #1255b5 100%);
+  color: #ffffff;
+  padding: 64px var(--cg-page-padding, 32px);
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 40px var(--cg-page-padding, 16px);
+  }
+
+  .hero-container {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1.25fr 0.95fr;
+    gap: 48px;
+    align-items: center;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      text-align: center;
+    }
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    @media (max-width: 900px) {
+      align-items: center;
+    }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    margin: 0 0 16px;
+    color: #ffffff;
+    word-break: normal;
+
+    @media (max-width: 900px) {
+      font-size: 2.25rem;
+    }
+
+    @media (max-width: 600px) {
+      font-size: 1.625rem;
+      line-height: 1.25;
+    }
+
+    @media (max-width: 400px) {
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+  }
+
+  .hero-subtitle {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 28px;
+    max-width: 540px;
+
+    @media (max-width: 600px) {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+  }
+
+  .primary-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #0f4699;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .hero-visual-side {
+    @media (max-width: 900px) {
+      display: none;
+    }
+
+    .hero-image-frame {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      height: 300px;
+
+      .hero-craft-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+        display: block;
+      }
+
+      .hero-img-badge {
+        position: absolute;
+        bottom: 14px;
+        left: 14px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(6px);
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .badge-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22c55e;
+        }
+      }
+    }
+  }
+}

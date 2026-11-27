@@ -1,0 +1,361 @@
+<div class="verifications-container">
+  <!-- Page Header & Breadcrumbs -->
+  <header class="page-header">
+    <div class="header-breadcrumb">
+      <a routerLink="/admin/dashboard" class="breadcrumb-root crumb-link" title="Navigate to Dashboard">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Verification Management</span>
+    </div>
+    <div class="header-title-bar">
+      <div class="title-meta">
+        <h1 class="page-title">Service Provider Verification Queue</h1>
+        <p class="page-subtitle">Review business authenticity, owner national identity, and real-time live selfies.</p>
+      </div>
+      <div class="header-badges">
+        @if (lastRefreshed()) {
+          <span class="last-refreshed">
+            Last synced: {{ lastRefreshed() | date: 'mediumTime' }}
+          </span>
+        }
+        <button
+          type="button"
+          class="btn-refresh"
+          (click)="refreshData()"
+          [disabled]="isLoading() || isRefreshing()"
+          title="Sync verification queue data with backend"
+          id="btn-refresh-queue"
+        >
+          <svg
+            class="refresh-icon"
+            [class.spinning]="isLoading() || isRefreshing()"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            width="16"
+            height="16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75a.75.75 0 00-.75.75v4.482a.75.75 0 001.5 0v-2.067l.39.389a7 7 0 0011.977-3.177.75.75 0 00-1.555-.242zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.77a.75.75 0 000 1.5h4.482a.75.75 0 00.75-.75V2.689a.75.75 0 00-1.5 0v2.067l-.39-.389A7 7 0 003.135 7.544a.75.75 0 001.553.242z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>{{ isRefreshing() ? 'Refreshing...' : 'Refresh Data' }}</span>
+        </button>
+        <span *ngIf="isPreviewMode()" class="badge-preview">Demo Preview Mode</span>
+        <span class="badge-role" [ngClass]="canReview() ? 'badge-role-authorized' : 'badge-role-readonly'">
+          {{ canReview() ? 'Operations Review Authority' : 'Read-Only Viewer' }}
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Success Alert -->
+  <div *ngIf="successBanner()" class="alert-success" role="status">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ successBanner() }}</span>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon-total">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Submissions</span>
+        <span class="kpi-value">{{ totalInQueue() }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card-highlight">
+      <div class="kpi-icon kpi-icon-pending">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Pending Verification</span>
+        <span class="kpi-value kpi-val-pending">{{ pendingCount() }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon-approved">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Approved Providers</span>
+        <span class="kpi-value kpi-val-approved">{{ approvedCount() }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon-rejected">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Rejected Applications</span>
+        <span class="kpi-value kpi-val-rejected">{{ rejectedCount() }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Action Toolbar -->
+  <section class="toolbar-section">
+    <div class="filter-controls">
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by business name or applicant..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          id="verification-search-input"
+        />
+        <button *ngIf="searchQuery()" class="btn-clear-search" (click)="onSearchChange('')" title="Clear search">×</button>
+      </div>
+
+      <!-- Category Filter -->
+      <app-admin-select
+        id="verification-category-filter"
+        ariaLabel="Filter applications by provider category"
+        leadingIcon="category"
+        [options]="categoryOptions"
+        [value]="categoryFilter()"
+        (valueChange)="onCategoryChange($event)"
+        minWidth="195px"
+      ></app-admin-select>
+
+      <!-- Status Pills -->
+      <div class="status-pills">
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'pending'"
+          (click)="onStatusChange('pending')"
+          id="status-pill-pending"
+        >
+          Pending ({{ pendingCount() }})
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'all'"
+          (click)="onStatusChange('all')"
+          id="status-pill-all"
+        >
+          All ({{ totalInQueue() }})
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'approved'"
+          (click)="onStatusChange('approved')"
+          id="status-pill-approved"
+        >
+          Approved
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'rejected'"
+          (click)="onStatusChange('rejected')"
+          id="status-pill-rejected"
+        >
+          Rejected
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-actions">
+      <button *ngIf="searchQuery() || categoryFilter() !== 'all' || statusFilter() !== 'pending'" class="btn-clear-all" (click)="clearFilters()">
+        Reset Filters
+      </button>
+    </div>
+  </section>
+
+  <!-- Error Alert -->
+  <div *ngIf="errorMessage()" class="alert-error" role="alert">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ errorMessage() }}</span>
+  </div>
+
+  <!-- Queue Table Card -->
+  <div class="table-card">
+    <div *ngIf="isLoading()" class="loading-overlay">
+      <div class="spinner"></div>
+      <span>Loading verification queue...</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="verification-table" id="verifications-table">
+        <thead>
+          <tr>
+            <th class="th-id">ID</th>
+            <th class="th-business">Business Name</th>
+            <th class="th-applicant">Applicant / Contact</th>
+            <th class="th-category">Category</th>
+            <th class="th-date">Submitted</th>
+            <th class="th-status">Status</th>
+            <th class="th-docs">Documents</th>
+            <th class="th-actions">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of queueItems()" [class.row-pending]="item.approval_status === 'pending'">
+            <td class="td-id">#{{ item.id }}</td>
+            <td class="td-business">
+              <div class="business-cell">
+                <span class="business-name">{{ item.business_name }}</span>
+                <span class="business-reg">District: {{ item.district }}</span>
+              </div>
+            </td>
+            <td class="td-applicant">
+              <div class="applicant-cell">
+                <span class="applicant-name">{{ item.full_name }}</span>
+                <span class="applicant-email">{{ item.email }}</span>
+              </div>
+            </td>
+            <td class="td-category">
+              <span class="badge-category">{{ item.provider_type | titlecase }}</span>
+            </td>
+            <td class="td-date">
+              <span class="submission-date">{{ item.created_at | date:'mediumDate' }}</span>
+              <span class="submission-time">{{ item.created_at | date:'shortTime' }}</span>
+            </td>
+            <td class="td-status">
+              <span class="badge-status" [ngClass]="getStatusBadgeClass(item.approval_status)">
+                {{ item.approval_status | titlecase }}
+              </span>
+            </td>
+            <td class="td-docs">
+              <div class="doc-chips">
+                <span class="doc-chip" [ngClass]="item.documents && hasDocumentType(item, 'selfie') ? 'doc-badge-available' : 'doc-badge-missing'" title="Selfie Document">
+                  Selfie
+                </span>
+                <span class="doc-chip" [ngClass]="item.documents && hasDocumentType(item, 'nic_front') ? 'doc-badge-available' : 'doc-badge-missing'" title="NIC Front Document">
+                  NIC Front
+                </span>
+                <span class="doc-chip" [ngClass]="item.documents && hasDocumentType(item, 'nic_back') ? 'doc-badge-available' : 'doc-badge-missing'" title="NIC Back Document">
+                  NIC Back
+                </span>
+              </div>
+            </td>
+            <td class="td-actions">
+              <button
+                type="button"
+                class="btn-review"
+                (click)="openReviewModal(item)"
+                [attr.aria-label]="'Review application for ' + item.business_name"
+                [id]="'btn-review-' + item.id"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span>Review Studio</span>
+              </button>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="!isLoading() && queueItems().length === 0">
+            <td colspan="8" class="empty-cell">
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-icon">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <h3 class="empty-title">Queue is clear!</h3>
+                <p class="empty-desc">No verification submissions found matching your active filter criteria.</p>
+                <button class="btn-clear-all" (click)="clearFilters()">Show All Pending</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <footer class="pagination-footer" *ngIf="totalItems() > 0">
+      <div class="pagination-info">
+        Showing <span class="fw-semibold">{{ startItemIndex() }}</span> to <span class="fw-semibold">{{ endItemIndex() }}</span> of <span class="fw-semibold">{{ totalItems() }}</span> applications
+      </div>
+
+      <div class="pagination-controls">
+        <div class="page-size-selector">
+          <label for="verification-page-size">Per page:</label>
+          <app-admin-select
+            id="verification-page-size"
+            ariaLabel="Applications per page"
+            leadingIcon="page"
+            [options]="pageSizeOptions"
+            [value]="pageSize()"
+            (valueChange)="onPageSizeChange($event)"
+            minWidth="85px"
+            maxWidth="100px"
+          ></app-admin-select>
+        </div>
+
+        <div class="page-nav">
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+            aria-label="Previous Page"
+            id="btn-page-prev"
+          >
+            ‹ Prev
+          </button>
+          <span class="page-current">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+            aria-label="Next Page"
+            id="btn-page-next"
+          >
+            Next ›
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Review Modal Studio -->
+  <app-admin-verification-review-modal
+    *ngIf="isReviewModalOpen()"
+    [item]="selectedVerification()"
+    (closed)="closeReviewModal()"
+    (close)="closeReviewModal()"
+    (decisionComplete)="onDecisionComplete($event)"
+  ></app-admin-verification-review-modal>
+</div>

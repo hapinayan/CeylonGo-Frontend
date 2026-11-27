@@ -1,0 +1,701 @@
+.experiences-shell .traveler-workflow {
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  padding: 2rem var(--cg-page-padding, 32px) 4rem;
+  box-sizing: border-box;
+
+  .workflow-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+    transition: color 0.15s;
+
+    &:hover {
+      color: #0066ff;
+    }
+  }
+
+  h1 {
+    font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+    font-weight: 800;
+    color: var(--experience-navy);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--experience-navy);
+    margin: 0 0 0.75rem;
+  }
+
+  .workflow-lead-p {
+    color: var(--experience-muted);
+    font-size: 0.95rem;
+    margin: 0 0 1.5rem;
+  }
+
+  a:not(.outline-control):not(.btn-view-details) {
+    color: var(--experience-blue);
+    text-decoration: underline;
+
+    &:hover {
+      color: #0052cc;
+    }
+  }
+
+  .workflow-state,
+  .workflow-card {
+    border: 1px solid var(--experience-border);
+    border-radius: 1rem;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    margin-block: 1.25rem;
+    overflow-wrap: anywhere;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(8, 43, 92, 0.05);
+  }
+
+  .workflow-state {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
+  .card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+
+    h2 {
+      margin: 0;
+    }
+
+    .payment-sim-badge {
+      font-size: 0.725rem;
+      font-weight: 700;
+      color: var(--experience-blue);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  .workflow-form {
+    max-width: 44rem;
+    display: grid;
+    gap: 1.15rem;
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-weight: 650;
+      font-size: 0.875rem;
+      color: var(--experience-navy);
+    }
+
+    .workflow-field-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--experience-navy);
+
+      app-experience-icon {
+        color: var(--experience-blue);
+      }
+    }
+
+    input:not([type='checkbox']),
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--experience-border);
+      border-radius: 0.5rem;
+      font: inherit;
+      font-size: 0.875rem;
+      background: #ffffff;
+      color: #334155;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: var(--experience-blue);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
+      }
+    }
+
+    .quantity-stepper {
+      display: grid;
+      grid-template-columns: 36px 1fr 36px;
+      align-items: center;
+      border: 1px solid var(--experience-border);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background: #ffffff;
+
+      .stepper-btn {
+        width: 36px;
+        height: 38px;
+        border: none;
+        background: #f8fafc;
+        color: var(--experience-navy);
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: background 0.15s;
+
+        &:hover:not(:disabled) {
+          background: #eff6ff;
+          color: #0066ff;
+        }
+
+        &:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+      }
+
+      input[type='number'] {
+        border: none !important;
+        text-align: center;
+        font-weight: 700;
+        height: 38px;
+        min-height: 38px !important;
+        padding: 0;
+        -moz-appearance: textfield;
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+      }
+    }
+
+    fieldset {
+      min-width: 0;
+      border: 1px solid var(--experience-border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      background: #f8fafc;
+
+      legend {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--experience-navy);
+        padding: 0 0.35rem;
+      }
+    }
+
+    .workflow-consent {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      input {
+        accent-color: var(--experience-blue);
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .workflow-note {
+    color: var(--experience-muted);
+    font-size: 0.825rem;
+    margin: 0 0 1rem;
+  }
+
+  .outline-control {
+    min-height: 42px;
+    padding: 0.55rem 1.15rem;
+    border: 1px solid var(--experience-border);
+    border-radius: 0.5rem;
+    background: #ffffff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--experience-navy);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+  }
+
+  .workflow-primary {
+    background: var(--experience-blue);
+    border-color: var(--experience-blue);
+    color: #ffffff;
+    font-weight: 700;
+
+    &:hover:not(:disabled) {
+      background: #0052cc;
+      border-color: #0052cc;
+    }
+  }
+
+  .workflow-form > .workflow-primary {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .workflow-estimate {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 1.15rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.75rem;
+
+    span {
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    strong {
+      color: var(--experience-navy);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    small {
+      flex-basis: 100%;
+      color: #64748b;
+      font-size: 0.775rem;
+    }
+  }
+
+  .workflow-statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block: 0.75rem;
+  }
+
+  .workflow-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    background: #eff6ff;
+    color: #0052cc;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: capitalize;
+
+    &:is([data-status='paid'], [data-status='confirmed'], [data-status='completed']) {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    &:is([data-status='cancelled'], [data-status='failed'], [data-status='expired']) {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    &:is([data-status='pending'], [data-status='unpaid']) {
+      background: #fffbeb;
+      color: #d97706;
+    }
+  }
+
+  .workflow-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  .workflow-ages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    gap: 0.65rem;
+  }
+
+  .pay-location-box {
+    margin-top: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    color: #334155;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  dialog {
+    max-width: min(calc(100vw - 2rem), 34rem);
+    border: 1px solid var(--experience-border);
+    border-radius: 1.25rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    color: var(--experience-navy);
+    box-shadow: 0 12px 36px rgba(8, 43, 92, 0.18);
+
+    &::backdrop {
+      background: rgba(8, 43, 92, 0.4);
+      backdrop-filter: blur(2px);
+    }
+  }
+
+  .booking-header-card {
+    background: #ffffff;
+    border: 1px solid var(--experience-border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(8, 43, 92, 0.05);
+
+    h1 {
+      margin: 0.5rem 0 0.75rem;
+      font-size: clamp(1.5rem, 3vw, 2.15rem);
+    }
+  }
+
+  .booking-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.88rem;
+    color: #475569;
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+
+      app-experience-icon {
+        color: var(--experience-blue);
+      }
+    }
+
+    .price-tag {
+      font-weight: 700;
+      color: var(--experience-blue);
+      background: #eff6ff;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+    }
+  }
+
+  .signin-prompt {
+    text-align: center;
+    max-width: 34rem;
+    margin: 2.5rem auto;
+    padding: 2.5rem 1.5rem;
+
+    h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #64748b;
+      margin: 0 0 1.5rem;
+    }
+  }
+
+  .bookings-list {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .booking-item-card {
+    transition: transform 0.15s, box-shadow 0.15s;
+
+    &:hover {
+      box-shadow: 0 4px 18px rgba(8, 43, 92, 0.08);
+    }
+
+    .booking-ref-badge {
+      display: flex;
+      flex-direction: column;
+
+      .ref-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.05em;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        margin: 0.15rem 0 0;
+        color: var(--experience-navy);
+      }
+    }
+
+    .booking-item-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .booking-time {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #475569;
+      font-size: 0.9rem;
+      margin: 0;
+
+      app-experience-icon {
+        color: var(--experience-blue);
+      }
+    }
+
+    .booking-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #f1f5f9;
+
+      .price-val {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--experience-navy);
+      }
+
+      .btn-view-booking {
+        color: var(--experience-blue);
+        border-color: #bfdbfe;
+        text-decoration: none !important;
+
+        &:hover {
+          background: #eff6ff;
+          border-color: var(--experience-blue);
+        }
+      }
+    }
+  }
+
+  .empty-bookings-card,
+  .empty-wishlist-card {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .empty-icon {
+      font-size: 2.75rem;
+      color: #94a3b8;
+      margin-bottom: 0.85rem;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--experience-navy);
+      margin: 0 0 0.5rem;
+    }
+
+    p {
+      color: #64748b;
+      font-size: 0.92rem;
+      max-width: 28rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+
+  .booking-detail-card {
+    .detail-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      gap: 1rem;
+      padding: 1.25rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 0.75rem;
+      margin: 1.15rem 0;
+
+      .info-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+
+        .info-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #64748b;
+          letter-spacing: 0.05em;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+
+          app-experience-icon {
+            color: var(--experience-blue);
+          }
+        }
+
+        strong {
+          color: var(--experience-navy);
+          font-size: 0.95rem;
+        }
+
+        .total-price {
+          font-size: 1.25rem;
+          color: var(--experience-blue);
+          font-weight: 800;
+        }
+      }
+    }
+
+    .detail-actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+
+      a.outline-control {
+        text-decoration: none !important;
+      }
+
+      .btn-danger {
+        color: #dc2626;
+        border-color: #fecaca;
+
+        &:hover:not(:disabled) {
+          background: #fef2f2;
+          border-color: #f87171;
+        }
+      }
+
+      .btn-confirm-cancel {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #ffffff;
+
+        &:hover:not(:disabled) {
+          background: #b91c1c;
+          border-color: #b91c1c;
+        }
+      }
+
+      .cancellation-note {
+        font-size: 0.825rem;
+        color: #64748b;
+        margin: 0;
+      }
+    }
+  }
+
+  .payment-status-card {
+    .payment-summary-box {
+      display: grid;
+      gap: 0.75rem;
+
+      .payment-amount-line {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        .amount-val {
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: var(--experience-navy);
+        }
+
+        .method-tag {
+          font-size: 0.78rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #475569;
+          background: #f1f5f9;
+          padding: 0.2rem 0.6rem;
+          border-radius: 6px;
+        }
+      }
+
+      .paid-time-note,
+      .trans-ref-note,
+      .pending-note {
+        font-size: 0.85rem;
+        color: #475569;
+        margin: 0;
+      }
+    }
+  }
+
+  .wishlist-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+
+    .filter-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+
+      input {
+        accent-color: var(--experience-blue);
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  .unavailable-card {
+    border-left: 4px solid #f87171;
+  }
+
+  .wishlist-pagination-wrap {
+    margin-top: 1.75rem;
+  }
+}
+
+.experiences-shell app-save-experience .outline-control {
+  padding: 0.45rem;
+  min-width: 2.3rem;
+  min-height: 2.3rem;
+}
+.experiences-shell app-save-experience button[aria-pressed='true'] svg {
+  fill: #0066ff;
+  color: #0066ff;
+}

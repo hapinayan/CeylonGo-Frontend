@@ -1,0 +1,573 @@
+<div class="homestay-discovery-page" (click)="closeGuestDropdown()">
+  <!-- =========================================================================
+       1. HORIZONTAL SEARCH BAR & FILTERS SECTION (Scrolls normally with page)
+       ========================================================================= -->
+  <section class="discovery-search-section">
+    <div class="search-section-container">
+      <!-- Horizontal Search Bar (White rounded pill with subtle shadow) -->
+      <form class="horizontal-search-bar" (ngSubmit)="onSearch()">
+
+        <!-- 1. Homestays Indicator -->
+        <div class="search-segment segment-type">
+          <svg class="segment-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="segment-text-bold">Homestays</span>
+        </div>
+
+        <div class="segment-separator" aria-hidden="true"></div>
+
+        <!-- 2. Destination Input -->
+        <div class="search-segment segment-destination">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <div class="input-stack">
+            <input
+              id="search-location"
+              type="text"
+              class="segment-input"
+              placeholder="Where to? Search destination"
+              [ngModel]="locationQuery()"
+              (ngModelChange)="locationQuery.set($event)"
+              name="location"
+              autocomplete="off"
+              aria-label="Destination"
+            />
+          </div>
+        </div>
+
+        <div class="segment-separator" aria-hidden="true"></div>
+
+        <!-- 3. Check-in Date -->
+        <div class="search-segment segment-date">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <div class="input-stack">
+            <span class="segment-label">Check-in</span>
+            <input
+              id="search-checkin"
+              type="date"
+              class="segment-date-input"
+              [ngModel]="checkInDate()"
+              (ngModelChange)="checkInDate.set($event)"
+              name="checkin"
+              aria-label="Check-in date"
+            />
+          </div>
+        </div>
+
+        <div class="segment-separator" aria-hidden="true"></div>
+
+        <!-- 4. Check-out Date -->
+        <div class="search-segment segment-date">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <div class="input-stack">
+            <span class="segment-label">Check-out</span>
+            <input
+              id="search-checkout"
+              type="date"
+              class="segment-date-input"
+              [ngModel]="checkOutDate()"
+              (ngModelChange)="checkOutDate.set($event)"
+              name="checkout"
+              aria-label="Check-out date"
+            />
+          </div>
+        </div>
+
+        <div class="segment-separator" aria-hidden="true"></div>
+
+        <!-- 5. Guests Selector Dropdown -->
+        <div class="search-segment segment-guests" (click)="toggleGuestDropdown($event)">
+          <svg class="segment-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+          <div class="input-stack">
+            <span class="segment-label">Guests</span>
+            <div class="guests-display">
+              <span class="guests-count-text">{{ totalGuests() }} {{ totalGuests() === 1 ? 'Guest' : 'Guests' }}</span>
+              <svg class="chevron-sm" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Guest Dropdown Menu -->
+          @if (guestDropdownOpen()) {
+            <div class="guest-dropdown-panel" (click)="$event.stopPropagation()">
+              <div class="guest-counter-row">
+                <div class="guest-desc">
+                  <span class="guest-name">Adults</span>
+                  <span class="guest-sub">Age 13 and above</span>
+                </div>
+                <div class="counter-actions">
+                  <button type="button" class="btn-step" [disabled]="adultsCount() <= 1" (click)="updateAdults(-1)">-</button>
+                  <span class="counter-num">{{ adultsCount() }}</span>
+                  <button type="button" class="btn-step" [disabled]="adultsCount() >= 10" (click)="updateAdults(1)">+</button>
+                </div>
+              </div>
+              <div class="guest-counter-row">
+                <div class="guest-desc">
+                  <span class="guest-name">Children</span>
+                  <span class="guest-sub">Ages 0 to 12</span>
+                </div>
+                <div class="counter-actions">
+                  <button type="button" class="btn-step" [disabled]="childrenCount() <= 0" (click)="updateChildren(-1)">-</button>
+                  <span class="counter-num">{{ childrenCount() }}</span>
+                  <button type="button" class="btn-step" [disabled]="childrenCount() >= 6" (click)="updateChildren(1)">+</button>
+                </div>
+              </div>
+              <div class="dropdown-actions">
+                <button type="button" class="btn-done" (click)="closeGuestDropdown()">Done</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- 6. Blue Search Button -->
+        <button type="submit" class="btn-search-submit" aria-label="Search homestays">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Search</span>
+        </button>
+      </form>
+
+      <!-- 3. Simplified Filters Section (Single Outlined Blue Filters Button) -->
+      <div class="filters-row">
+        <button
+          type="button"
+          class="btn-filters-pill"
+          (click)="openFilterModal()"
+          aria-label="Filter Homestays"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>Filters</span>
+          @if (selectedAmenities().length > 0 || verifiedOnly() || minPrice() > 3000 || maxPrice() < 15000) {
+            <span class="filter-indicator-dot" aria-label="Active filters"></span>
+          }
+        </button>
+
+        <!-- Mobile View Mode Toggle (List / Map) -->
+        <div class="mobile-toggle-wrapper">
+          <button
+            type="button"
+            class="mobile-toggle-btn"
+            [class.active]="mobileViewMode() === 'list'"
+            (click)="setMobileView('list')"
+          >
+            List View
+          </button>
+          <button
+            type="button"
+            class="mobile-toggle-btn"
+            [class.active]="mobileViewMode() === 'map'"
+            (click)="setMobileView('map')"
+          >
+            Map View
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       4. SPLIT-SCREEN LAYOUT: LEFT (55% LISTINGS) & RIGHT (45% STICKY MAP)
+       ========================================================================= -->
+  <main class="discovery-main-layout">
+    <div class="split-screen-container">
+
+      <!-- LEFT COLUMN (55%): Results Header, 2-Column Cards Grid, Pagination -->
+      <section
+        class="listings-pane"
+        [class.mobile-hidden]="mobileViewMode() === 'map'"
+        #scrollRegion
+      >
+        <!-- Results Header Row -->
+        <div class="results-header-bar">
+          <div class="header-titles">
+            <h1 class="results-count-title">
+              <span class="count-bold">{{ totalCount() }}</span> {{ totalCount() === 1 ? 'Homestay' : 'Homestays' }} in Sri Lanka
+            </h1>
+            <span class="results-location-subtitle">
+              Showing stays in {{ locationQuery() || 'Sri Lanka' }}
+            </span>
+          </div>
+
+          <div class="header-badges">
+            <div class="badge-price-includes">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1.5" aria-hidden="true">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7" stroke="#FFFFFF" stroke-width="2.5"></line>
+              </svg>
+              <span>Prices include all fees</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Skeletons -->
+        @if (isLoading()) {
+          <div class="homestays-grid-2col">
+            @for (p of [1, 2, 3, 4]; track p) {
+              <div class="homestay-card skeleton-card" aria-hidden="true">
+                <div class="skeleton-media"></div>
+                <div class="skeleton-body">
+                  <div class="skeleton-line line-title"></div>
+                  <div class="skeleton-line line-location"></div>
+                  <div class="skeleton-line line-amenities"></div>
+                  <div class="skeleton-line line-price"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (homestays().length === 0) {
+          <div class="empty-state-card empty-state">
+            <div class="empty-icon-wrap">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.5">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <line x1="9" y1="17" x2="15" y2="17"></line>
+              </svg>
+            </div>
+            <h3 class="empty-title">No homestays match your search</h3>
+            <p class="empty-desc">Try clearing your filters or exploring another destination in Sri Lanka.</p>
+            <button type="button" class="btn-clear-filters" (click)="resetFilters()">Clear All Filters</button>
+          </div>
+        } @else {
+          <!-- 2-Column Grid of Homestay Cards (Matching Reference Mockup) -->
+          <div class="homestays-grid-2col">
+            @for (homestay of homestays(); track homestay.id) {
+              <article
+                class="homestay-card"
+                [id]="'homestay-card-' + homestay.id"
+                [class.is-selected]="selectedHomestayId() === homestay.id"
+                [class.is-hovered]="hoveredHomestayId() === homestay.id"
+                (mouseenter)="onCardHover(homestay.id)"
+                (mouseleave)="onCardHover(null)"
+              >
+                <!-- Card Media Box with Badges & Wishlist Button -->
+                <div class="card-media-box" (click)="bookHomestay(homestay, $event)">
+                  <img
+                    [src]="homestay.has_media && homestay.images.length ? homestay.images[0] : neutralPlaceholder"
+                    [alt]="homestay.name"
+                    class="card-photo"
+                    loading="lazy"
+                  />
+
+                  <!-- Top-Left Badge: Superhost or Guest favorite -->
+                  @if (homestay.is_superhost) {
+                    <div class="card-pill-badge badge-superhost">
+                      <span class="crown-icon">👑</span>
+                      <span class="badge-label">Superhost</span>
+                    </div>
+                  } @else if (homestay.is_guest_favorite) {
+                    <div class="card-pill-badge badge-guest-fav">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#082B5C" stroke="#082B5C" stroke-width="2" aria-hidden="true">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                      </svg>
+                      <span class="badge-label">Guest favorite</span>
+                    </div>
+                  }
+
+                  <!-- Top-Right Wishlist Heart Icon -->
+                  <button
+                    type="button"
+                    class="btn-card-wishlist"
+                    [class.wishlisted]="isWishlisted(homestay.id)"
+                    (click)="toggleWishlist(homestay, $event)"
+                    [attr.aria-label]="isWishlisted(homestay.id) ? 'Remove from wishlist' : 'Save to wishlist'"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      [attr.fill]="isWishlisted(homestay.id) ? '#EF4444' : 'rgba(0,0,0,0.3)'"
+                      [attr.stroke]="isWishlisted(homestay.id) ? '#EF4444' : '#FFFFFF'"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </button>
+
+                  <!-- Image Carousel Dots at bottom of photo -->
+                  @if (homestay.images.length > 1) {
+                    <div class="carousel-dots-indicator" aria-hidden="true">
+                      @for (img of homestay.images; track $index) {
+                        <span class="dot" [class.active]="$index === 0"></span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Card Content -->
+                <div class="card-content-area">
+                  <!-- Title -->
+                  <h2 class="card-title">
+                    <a
+                      [routerLink]="['/homestays', homestay.id]"
+                      [queryParams]="getBookingQueryParams()"
+                      (click)="bookHomestay(homestay, $event)"
+                      class="card-title-link title-link"
+                    >
+                      {{ homestay.name }}
+                    </a>
+                  </h2>
+
+                  <!-- Rating & Review Count (Only when reviewed) -->
+                  @if (homestay.rating > 0) {
+                    <div class="card-rating-line">
+                      <span class="amber-star" aria-hidden="true">★</span>
+                      <span class="rating-value">{{ homestay.rating }}</span>
+                      <span class="review-count">({{ homestay.review_count }} reviews)</span>
+                    </div>
+                  } @else {
+                    <div class="card-rating-line">
+                      <span class="text-muted" style="font-size: 13px; color: #64748B;">Awaiting traveler reviews</span>
+                    </div>
+                  }
+
+                  <!-- Location with Pin -->
+                  <div class="card-location-line">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>{{ homestay.location }}</span>
+                  </div>
+
+                  <!-- Amenities Row (Wi-Fi, Breakfast, AC, Pool, etc.) -->
+                  <div class="card-amenities-row">
+                    @for (amenity of homestay.amenities.slice(0, 3); track amenity) {
+                      <div class="amenity-item">
+                        @switch (amenity.toLowerCase()) {
+                          @case ('wi-fi') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                          }
+                          @case ('breakfast') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                          }
+                          @case ('free breakfast') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                          }
+                          @case ('ac') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="8" y1="20" x2="8.01" y2="20"></line><line x1="12" y1="18" x2="12.01" y2="18"></line><line x1="12" y1="22" x2="12.01" y2="22"></line><line x1="16" y1="16" x2="16.01" y2="16"></line><line x1="16" y1="20" x2="16.01" y2="20"></line></svg>
+                          }
+                          @case ('air conditioning') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="8" y1="20" x2="8.01" y2="20"></line><line x1="12" y1="18" x2="12.01" y2="18"></line><line x1="12" y1="22" x2="12.01" y2="22"></line><line x1="16" y1="16" x2="16.01" y2="16"></line><line x1="16" y1="20" x2="16.01" y2="20"></line></svg>
+                          }
+                          @case ('pool') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path></svg>
+                          }
+                          @case ('private room') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          }
+                          @case ('garden') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a9 9 0 0 0-9 9c0 4.17 2.84 7.67 6.69 8.69L12 22l2.31-2.31C18.16 18.67 21 15.17 21 11a9 9 0 0 0-9-9z"></path></svg>
+                          }
+                          @case ('surf friendly') {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 16h20M2 20h20"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          }
+                          @default {
+                            <svg class="amenity-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                          }
+                        }
+                        <span>{{ amenity }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Price & Action Button (View Details →) -->
+                  <div class="card-bottom-row">
+                    <div class="price-container">
+                      <span class="price-amount">LKR {{ homestay.price_per_night | number }}</span>
+                      <span class="price-suffix">/ night</span>
+                    </div>
+
+                    <a
+                      [routerLink]="['/homestays', homestay.id]"
+                      [queryParams]="getBookingQueryParams()"
+                      (click)="bookHomestay(homestay, $event)"
+                      class="btn-view-details btn-card-book"
+                      aria-label="View Details for {{ homestay.name }}"
+                    >
+                      <span>View Details</span>
+                      <span class="arrow-symbol">→</span>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- Cursor Pagination (next_before_id) -->
+          @if (homestays().length > 0 && (nextBeforeId() !== null || beforeIdHistory().length > 0)) {
+            <nav class="pagination-container" aria-label="Homestay results navigation" style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
+              <button
+                type="button"
+                class="btn-prev-page btn-page"
+                [disabled]="beforeIdHistory().length === 0"
+                (click)="onPrevPage()"
+                aria-label="Previous page"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; border: 1.5px solid #E2E8F0; background: #FFFFFF; font-weight: 600; font-size: 14px; cursor: pointer;"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span>Previous</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-next-page btn-page active"
+                [disabled]="nextBeforeId() === null"
+                (click)="onNextPage()"
+                aria-label="Next page"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; border: 1.5px solid #2563EB; background: #2563EB; color: #FFFFFF; font-weight: 600; font-size: 14px; cursor: pointer;"
+              >
+                <span>Next</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </nav>
+          }
+        }
+      </section>
+
+      <!-- RIGHT COLUMN (45%): Sticky Interactive Sri Lanka Map -->
+      <aside
+        class="map-pane"
+        [class.mobile-hidden]="mobileViewMode() === 'list'"
+      >
+        <div class="sticky-map-container">
+          <app-homestay-map
+            [homestays]="homestays()"
+            [selectedId]="selectedHomestayId()"
+            [hoveredId]="hoveredHomestayId()"
+            (markerClick)="onMarkerClick($event)"
+            (markerHover)="hoveredHomestayId.set($event)"
+          />
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       EXTENDED FILTERS MODAL (Triggered by outlined Filters button)
+       ========================================================================= -->
+  @if (filterModalOpen()) {
+    <div class="filter-modal-backdrop" (click)="closeFilterModal()" aria-modal="true" role="dialog">
+      <div class="filter-modal-window" (click)="$event.stopPropagation()">
+        <div class="modal-top">
+          <h3 class="modal-heading">Filter Homestays</h3>
+          <button type="button" class="btn-close-modal" (click)="closeFilterModal()" aria-label="Close filters">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#082B5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-scroll-area">
+          <!-- Price Range Filter -->
+          <div class="filter-section">
+            <h4 class="section-title">Nightly Price Range (LKR)</h4>
+            <div class="price-range-inputs">
+              <div class="price-field">
+                <span class="field-prefix">Min LKR</span>
+                <input
+                  type="number"
+                  class="field-input"
+                  [ngModel]="minPrice()"
+                  (ngModelChange)="minPrice.set($event)"
+                  step="500"
+                  min="1000"
+                  max="50000"
+                />
+              </div>
+              <span class="field-dash">—</span>
+              <div class="price-field">
+                <span class="field-prefix">Max LKR</span>
+                <input
+                  type="number"
+                  class="field-input"
+                  [ngModel]="maxPrice()"
+                  (ngModelChange)="maxPrice.set($event)"
+                  step="500"
+                  min="2000"
+                  max="100000"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-sep"></div>
+
+          <!-- Verified Hosts Only -->
+          <div class="filter-section">
+            <div class="toggle-control-row">
+              <div>
+                <h4 class="section-title">Verified Hosts Only</h4>
+                <p class="section-note">Show homestays verified by CeylonGo local community officers.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" [checked]="verifiedOnly()" (change)="verifiedOnly.set(!verifiedOnly())" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-sep"></div>
+
+          <!-- Amenities Selection -->
+          <div class="filter-section">
+            <h4 class="section-title">Popular Amenities</h4>
+            <div class="amenities-selection-grid">
+              @for (amenity of availableAmenities; track amenity) {
+                <label class="amenity-toggle-label">
+                  <input type="checkbox" [checked]="isAmenitySelected(amenity)" (change)="toggleAmenity(amenity)" />
+                  <span class="checkbox-indicator"></span>
+                  <span class="amenity-title">{{ amenity }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-bottom">
+          <button type="button" class="btn-modal-reset" (click)="resetFilters()">Reset All</button>
+          <button type="button" class="btn-modal-apply" (click)="applyModalFilters()">Show Homestays</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Notification Message -->
+  @if (toastMessage()) {
+    <div class="discovery-toast" role="status" aria-live="polite">
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>

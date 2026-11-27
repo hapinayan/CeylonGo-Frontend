@@ -1,0 +1,106 @@
+<!-- TRAVELER HOMEPAGE UNDERLAY (BLURRED IN BACKGROUND) -->
+<div class="homepage-underlay" aria-hidden="true" tabindex="-1">
+  <app-traveler-home></app-traveler-home>
+</div>
+
+<!-- AUTH MODAL BACKDROP (DARK OVERLAY & BLUR) -->
+<div class="auth-modal-backdrop status-page" (click)="onBackdropClick($event)">
+  <div class="auth-modal-card status-card" role="dialog" aria-modal="true" aria-labelledby="check-email-title">
+
+    <!-- CLOSE (X) BUTTON IN TOP-RIGHT -->
+    <button
+      type="button"
+      class="modal-close-btn close-btn"
+      aria-label="Close modal"
+      (click)="closeModal()"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- CEYLONGO BRAND LOGO -->
+    <div class="modal-logo-wrapper">
+      <img
+        src="/images/ceylongo-brand-logo.png"
+        alt="CeylonGo - Discover Local. Feel at Home."
+        class="modal-logo-img modal-logo"
+      />
+    </div>
+
+    <!-- BLUE EMAIL OUTLINE ICON IN LIGHT-BLUE CIRCULAR BACKGROUND -->
+    <div class="recovery-icon-badge status-icon-wrapper" aria-hidden="true">
+      <div class="status-icon">
+        <svg
+          width="38"
+          height="38"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m2 6 10 7 10-7" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- HEADING & DESCRIPTION -->
+    <div class="modal-header">
+      <h1 id="check-email-title" class="modal-title">Check Your Email</h1>
+      <p class="modal-subtitle subtitle">
+        If an account exists for this email address, we've sent a password reset link.
+      </p>
+    </div>
+
+    <!-- EMAIL DISPLAY CONTAINER -->
+    @if (email) {
+      <div class="email-display-box">
+        <span class="email-value">{{ email }}</span>
+      </div>
+    }
+
+    <!-- INBOX AND SPAM FOLDER INSTRUCTIONS -->
+    <p class="instruction-text">
+      Please check your inbox and spam folder. Open the link in the email to reset your password.
+    </p>
+
+    <!-- ACTIONS GROUP -->
+    <div class="actions-group">
+      <!-- PRIMARY BUTTON (SOLID BLUE #2563EB): OPEN EMAIL APP -->
+      <a
+        href="mailto:"
+        class="btn-primary-blue primary-btn"
+        (click)="openEmailApp()"
+      >
+        Open Email App
+      </a>
+
+      <!-- BOTTOM NAVIGATION: BACK TO SIGN IN -->
+      <div class="auth-bottom-switch bottom-nav">
+        Remember your password?
+        <button
+          type="button"
+          class="switch-auth-link back-link"
+          (click)="backToLogin()"
+        >
+          Back to Sign In
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

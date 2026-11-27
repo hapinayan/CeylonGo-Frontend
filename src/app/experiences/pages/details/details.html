@@ -1,0 +1,392 @@
+<div class="experiences-shell">
+  <main class="discover experience-details-flow">
+    @switch (state().status) {
+      @case ('loading') {
+        <p role="status" class="empty-results">Loading experience…</p>
+      }
+      @case ('missing') {
+        <section class="empty-results">
+          <h1>Experience unavailable</h1>
+          <p>This experience may have been removed or unpublished.</p>
+          <a routerLink="/experiences" class="outline-control">Browse experiences</a>
+        </section>
+      }
+      @case ('error') {
+        @if (state(); as errState) {
+          @if (errState.status === 'error') {
+            <section class="empty-results" role="alert">
+              <h1>Could not load this experience</h1>
+              <p>{{ errState.message }}</p>
+              <button type="button" class="outline-control" (click)="retry()">Retry</button>
+            </section>
+          }
+        }
+      }
+    }
+
+    @if (state(); as current) {
+      @if (current.status === 'ready') {
+        @let detail = current.detail;
+        @let listing = detail.activity;
+        @let meta = listing.activity;
+        @let categoryLabel = detail.card.categoryLabel;
+
+        <!-- 1. Page Header -->
+        <header class="detail-header">
+          <div class="detail-header-row">
+            <div class="detail-title-col">
+              @if (categoryLabel) {
+                <div class="detail-badge-row">
+                  <span class="detail-category">{{ categoryLabel }}</span>
+                </div>
+              }
+              <h1 class="detail-title">{{ listing.title }}</h1>
+              <div class="detail-meta-row">
+                <span class="meta-location">
+                  <app-experience-icon name="pin" />{{ detail.locationLabel }}
+                </span>
+              </div>
+            </div>
+
+            <div class="detail-actions-col">
+              <app-save-experience [id]="detail.card.id" [title]="listing.title" [showLabel]="false" />
+              <button
+                class="action-circle-btn"
+                type="button"
+                aria-label="Share experience"
+                (click)="share(listing.title)"
+              >
+                <app-experience-icon name="share" />
+              </button>
+            </div>
+          </div>
+
+          @if (shareStatus()) {
+            <p class="detail-share-status" role="status">{{ shareStatus() }}</p>
+          }
+          @if (shareUrl(); as url) {
+            <label class="detail-share-link">
+              Copy link <input type="url" [value]="url" readonly #link (focus)="link.select()" />
+            </label>
+          }
+        </header>
+
+        <!-- 2. Full-Width Photo Gallery Above Content -->
+        <div
+          class="experience-gallery-grid"
+          [class.gallery-multi]="detail.images.length >= 3"
+          [class.gallery-duo]="detail.images.length === 2"
+          [class.gallery-single]="detail.images.length === 1"
+          aria-label="Experience photo gallery"
+        >
+          @if (detail.images.length >= 3) {
+            <div class="gallery-col-main">
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[0], imageDialog)"
+                aria-label="View main photo"
+              >
+                <img
+                  [src]="detail.images[0].url"
+                  [alt]="detail.images[0].caption || listing.title"
+                  class="gallery-img"
+                />
+              </button>
+            </div>
+            <div class="gallery-col-side">
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[1], imageDialog)"
+                aria-label="View photo 2"
+              >
+                <img
+                  [src]="detail.images[1].url"
+                  [alt]="detail.images[1].caption || listing.title"
+                  class="gallery-img"
+                />
+              </button>
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[2], imageDialog)"
+                aria-label="View photo 3"
+              >
+                <img
+                  [src]="detail.images[2].url"
+                  [alt]="detail.images[2].caption || listing.title"
+                  class="gallery-img"
+                />
+                @if (detail.images.length > 3) {
+                  <div class="gallery-more-overlay">
+                    <app-experience-icon name="expand" />
+                    <span>+{{ detail.images.length - 3 }} more</span>
+                  </div>
+                }
+              </button>
+            </div>
+          } @else if (detail.images.length === 2) {
+            <div class="gallery-col-main">
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[0], imageDialog)"
+                aria-label="View main photo"
+              >
+                <img
+                  [src]="detail.images[0].url"
+                  [alt]="detail.images[0].caption || listing.title"
+                  class="gallery-img"
+                />
+              </button>
+            </div>
+            <div class="gallery-col-side gallery-col-side--single">
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[1], imageDialog)"
+                aria-label="View photo 2"
+              >
+                <img
+                  [src]="detail.images[1].url"
+                  [alt]="detail.images[1].caption || listing.title"
+                  class="gallery-img"
+                />
+              </button>
+            </div>
+          } @else if (detail.images.length === 1) {
+            <div class="gallery-col-full">
+              <button
+                type="button"
+                class="gallery-item-btn"
+                (click)="openImage(detail.images[0], imageDialog)"
+                aria-label="View photo"
+              >
+                <img
+                  [src]="detail.images[0].url"
+                  [alt]="detail.images[0].caption || listing.title"
+                  class="gallery-img"
+                />
+              </button>
+            </div>
+          } @else {
+            <div class="gallery-placeholder">
+              <app-experience-icon name="mountain" />
+              <span>Photos unavailable</span>
+            </div>
+          }
+        </div>
+
+        <!-- 3. Two-Column Content Layout Below Gallery -->
+        <div class="experience-content-columns">
+          <!-- 4. Left Section: 65% -->
+          <div class="column-details">
+            <!-- Light-Blue Information Strip -->
+            @if (meta) {
+              <div class="info-strip">
+                <div class="info-strip-item">
+                  <div class="strip-icon-box"><app-experience-icon name="clock" /></div>
+                  <div class="strip-text">
+                    <span class="strip-label">Duration</span>
+                    <strong>{{ detail.durationLabel || 'Not specified' }}</strong>
+                  </div>
+                </div>
+                <div class="info-strip-item">
+                  <div class="strip-icon-box"><app-experience-icon name="group" /></div>
+                  <div class="strip-text">
+                    <span class="strip-label">Group Capacity</span>
+                    <strong>{{ meta.min_participants }}–{{ meta.max_participants }} travelers</strong>
+                  </div>
+                </div>
+                <div class="info-strip-item">
+                  <div class="strip-icon-box"><app-experience-icon name="user" /></div>
+                  <div class="strip-text">
+                    <span class="strip-label">Minimum Age</span>
+                    <strong>{{ meta.minimum_age != null ? meta.minimum_age + '+ years' : 'All ages' }}</strong>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="content-section">
+                <p class="no-reviews-note">
+                  Detailed activity metadata and schedule are not yet configured for this listing.
+                </p>
+              </div>
+            }
+
+            @if (listing.description) {
+              <section class="content-section">
+                <h2>About This Experience</h2>
+                <p class="section-text">{{ listing.description }}</p>
+              </section>
+            }
+
+            @if (meta?.highlights?.length) {
+              <section class="content-section">
+                <h2>Experience Highlights</h2>
+                <ul class="included-list">
+                  @for (highlight of meta!.highlights; track highlight) {
+                    <li>✓ {{ highlight }}</li>
+                  }
+                </ul>
+              </section>
+            }
+
+            @if (meta?.included?.length || meta?.excluded?.length || meta?.equipment || meta?.facilities) {
+              <section class="content-section">
+                <h2>What's Included & Provided</h2>
+                @if (meta!.included.length) {
+                  <ul class="included-list">
+                    @for (item of meta!.included; track item) {
+                      <li>✓ {{ item }}</li>
+                    }
+                  </ul>
+                }
+                @if (meta!.excluded.length) {
+                  <p class="section-text"><strong>Not included:</strong> {{ meta!.excluded.join(', ') }}</p>
+                }
+                @if (meta!.equipment) {
+                  <p class="section-text"><strong>Equipment:</strong> {{ meta!.equipment }}</p>
+                }
+                @if (meta!.facilities) {
+                  <p class="section-text"><strong>Facilities:</strong> {{ meta!.facilities }}</p>
+                }
+              </section>
+            }
+
+            @if (meta && (meta.minimum_age != null || meta.safety_instructions || meta.restrictions)) {
+              <section class="content-section">
+                <h2>Requirements & Safety</h2>
+                @if (meta.minimum_age != null) {
+                  <p><strong>Minimum age requirement:</strong> {{ meta.minimum_age }} years old.</p>
+                }
+                @if (meta.safety_instructions) {
+                  <p><strong>Safety instructions:</strong> {{ meta.safety_instructions }}</p>
+                }
+                @if (meta.restrictions) {
+                  <p><strong>Restrictions:</strong> {{ meta.restrictions }}</p>
+                }
+              </section>
+            }
+
+            @if (meta?.meeting_point || detail.locationLabel) {
+              <section class="content-section">
+                <h2>Meeting Point & Location</h2>
+                <div class="meeting-point-box">
+                  <div class="meeting-icon"><app-experience-icon name="pin" /></div>
+                  <div class="meeting-text">
+                    <strong>{{ meta?.meeting_point || detail.locationLabel }}</strong>
+                    <span>{{ detail.locationLabel }}</span>
+                  </div>
+                </div>
+                <app-service-weather-card
+                  [locationName]="detail.locationLabel || listing.title"
+                  [latitude]="listing.latitude"
+                  [longitude]="listing.longitude"
+                />
+              </section>
+            } @else {
+              <app-service-weather-card
+                [locationName]="listing.title"
+                [latitude]="listing.latitude"
+                [longitude]="listing.longitude"
+              />
+            }
+
+            @if (listing.provider_name) {
+              <section class="content-section">
+                <h2>Activity Provider</h2>
+                <div class="host-profile-box">
+                  <div class="host-avatar-icon"><app-experience-icon name="user" /></div>
+                  <div class="host-details">
+                    <h3>{{ listing.provider_name }}</h3>
+                    <span class="host-verified-tag">✓ Approved CeylonGo Provider</span>
+                    <p>Published adventure provider on CeylonGo.</p>
+                  </div>
+                </div>
+              </section>
+            }
+
+            <section class="content-section">
+              <h2>Traveler Reviews</h2>
+              <p class="no-reviews-note">
+                Ratings and customer reviews are not available in this Academic MVP release.
+              </p>
+            </section>
+
+            <section class="content-section cancellation-section">
+              <h2>Cancellation Policy</h2>
+              <div class="cancellation-policy-box">
+                <p>
+                  {{
+                    meta?.cancellation_policy ||
+                      'Bookings remain pending until confirmed by the provider. Pending and confirmed bookings can be cancelled from My Bookings according to backend rules.'
+                  }}
+                </p>
+              </div>
+            </section>
+          </div>
+
+          <!-- 5. Right Section: 35% Sticky Booking Card -->
+          <div class="column-booking">
+            <aside class="sticky-booking-card" aria-label="Price and booking">
+              <div class="booking-price-header">
+                <span class="price-eyebrow">Price</span>
+                <div class="price-row">
+                  <strong class="price-val">
+                    {{ listing.currency }} {{ detail.card.price | number:'1.2-2' }}
+                  </strong>
+                  <span class="price-unit">/ person</span>
+                </div>
+              </div>
+
+              @if (detail.slots === undefined) {
+                <p class="slot-alert" role="status">Loading upcoming availability…</p>
+              } @else if (detail.slots === null) {
+                <p class="slot-alert">Availability is currently unavailable.</p>
+              } @else if (detail.nextOpenSlot; as slot) {
+                <p class="slot-alert">
+                  Next open slot: {{ slot.starts_at | date:'medium':'GMT+0530' }} (Sri Lanka time) ·
+                  {{ slot.remaining_capacity }} places left
+                </p>
+              } @else {
+                <p class="slot-alert">No upcoming open slots are currently available.</p>
+              }
+
+              <app-experience-booking [listing]="listing" [routeId]="detail.card.id" />
+            </aside>
+          </div>
+        </div>
+
+        <!-- Photo Dialog -->
+        <dialog
+          #imageDialog
+          class="detail-image-dialog"
+          aria-label="Experience photo"
+          (close)="viewedImage.set(null)"
+        >
+          <div class="dialog-header">
+            <button
+              class="outline-control btn-close-dialog"
+              type="button"
+              autofocus
+              (click)="imageDialog.close()"
+            >
+              Close
+            </button>
+          </div>
+          @if (viewedImage(); as image) {
+            <img [src]="image.url" [alt]="image.caption || listing.title" class="dialog-full-img" />
+            @if (image.caption) {
+              <p class="dialog-caption">{{ image.caption }}</p>
+            }
+          }
+        </dialog>
+      }
+    }
+    @if (state().status === 'ready') {
+    <app-recommendations [sourceId]="$any(state()).detail.activity.id" [category]="'adventure'" />
+  }
+</main>
+</div>

@@ -1,0 +1,446 @@
+<main class="booking-page rental-booking-page">
+  <div class="container">
+    @if (vehicleState().status === 'loading') {
+      <div class="state-card" role="status" aria-live="polite">
+        <p>Preparing your rental booking…</p>
+      </div>
+    } @else if (vehicleState().status === 'error') {
+      @let err = $any(vehicleState());
+      <div class="state-card error" role="alert">
+        <h1>Booking Unavailable</h1>
+        <p>{{ err.message }}</p>
+        <div class="state-actions">
+          <button type="button" class="primary-btn" (click)="retryLoad()">Retry</button>
+          <a class="outline-btn" [routerLink]="['/bicycles']">Back to rentals</a>
+        </div>
+      </div>
+    } @else {
+      @let vehicle = $any(vehicleState()).vehicle;
+
+      @if (preview()) {
+        <div class="booking-topbar">
+          <span class="preview-badge">Preview Mode — Demo Submission Only</span>
+        </div>
+      }
+
+      <ol class="booking-stepper" aria-label="Booking progress">
+        <li [class.active]="step() === 'review'" [class.done]="step() !== 'review'">
+          <span class="step-num">1</span>
+          <span>Booking Details</span>
+        </li>
+        <li [class.active]="step() === 'payment'" [class.done]="step() === 'confirmation'">
+          <span class="step-num">2</span>
+          <span>Payment</span>
+        </li>
+        <li [class.active]="step() === 'confirmation'">
+          <span class="step-num">3</span>
+          <span>Confirmation</span>
+        </li>
+      </ol>
+
+      @if (step() === 'review') {
+        <div class="booking-grid">
+          <div class="booking-main">
+            <section class="booking-card">
+              <h2>Selected Vehicle</h2>
+              <div class="selected-vehicle-row">
+                <div class="thumb-box">
+                  <app-rental-image [src]="vehicle.primary_image_url" [alt]="vehicle.vehicle_name" />
+                </div>
+                <div class="vehicle-summary-meta">
+                  <span class="type-pill">{{ categoryLabel(vehicle) }}</span>
+                  <h3>{{ vehicle.vehicle_name }}</h3>
+                  <p class="muted">{{ vehicle.city || 'Sri Lanka' }}</p>
+                  <p class="rate-line">
+                    <strong>{{ formatLkr(vehicle.price_per_day) }}</strong> / day
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section class="booking-card">
+              <div class="card-head-inline">
+                <h2>Pickup &amp; Return Details</h2>
+                @if (selectedDates() && !editingDates()) {
+                  <button type="button" class="link-btn" (click)="editingDates.set(true)">
+                    Edit selection
+                  </button>
+                }
+              </div>
+
+              @if (selectedDates() && !editingDates()) {
+                @let dates = selectedDates()!;
+                <dl class="schedule-summary">
+                  <div>
+                    <dt>Pickup</dt>
+                    <dd>{{ formatTimestamp(dates.dates.pickup_at) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Return</dt>
+                    <dd>{{ formatTimestamp(dates.dates.return_at) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Duration</dt>
+                    <dd>{{ dates.days }} {{ dates.days === 1 ? 'day' : 'days' }} ({{ dates.hours }} hrs)</dd>
+                  </div>
+                  <div>
+                    <dt>Vehicles Requested</dt>
+                    <dd>{{ vehicleQuantity() }} {{ vehicleQuantity() === 1 ? 'vehicle' : 'vehicles' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Pickup Location</dt>
+                    <dd>{{ vehicle.rental?.pickup_name || vehicle.pickup_address || vehicle.city || 'Confirmed after booking' }}</dd>
+                  </div>
+                </dl>
+              } @else {
+                <p class="helper-copy">Select your pickup dates, return dates and vehicle quantity to validate availability and price.</p>
+                <app-rental-date-picker
+                  [id]="vehicle.id"
+                  [preview]="preview()"
+                  [showQuantity]="true"
+                  [initialQuantity]="vehicleQuantity()"
+                  [pickupDate]="params().get('pickup') || ''"
+                  [returnDate]="params().get('dropoff') || params().get('return') || ''"
+                  [initialDates]="selectedDates()?.dates || null"
+                  (checked)="onDatesChecked($event)" />
+              }
+            </section>
+
+            <section class="booking-card">
+              <div class="card-head-inline">
+                <h2>Traveler Information</h2>
+                @if (!preview() && !currentUser()) {
+                  <button type="button" class="link-btn" (click)="openLoginModal()">Sign in to prefill</button>
+                }
+              </div>
+
+              @if (!preview() && !currentUser()) {
+                <div class="auth-notice-box">
+                  <p>Sign in with your CeylonGo traveler account before submitting your rental request.</p>
+                  <button type="button" class="outline-btn" (click)="openLoginModal()">Sign in / Register</button>
+                </div>
+              }
+
+              <div class="form-grid">
+                <div class="field-group">
+                  <label for="booking-full-name">Full Name *</label>
+                  <input
+                    id="booking-full-name"
+                    type="text"
+                    [ngModel]="fullName()"
+                    (ngModelChange)="fullName.set($event)"
+                    placeholder="Enter rider full name" />
+                </div>
+
+                <div class="field-group">
+                  <label for="booking-email">Email Address *</label>
+                  <input
+                    id="booking-email"
+                    type="email"
+                    [ngModel]="email()"
+                    (ngModelChange)="email.set($event)"
+                    placeholder="you@example.com" />
+                </div>
+              </div>
+            </section>
+
+            <section class="booking-card">
+              <h2>Rental Eligibility &amp; Terms</h2>
+
+              @if (isMotorized(vehicle)) {
+                <div class="eligibility-notice">
+                  <p><strong>Motorized Two-Wheeler Eligibility:</strong> A valid motorcycle driving license covering the return date is required. The provider checks the original driving license at pickup.</p>
+                </div>
+
+                <label class="agreement-check" style="margin-bottom: 14px;">
+                  <input
+                    type="checkbox"
+                    [ngModel]="licenseConfirmed()"
+                    (ngModelChange)="licenseConfirmed.set($event); reviewError.set('')" />
+                  <span>I confirm I hold a valid motorcycle driving license and will present the original license at pickup.</span>
+                </label>
+
+                <div class="field-group" style="max-width: 260px; margin-bottom: 16px;">
+                  <label for="license-valid-until">Driving License Expiry Date *</label>
+                  <input
+                    id="license-valid-until"
+                    type="date"
+                    [min]="returnDateSriLanka(selectedDates()?.dates?.return_at)"
+                    [ngModel]="licenseValidUntil()"
+                    (ngModelChange)="licenseValidUntil.set($event); reviewError.set('')" />
+                </div>
+              } @else {
+                <p class="helper-copy"><strong>Bicycle Rental:</strong> No motorized driving license is required for this bicycle.</p>
+              }
+
+              @if (vehicle.rental?.requirements || vehicle.rental?.cancellation_policy || vehicle.cancellation_policy) {
+                <ul class="requirements-list">
+                  @if (vehicle.rental?.requirements) {
+                    <li>{{ vehicle.rental!.requirements }}</li>
+                  }
+                  @if (vehicle.rental?.cancellation_policy || vehicle.cancellation_policy) {
+                    <li><strong>Cancellation Policy:</strong> {{ vehicle.rental?.cancellation_policy || vehicle.cancellation_policy }}</li>
+                  }
+                </ul>
+              }
+
+              <label class="agreement-check">
+                <input
+                  type="checkbox"
+                  [ngModel]="termsAccepted()"
+                  (ngModelChange)="termsAccepted.set($event); reviewError.set('')" />
+                <span>I confirm the rider meets all rental requirements and accept the cancellation &amp; rental terms.</span>
+              </label>
+
+              @if (reviewError()) {
+                <p class="form-error" role="alert">{{ reviewError() }}</p>
+              }
+            </section>
+          </div>
+
+          <aside class="booking-sidebar">
+            <div class="summary-card">
+              <h2>Price Summary</h2>
+              <div class="summary-vehicle">{{ vehicle.vehicle_name }}</div>
+
+              <div class="summary-rows">
+                <div class="summary-row">
+                  <span>Daily rate</span>
+                  <strong>{{ formatLkr(selectedDates()?.rate ?? vehicle.price_per_day) }}</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Duration</span>
+                  <strong>
+                    @if (selectedDates()) {
+                      {{ selectedDates()!.days }} {{ selectedDates()!.days === 1 ? 'day' : 'days' }}
+                    } @else {
+                      Select dates
+                    }
+                  </strong>
+                </div>
+                <div class="summary-row">
+                  <span>Vehicles</span>
+                  <strong>{{ vehicleQuantity() }}</strong>
+                </div>
+              </div>
+
+              <div class="summary-total">
+                <span>Total Amount</span>
+                <strong>{{ formatLkr(estimatedTotal()) }}</strong>
+              </div>
+
+              <button
+                type="button"
+                class="primary-btn full-width"
+                [disabled]="revalidating()"
+                (click)="continueToPayment(vehicle)">
+                {{ revalidating() ? 'Checking Pricing…' : 'Continue to Payment →' }}
+              </button>
+            </div>
+          </aside>
+        </div>
+      }
+
+      @if (step() === 'payment') {
+        <div class="booking-grid">
+          <div class="booking-main">
+            <section class="booking-card">
+              <h2>Choose Payment Method</h2>
+              <p class="helper-copy">
+                Select Online Payment — Academic Demo or Pay at Location. Both options keep your booking pending until the provider confirms it.
+              </p>
+
+              <div class="payment-options">
+                <label
+                  class="payment-option-card"
+                  [class.selected]="paymentMethod() === 'online'"
+                  (click)="selectPaymentMethod('online')">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    [checked]="paymentMethod() === 'online'" />
+                  <div>
+                    <strong>Online Payment — Academic Demo</strong>
+                    <p>No real card details or live payment gateway charge is performed.</p>
+
+                    @if (paymentMethod() === 'online') {
+                      <div class="demo-outcome-picker">
+                        <label for="demo-outcome-select">Demo Payment Outcome</label>
+                        <select
+                          id="demo-outcome-select"
+                          [ngModel]="simulateOutcome()"
+                          (ngModelChange)="simulateOutcome.set($event)">
+                          <option value="success">Simulate Successful Payment</option>
+                          <option value="failure">Simulate Payment Failure (Test Retry)</option>
+                        </select>
+                      </div>
+                    }
+                  </div>
+                </label>
+
+                <label
+                  class="payment-option-card"
+                  [class.selected]="paymentMethod() === 'at_location'"
+                  (click)="selectPaymentMethod('at_location')">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    [checked]="paymentMethod() === 'at_location'" />
+                  <div>
+                    <strong>Pay at Location</strong>
+                    <p>Submit your booking request now and pay the provider directly at pickup (status remains Unpaid).</p>
+                  </div>
+                </label>
+              </div>
+
+              @if (paymentError()) {
+                <div class="payment-alert" role="alert">
+                  <p>{{ paymentError() }}</p>
+                  <div class="alert-actions">
+                    @if (conflictNeedsRefresh()) {
+                      <button type="button" class="primary-btn" (click)="refreshAfterConflict()">
+                        Refresh Availability &amp; Price
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="primary-btn"
+                        [disabled]="submitting()"
+                        (click)="submitBooking(vehicle)">
+                        Retry Payment
+                      </button>
+                      <button
+                        type="button"
+                        class="outline-btn"
+                        [disabled]="submitting()"
+                        (click)="switchToPayAtLocation(vehicle)">
+                        Switch to Pay at Location
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div class="step-actions-row">
+                <button type="button" class="outline-btn" [disabled]="submitting()" (click)="backToReview()">
+                  &larr; Back
+                </button>
+                <button
+                  type="button"
+                  class="primary-btn"
+                  [disabled]="submitting()"
+                  (click)="submitBooking(vehicle)">
+                  {{ submitting() ? 'Submitting…' : 'Submit Booking Request' }}
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <aside class="booking-sidebar">
+            <div class="summary-card">
+              <h2>Booking Summary</h2>
+              <div class="summary-vehicle">{{ vehicle.vehicle_name }}</div>
+              @if (selectedDates()) {
+                <p class="muted">{{ formatTimestamp(selectedDates()!.dates.pickup_at) }} &rarr; {{ formatTimestamp(selectedDates()!.dates.return_at) }}</p>
+              }
+              <div class="summary-total">
+                <span>Total Amount</span>
+                <strong>{{ formatLkr(createdBooking()?.total_amount ?? estimatedTotal()) }}</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      }
+
+      @if (step() === 'confirmation') {
+        @let booking = createdBooking();
+        <section class="confirmation-card" aria-live="polite">
+          <div class="confirm-badge">
+            {{ booking?.status === 'confirmed' ? 'Confirmed' : 'Pending Provider Confirmation' }}
+          </div>
+
+          <h1>{{ confirmedTitle() }}</h1>
+          <p class="confirm-subtitle">
+            @if (booking?.status === 'confirmed') {
+              Your rental reservation is confirmed. Save your reference number for pickup.
+            } @else {
+              Your rental booking request has been sent to the provider and remains pending until confirmation.
+            }
+          </p>
+
+          <div class="reference-box">
+            <span>Booking Reference</span>
+            <strong>{{ booking?.booking_reference || previewReference() || ('RENT-' + (booking?.id || 0)) }}</strong>
+          </div>
+
+          <div class="confirm-vehicle-banner">
+            <div class="confirm-thumb">
+              <app-rental-image [src]="vehicle.primary_image_url" [alt]="vehicle.vehicle_name" />
+            </div>
+            <div>
+              <h3>{{ vehicle.vehicle_name }}</h3>
+              <p>{{ vehicle.rental?.pickup_name || vehicle.pickup_address || vehicle.city || 'Sri Lanka' }}</p>
+            </div>
+          </div>
+
+          <dl class="confirm-details-grid">
+            <div>
+              <dt>Pickup</dt>
+              <dd>{{ formatTimestamp(booking?.starts_at || selectedDates()?.dates?.pickup_at || '') }}</dd>
+            </div>
+            <div>
+              <dt>Return</dt>
+              <dd>{{ formatTimestamp(booking?.ends_at || selectedDates()?.dates?.return_at || '') }}</dd>
+            </div>
+            <div>
+              <dt>Vehicles</dt>
+              <dd>{{ booking?.quantity ?? vehicleQuantity() }}</dd>
+            </div>
+            <div>
+              <dt>Total Amount</dt>
+              <dd>{{ formatLkr(booking?.total_amount ?? estimatedTotal()) }}</dd>
+            </div>
+            <div>
+              <dt>Payment Method</dt>
+              <dd>{{ paymentMethodDisplay() }}</dd>
+            </div>
+            <div>
+              <dt>Payment Status</dt>
+              <dd>{{ paymentStatusDisplay() }}</dd>
+            </div>
+            <div>
+              <dt>Booking Status</dt>
+              <dd class="capitalize">{{ booking?.status || 'pending' }}</dd>
+            </div>
+          </dl>
+
+          <div class="confirm-actions">
+            @if (!preview() && booking?.id) {
+              <a class="primary-btn" [routerLink]="['/experiences/bookings', booking!.id]">View Booking</a>
+              <a class="outline-btn" [routerLink]="['/experiences/bookings']">My Bookings</a>
+            } @else if (preview()) {
+              <a
+                class="primary-btn"
+                [routerLink]="['/bicycles/my-rentals', previewReference()]"
+                [queryParams]="{ preview: '1' }">
+                View Demo Booking
+              </a>
+              <a
+                class="outline-btn"
+                [routerLink]="['/bicycles/my-rentals']"
+                [queryParams]="{ preview: '1' }">
+                My Demo Rentals
+              </a>
+            }
+            <a
+              class="outline-btn"
+              [routerLink]="['/bicycles']"
+              [queryParams]="preview() ? { preview: '1' } : null">
+              Continue Browsing
+            </a>
+          </div>
+        </section>
+      }
+    }
+  </div>
+</main>

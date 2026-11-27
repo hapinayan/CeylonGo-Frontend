@@ -1,0 +1,153 @@
+<article class="post-card">
+  <!-- AUTHOR HEADER -->
+  <header class="post-header">
+    <div class="author-block">
+      <div class="author-avatar" [class.provider]="post.author_type === 'provider'" aria-hidden="true">
+        {{ authorInitials }}
+      </div>
+      <div class="author-meta">
+        <div class="author-top-line">
+          <strong class="author-name">{{ post.author_name }}</strong>
+          <span class="role-badge" [class.provider]="post.author_type === 'provider'">
+            {{ authorLabel }}
+          </span>
+        </div>
+        @if (post.author.provider_business_name) {
+          <p class="business-line">
+            {{ post.author.provider_business_name }}
+            @if (post.author.provider_district) {
+              <span>&middot; {{ post.author.provider_district }}</span>
+            }
+          </p>
+        }
+        <p class="time-line">
+          <time [attr.datetime]="post.created_at">{{ post.created_at | date:'mediumDate' }} at {{ post.created_at | date:'shortTime' }}</time>
+          @if (wasEdited) {
+            <span class="edited-tag">&middot; Edited</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    <div class="menu-wrap">
+      <button
+        type="button"
+        class="menu-trigger-btn"
+        (click)="toggleMenu($event)"
+        aria-label="Post options"
+        [attr.aria-expanded]="isMenuOpen()"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
+
+      @if (isMenuOpen()) {
+        <div class="post-dropdown" role="menu" (click)="$event.stopPropagation()">
+          @if (isOwner) {
+            <button type="button" class="dropdown-item" role="menuitem" (click)="onEdit($event)">
+              Edit Post
+            </button>
+            <button type="button" class="dropdown-item danger" role="menuitem" (click)="onDelete($event)">
+              Delete Post
+            </button>
+          } @else {
+            <button type="button" class="dropdown-item" role="menuitem" (click)="onReport($event)">
+              Report Post
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- BODY TEXT -->
+  <div class="post-body">
+    <p class="post-text">{{ post.body }}</p>
+  </div>
+
+  <!-- PHOTOGRAPHS -->
+  @if (post.media.length > 0) {
+    <div class="media-grid" [ngClass]="mediaGridClass()" aria-label="Post photographs">
+      @for (photo of post.media; track photo.id; let idx = $index) {
+        <button
+          type="button"
+          class="media-slot"
+          (click)="openPhoto(idx)"
+          [attr.aria-label]="'View photo ' + (idx + 1) + ' of ' + post.media.length"
+        >
+          <img
+            [src]="photo.image_url"
+            [alt]="photo.alt_text || (post.author_name + ' travel photo ' + (idx + 1))"
+            loading="lazy"
+          />
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ENGAGEMENT SUMMARY & ACTION BAR -->
+  <footer class="post-footer">
+    <div class="counts-row">
+      <span>{{ post.likes_count }} {{ post.likes_count === 1 ? 'Like' : 'Likes' }}</span>
+      <span>{{ post.comments_count }} {{ post.comments_count === 1 ? 'Comment' : 'Comments' }}</span>
+    </div>
+
+    <div class="actions-row">
+      <button
+        type="button"
+        class="action-btn"
+        [class.active]="post.viewer_has_liked"
+        [disabled]="isLikeBusy()"
+        (click)="onToggleLike()"
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" [attr.fill]="post.viewer_has_liked ? '#0066FF' : 'none'" [attr.stroke]="post.viewer_has_liked ? '#0066FF' : 'currentColor'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 10v12" />
+          <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+        </svg>
+        <span>{{ post.viewer_has_liked ? 'Liked' : 'Like' }}</span>
+      </button>
+
+      @if (inlineCommentsOnly) {
+        <button type="button" class="action-btn" (click)="onCommentClick()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>Comment</span>
+        </button>
+      } @else {
+        <a [routerLink]="['/community/posts', post.id]" class="action-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>Comment</span>
+        </a>
+      }
+
+      <button
+        type="button"
+        class="action-btn"
+        [class.active]="post.viewer_has_saved"
+        [disabled]="isSaveBusy()"
+        (click)="onToggleSave()"
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" [attr.fill]="post.viewer_has_saved ? '#0066FF' : 'none'" [attr.stroke]="post.viewer_has_saved ? '#0066FF' : 'currentColor'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+        </svg>
+        <span>{{ post.viewer_has_saved ? 'Saved' : 'Save' }}</span>
+      </button>
+
+      @if (!isOwner) {
+        <button type="button" class="action-btn report-btn" (click)="onReport($event)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+            <line x1="4" y1="22" x2="4" y2="15" />
+          </svg>
+          <span>Report</span>
+        </button>
+      }
+    </div>
+  </footer>
+</article>

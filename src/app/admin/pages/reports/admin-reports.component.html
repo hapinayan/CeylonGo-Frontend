@@ -1,0 +1,100 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Executive Reports & Analytics</h1>
+      <p class="page-subtitle">Platform metrics, service vertical distribution, and revenue aggregate reporting.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadAnalytics()" [disabled]="isLoading">
+        <span>Refresh Report</span>
+      </button>
+      <span class="report-badge">Generated: {{ lastGenerated | date:'medium' }}</span>
+    </div>
+  </header>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <p>Synthesizing platform telemetry and ledger statistics...</p>
+  </div>
+
+  <div *ngIf="!isLoading && analytics" class="analytics-layout">
+    <!-- Macro KPI Metrics -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Travelers</span>
+        <span class="kpi-val text-blue">{{ analytics.total_travelers | number }}</span>
+        <span class="kpi-sub">{{ analytics.active_travelers | number }} actively verified</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Registered Providers</span>
+        <span class="kpi-val text-indigo">{{ analytics.total_providers | number }}</span>
+        <span class="kpi-sub">{{ analytics.verified_providers | number }} verified hosts</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Gross Platform Revenue</span>
+        <span class="kpi-val text-green">{{ analytics.total_revenue_lkr | number }} LKR</span>
+        <span class="kpi-sub">Total booking transactions</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Platform Retained Commission</span>
+        <span class="kpi-val text-amber">{{ analytics.commission_revenue_lkr | number }} LKR</span>
+        <span class="kpi-sub">10% statutory platform intake</span>
+      </div>
+    </section>
+
+    <!-- Vertical Breakdown Section -->
+    <section class="breakdown-card">
+      <div class="card-header">
+        <h2>Service Vertical Revenue Distribution</h2>
+        <span class="badge">{{ analytics.period }}</span>
+      </div>
+
+      <div class="breakdown-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Service Vertical</th>
+              <th>Bookings / Units</th>
+              <th>Gross Revenue (LKR)</th>
+              <th>Platform Share</th>
+              <th>Volume %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cat of analytics.category_distribution">
+              <td><strong>{{ cat.label }}</strong></td>
+              <td>{{ cat.count | number }} bookings</td>
+              <td><strong>{{ cat.revenue | number }} LKR</strong></td>
+              <td class="text-green">{{ (cat.revenue * 0.1) | number }} LKR</td>
+              <td>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" [style.width.%]="cat.percentage"></div>
+                  <span class="pct-text">{{ cat.percentage }}%</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Audit Volume Section -->
+    <section class="volume-card">
+      <div class="card-header">
+        <h2>Live Booking Volume Telemetry</h2>
+        <span class="status-note">Half-open UTC reconciliation interval</span>
+      </div>
+
+      <div class="volume-grid">
+        <div class="volume-box" *ngFor="let vol of analytics.recent_booking_volume">
+          <h3>{{ vol.module | uppercase }} MODULE</h3>
+          <p class="vol-total">Total Window Bookings: <strong>{{ vol.total }}</strong></p>
+          <div class="status-chips">
+            <span *ngFor="let s of vol.by_status" class="chip">
+              {{ s.status }}: <strong>{{ s.count }}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

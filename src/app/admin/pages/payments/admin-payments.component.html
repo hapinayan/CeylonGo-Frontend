@@ -1,0 +1,154 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Payments & Financial Reconciliation</h1>
+      <p class="page-subtitle">Platform-wide transaction monitoring, gross revenue reconciliation, and payout liability oversight.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="refreshData()" [disabled]="isLoading">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span>{{ isLoading ? 'Refreshing...' : 'Refresh Data' }}</span>
+      </button>
+      <span class="synced-badge">Last Synced: {{ lastSynced | date:'shortTime' }}</span>
+    </div>
+  </header>
+
+  <!-- Financial KPI Metrics -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-title">Gross Booking Volume</span>
+      <span class="kpi-value text-blue">{{ summary.total_gross_booking_revenue | number }} {{ summary.currency }}</span>
+      <span class="kpi-caption">Total transaction intake across verticals</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-title">Platform Commission (10%)</span>
+      <span class="kpi-value text-green">{{ summary.total_ceylongo_commission | number }} {{ summary.currency }}</span>
+      <span class="kpi-caption">Net platform retainable fee</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-title">Provider Settlement Liabilities</span>
+      <span class="kpi-value text-amber">{{ summary.total_provider_liabilities | number }} {{ summary.currency }}</span>
+      <span class="kpi-caption">Pending payout to verified hosts</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-title">Verified Refunds Processed</span>
+      <span class="kpi-value text-red">{{ summary.total_verified_refunds | number }} {{ summary.currency }}</span>
+      <span class="kpi-caption">Disputes and verified cancellations</span>
+    </div>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <section class="filters-card">
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search reference (TX-..., BK-...), traveler, or provider..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <app-admin-select
+        ariaLabel="Filter by Category"
+        [options]="categoryOptions"
+        [value]="selectedCategory"
+        (valueChange)="onCategoryChange($event)"
+      ></app-admin-select>
+
+      <app-admin-select
+        ariaLabel="Filter by Payment Status"
+        [options]="statusOptions"
+        [value]="selectedStatus"
+        (valueChange)="onStatusChange($event)"
+      ></app-admin-select>
+
+      <app-admin-select
+        ariaLabel="Items per page"
+        [options]="pageSizeOptions"
+        [value]="pageSize"
+        (valueChange)="onPageSizeChange($event)"
+      ></app-admin-select>
+    </div>
+  </section>
+
+  <!-- Transaction Data Table -->
+  <section class="table-card">
+    <div *ngIf="isLoading" class="loading-state">
+      <p>Loading transactions & settlements queue...</p>
+    </div>
+
+    <div *ngIf="!isLoading && errorMessage" class="error-banner">
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage" class="table-wrapper">
+      <table class="data-table" aria-label="Transaction Ledger">
+        <thead>
+          <tr>
+            <th>Tx Reference</th>
+            <th>Booking Reference</th>
+            <th>Service Vertical</th>
+            <th>Traveler & Provider</th>
+            <th>Gross Amount</th>
+            <th>Commission</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of payments">
+            <td>
+              <span class="font-mono text-bold">{{ p.transaction_reference }}</span>
+              <span *ngIf="p.reconciliation_flag" class="flag-badge">Flagged</span>
+            </td>
+            <td><span class="font-mono">{{ p.booking_reference }}</span></td>
+            <td><span class="badge category-badge">{{ p.category | uppercase }}</span></td>
+            <td>
+              <div class="entity-pair">
+                <span><strong>Trav:</strong> {{ p.traveler_name }}</span>
+                <span><strong>Prov:</strong> {{ p.provider_name }}</span>
+              </div>
+            </td>
+            <td><strong>{{ p.amount | number }} {{ p.currency }}</strong></td>
+            <td class="text-green">{{ p.commission_amount | number }} {{ p.currency }}</td>
+            <td>
+              <span class="badge" [ngClass]="p.payment_status">{{ p.payment_status | uppercase }}</span>
+              <span *ngIf="p.refund_status !== 'none'" class="badge refund-badge">{{ p.refund_status }}</span>
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline" (click)="openDetail(p)">
+                Audit Dossier
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="payments.length === 0">
+            <td colspan="8" class="empty-cell">No matching transactions found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <footer class="pagination-footer" *ngIf="totalPages > 1">
+      <span class="pagination-info">Showing {{ payments.length }} of {{ totalItems }} records</span>
+      <div class="pagination-btns">
+        <button type="button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Previous</button>
+        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- Transaction Detail Modal -->
+  <app-admin-payment-detail-modal
+    *ngIf="selectedPayment"
+    [payment]="selectedPayment"
+    (close)="closeDetail()"
+  ></app-admin-payment-detail-modal>
+</div>

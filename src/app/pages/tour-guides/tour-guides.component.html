@@ -1,0 +1,699 @@
+<div class="tour-guides-page">
+  <!-- Top Controls: Search Bar + Guide Categories -->
+  <section class="discovery-controls-band" aria-label="Search and categories">
+    <div class="controls-inner">
+      <!-- 2. Search Bar -->
+      <div class="search-bar-wrapper" (click)="$event.stopPropagation()">
+        <div class="search-bar">
+          <!-- Destination -->
+          <div
+            class="search-field location-field"
+            [class.active]="isLocationDropdownOpen()"
+            (click)="toggleLocationDropdown($event)"
+          >
+            <div class="field-icon-box">
+              <svg class="field-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="field-text">
+              <span class="field-label">Destination</span>
+              <input
+                type="text"
+                class="field-input"
+                placeholder="Where to? (Kandy, Ella...)"
+                [value]="searchLocationInput()"
+                (input)="searchLocationInput.set($any($event.target).value)"
+                (keydown.enter)="executeSearch()"
+                (click)="$event.stopPropagation()"
+              />
+            </div>
+
+            @if (isLocationDropdownOpen()) {
+              <div class="search-popover location-popover" (click)="$event.stopPropagation()">
+                <div class="popover-heading">Destinations</div>
+                <div class="location-chips">
+                  @for (loc of popularLocations; track loc) {
+                    <button
+                      type="button"
+                      class="location-chip-btn"
+                      [class.selected]="searchLocationInput() === loc"
+                      (click)="selectLocation(loc, $event)"
+                    >
+                      <span>{{ loc }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="field-divider"></div>
+
+          <!-- Date -->
+          <div
+            class="search-field date-field"
+            [class.active]="isDatePickerOpen()"
+            (click)="toggleDatePicker($event)"
+          >
+            <div class="field-icon-box">
+              <svg class="field-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="field-text">
+              <span class="field-label">Date</span>
+              <span class="field-value">{{ selectedDateInput() || 'Any date' }}</span>
+            </div>
+
+            @if (isDatePickerOpen()) {
+              <div class="search-popover date-popover" (click)="$event.stopPropagation()">
+                <div class="popover-heading">Tour Date</div>
+                <div class="custom-date-box">
+                  <input
+                    id="customDateInput"
+                    type="date"
+                    class="custom-date-picker"
+                    [value]="selectedDateInput()"
+                    (change)="selectDate($any($event.target).value, $event)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="field-divider"></div>
+
+          <!-- Travelers -->
+          <div
+            class="search-field travelers-field"
+            [class.active]="isTravelersOpen()"
+            (click)="toggleTravelersPicker($event)"
+          >
+            <div class="field-icon-box">
+              <svg class="field-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="field-text">
+              <span class="field-label">Travelers</span>
+              <span class="field-value">{{ travelersCount() }} {{ travelersCount() === 1 ? 'Traveler' : 'Travelers' }}</span>
+            </div>
+
+            @if (isTravelersOpen()) {
+              <div class="search-popover travelers-popover" (click)="$event.stopPropagation()">
+                <div class="traveler-counter-row">
+                  <div>
+                    <p class="counter-label">Travelers</p>
+                    <p class="counter-sub">Group size</p>
+                  </div>
+                  <div class="counter-controls">
+                    <button
+                      type="button"
+                      class="circle-btn"
+                      [disabled]="travelersCount() <= 1"
+                      (click)="changeTravelers(-1, $event)"
+                    >-</button>
+                    <span class="counter-number">{{ travelersCount() }}</span>
+                    <button
+                      type="button"
+                      class="circle-btn"
+                      (click)="changeTravelers(1, $event)"
+                    >+</button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="field-divider"></div>
+
+          <!-- Language -->
+          <div
+            class="search-field language-field"
+            [class.active]="isLanguageDropdownOpen()"
+            (click)="toggleLanguageDropdown($event)"
+          >
+            <div class="field-icon-box">
+              <svg class="field-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </div>
+            <div class="field-text">
+              <span class="field-label">Language</span>
+              <span class="field-value">{{ searchLanguageInput() || 'Any language' }}</span>
+            </div>
+
+            @if (isLanguageDropdownOpen()) {
+              <div class="search-popover location-popover" (click)="$event.stopPropagation()">
+                <div class="popover-heading">Preferred Language</div>
+                <div class="location-chips">
+                  <button
+                    type="button"
+                    class="location-chip-btn"
+                    [class.selected]="!searchLanguageInput()"
+                    (click)="selectSearchLanguage('', $event)"
+                  >
+                    <span>Any Language</span>
+                  </button>
+                  @for (lang of availableLanguages; track lang) {
+                    <button
+                      type="button"
+                      class="location-chip-btn"
+                      [class.selected]="searchLanguageInput() === lang"
+                      (click)="selectSearchLanguage(lang, $event)"
+                    >
+                      <span>{{ lang }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Search Button -->
+          <button
+            type="button"
+            class="search-submit-btn"
+            aria-label="Search tour guides"
+            (click)="executeSearch()"
+          >
+            <svg class="search-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Guide Categories -->
+      <div class="categories-bar-wrapper">
+        <div class="categories-grid" role="tablist" aria-label="Tour Guide Categories">
+          @for (cat of categories; track cat.id) {
+            <button
+              type="button"
+              role="tab"
+              class="category-card-btn category-pill-btn"
+              [class.active]="filter().categoryId === cat.id"
+              [attr.aria-selected]="filter().categoryId === cat.id"
+              (click)="selectCategory(cat.id)"
+            >
+              <span class="category-icon-box">
+                @switch (cat.icon) {
+                  @case ('grid') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                    </svg>
+                  }
+                  @case ('mountain') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>
+                    </svg>
+                  }
+                  @case ('temple') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="4" y1="21" x2="20" y2="21"></line>
+                      <line x1="6" y1="10" x2="6" y2="21"></line>
+                      <line x1="18" y1="10" x2="18" y2="21"></line>
+                      <line x1="12" y1="10" x2="12" y2="21"></line>
+                      <polygon points="12 2 2 7 22 7 12 2"></polygon>
+                    </svg>
+                  }
+                  @case ('camera') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                  }
+                  @case ('leaf') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+                    </svg>
+                  }
+                  @case ('wave') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 5-3"></path>
+                      <path d="M2 17c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 5-3"></path>
+                    </svg>
+                  }
+                  @case ('route') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="6" cy="19" r="3"></circle>
+                      <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path>
+                      <circle cx="18" cy="5" r="3"></circle>
+                    </svg>
+                  }
+                  @case ('car') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                      <circle cx="7" cy="17" r="2"></circle>
+                      <circle cx="17" cy="17" r="2"></circle>
+                    </svg>
+                  }
+                }
+              </span>
+              <span class="category-name">{{ cat.name }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="results-section" id="tourGuidesResults">
+    <div class="results-container">
+      <!-- 4. Results Count, Sort & Filters -->
+      <section class="results-toolbar">
+        <div class="results-count-box">
+          <h2 class="results-count-text">{{ totalCount() }} Tour Guides</h2>
+        </div>
+
+        <div class="toolbar-actions" (click)="$event.stopPropagation()">
+          <div class="sort-dropdown-wrapper">
+            <button
+              type="button"
+              class="sort-dropdown-btn"
+              [attr.aria-expanded]="isSortDropdownOpen()"
+              (click)="toggleSortDropdown($event)"
+            >
+              <span>Sort: {{ getSortLabel(filter().sortBy) }}</span>
+              <svg class="chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            @if (isSortDropdownOpen()) {
+              <div class="dropdown-menu sort-menu">
+                <button
+                  type="button"
+                  class="sort-option-btn"
+                  [class.selected]="filter().sortBy === 'top_rated'"
+                  (click)="setSortOption('top_rated', $event)"
+                >
+                  Top Rated
+                </button>
+                <button
+                  type="button"
+                  class="sort-option-btn"
+                  [class.selected]="filter().sortBy === 'price_asc'"
+                  (click)="setSortOption('price_asc', $event)"
+                >
+                  Price: Low to High
+                </button>
+                <button
+                  type="button"
+                  class="sort-option-btn"
+                  [class.selected]="filter().sortBy === 'price_desc'"
+                  (click)="setSortOption('price_desc', $event)"
+                >
+                  Price: High to Low
+                </button>
+                <button
+                  type="button"
+                  class="sort-option-btn"
+                  [class.selected]="filter().sortBy === 'experience'"
+                  (click)="setSortOption('experience', $event)"
+                >
+                  Most Experienced
+                </button>
+              </div>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="filters-btn"
+            (click)="openFilterModal()"
+            aria-label="Open detailed filter options"
+          >
+            <svg class="filters-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Filters</span>
+            @if (activeFilterCount() > 0) {
+              <span class="filter-count-pill">{{ activeFilterCount() }}</span>
+            }
+          </button>
+        </div>
+      </section>
+
+      <!-- 5. Tour Guide Cards Grid -->
+      @if (isLoading()) {
+        <section class="guides-grid-section" aria-label="Loading Tour Guides">
+          <div class="guides-grid">
+            @for (skeleton of [1, 2, 3, 4, 5, 6, 7, 8]; track skeleton) {
+              <article class="guide-card skeleton-card">
+                <div class="card-cover-wrapper">
+                  <div class="skeleton-shimmer skeleton-cover"></div>
+                </div>
+                <div class="card-body">
+                  <div class="skeleton-shimmer skeleton-line skeleton-name"></div>
+                  <div class="skeleton-shimmer skeleton-line skeleton-sub"></div>
+                  <div class="skeleton-shimmer skeleton-line skeleton-price"></div>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      } @else if (errorMessage()) {
+        <section class="error-state-section" aria-label="Error loading guides">
+          <div class="error-box">
+            <h3 class="error-title">Unable to Load Tour Guides</h3>
+            <p class="error-desc">{{ errorMessage() }}</p>
+            <button type="button" class="btn-primary retry-btn" (click)="retryLoadGuides()">
+              Retry Connection
+            </button>
+          </div>
+        </section>
+      } @else if (paginatedGuides().length > 0) {
+        <section class="guides-grid-section" aria-label="Tour Guide Cards">
+          <div class="guides-grid">
+            @for (guide of paginatedGuides(); track guide.id) {
+              <article class="guide-card" (click)="viewGuideProfile(guide)">
+                <!-- Destination Cover + Top-Right Wishlist -->
+                <div class="card-cover-wrapper">
+                  <img
+                    [src]="guide.coverImageUrl"
+                    [alt]="guide.location"
+                    class="card-cover-img"
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+
+                  <button
+                    type="button"
+                    class="favorite-btn"
+                    [class.is-fav]="guide.isFavorite"
+                    [attr.aria-label]="guide.isFavorite ? 'Remove from wishlist' : 'Save to wishlist'"
+                    (click)="toggleFavorite(guide, $event)"
+                  >
+                    <svg
+                      class="heart-svg"
+                      viewBox="0 0 24 24"
+                      [attr.fill]="guide.isFavorite ? '#ef4444' : 'none'"
+                      [attr.stroke]="guide.isFavorite ? '#ef4444' : '#1e293b'"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Circular Avatar Overlapping Cover Image -->
+                <div class="avatar-overlap-wrap">
+                  <img
+                    [src]="guide.avatarUrl"
+                    [alt]="guide.name"
+                    class="guide-avatar-overlap"
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="guide-name-row">
+                    <h3 class="guide-name">{{ guide.name }}</h3>
+                    @if (guide.verified) {
+                      <span class="verified-badge" [title]="guide.licenseStatus || 'Verified Guide'">
+                        <svg viewBox="0 0 24 24" fill="#0066FF">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                      </span>
+                    }
+                  </div>
+
+                  <p class="guide-meta-line">
+                    {{ guide.experienceYears }}+ yrs experience · {{ guide.location }}
+                  </p>
+
+                  <!-- Languages -->
+                  <div class="tag-row">
+                    @for (lang of guide.languages.slice(0, 3); track lang) {
+                      <span class="lang-pill">{{ lang }}</span>
+                    }
+                  </div>
+
+                  <!-- Specializations -->
+                  @if (guide.specialties && guide.specialties.length > 0) {
+                    <div class="spec-line">
+                      {{ guide.specialties.slice(0, 2).join(' · ') }}
+                    </div>
+                  }
+
+                  <!-- Price & Rating -->
+                  <div class="card-footer-row">
+                    <div class="rating-box">
+                      @if (guide.reviewsCount > 0) {
+                        <span class="star-icon">★</span>
+                        <span class="rating-value">{{ guide.rating | number:'1.1-1' }}</span>
+                        <span class="reviews-count">({{ guide.reviewsCount }})</span>
+                      } @else {
+                        <span class="reviews-count">No reviews yet</span>
+                      }
+                    </div>
+
+                    <div class="price-box">
+                      <span class="price-from">From </span>
+                      <span class="price-amount">{{ guide.currency }} {{ guide.pricePerDay | number }}</span>
+                      <span class="price-period">{{ pricingUnitLabel(guide) }}</span>
+                    </div>
+                  </div>
+
+                  <a
+                    [routerLink]="['/tour-guides', guide.id]"
+                    [queryParams]="guideLinkQueryParams()"
+                    class="btn-view-profile"
+                    (click)="onViewProfileClick(guide, $event)"
+                  >
+                    View Profile
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <!-- 6. Pagination -->
+        <nav class="pagination-nav" aria-label="Pagination">
+          <ul class="pagination-list">
+            @for (pageItem of getVisiblePages(); track $index) {
+              <li class="page-item">
+                @if (pageItem === '...') {
+                  <span class="page-ellipsis">...</span>
+                } @else {
+                  <button
+                    type="button"
+                    class="page-number-btn"
+                    [class.active]="currentPage() === pageItem"
+                    [attr.aria-current]="currentPage() === pageItem ? 'page' : null"
+                    (click)="goToPage(pageItem)"
+                  >
+                    {{ pageItem }}
+                  </button>
+                }
+              </li>
+            }
+
+            @if (currentPage() < totalPages()) {
+              <li class="page-item">
+                <button
+                  type="button"
+                  class="page-arrow-btn"
+                  (click)="nextPage()"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </li>
+            }
+          </ul>
+        </nav>
+      } @else {
+        <section class="empty-state-section">
+          <div class="empty-box">
+            @if (guideService.allGuides().length === 0) {
+              <h3 class="empty-title">No approved tour guides available yet</h3>
+              <p class="empty-desc">
+                Verified and published local tour guides will appear here once approved by platform administrators.
+              </p>
+              <button type="button" class="btn-primary reset-filters-btn" (click)="retryLoadGuides()">
+                Refresh Guides
+              </button>
+            } @else {
+              <h3 class="empty-title">No local guides found</h3>
+              <p class="empty-desc">
+                Try adjusting your destination, language, category, or price filters.
+              </p>
+              <button type="button" class="btn-primary reset-filters-btn" (click)="resetAllFilters()">
+                Reset All Filters
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- FILTERS MODAL DIALOG -->
+@if (isFilterModalOpen()) {
+  <div class="modal-backdrop" (click)="closeFilterModal()">
+    <div class="modal-container filter-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Filter Tour Guides</h3>
+        <button type="button" class="modal-close-btn" (click)="closeFilterModal()" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="filter-two-col">
+          <div class="input-box">
+            <label for="filterLocation">Location / District</label>
+            <input
+              id="filterLocation"
+              type="text"
+              placeholder="e.g. Kandy, Ella, Galle"
+              [value]="tempLocation()"
+              (input)="tempLocation.set($any($event.target).value)"
+            />
+          </div>
+          <div class="input-box">
+            <label for="filterSpecialization">Specialization</label>
+            <input
+              id="filterSpecialization"
+              type="text"
+              placeholder="e.g. Wildlife, Hiking, Heritage"
+              [value]="tempSpecialization()"
+              (input)="tempSpecialization.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <hr class="modal-divider" />
+
+        <div class="filter-group">
+          <label class="filter-group-title">Languages Spoken</label>
+          <div class="filter-checkboxes-grid">
+            @for (lang of availableLanguages; track lang) {
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="tempLanguages().includes(lang)"
+                  (change)="toggleLanguageFilter(lang)"
+                />
+                <span>{{ lang }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <hr class="modal-divider" />
+
+        <div class="filter-group">
+          <label class="filter-group-title">Starting Rate (LKR)</label>
+          <div class="price-inputs-row">
+            <div class="input-box">
+              <span>Min Price (LKR)</span>
+              <input
+                type="number"
+                placeholder="5000"
+                [value]="tempMinPrice() || ''"
+                (input)="tempMinPrice.set($any($event.target).value ? +$any($event.target).value : null)"
+              />
+            </div>
+            <span class="range-dash">-</span>
+            <div class="input-box">
+              <span>Max Price (LKR)</span>
+              <input
+                type="number"
+                placeholder="20000"
+                [value]="tempMaxPrice() || ''"
+                (input)="tempMaxPrice.set($any($event.target).value ? +$any($event.target).value : null)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <hr class="modal-divider" />
+
+        <div class="filter-two-col">
+          <div class="input-box">
+            <label for="filterExperience">Minimum Experience</label>
+            <select
+              id="filterExperience"
+              [value]="tempMinExperience() ?? ''"
+              (change)="tempMinExperience.set($any($event.target).value ? +$any($event.target).value : null)"
+            >
+              <option value="">Any experience</option>
+              <option value="3">3+ years</option>
+              <option value="5">5+ years</option>
+              <option value="8">8+ years</option>
+              <option value="10">10+ years</option>
+            </select>
+          </div>
+          <div class="input-box">
+            <label for="filterRating">Minimum Rating</label>
+            <select
+              id="filterRating"
+              [value]="tempMinRating() ?? ''"
+              (change)="tempMinRating.set($any($event.target).value ? +$any($event.target).value : null)"
+            >
+              <option value="">Any rating</option>
+              <option value="4.5">4.5+ stars</option>
+              <option value="4.8">4.8+ stars</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="modal-divider" />
+
+        <div class="filter-group toggle-group">
+          <div>
+            <p class="filter-group-title mb-0">Verified Guides Only</p>
+            <p class="filter-sub">Show only credential-verified local guides</p>
+          </div>
+          <label class="switch">
+            <input
+              type="checkbox"
+              [checked]="tempVerifiedOnly()"
+              (change)="tempVerifiedOnly.set(!tempVerifiedOnly())"
+            />
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="resetAllFilters()">Clear All</button>
+        <button type="button" class="btn-primary" (click)="applyModalFilters()">Show Results</button>
+      </div>
+    </div>
+  </div>
+}
