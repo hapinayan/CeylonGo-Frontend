@@ -94,6 +94,9 @@ describe('Rental details, 3-step booking checkout, and shared My Bookings integr
     harness.detectChanges();
     await harness.fixture.whenStable();
     http.expectOne(`${api}/rental-wishlist/22/status`).flush({ vehicle_id: 22, saved: false });
+    http
+      .match(`${api}/recommendations/similar/22?limit=5`)
+      .forEach((r) => r.flush({ recommendation_type: 'similar_services', items: [] }));
     harness.detectChanges();
 
     expect(page().textContent).toContain('No driving licence required for this bicycle.');
@@ -105,6 +108,9 @@ describe('Rental details, 3-step booking checkout, and shared My Bookings integr
     harness.detectChanges();
     await harness.fixture.whenStable();
     http.expectOne(`${api}/rental-wishlist/21/status`).flush({ vehicle_id: 21, saved: false });
+    http
+      .match(`${api}/recommendations/similar/21?limit=5`)
+      .forEach((r) => r.flush({ recommendation_type: 'similar_services', items: [] }));
     harness.detectChanges();
 
     expect(page().textContent).toContain('Valid motorcycle driving license required');

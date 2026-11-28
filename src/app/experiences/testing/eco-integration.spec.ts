@@ -95,6 +95,13 @@ describe('Adventure Activities Details & API Integration', () => {
     http.expectOne(`${base}/activities/41`).flush(sampleActivity);
     http.expectOne((r) => r.url === `${base}/activities/41/availability`).flush([]);
     harness.detectChanges();
+    http
+      .match((r) => r.url.startsWith(`${base}/weather/`))
+      .forEach((r) => r.flush({}, { status: 503, statusText: 'Unavailable' }));
+    http
+      .expectOne(`${base}/recommendations/similar/41?limit=5`)
+      .flush({ recommendation_type: 'similar_services', items: [] });
+    harness.detectChanges();
 
     const text = harness.routeNativeElement?.textContent ?? '';
     expect(text).toContain('Ella Ridge Hike');
@@ -108,6 +115,13 @@ describe('Adventure Activities Details & API Integration', () => {
     await harness.navigateByUrl('/experiences/42');
     http.expectOne(`${base}/activities/42`).flush({ ...sampleActivity, id: 42, activity: null, photos: [] });
     http.expectOne((r) => r.url === `${base}/activities/42/availability`).flush([]);
+    harness.detectChanges();
+    http
+      .match((r) => r.url.startsWith(`${base}/weather/`))
+      .forEach((r) => r.flush({}, { status: 503, statusText: 'Unavailable' }));
+    http
+      .expectOne(`${base}/recommendations/similar/42?limit=5`)
+      .flush({ recommendation_type: 'similar_services', items: [] });
     harness.detectChanges();
     expect(harness.routeNativeElement?.textContent).toContain('schedule configuration is incomplete');
 

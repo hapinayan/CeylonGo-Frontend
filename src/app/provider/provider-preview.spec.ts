@@ -20,23 +20,16 @@ import { providerPreviewEnabled } from './provider-preview';
 import { ProviderPreviewService } from './provider-preview.service';
 
 describe('Provider Preview Mode', () => {
-  it('activates preview mode in development only when preview=true is requested', () => {
-    expect(providerPreviewEnabled).toBe(true);
+  it('keeps runtime preview mode disabled in development and production', () => {
+    expect(providerPreviewEnabled).toBe(false);
     TestBed.configureTestingModule({});
     const previewService = TestBed.inject(ProviderPreviewService);
 
     expect(previewService.isPreview()).toBe(false);
     expect(previewService.syncFromNavigation('/provider/dashboard', null)).toBe(false);
-    expect(previewService.syncFromNavigation('/provider/dashboard?preview=true', 'true')).toBe(true);
-    expect(previewService.isPreview()).toBe(true);
-    expect(previewService.queryParams()).toEqual({ preview: 'true' });
-
-    // Preserved across internal provider routes once active
-    expect(previewService.syncFromNavigation('/provider/listings')).toBe(true);
-
-    // Cleared when leaving provider portal or explicitly disabled
-    expect(previewService.syncFromNavigation('/provider/dashboard?preview=false', 'false')).toBe(false);
+    expect(previewService.syncFromNavigation('/provider/dashboard?preview=true', 'true')).toBe(false);
     expect(previewService.isPreview()).toBe(false);
+    expect(previewService.queryParams()).toEqual({});
   });
 
   describe('Preview Service HTTP isolation and mutation blocking', () => {

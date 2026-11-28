@@ -8,7 +8,7 @@ import {
   ReviewListing,
 } from '../core/models/provider.models';
 
-export const providerPreviewEnabled: boolean = true;
+export const providerPreviewEnabled: boolean = false;
 
 function makeSvgPreviewUrl(title: string, accent: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#082B5C"/><stop offset="100%" stop-color="${accent}"/></linearGradient></defs><rect width="800" height="500" fill="url(#g)"/><text x="50%" y="46%" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="700" text-anchor="middle">${title}</text><text x="50%" y="56%" fill="#cbd5e1" font-family="Inter,Arial,sans-serif" font-size="18" text-anchor="middle">Sample Preview Image</text></svg>`;

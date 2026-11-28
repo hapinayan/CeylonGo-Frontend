@@ -211,6 +211,7 @@ describe('AuthService', () => {
   });
 
   it('should fetch current user via /auth/me', () => {
+    sessionStorage.setItem('ceylongo_access_token', 'test-token');
     const mockUser: User = {
       id: 1,
       full_name: 'Current Traveler',
