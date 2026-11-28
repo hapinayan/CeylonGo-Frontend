@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AdminProfileDetails } from '../../core/models/admin-profile.models';
@@ -16,6 +16,7 @@ import { AdminProfileService } from '../../core/services/admin-profile.service';
 export class AdminProfileComponent implements OnInit {
   private readonly profileService = inject(AdminProfileService);
   private readonly authService = inject(AdminAuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   profile: AdminProfileDetails | null = null;
   isLoading = false;
@@ -34,14 +35,24 @@ export class AdminProfileComponent implements OnInit {
     this.isLoading = true;
     this.profileService.getProfile().subscribe({
       next: (prof) => {
-        this.profile = prof;
+        this.profile = {
+          ...prof,
+          notification_preferences: prof.notification_preferences ?? {
+            email_alerts: false,
+            verification_notifications: false,
+            financial_summaries: false,
+            security_alerts: false,
+          },
+        };
         this.editFullName = prof.full_name;
         this.editPhone = prof.phone || '';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.message || 'Failed to load profile details.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -63,11 +74,16 @@ export class AdminProfileComponent implements OnInit {
           this.profile = updated;
           this.isSaving = false;
           this.successMessage = 'Profile updated successfully.';
-          setTimeout(() => (this.successMessage = null), 3000);
+          this.cdr.markForCheck();
+          setTimeout(() => {
+            this.successMessage = null;
+            this.cdr.markForCheck();
+          }, 3000);
         },
         error: (err) => {
           this.isSaving = false;
           this.errorMessage = err?.message || 'Failed to update profile.';
+          this.cdr.markForCheck();
         },
       });
   }

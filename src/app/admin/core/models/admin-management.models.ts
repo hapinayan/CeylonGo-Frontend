@@ -20,10 +20,23 @@ export interface AdminInvitationRequest {
   invitation_note?: string;
 }
 
+export interface AdminInvitationResult {
+  id: number;
+  delivery_status: 'sent' | 'failed' | 'unconfigured' | 'preview';
+}
+
 export interface AdminManagementQueryParams {
   role?: string;
   status?: string;
   search?: string;
   page?: number;
   page_size?: number;
+}
+
+export interface AdminInvitationItem {
+  id: number;
+  email: string;
+  role: AdminRole;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
+  expires_at: string;
 }

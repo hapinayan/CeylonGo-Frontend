@@ -1,8 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { AdminListingDirectoryService, ListingReview } from './admin-listing-directory.service';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { map, Observable, of, switchMap, throwError } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import {
   ActivityAdminSummary,
   ActivityApprovalRequest,
@@ -23,15 +22,25 @@ import {
  * Strictly integrates with backend app/routers/admin_activities.py.
  * Strictly isolates development preview mode from production live API.
  */
+function activity(r: ListingReview): ActivityResponse {
+  const l = r.listing;
+  const fields = r.details['activity'] ?? r.details;
+  return { ...l, category: fields.category ?? '', location: l.locality, city: l.locality,
+    price_per_person: Number(l.price), duration_hours: fields.duration_hours,
+    difficulty_level: fields.difficulty_level, max_participants: fields.max_participants,
+    min_participants: fields.min_participants, provider_business_name: r.provider.business_name,
+    approval_status: l.approval_status as ActivityResponse['approval_status'],
+    reviewed_at: r.decided_at ?? undefined, rejection_reason: r.decision_reason ?? undefined };
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AdminAdventuresService {
-  private readonly http = inject(HttpClient);
+  private readonly directory = inject(AdminListingDirectoryService);
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewState = inject(AdminPreviewStateService, { optional: true });
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/admin/activities`;
 
   get isPreviewMode(): boolean {
     return this.adminAuthService.isDemoSession();
@@ -61,51 +70,10 @@ export class AdminAdventuresService {
       }
     }
 
-    // Live mode: backend router provides GET /api/v1/admin/activities listing pending activities
-    let httpParams = new HttpParams();
-    const limit = params?.limit || 50;
-    httpParams = httpParams.set('limit', limit.toString());
-
-    return this.http.get<ActivityResponse[]>(this.baseUrl, { params: httpParams }).pipe(
-      map((items) => {
-        let filtered = items;
-        if (params?.search && params.search.trim()) {
-          const q = params.search.trim().toLowerCase();
-          filtered = filtered.filter(
-            (a) =>
-              a.title.toLowerCase().includes(q) ||
-              a.location.toLowerCase().includes(q) ||
-              (a.city && a.city.toLowerCase().includes(q))
-          );
-        }
-        if (params?.category && params.category !== 'all') {
-          const cat = params.category.trim().toLowerCase();
-          filtered = filtered.filter((a) => (a.category || '').toLowerCase() === cat);
-        }
-        if (params?.district && params.district !== 'all') {
-          const d = params.district.trim().toLowerCase();
-          filtered = filtered.filter((a) => (a.district || '').toLowerCase().includes(d));
-        }
-
-        const total = filtered.length;
-        const page = Math.max(1, params?.page || 1);
-        const pageSize = Math.max(1, params?.limit || 10);
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        const pagedItems = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-        return {
-          items: pagedItems,
-          total,
-          page,
-          limit: pageSize,
-          total_pages: totalPages,
-        };
-      }),
-      catchError((error) => {
-        // Honest error propagation - never fallback to preview on live API failure
-        return throwError(() => error);
-      })
-    );
+    return this.directory.list('activity', activity, {
+      page: params?.page, page_size: params?.limit, status: params?.status,
+      district: params?.district, search: params?.search, activity_category: params?.category,
+    });
   }
 
   /**
@@ -130,9 +98,7 @@ export class AdminAdventuresService {
       return of(item);
     }
 
-    return this.http.get<ActivityResponse>(`${this.baseUrl}/${id}`).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.detail(id, activity);
   }
 
   /**
@@ -158,10 +124,8 @@ export class AdminAdventuresService {
       }
     }
 
-    const body = { notes: payload?.notes || '' };
-    return this.http.post<ActivityResponse>(`${this.baseUrl}/${id}/approve`, body).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.decide(id, 'approved', payload?.notes)
+      .pipe(switchMap(() => this.directory.detail(id, activity)));
   }
 
   /**
@@ -193,29 +157,19 @@ export class AdminAdventuresService {
       }
     }
 
-    return this.http.post<ActivityResponse>(`${this.baseUrl}/${id}/reject`, payload).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.decide(id, 'rejected', payload.reason)
+      .pipe(switchMap(() => this.directory.detail(id, activity)));
   }
 
   /**
    * Computes summary metrics for KPI cards.
    */
   getSummary(): Observable<ActivityAdminSummary> {
-    return this.getActivities({ limit: 100 }).pipe(
-      map((res) => {
-        const all = res.items;
-        const total = res.total;
-        const pending = all.filter((a: ActivityResponse) => a.approval_status === 'pending').length;
-        const approved = all.filter((a: ActivityResponse) => a.approval_status === 'approved').length;
-        const rejected = all.filter((a: ActivityResponse) => a.approval_status === 'rejected').length;
-        return {
-          total,
-          pending_approval: pending,
-          approved,
-          rejected,
-        };
-      })
+    return this.directory.list('activity', activity, { page_size: 1 }).pipe(
+      map(({ counts }) => ({ total: Object.values(counts).reduce((a, b) => a + b, 0),
+        pending_approval: counts['pending'] ?? 0, approved: counts['approved'] ?? 0,
+        rejected: counts['rejected'] ?? 0 }))
     );
   }
+
 }

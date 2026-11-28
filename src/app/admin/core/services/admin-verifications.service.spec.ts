@@ -61,6 +61,7 @@ describe('AdminVerificationsService', () => {
       id: '1',
       email: 'admin@ceylongo.com',
       role: 'super_admin',
+      admin_role: 'super_admin',
       is_active: true,
       name: 'Super Admin',
     });
@@ -125,7 +126,7 @@ describe('AdminVerificationsService', () => {
       (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? true;
     });
 
-    it('should query GET /api/v1/admin/providers with status=pending by default', () => {
+    it('should query GET /api/v1/admin/provider-directory with status=pending by default', () => {
       service.getVerificationQueue({ page: 1, limit: 10 }).subscribe((res) => {
         expect(res.items.length).toBe(1);
         expect(res.items[0].business_name).toBe('Ella Peaks Tour Guiding');
@@ -133,7 +134,7 @@ describe('AdminVerificationsService', () => {
 
       const req = httpMock.expectOne(
         (r) =>
-          r.url === `${environment.apiBaseUrl}/admin/providers` &&
+          r.url === `${environment.apiBaseUrl}/admin/provider-directory` &&
           r.params.get('status') === 'pending' &&
           r.params.get('page') === '1' &&
           r.params.get('limit') === '10'
@@ -240,16 +241,25 @@ describe('AdminVerificationsService', () => {
       });
 
       expect(caughtErr).toBeDefined();
-      expect(caughtErr?.message).toContain('Unauthorized: Only Super Administrators and Operations Administrators');
+      expect(caughtErr?.message).toContain('Unauthorized: Only administrators');
     });
   });
 
   describe('Isolated Development Preview Mode', () => {
+    const originalPreview = environment.features?.adminPreviewMode;
+
     beforeEach(() => {
       if (environment.features) {
         environment.features.adminPreviewMode = true;
       }
       (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = true;
+    });
+
+    afterEach(() => {
+      if (environment.features) {
+        environment.features.adminPreviewMode = originalPreview ?? false;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? false;
     });
 
     it('should delegate getVerificationQueue to AdminPreviewStateService without HTTP requests', () => {

@@ -17,8 +17,8 @@ describe('AdminAdventuresComponent', () => {
     id: 1,
     email: 'admin@ceylongo.com',
     full_name: 'Lead Operations Admin',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -74,8 +74,8 @@ describe('AdminAdventuresComponent', () => {
       id: 1,
       email: 'admin@ceylongo.com',
       full_name: 'Lead Operations Admin',
-      role: 'operations_admin',
-      admin_role: 'operations_admin',
+      role: 'admin',
+      admin_role: 'admin',
       is_active: true,
     };
 

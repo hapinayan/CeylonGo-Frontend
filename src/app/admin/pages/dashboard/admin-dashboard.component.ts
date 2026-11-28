@@ -87,6 +87,6 @@ export class AdminDashboardComponent implements OnInit {
   get totalBookingsRecorded(): number {
     const b = this.dashboardData()?.bookings;
     if (!b) return 0;
-    return (b.homestay || 0) + (b.rental_vehicle || 0) + (b.tour_guide || 0);
+    return (b.homestay || 0) + (b.rental_vehicle || 0) + (b.tour_guide || 0) + (b.activity || 0);
   }
 }

@@ -16,6 +16,10 @@
     <p>Synthesizing platform telemetry and ledger statistics...</p>
   </div>
 
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger" role="alert">
+    <span>{{ errorMessage }}</span>
+  </div>
+
   <div *ngIf="!isLoading && analytics" class="analytics-layout">
     <!-- Macro KPI Metrics -->
     <section class="kpi-grid">

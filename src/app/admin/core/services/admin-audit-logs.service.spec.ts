@@ -66,7 +66,7 @@ describe('AdminAuditLogsService', () => {
       expect(res.total).toBe(1);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/admin/audit-logs'));
+    const req = httpTesting.expectOne((r) => r.url.includes('/admin/audit-log-directory'));
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('action_type')).toBe('homestay.approve');
     req.flush({ items: [{ id: 101 }], total: 1, page: 1, page_size: 20, total_pages: 1 });

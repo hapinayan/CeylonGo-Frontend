@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -28,8 +28,7 @@ export class AdminReportsService {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.getAnalyticsOverview());
     }
-    // Live aggregate fallback/API
-    return of(this.previewStateService.getAnalyticsOverview());
+    return throwError(() => new Error('Advanced analytics are unavailable in the MVP. Use Dashboard or Bookings for live totals.'));
   }
 
   getBookingVolume(

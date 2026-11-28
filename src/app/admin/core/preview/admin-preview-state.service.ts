@@ -207,20 +207,24 @@ export class AdminPreviewStateService {
   private lastSessionKey: string | null = null;
 
   constructor() {
-    this.assertProductionBlocked();
-    this.restoreOrResetState();
+    if (!this.isPreviewBlocked()) {
+      this.restoreOrResetState();
+    }
+  }
+
+  private isPreviewBlocked(): boolean {
+    const isProd = environment.production === true;
+    const isPreviewDisabled =
+      !environment.features?.adminPreviewMode &&
+      !(environment as unknown as Record<string, unknown>)['adminPreviewMode'];
+    return isProd || isPreviewDisabled;
   }
 
   /**
    * Defense-in-depth security guard: Prevents preview state execution in production.
    */
   private assertProductionBlocked(): void {
-    const isProd = environment.production === true;
-    const isPreviewDisabled =
-      !environment.features?.adminPreviewMode &&
-      !(environment as unknown as Record<string, unknown>)['adminPreviewMode'];
-
-    if (isProd || isPreviewDisabled) {
+    if (this.isPreviewBlocked()) {
       throw new Error(
         'Security Violation: Admin preview mock state is strictly forbidden in production or when preview mode is disabled.'
       );
@@ -2297,7 +2301,7 @@ export class AdminPreviewStateService {
 
     const actor = admin || this.adminAuthService.currentUser();
     if (!canModerateCommunity(actor)) {
-      throw new Error('HTTP 403 Forbidden: Content Moderator or Super Admin authority required.');
+      throw new Error('HTTP 403 Forbidden: Administrator access is required.');
     }
 
     const report = this.communityReportsSignal().find((r) => r.id === id);
@@ -2449,8 +2453,8 @@ export class AdminPreviewStateService {
       throw new Error(`HTTP 404 Not Found: Administrator #${id} not found.`);
     }
 
-    if (account.id === 1 && !isActive) {
-      throw new Error('HTTP 400 Bad Request: Cannot deactivate the primary root Super Administrator.');
+    if (account.status === 'invited' || (!isActive && account.id === actor?.id)) {
+      throw new Error('This administrator status cannot be changed.');
     }
 
     account.is_active = isActive;

@@ -17,11 +17,11 @@
         </div>
         <div class="metric">
           <span class="label">Platform Commission (10%)</span>
-          <span class="val">{{ payment.commission_amount | number }} {{ payment.currency }}</span>
+          <span class="val">{{ payment.commission_amount == null ? "?" : (payment.commission_amount | number) }}</span>
         </div>
         <div class="metric">
           <span class="label">Net Provider Payable</span>
-          <span class="val success">{{ payment.net_provider_amount | number }} {{ payment.currency }}</span>
+          <span class="val success">{{ payment.net_provider_amount == null ? "?" : (payment.net_provider_amount | number) }}</span>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
 
       <div class="detail-group full-width">
         <h3>Reconciliation & Refund Status</h3>
-        <p><strong>Refund Status:</strong> <span class="badge" [ngClass]="payment.refund_status">{{ payment.refund_status }}</span></p>
+        <p><strong>Refund Status:</strong> <span class="badge" [ngClass]="payment.refund_status">{{ payment.refund_status ?? "Unavailable" }}</span></p>
         <p *ngIf="payment.refund_amount"><strong>Refund Amount:</strong> {{ payment.refund_amount | number }} {{ payment.currency }}</p>
         <p><strong>Transaction Created:</strong> {{ payment.created_at | date:'medium' }}</p>
         <div class="security-notice">

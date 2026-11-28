@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 
 import {
   AdminAccountItem,
   AdminInvitationRequest,
+  AdminInvitationItem,
   AdminManagementQueryParams,
 } from '../../core/models/admin-management.models';
 import { AdminManagementService } from '../../core/services/admin-management.service';
@@ -26,10 +27,16 @@ import { AdminInviteModalComponent } from './components/admin-invite-modal/admin
 })
 export class AdminManagementComponent implements OnInit, OnDestroy {
   private readonly managementService = inject(AdminManagementService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canManage = this.managementService.canManageAdmins;
+  readonly currentUser = this.managementService.currentUser;
 
   admins: AdminAccountItem[] = [];
+  invitations: AdminInvitationItem[] = [];
+  invitationsLoading = false;
+  invitationError: string | null = null;
+  updatingInvitation = false;
   isLoading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
@@ -43,11 +50,8 @@ export class AdminManagementComponent implements OnInit, OnDestroy {
 
   readonly roleOptions: readonly AdminSelectOption[] = [
     { key: 'all', label: 'All Roles' },
+    { key: 'admin', label: 'Administrator' },
     { key: 'super_admin', label: 'Super Administrator' },
-    { key: 'operations_admin', label: 'Operations Admin' },
-    { key: 'finance_admin', label: 'Finance Admin' },
-    { key: 'content_moderator', label: 'Content Moderator' },
-    { key: 'support_admin', label: 'Support Admin' },
   ];
 
   readonly statusOptions: readonly AdminSelectOption[] = [
@@ -67,6 +71,7 @@ export class AdminManagementComponent implements OnInit, OnDestroy {
       });
 
     this.loadAdmins();
+    this.loadInvitations();
   }
 
   ngOnDestroy(): void {
@@ -85,10 +90,12 @@ export class AdminManagementComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.admins = res.items;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.message || 'Access restricted to Super Administrators.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -117,14 +124,65 @@ export class AdminManagementComponent implements OnInit, OnDestroy {
 
   handleInvite(payload: AdminInvitationRequest): void {
     this.managementService.inviteAdmin(payload).subscribe({
-      next: () => {
-        this.successMessage = `Invitation successfully dispatched to ${payload.email}.`;
+      next: ({ delivery_status }) => {
+        this.errorMessage = null;
+        this.successMessage = null;
+        if (delivery_status === 'sent') {
+          this.successMessage = `Invitation sent to ${payload.email}.`;
+        } else if (delivery_status === 'preview') {
+          this.successMessage = 'Preview invitation created.';
+        } else {
+          this.errorMessage = 'Invitation saved, but email delivery was unsuccessful.';
+        }
         this.closeInviteModal();
         this.loadAdmins();
-        setTimeout(() => (this.successMessage = null), 3500);
+        this.loadInvitations();
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.successMessage = null;
+          this.cdr.markForCheck();
+        }, 3500);
       },
       error: (err) => {
-        this.errorMessage = err?.message || 'Failed to dispatch invitation.';
+        this.errorMessage = err?.error?.detail || err?.message || 'Failed to dispatch invitation.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  loadInvitations(): void {
+    this.invitationsLoading = true;
+    this.invitationError = null;
+    this.managementService.getInvitations().subscribe({
+      next: (items) => {
+        this.invitations = items;
+        this.invitationsLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.invitationsLoading = false;
+        this.invitationError = err?.error?.detail || 'Could not load invitations.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  changeInvitation(id: number, action: 'resend' | 'revoke'): void {
+    this.updatingInvitation = true;
+    this.managementService.updateInvitation(id, action).subscribe({
+      next: (response) => {
+        this.updatingInvitation = false;
+        this.loadInvitations();
+        this.loadAdmins();
+        if (action === 'resend' && response.delivery_status !== 'sent') {
+          this.invitationError = 'Invitation refreshed, but email delivery was unsuccessful.';
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.updatingInvitation = false;
+        this.invitationError = err?.error?.detail || 'Could not update the invitation.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -135,10 +193,15 @@ export class AdminManagementComponent implements OnInit, OnDestroy {
       next: (updated) => {
         this.successMessage = `Administrator #${updated.id} status transitioned to ${updated.status}.`;
         this.loadAdmins();
-        setTimeout(() => (this.successMessage = null), 3000);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.successMessage = null;
+          this.cdr.markForCheck();
+        }, 3000);
       },
       error: (err) => {
-        this.errorMessage = err?.message || 'Failed to modify administrator status.';
+        this.errorMessage = err?.error?.detail || err?.message || 'Failed to modify administrator status.';
+        this.cdr.markForCheck();
       },
     });
   }

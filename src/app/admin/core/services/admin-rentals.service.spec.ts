@@ -22,8 +22,8 @@ describe('AdminRentalsService', () => {
     id: 1,
     email: 'admin@ceylongo.com',
     full_name: 'Lead Operations Admin',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -103,8 +103,8 @@ describe('AdminRentalsService', () => {
       id: 1,
       email: 'admin@ceylongo.com',
       full_name: 'Lead Operations Admin',
-      role: 'operations_admin',
-      admin_role: 'operations_admin',
+      role: 'admin',
+      admin_role: 'admin',
       is_active: true,
     };
 
@@ -164,7 +164,8 @@ describe('AdminRentalsService', () => {
     });
 
     const req = httpMock.expectOne((r) =>
-      r.url === `${environment.apiBaseUrl}/admin/rentals/vehicles` &&
+      r.url === `${environment.apiBaseUrl}/admin/listing-directory` &&
+      r.params.get('category') === 'rental' &&
       r.params.get('vehicle_type') === 'bike' &&
       r.params.get('page') === '1'
     );
@@ -172,25 +173,45 @@ describe('AdminRentalsService', () => {
     req.flush({
       items: [
         {
-          id: 1,
-          provider_id: 3,
-          provider_business_name: 'Southern Coastal Bike Rentals',
-          vehicle_name: 'Honda Scoopy 110cc Automatic Scooter',
-          vehicle_type: 'bike',
-          license_plate: 'SP-BC-4412',
-          price_per_day: 2500,
-          district: 'Galle',
-          status: 'available',
-          approval_status: 'pending',
+          listing: {
+            id: 1,
+            provider_id: 3,
+            category: 'bike',
+            title: 'Honda Scoopy 110cc Automatic Scooter',
+            description: 'Scooter',
+            district: 'Galle',
+            locality: 'Galle',
+            price: 2500,
+            currency: 'LKR',
+            is_active: true,
+            approval_status: 'pending',
+            created_at: '2026-03-22T08:00:00Z',
+            updated_at: '2026-03-22T08:00:00Z',
+          },
+          provider: {
+            id: 3,
+            business_name: 'Southern Coastal Bike Rentals',
+            email: 'bikes@ceylongo.lk',
+            phone: '0771234567',
+            verification_status: 'approved',
+          },
           verification_status: 'unverified',
-          created_at: '2026-03-22T08:00:00Z',
+          decided_at: null,
+          decision_reason: null,
+          details: {},
+          homestay_metadata: null,
+          rooms: [],
         },
       ],
       total: 1,
       page: 1,
       page_size: 20,
+      limit: 20,
       total_pages: 1,
-    } as AdminVehicleListResponse);
+      counts: { pending: 1 },
+      active: 1,
+      providers: 1,
+    });
 
     const res = await promise;
     expect(res.items.length).toBe(1);
@@ -221,36 +242,29 @@ describe('AdminRentalsService', () => {
 
     const req = httpMock.expectOne({
       method: 'POST',
-      url: `${environment.apiBaseUrl}/admin/rentals/vehicles/1/review`,
+      url: `${environment.apiBaseUrl}/admin/listings/1/decision`,
     });
-    expect(req.request.body).toEqual({ decision: 'approved' });
-    req.flush({
-      success: true,
-      vehicle_id: 1,
-      approval_status: 'approved',
-      message: 'Vehicle listing has been approved.',
-    });
+    expect(req.request.body).toEqual({ approval_status: 'approved', decision_reason: undefined });
+    req.flush({ success: true });
 
     const res = await promise;
     expect(res.approval_status).toBe('approved');
   });
 
-  it('should verify document in live mode', async () => {
-    const promise = new Promise<any>((resolve, reject) => {
-      service.verifyRentalDocument(1, 101, true, 'Valid revenue license').subscribe({
-        next: resolve,
-        error: reject,
+  it('should reject separate document verification in live MVP mode', async () => {
+    let errorThrown: any = null;
+    try {
+      await new Promise((resolve, reject) => {
+        service.verifyRentalDocument(1, 101, true, 'Valid revenue license').subscribe({
+          next: resolve,
+          error: reject,
+        });
       });
-    });
+    } catch (err) {
+      errorThrown = err;
+    }
 
-    const req = httpMock.expectOne({
-      method: 'POST',
-      url: `${environment.apiBaseUrl}/admin/rentals/vehicles/1/documents/101/verify`,
-    });
-    expect(req.request.body).toEqual({ is_verified: true, verification_notes: 'Valid revenue license' });
-    req.flush(sampleDoc);
-
-    const doc = await promise;
-    expect(doc.is_verified).toBe(true);
+    expect(errorThrown).toBeTruthy();
+    expect(errorThrown.message).toContain('unavailable in the MVP');
   });
 });

@@ -17,8 +17,8 @@ describe('AdminPaymentsService', () => {
     id: 1,
     email: 'finance@ceylongo.lk',
     full_name: 'Finance Admin',
-    role: 'finance_admin',
-    admin_role: 'finance_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   });
 
@@ -77,7 +77,7 @@ describe('AdminPaymentsService', () => {
       expect(res.total_gross_booking_revenue).toBe(100000);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/payments/admin/summary'));
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/admin/payments/summary'));
     expect(req.request.method).toBe('GET');
     req.flush({ total_gross_booking_revenue: 100000, currency: 'LKR' });
   });
@@ -87,7 +87,7 @@ describe('AdminPaymentsService', () => {
       expect(res.total).toBe(1);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/payments/admin/reconciliation-queue'));
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/admin/payments'));
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('status')).toBe('captured');
     req.flush({ items: [{ id: 1 }], total: 1, page: 1, page_size: 20, total_pages: 1 });

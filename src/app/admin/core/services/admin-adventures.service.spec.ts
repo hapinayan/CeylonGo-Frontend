@@ -18,8 +18,8 @@ describe('AdminAdventuresService', () => {
     id: 1,
     email: 'admin@ceylongo.com',
     full_name: 'Lead Operations Admin',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -67,8 +67,8 @@ describe('AdminAdventuresService', () => {
       id: 1,
       email: 'admin@ceylongo.com',
       full_name: 'Lead Operations Admin',
-      role: 'operations_admin',
-      admin_role: 'operations_admin',
+      role: 'admin',
+      admin_role: 'admin',
       is_active: true,
     };
 
@@ -119,6 +119,31 @@ describe('AdminAdventuresService', () => {
     expect(errorThrown.message).toContain('HTTP 403 Forbidden');
   });
 
+  const listingReview = {
+    listing: {
+      id: 1,
+      provider_id: 2,
+      category: 'adventure',
+      title: 'Kitulgala White Water Rafting',
+      description: 'Thrilling white water rafting expedition.',
+      district: 'Kegalle',
+      locality: 'Kitulgala',
+      price: 6500,
+      currency: 'LKR',
+      is_active: true,
+      approval_status: 'pending',
+      created_at: '2026-04-01T00:00:00Z',
+      updated_at: '2026-04-01T00:00:00Z',
+    },
+    provider: { id: 2, business_name: 'Kitulgala Adventures', email: 'adv@ceylongo.lk', phone: '0771234567', verification_status: 'approved' },
+    verification_status: 'pending',
+    decided_at: null,
+    decision_reason: null,
+    details: { activity: { category: 'rafting', duration_hours: 3.5, difficulty_level: 'moderate', max_participants: 8, min_participants: 2 } },
+    homestay_metadata: null,
+    rooms: [],
+  };
+
   it('should fetch pending activities from live backend in non-preview mode', async () => {
     const promise = new Promise<any>((resolve, reject) => {
       service.getActivities({ page: 1, limit: 10 }).subscribe({
@@ -128,10 +153,11 @@ describe('AdminAdventuresService', () => {
     });
 
     const req = httpMock.expectOne((request) =>
-      request.url === `${environment.apiBaseUrl}/admin/activities` &&
+      request.url === `${environment.apiBaseUrl}/admin/listing-directory` &&
+      request.params.get('category') === 'activity' &&
       request.method === 'GET'
     );
-    req.flush([sampleActivity]);
+    req.flush({ items: [listingReview], total: 1, page: 1, page_size: 10, limit: 10, total_pages: 1, counts: { pending: 1 }, active: 1, providers: 1 });
 
     const response = await promise;
     expect(response.items.length).toBe(1);
@@ -161,10 +187,16 @@ describe('AdminAdventuresService', () => {
 
     const req = httpMock.expectOne({
       method: 'POST',
-      url: `${environment.apiBaseUrl}/admin/activities/1/approve`,
+      url: `${environment.apiBaseUrl}/admin/listings/1/decision`,
     });
-    expect(req.request.body).toEqual({ notes: 'Meets safety standards' });
-    req.flush({ ...sampleActivity, approval_status: 'approved' });
+    expect(req.request.body).toEqual({ approval_status: 'approved', decision_reason: 'Meets safety standards' });
+    req.flush({ success: true });
+
+    const detailReq = httpMock.expectOne({
+      method: 'GET',
+      url: `${environment.apiBaseUrl}/admin/listings/1`,
+    });
+    detailReq.flush({ ...listingReview, listing: { ...listingReview.listing, approval_status: 'approved' } });
 
     const res = await promise;
     expect(res.approval_status).toBe('approved');
@@ -180,10 +212,16 @@ describe('AdminAdventuresService', () => {
 
     const req = httpMock.expectOne({
       method: 'POST',
-      url: `${environment.apiBaseUrl}/admin/activities/1/reject`,
+      url: `${environment.apiBaseUrl}/admin/listings/1/decision`,
     });
-    expect(req.request.body).toEqual({ reason: 'Inadequate river guide certification' });
-    req.flush({ ...sampleActivity, approval_status: 'rejected' });
+    expect(req.request.body).toEqual({ approval_status: 'rejected', decision_reason: 'Inadequate river guide certification' });
+    req.flush({ success: true });
+
+    const detailReq = httpMock.expectOne({
+      method: 'GET',
+      url: `${environment.apiBaseUrl}/admin/listings/1`,
+    });
+    detailReq.flush({ ...listingReview, listing: { ...listingReview.listing, approval_status: 'rejected' } });
 
     const res = await promise;
     expect(res.approval_status).toBe('rejected');

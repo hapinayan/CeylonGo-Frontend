@@ -20,7 +20,7 @@ export class AdminPaymentsService {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewStateService = inject(AdminPreviewStateService);
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/payments`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/payments`;
 
   readonly currentUser = this.adminAuthService.currentUser;
   readonly canViewPayments = computed(() => canViewPayments(this.currentUser()));
@@ -30,7 +30,7 @@ export class AdminPaymentsService {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.getFinancialSummary());
     }
-    return this.http.get<AdminFinancialSummaryResponse>(`${this.baseUrl}/admin/summary`);
+    return this.http.get<AdminFinancialSummaryResponse>(`${this.baseUrl}/summary`);
   }
 
   getPayments(params: PaymentQueryParams = {}): Observable<{
@@ -61,12 +61,14 @@ export class AdminPaymentsService {
       httpParams = httpParams.set('page_size', params.page_size.toString());
     }
 
+    if (params.date_from) httpParams = httpParams.set('date_from', params.date_from);
+    if (params.date_to) httpParams = httpParams.set('date_to', params.date_to);
     return this.http.get<{
       items: AdminPaymentTransactionItem[];
       total: number;
       page: number;
       page_size: number;
       total_pages: number;
-    }>(`${this.baseUrl}/admin/reconciliation-queue`, { params: httpParams });
+    }>(`${this.baseUrl}`, { params: httpParams });
   }
 }

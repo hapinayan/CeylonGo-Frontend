@@ -224,13 +224,7 @@ export class AdminHomestaysComponent implements OnInit, OnDestroy {
         this.kpiRejected.set(dashboard.listings.rejected);
       },
       error: () => {
-        // Fallback: derive KPIs from currently loaded collection if dashboard fails
-        const items = this.homestays();
-        this.kpiTotal.set(items.length);
-        this.kpiApproved.set(items.filter((h) => h.approval_status === 'approved').length);
-        this.kpiPending.set(items.filter((h) => h.approval_status === 'pending').length);
-        this.kpiSuspended.set(items.filter((h) => h.approval_status === 'suspended').length);
-        this.kpiRejected.set(items.filter((h) => h.approval_status === 'rejected').length);
+        this.errorMessage.set('Could not load live homestay totals.');
       },
     });
   }

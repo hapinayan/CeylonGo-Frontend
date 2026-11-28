@@ -169,7 +169,7 @@ import { canReviewVerifications } from '../../../../core/utils/admin-permissions
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
-                <span>Super Administrator or Operations Administrator authority is required to approve or reject verification applications.</span>
+                <span>Administrator access is required to approve or reject verification applications.</span>
               </div>
 
               <div *ngIf="canReview() && !activeDialog()" class="decision-buttons">

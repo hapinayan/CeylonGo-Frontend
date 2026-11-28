@@ -51,7 +51,7 @@ export class AdminVerificationsService {
     const user = this.adminAuthService.currentUser();
     if (!canReviewVerifications(user)) {
       throw new Error(
-        'Unauthorized: Only Super Administrators and Operations Administrators can perform verification reviews.'
+        'Unauthorized: Only administrators can perform verification reviews.'
       );
     }
   }
@@ -101,6 +101,7 @@ export class AdminVerificationsService {
       httpParams = httpParams.set('search', params.search.trim());
     }
 
+    if (params?.category && params.category !== 'all') httpParams = httpParams.set('category', params.category);
     return this.http
       .get<
         | {
@@ -115,6 +116,9 @@ export class AdminVerificationsService {
               approval_status?: string;
               verification_status?: string;
               created_at?: string;
+              selfie_uploaded?: boolean;
+              nic_front_uploaded?: boolean;
+              nic_back_uploaded?: boolean;
             }>;
             total?: number;
             page?: number;
@@ -132,8 +136,11 @@ export class AdminVerificationsService {
             approval_status?: string;
             verification_status?: string;
             created_at?: string;
+            selfie_uploaded?: boolean;
+            nic_front_uploaded?: boolean;
+            nic_back_uploaded?: boolean;
           }>
-      >(this.baseUrl, { params: httpParams })
+      >(environment.apiBaseUrl + '/admin/provider-directory', { params: httpParams })
       .pipe(
         map((res) => {
           const rawItems = Array.isArray(res) ? res : res.items || [];
@@ -147,29 +154,17 @@ export class AdminVerificationsService {
           const items: ProviderVerificationItem[] = rawItems.map((item) => ({
             id: item.id,
             user_id: item.user_id,
-            full_name: item.full_name || 'Provider User',
+            full_name: item.full_name ?? '',
             email: item.email || '',
-            business_name: item.business_name || 'Independent Provider',
-            provider_type: item.provider_type || 'activity',
-            district: item.district || 'Colombo',
+            business_name: item.business_name ?? '',
+            provider_type: item.provider_type ?? '',
+            district: item.district ?? '',
             approval_status: (item.approval_status || item.verification_status || 'pending') as any,
-            created_at: item.created_at || new Date().toISOString(),
+            created_at: item.created_at ?? '',
             documents: [
-              {
-                type: 'selfie',
-                title: 'Live Selfie / Photo',
-                isAvailable: true,
-              },
-              {
-                type: 'nic_front',
-                title: 'National ID / Passport (Front)',
-                isAvailable: true,
-              },
-              {
-                type: 'nic_back',
-                title: 'National ID (Back)',
-                isAvailable: true,
-              },
+              { type: 'selfie' as const, title: 'Selfie', isAvailable: item.selfie_uploaded === true },
+              { type: 'nic_front' as const, title: 'Identity document front', isAvailable: item.nic_front_uploaded === true },
+              { type: 'nic_back' as const, title: 'Identity document back', isAvailable: item.nic_back_uploaded === true },
             ],
           }));
 

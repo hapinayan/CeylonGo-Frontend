@@ -17,8 +17,8 @@ describe('AdminReportsService', () => {
     id: 1,
     email: 'ops@ceylongo.lk',
     full_name: 'Operations Admin',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   });
 

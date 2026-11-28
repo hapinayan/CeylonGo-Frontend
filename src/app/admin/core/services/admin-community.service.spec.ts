@@ -17,8 +17,8 @@ describe('AdminCommunityService', () => {
     id: 1,
     email: 'moderator@ceylongo.lk',
     full_name: 'Content Moderator',
-    role: 'content_moderator',
-    admin_role: 'content_moderator',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   });
 
@@ -68,10 +68,10 @@ describe('AdminCommunityService', () => {
       expect(res.total).toBe(1);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/community/admin/reports'));
+    const req = httpTesting.expectOne((r) => r.url.includes('/admin/community/reports'));
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('report_status')).toBe('pending');
-    req.flush({ items: [{ id: 1 }], total: 1, page: 1, page_size: 20, total_pages: 1 });
+    expect(req.request.params.get('status')).toBe('pending');
+    req.flush({ items: [{ id: 1, status: 'pending' }], total: 1, page: 1, page_size: 20 });
   });
 
   it('should call review report endpoint', () => {
@@ -79,8 +79,13 @@ describe('AdminCommunityService', () => {
       expect(res.success).toBe(true);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/community/admin/reports/1'));
+    const req = httpTesting.expectOne((r) => r.url.includes('/admin/community/reports/1'));
     expect(req.request.method).toBe('PATCH');
-    req.flush({ success: true, message: 'Processed' });
+    expect(req.request.body).toEqual({
+      status: 'resolved',
+      review_notes: 'Spam',
+      action_visibility: 'hidden',
+    });
+    req.flush({ success: true });
   });
 });

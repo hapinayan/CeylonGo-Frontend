@@ -7,6 +7,8 @@ import { catchError, Observable, of, tap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AdminLoginRequest, AdminTokenResponse, AdminUser } from '../models/admin-auth.models';
 
+import { isSuperAdminUser } from '../utils/admin-permissions.utils';
+
 export const ADMIN_TOKEN_KEY = 'ceylongo_admin_access_token';
 export const ADMIN_USER_KEY = 'ceylongo_admin_user';
 
@@ -28,11 +30,7 @@ export class AdminAuthService {
   readonly isReconciling = this.isReconcilingSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
   readonly isSuperAdmin = computed(() => {
-    // If reconciliation is currently in progress, do not elevate permissions prematurely
-    const user = this.userSignal();
-    if (!user) return false;
-    const role = (user.admin_role || user.role || '').toLowerCase();
-    return role === 'super_admin';
+    return !this.isReconcilingSignal() && isSuperAdminUser(this.userSignal());
   });
   readonly roleDisplayName = computed(() => {
     if (this.isSuperAdmin()) return 'Super Admin';
@@ -44,7 +42,7 @@ export class AdminAuthService {
    * and has not expired if exp claim is present.
    */
   isValidTokenFormat(token: string | null): boolean {
-    if (!token || typeof token !== 'string') return false;
+    if (!token || typeof token !== 'string' || (!environment.features?.adminPreviewMode && (token.endsWith('.demo_signature') || token.startsWith('demo-')))) return false;
     const parts = token.trim().split('.');
     if (parts.length !== 3) return false;
     try {
@@ -228,7 +226,7 @@ export class AdminAuthService {
         const raw = sessionStorage.getItem(ADMIN_USER_KEY);
         if (!raw) return null;
         const user = JSON.parse(raw) as AdminUser;
-        if (environment.production && (user.email?.includes('demo') || user.email?.includes('academic-mvp-v1-1.invalid') || user.id === 11 || user.id === 12)) {
+        if (!this.loadStoredToken()) {
           sessionStorage.removeItem(ADMIN_USER_KEY);
           return null;
         }

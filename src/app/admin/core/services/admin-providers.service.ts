@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { map, Observable, of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../../environments/environment';
@@ -67,7 +67,13 @@ export class AdminProvidersService {
       httpParams = httpParams.set('search', params.search.trim());
     }
 
-    return this.http.get<ProviderListResponse>(this.baseUrl, { params: httpParams }).pipe(
+    if (params?.category) httpParams = httpParams.set('category', params.category);
+    return this.http.get<Omit<ProviderListResponse, 'items'> & {
+      items: (ProviderListResponse['items'][number] & { verification_status: ProviderListResponse['items'][number]['approval_status'] })[];
+    }>(environment.apiBaseUrl + '/admin/provider-directory', { params: httpParams }).pipe(
+      map((page) => ({ ...page, items: page.items.map((item) => ({
+        ...item, approval_status: item.verification_status,
+      })) })),
       catchError((error) => {
         // Never silently fall back to demo preview data
         return throwError(() => error);
@@ -106,7 +112,7 @@ export class AdminProvidersService {
       return throwError(
         () =>
           new Error(
-            'Unauthorized: Only Super Administrators and Operations Administrators can approve applications.'
+            'Unauthorized: Only administrators can approve applications.'
           )
       );
     }
@@ -139,7 +145,7 @@ export class AdminProvidersService {
       return throwError(
         () =>
           new Error(
-            'Unauthorized: Only Super Administrators and Operations Administrators can reject applications.'
+            'Unauthorized: Only administrators can reject applications.'
           )
       );
     }

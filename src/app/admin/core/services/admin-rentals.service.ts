@@ -1,8 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { AdminListingDirectoryService, ListingReview, listingVerificationStatus } from './admin-listing-directory.service';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { map, Observable, of, throwError } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import {
   AdminRentalFleetSummaryResponse,
   AdminVehicleDetailResponse,
@@ -28,15 +27,26 @@ import {
  * Strictly integrates with backend app/routers/admin_rentals.py.
  * Strictly separates motor vehicle documents from non-motorized bicycle requirements.
  */
+function rental(r: ListingReview) {
+  const l = r.listing;
+  return { ...l, vehicle_name: l.title, vehicle_type: l.category as AdminVehicleListItem['vehicle_type'],
+    provider_business_name: r.provider.business_name, provider_phone: r.provider.phone,
+    provider_approval_status: r.provider.verification_status, price_per_day: Number(l.price),
+    status: (l.is_active ? 'available' : 'retired') as AdminVehicleListItem['status'],
+    approval_status: l.approval_status as AdminVehicleListItem['approval_status'],
+    verification_status: listingVerificationStatus(r), city: l.locality, reviewed_at: r.decided_at ?? undefined,
+    rejection_reason: r.decision_reason ?? undefined, images_count: l.media?.length ?? 0,
+    documents_count: r.details['files']?.length ?? 0, verified_documents_count: 0 };
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AdminRentalsService {
-  private readonly http = inject(HttpClient);
+  private readonly directory = inject(AdminListingDirectoryService);
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewState = inject(AdminPreviewStateService, { optional: true });
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/admin/rentals`;
 
   get isPreviewMode(): boolean {
     return this.adminAuthService.isDemoSession();
@@ -66,31 +76,9 @@ export class AdminRentalsService {
     }
 
     // Live mode: queries GET /api/v1/admin/rentals/vehicles
-    let httpParams = new HttpParams();
-    if (params?.page) httpParams = httpParams.set('page', params.page.toString());
-    if (params?.page_size) httpParams = httpParams.set('page_size', params.page_size.toString());
-    if (params?.approval_status && params.approval_status !== 'all') {
-      httpParams = httpParams.set('approval_status', params.approval_status);
-    }
-    if (params?.verification_status && params.verification_status !== 'all') {
-      httpParams = httpParams.set('verification_status', params.verification_status);
-    }
-    if (params?.vehicle_type && params.vehicle_type !== 'all') {
-      httpParams = httpParams.set('vehicle_type', params.vehicle_type);
-    }
-    if (params?.provider_id) {
-      httpParams = httpParams.set('provider_id', params.provider_id.toString());
-    }
-    if (params?.district && params.district !== 'all') {
-      httpParams = httpParams.set('district', params.district);
-    }
-    if (params?.search && params.search.trim()) {
-      httpParams = httpParams.set('search', params.search.trim());
-    }
-
-    return this.http.get<AdminVehicleListResponse>(`${this.baseUrl}/vehicles`, { params: httpParams }).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.list('rental', rental, {
+      ...params, status: params?.approval_status,
+    });
   }
 
   /**
@@ -115,9 +103,7 @@ export class AdminRentalsService {
       return of(item);
     }
 
-    return this.http.get<AdminVehicleDetailResponse>(`${this.baseUrl}/vehicles/${id}`).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.detail(id, rental);
   }
 
   /**
@@ -149,8 +135,9 @@ export class AdminRentalsService {
       }
     }
 
-    return this.http.post<AdminVehicleReviewResponse>(`${this.baseUrl}/vehicles/${id}/review`, payload).pipe(
-      catchError((error) => throwError(() => error))
+    return this.directory.decide(id, payload.decision, payload.reason ?? payload.notes).pipe(
+      map(() => ({ success: true, vehicle_id: id, approval_status: payload.decision,
+        message: 'Listing decision saved.' }))
     );
   }
 
@@ -173,9 +160,7 @@ export class AdminRentalsService {
       return of(docs);
     }
 
-    return this.http.get<AdminVehicleDocumentItem[]>(`${this.baseUrl}/vehicles/${vehicleId}/documents`).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return throwError(() => new Error('Separate vehicle document verification is unavailable in the MVP.'));
   }
 
   /**
@@ -207,12 +192,7 @@ export class AdminRentalsService {
     }
 
     const payload = { is_verified: isVerified, verification_notes: notes };
-    return this.http.post<AdminVehicleDocumentItem>(
-      `${this.baseUrl}/vehicles/${vehicleId}/documents/${documentId}/verify`,
-      payload
-    ).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return throwError(() => new Error('Separate vehicle document verification is unavailable in the MVP.'));
   }
 
   /**
@@ -241,12 +221,7 @@ export class AdminRentalsService {
       }
     }
 
-    return this.http.patch<AdminVehicleVerifyStatusResponse>(
-      `${this.baseUrl}/vehicles/${vehicleId}/verification-status`,
-      payload
-    ).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return throwError(() => new Error('Separate vehicle document verification is unavailable in the MVP.'));
   }
 
   /**
@@ -267,8 +242,10 @@ export class AdminRentalsService {
       return of(this.previewState.getRentalFleetSummary());
     }
 
-    return this.http.get<AdminRentalFleetSummaryResponse>(`${this.baseUrl}/analytics/fleet-summary`).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.list('rental', rental, { page_size: 1 }).pipe(map(({counts, providers}) => ({
+      total_vehicles: Object.values(counts).reduce((a,b) => a+b, 0), total_providers: providers,
+      pending_approval: counts['pending'] ?? 0, approved_vehicles: counts['approved'] ?? 0,
+      verified_vehicles: counts['approved'] ?? 0, rejected_vehicles: counts['rejected'] ?? 0,
+    })));
   }
 }

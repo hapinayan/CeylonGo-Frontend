@@ -3,7 +3,7 @@
   <header class="page-header">
     <div class="header-content">
       <h1 class="page-title">Payments & Financial Reconciliation</h1>
-      <p class="page-subtitle">Platform-wide transaction monitoring, gross revenue reconciliation, and payout liability oversight.</p>
+      <p class="page-subtitle">Academic MVP payment attempts and wallet commission. Online payments are simulated.</p>
     </div>
     <div class="header-actions">
       <button type="button" class="btn btn-secondary" (click)="refreshData()" [disabled]="isLoading">
@@ -18,26 +18,27 @@
   </header>
 
   <!-- Financial KPI Metrics -->
-  <section class="kpi-grid">
+  <p *ngIf="summaryError" role="alert">{{ summaryError }}</p>
+  <section *ngIf="metricsLoaded" class="kpi-grid">
     <div class="kpi-card">
-      <span class="kpi-title">Gross Booking Volume</span>
+      <span class="kpi-title">Successful Simulated Payment Volume</span>
       <span class="kpi-value text-blue">{{ summary.total_gross_booking_revenue | number }} {{ summary.currency }}</span>
-      <span class="kpi-caption">Total transaction intake across verticals</span>
+      <span class="kpi-caption">Total recorded simulated successes</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-title">Platform Commission (10%)</span>
+      <span class="kpi-title">Net Wallet Commission</span>
       <span class="kpi-value text-green">{{ summary.total_ceylongo_commission | number }} {{ summary.currency }}</span>
       <span class="kpi-caption">Net platform retainable fee</span>
     </div>
     <div class="kpi-card">
       <span class="kpi-title">Provider Settlement Liabilities</span>
-      <span class="kpi-value text-amber">{{ summary.total_provider_liabilities | number }} {{ summary.currency }}</span>
-      <span class="kpi-caption">Pending payout to verified hosts</span>
+      <span class="kpi-value text-amber">Unavailable</span>
+      <span class="kpi-caption">The MVP has no provider payout ledger.</span>
     </div>
     <div class="kpi-card">
       <span class="kpi-title">Verified Refunds Processed</span>
-      <span class="kpi-value text-red">{{ summary.total_verified_refunds | number }} {{ summary.currency }}</span>
-      <span class="kpi-caption">Disputes and verified cancellations</span>
+      <span class="kpi-value text-red">Unavailable</span>
+      <span class="kpi-caption">The MVP has no payment refund ledger.</span>
     </div>
   </section>
 
@@ -116,10 +117,10 @@
               </div>
             </td>
             <td><strong>{{ p.amount | number }} {{ p.currency }}</strong></td>
-            <td class="text-green">{{ p.commission_amount | number }} {{ p.currency }}</td>
+            <td class="text-green">{{ p.commission_amount == null ? "?" : (p.commission_amount | number) }}</td>
             <td>
               <span class="badge" [ngClass]="p.payment_status">{{ p.payment_status | uppercase }}</span>
-              <span *ngIf="p.refund_status !== 'none'" class="badge refund-badge">{{ p.refund_status }}</span>
+              <span *ngIf="p.refund_status && p.refund_status !== 'none'" class="badge refund-badge">{{ p.refund_status }}</span>
             </td>
             <td>
               <button type="button" class="btn btn-sm btn-outline" (click)="openDetail(p)">

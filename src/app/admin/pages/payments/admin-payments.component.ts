@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 
@@ -26,6 +26,7 @@ import { AdminPaymentDetailModalComponent } from './components/admin-payment-det
 })
 export class AdminPaymentsComponent implements OnInit, OnDestroy {
   private readonly paymentsService = inject(AdminPaymentsService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.paymentsService.canViewPayments;
   readonly canManage = this.paymentsService.canManageFinances;
@@ -65,9 +66,9 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
 
   readonly statusOptions: readonly AdminSelectOption[] = [
     { key: 'all', label: 'All Statuses' },
-    { key: 'captured', label: 'Captured & Verified', badgeColor: '#10b981' },
+    { key: 'captured', label: 'Simulated Success', badgeColor: '#10b981' },
     { key: 'pending', label: 'Pending Settlement', badgeColor: '#f59e0b' },
-    { key: 'refunded', label: 'Refunded', badgeColor: '#ef4444' },
+    { key: 'cash_on_delivery', label: 'Unpaid at Location', badgeColor: '#64748b' },
     { key: 'disputed', label: 'Flagged / Disputed', badgeColor: '#b45309' },
   ];
 
@@ -102,12 +103,22 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
     this.searchSubscription?.unsubscribe();
   }
 
+  metricsLoaded = false;
+  summaryError: string | null = null;
+
   loadSummary(): void {
+    this.metricsLoaded = false;
+    this.summaryError = null;
     this.paymentsService.getFinancialSummary().subscribe({
       next: (summary) => {
+        this.metricsLoaded = true;
         this.summary = summary;
+        this.cdr.markForCheck();
       },
-      error: () => {},
+      error: () => {
+        this.summaryError = 'Could not load live totals.';
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -130,10 +141,12 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
         this.totalPages = res.total_pages;
         this.isLoading = false;
         this.lastSynced = new Date();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.message || 'Failed to load transaction reconciliation queue.';
+        this.cdr.markForCheck();
       },
     });
   }

@@ -1,8 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { AdminListingDirectoryService, ListingReview, listingVerificationStatus } from './admin-listing-directory.service';
 import { computed, inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of, throwError } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import {
   AdminTourGuideDetailResponse,
   AdminTourGuideListResponse,
@@ -20,15 +19,26 @@ import {
 } from '../utils/admin-permissions.utils';
 import { AdminAuthService } from './admin-auth.service';
 
+function guide(r: ListingReview): AdminTourGuideListResponse['items'][number] {
+  const l = r.listing;
+  const settings = r.details['guide'] ?? r.details;
+  return { id: l.id, provider_profile_id: l.provider_id, business_name: r.provider.business_name,
+    provider_name: r.provider.business_name, email: r.provider.email, base_city: l.locality,
+    base_district: l.district, province: settings.province, daily_rate: Number(l.price),
+    currency: l.currency, approval_status: l.approval_status as AdminTourGuideListResponse['items'][number]['approval_status'],
+    verification_status: listingVerificationStatus(r), is_active: l.is_active, is_available: l.is_active,
+    years_of_experience: settings.years_of_experience, review_count: 0,
+    pending_credentials_count: 0, approved_credentials_count: 0, created_at: l.created_at };
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AdminTourGuidesService {
-  private readonly http = inject(HttpClient);
+  private readonly directory = inject(AdminListingDirectoryService);
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewStateService = inject(AdminPreviewStateService);
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/admin/tour-guides`;
 
   readonly currentUser = this.adminAuthService.currentUser;
   readonly canViewGuides = computed(() => canViewTourGuides(this.currentUser()));
@@ -40,108 +50,72 @@ export class AdminTourGuidesService {
       return of(this.previewStateService.getTourGuides(params));
     }
 
-    let httpParams = new HttpParams();
-    if (params.approval_status && params.approval_status !== 'all') {
-      httpParams = httpParams.set('approval_status', params.approval_status);
-    }
-    if (params.verification_status && params.verification_status !== 'all') {
-      httpParams = httpParams.set('verification_status', params.verification_status);
-    }
-    if (params.district && params.district !== 'all') {
-      httpParams = httpParams.set('district', params.district);
-    }
-    if (params.is_active !== undefined) {
-      httpParams = httpParams.set('is_active', String(params.is_active));
-    }
-    if (params.search && params.search.trim()) {
-      httpParams = httpParams.set('search', params.search.trim());
-    }
-    if (params.page) {
-      httpParams = httpParams.set('page', String(params.page));
-    }
-    if (params.page_size) {
-      httpParams = httpParams.set('page_size', String(params.page_size));
-    }
-
-    return this.http.get<AdminTourGuideListResponse>(this.baseUrl, { params: httpParams });
+    return this.directory.list('tour_guide', guide, { ...params, status: params?.approval_status });
   }
 
   getTourGuideById(id: number): Observable<AdminTourGuideDetailResponse> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.getTourGuideById(id));
     }
-    return this.http.get<AdminTourGuideDetailResponse>(`${this.baseUrl}/${id}`);
+    return this.directory.detail(id, (r): AdminTourGuideDetailResponse => {
+      const item = guide(r);
+      return { ...item, guide: { ...item, bio: r.listing.description,
+          max_group_size: r.details['max_group_size'] }, phone: r.provider.phone,
+        provider_approval_status: r.provider.verification_status,
+        languages: [], service_areas: [], images: [], credentials: [], verification_history: [],
+        packages: r.details['packages'] ?? [] };
+    });
   }
 
   approveTourGuide(id: number, reason?: string): Observable<{ success: boolean; tour_guide_id: number; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.approveTourGuide(id, reason));
     }
-    return this.http.post<{ success: boolean; tour_guide_id: number; message: string }>(
-      `${this.baseUrl}/${id}/approve`,
-      reason ? { reason } : {}
-    );
+    return this.directory.decide(id, 'approved', reason).pipe(
+      map(() => ({ success: true, tour_guide_id: id, message: 'Listing decision saved.' })));
   }
 
   rejectTourGuide(id: number, payload: TourGuideDecisionPayload): Observable<{ success: boolean; tour_guide_id: number; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.rejectTourGuide(id, payload));
     }
-    return this.http.post<{ success: boolean; tour_guide_id: number; message: string }>(
-      `${this.baseUrl}/${id}/reject`,
-      payload
-    );
+    return this.directory.decide(id, 'rejected', payload.reason).pipe(
+      map(() => ({ success: true, tour_guide_id: id, message: 'Listing decision saved.' })));
   }
 
   suspendTourGuide(id: number, payload?: TourGuideDecisionPayload): Observable<{ success: boolean; tour_guide_id: number; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.suspendTourGuide(id, payload));
     }
-    return this.http.post<{ success: boolean; tour_guide_id: number; message: string }>(
-      `${this.baseUrl}/${id}/suspend`,
-      payload || {}
-    );
+    return this.directory.decide(id, 'suspended', payload?.reason).pipe(
+      map(() => ({ success: true, tour_guide_id: id, message: 'Listing decision saved.' })));
   }
 
   reinstateTourGuide(id: number): Observable<{ success: boolean; tour_guide_id: number; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.reinstateTourGuide(id));
     }
-    return this.http.post<{ success: boolean; tour_guide_id: number; message: string }>(
-      `${this.baseUrl}/${id}/reinstate`,
-      {}
-    );
+    return throwError(() => new Error('This action is unavailable in the MVP listing workflow.'));
   }
 
   updateTourGuideBadge(id: number, payload: TourGuideBadgePayload): Observable<{ success: boolean; tour_guide_id: number; verification_status: string; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.updateTourGuideBadge(id, payload));
     }
-    return this.http.post<{ success: boolean; tour_guide_id: number; verification_status: string; message: string }>(
-      `${this.baseUrl}/${id}/verification-badge`,
-      payload
-    );
+    return throwError(() => new Error('Separate guide verification is unavailable in the MVP.'));
   }
 
   verifyGuideCredential(credentialId: number, payload: CredentialVerifyPayload): Observable<{ success: boolean; credential_id: number; verification_status: string; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.verifyGuideCredential(credentialId, payload));
     }
-    return this.http.post<{ success: boolean; credential_id: number; verification_status: string; message: string }>(
-      `${this.baseUrl}/credentials/${credentialId}/verify`,
-      payload
-    );
+    return throwError(() => new Error('This action is unavailable in the MVP listing workflow.'));
   }
 
   getTourGuideKPIs(): Observable<TourGuideKPIs> {
-    if (this.adminAuthService.isDemoSession()) {
-      return of(this.previewStateService.getTourGuideKPIs());
-    }
-    return of({
-      total_guides: 0,
-      active_guides: 0,
-      pending_approval: 0,
-      verified_guides: 0,
-    });
+    return this.directory.list('tour_guide', guide, { page_size: 1 }).pipe(map(({counts, active}) => ({
+      total_guides: Object.values(counts).reduce((a,b) => a+b, 0), active_guides: active,
+      pending_approval: counts['pending'] ?? 0, verified_guides: counts['approved'] ?? 0,
+    })));
   }
 }
