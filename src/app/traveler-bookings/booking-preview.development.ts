@@ -1,6 +1,6 @@
 import { BookingService, TravelerBooking, bookingGroup } from './booking-model';
 
-export const bookingPreviewEnabled = true;
+export const bookingPreviewEnabled = false;
 const year = new Date().getFullYear();
 const date = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 const examples: [BookingService, string, string, string, number, string, number, number][] = [

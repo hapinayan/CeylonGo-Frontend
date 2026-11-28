@@ -281,6 +281,7 @@ describe('Traveler Account Management — Final API Integrations', () => {
     const authMock = {
       currentUser: currentUserSig.asReadonly(),
       isAuthenticated: vi.fn(() => !!currentUserSig()),
+      getToken: vi.fn(() => (currentUserSig() ? 'jwt-1' : null)),
       getCurrentUser: vi.fn(() => of(sampleUser)),
       forgotPassword: vi.fn(() => of({ message: 'Reset sent' })),
       changePassword: vi.fn(() => {

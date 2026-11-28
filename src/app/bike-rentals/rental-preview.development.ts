@@ -1,6 +1,6 @@
 import { PAGE_SIZE, PRICE_RANGES, RentalCategory, RentalPage, RentalQuery, RentalVehicle } from './rental-models';
 
-export const rentalPreviewEnabled = true;
+export const rentalPreviewEnabled = false;
 
 interface PreviewVehicle extends RentalVehicle {
   category: RentalCategory;

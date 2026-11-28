@@ -159,6 +159,9 @@ describe('Rental discovery', () => {
       http.expectOne(base + '/12').flush(vehicle);
       http.expectOne(req => req.url === base + '/12/reviews').flush({ items: [], total: 0 });
       harness.detectChanges();
+      http
+        .match(`${environment.apiBaseUrl}/recommendations/similar/12?limit=5`)
+        .forEach((req) => req.flush({ recommendation_type: 'similar_services', items: [] }));
       expect(page().textContent).toContain('No published reviews yet.');
       await click('Back');
       const back = list('bike', [vehicle], 12);
@@ -231,6 +234,9 @@ describe('Rental discovery', () => {
     failed.reviews.flush(null, { status: 503, statusText: 'Unavailable' });
     failed.availability.flush(null, { status: 503, statusText: 'Unavailable' });
     harness.detectChanges();
+    http
+      .match(`${environment.apiBaseUrl}/recommendations/similar/12?limit=5`)
+      .forEach((req) => req.flush({ recommendation_type: 'similar_services', items: [] }));
     expect(page().textContent).toContain(vehicle.vehicle_name);
     expect(page().textContent).toContain('Availability couldn');
     expect(page().textContent).toContain('Reviews couldn');
@@ -240,6 +246,9 @@ describe('Rental discovery', () => {
       items: [{ id: 8, rating: '4.5', title: 'Published review', reviewer_name: null, comment: null }] });
     success.availability.flush({ vehicle_id: 12, is_available: false, unavailable_periods: [] });
     harness.detectChanges();
+    http
+      .match(`${environment.apiBaseUrl}/recommendations/similar/12?limit=5`)
+      .forEach((req) => req.flush({ recommendation_type: 'similar_services', items: [] }));
     expect(page().textContent).toContain('Published review');
     expect(page().textContent).toContain('Unavailable for the search dates.');
     http.verify();
@@ -251,6 +260,9 @@ describe('Rental discovery', () => {
     http.expectOne(req => req.url === base + '/12/reviews').flush({ items: [], total: 0 });
     http.expectOne(req => req.url === base + '/12/availability').flush({ is_available: true });
     harness.detectChanges();
+    http
+      .match(`${environment.apiBaseUrl}/recommendations/similar/12?limit=5`)
+      .forEach((req) => req.flush({ recommendation_type: 'similar_services', items: [] }));
     const dates = { pickup_at: '2099-01-01T09:00:00+05:30', return_at: '2099-01-02T09:00:00+05:30' };
     const validate = async (valid: boolean, collision = 'none') => {
       await click('Check availability');
@@ -302,6 +314,9 @@ describe('Rental discovery', () => {
     http.expectOne(req => req.url === base + '/12/reviews').flush({ items: [], total: 0 });
     http.expectOne(req => req.url === base + '/12/availability').flush({ is_available: true });
     harness.detectChanges();
+    http
+      .match(`${environment.apiBaseUrl}/recommendations/similar/12?limit=5`)
+      .forEach((req) => req.flush({ recommendation_type: 'similar_services', items: [] }));
   }
 
   async function requestQuote() {
@@ -393,19 +408,19 @@ describe('Rental discovery', () => {
   });
 
   it.each(['1/booking', 'my-rentals', 'my-rentals/DEMO-001'])(
-    'leaves the %s preview when opt-in is removed on the same route',
+    'does not expose %s preview route when runtime preview is disabled',
     async route => {
+      expect(previewBookingRoutes).toEqual([]);
       const router = TestBed.inject(Router);
       router.resetConfig([{ path: 'bicycles', children: [
         ...previewBookingRoutes,
         { path: '', component: RentalDiscover },
+        { path: '**', redirectTo: '' },
       ] }]);
 
       const previewPath = '/bicycles/' + route;
       await harness.navigateByUrl(previewPath + '?preview=1');
-      expect(page().querySelector('.booking-page')).toBeTruthy();
-      await harness.navigateByUrl(previewPath + '?preview=0');
-      expect(router.url).toBe('/bicycles');
+      expect(router.url).toBe('/bicycles?preview=1');
       expect(page().querySelector('.booking-page')).toBeNull();
       list('bike');
       list('bicycle');

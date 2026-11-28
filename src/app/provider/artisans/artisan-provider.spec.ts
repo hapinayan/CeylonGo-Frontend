@@ -149,12 +149,21 @@ describe('Artisan Provider Wizard & Products', () => {
   });
 
   it('isolates preview mode in ArtisanWizard and blocks uploads/submissions', async () => {
+    const previewStub: Partial<ProviderPreviewService> = {
+      isPreview: (() => true) as any,
+      canUsePreview: () => true,
+      queryParams: (() => ({ preview: 'true' })) as any,
+      sampleListings: [],
+      syncFromNavigation: vi.fn().mockReturnValue(true),
+      disable: vi.fn(),
+    };
     await TestBed.configureTestingModule({
       imports: [ArtisanWizard],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: ProviderPreviewService, useValue: previewStub },
         {
           provide: ActivatedRoute,
           useValue: {

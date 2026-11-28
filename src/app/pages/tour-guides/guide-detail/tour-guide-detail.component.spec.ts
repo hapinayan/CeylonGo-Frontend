@@ -147,6 +147,10 @@ describe('TourGuideDetailComponent (Live Backend Integration)', () => {
       .expectOne(`${apiBase}/tour-guides/41/availability?package_id=23&participants=3`)
       .flush(sampleSlots);
     fixture.detectChanges();
+    httpMock
+      .expectOne(`${apiBase}/recommendations/similar/41?limit=5`)
+      .flush({ recommendation_type: 'similar_services', items: [] });
+    fixture.detectChanges();
   });
 
   afterEach(() => {

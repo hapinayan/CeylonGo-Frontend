@@ -230,12 +230,15 @@ describe('Experiences Discovery Page (Backend Integration)', () => {
 
 describe('Experiences Route & Guard Structure', () => {
   it('preserves route structure and guards', async () => {
-    const index = routes.findIndex((route) => route.path === 'experiences');
-    expect(index).toBeGreaterThan(0);
+    const travelerShell = routes.find((route) => route.path === '' && Array.isArray(route.children));
+    const experiencesRoute =
+      travelerShell?.children?.find((route) => route.path === 'experiences') ??
+      routes.find((route) => route.path === 'experiences');
+    expect(experiencesRoute).toBeDefined();
     expect(routes.find((route) => route.path === 'provider/dashboard')?.canActivate).toEqual([
       providerAuthGuard,
     ]);
-    const children = await routes[index].loadChildren?.();
+    const children = await experiencesRoute?.loadChildren?.();
     expect(children).toEqual([
       expect.objectContaining({ path: 'wishlist' }),
       expect.objectContaining({ path: 'bookings' }),
