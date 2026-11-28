@@ -1,0 +1,96 @@
+<div class="activate-container">
+  <div class="activate-card">
+    <div class="brand-header">
+      <div class="badge-tag">ADMINISTRATIVE PORTAL</div>
+      <h1 class="portal-title">Account Activation</h1>
+      <p class="portal-subtitle">Complete your CeylonGo administrator credentials</p>
+    </div>
+
+    <!-- Verifying state -->
+    <div *ngIf="isVerifying()" class="status-box loading">
+      <div class="spinner"></div>
+      <p>Validating invitation authorization token...</p>
+    </div>
+
+    <!-- Token Verification Error -->
+    <div *ngIf="!isVerifying() && verificationError()" class="status-box error">
+      <div class="icon-warning">⚠️</div>
+      <h2 class="error-title">Invitation Invalid or Expired</h2>
+      <p class="error-msg">{{ verificationError() }}</p>
+      <a routerLink="/admin/login" class="btn btn-secondary">Return to Admin Login</a>
+    </div>
+
+    <!-- Success state -->
+    <div *ngIf="activationSuccess()" class="status-box success">
+      <div class="icon-success">✓</div>
+      <h2 class="success-title">Account Successfully Activated</h2>
+      <p class="success-msg">
+        Your administrator credentials have been configured. You can now log in using your official email.
+      </p>
+      <button type="button" class="btn btn-primary" (click)="goToLogin()">Proceed to Login</button>
+    </div>
+
+    <!-- Password Setup Form -->
+    <div *ngIf="!isVerifying() && !verificationError() && !activationSuccess() && invitation()" class="activation-content">
+      <div class="invitee-summary">
+        <div class="summary-row">
+          <span class="label">Invited Official:</span>
+          <span class="value">{{ invitation()?.full_name }} ({{ invitation()?.email }})</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Designated Role:</span>
+          <span class="badge role">{{ invitation()?.role }}</span>
+        </div>
+        <div *ngIf="invitation()?.department" class="summary-row">
+          <span class="label">Department:</span>
+          <span class="value">{{ invitation()?.department }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="activationError()" class="form-banner error">
+        {{ activationError() }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="activate-form">
+        <div class="form-group">
+          <label for="password">Create Password</label>
+          <div class="input-wrapper">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Minimum 8 characters"
+              class="form-control"
+            />
+            <button type="button" class="btn-toggle" (click)="togglePasswordVisibility()">
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <small *ngIf="form.get('password')?.touched && form.get('password')?.hasError('minlength')" class="field-error">
+            Password must be at least 8 characters.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            id="confirmPassword"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            placeholder="Repeat password"
+            class="form-control"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          [disabled]="form.invalid || isSubmitting()"
+        >
+          <span *ngIf="!isSubmitting()">Activate Administrator Account</span>
+          <span *ngIf="isSubmitting()">Securing Credentials...</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

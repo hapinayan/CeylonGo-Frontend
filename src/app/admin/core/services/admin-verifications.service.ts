@@ -102,35 +102,58 @@ export class AdminVerificationsService {
     }
 
     return this.http
-      .get<{
-        items: Array<{
-          id: number;
-          user_id: number;
-          full_name: string;
-          email: string;
-          business_name: string;
-          provider_type: string;
-          district: string;
-          approval_status: string;
-          created_at: string;
-        }>;
-        total: number;
-        page: number;
-        limit: number;
-        total_pages: number;
-      }>(this.baseUrl, { params: httpParams })
+      .get<
+        | {
+            items: Array<{
+              id: number;
+              user_id: number;
+              full_name?: string;
+              email?: string;
+              business_name?: string;
+              provider_type?: string;
+              district?: string;
+              approval_status?: string;
+              verification_status?: string;
+              created_at?: string;
+            }>;
+            total?: number;
+            page?: number;
+            limit?: number;
+            total_pages?: number;
+          }
+        | Array<{
+            id: number;
+            user_id: number;
+            full_name?: string;
+            email?: string;
+            business_name?: string;
+            provider_type?: string;
+            district?: string;
+            approval_status?: string;
+            verification_status?: string;
+            created_at?: string;
+          }>
+      >(this.baseUrl, { params: httpParams })
       .pipe(
         map((res) => {
-          const items: ProviderVerificationItem[] = res.items.map((item) => ({
+          const rawItems = Array.isArray(res) ? res : res.items || [];
+          const totalCount = Array.isArray(res) ? rawItems.length : res.total ?? rawItems.length;
+          const currentPage = Array.isArray(res) ? (params?.page || 1) : res.page ?? 1;
+          const currentLimit = Array.isArray(res) ? (params?.limit || 10) : res.limit ?? 10;
+          const totalPagesCount = Array.isArray(res)
+            ? Math.max(1, Math.ceil(totalCount / currentLimit))
+            : res.total_pages ?? Math.max(1, Math.ceil(totalCount / currentLimit));
+
+          const items: ProviderVerificationItem[] = rawItems.map((item) => ({
             id: item.id,
             user_id: item.user_id,
-            full_name: item.full_name,
-            email: item.email,
-            business_name: item.business_name,
-            provider_type: item.provider_type,
-            district: item.district,
-            approval_status: item.approval_status as any,
-            created_at: item.created_at,
+            full_name: item.full_name || 'Provider User',
+            email: item.email || '',
+            business_name: item.business_name || 'Independent Provider',
+            provider_type: item.provider_type || 'activity',
+            district: item.district || 'Colombo',
+            approval_status: (item.approval_status || item.verification_status || 'pending') as any,
+            created_at: item.created_at || new Date().toISOString(),
             documents: [
               {
                 type: 'selfie',
@@ -158,10 +181,10 @@ export class AdminVerificationsService {
 
           return {
             items: filteredItems,
-            total: res.total,
-            page: res.page,
-            limit: res.limit,
-            total_pages: res.total_pages,
+            total: totalCount,
+            page: currentPage,
+            limit: currentLimit,
+            total_pages: totalPagesCount,
           };
         }),
         catchError((error) => throwError(() => error))

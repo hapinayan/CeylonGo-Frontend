@@ -11,6 +11,12 @@ export const ADMIN_ROUTES: Routes = [
       import('./pages/auth/login/admin-login.component').then((m) => m.AdminLoginComponent),
   },
   {
+    path: 'activate',
+    canActivate: [adminGuestGuard],
+    loadComponent: () =>
+      import('./pages/auth/activate/admin-activate.component').then((m) => m.AdminActivateComponent),
+  },
+  {
     path: '',
     canActivate: [adminAuthGuard],
     loadComponent: () =>
@@ -123,6 +129,14 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./pages/community/admin-community.component').then(
             (m) => m.AdminCommunityComponent
+          ),
+      },
+      {
+        path: 'wallets',
+        data: { breadcrumb: 'Wallets & Commission' },
+        loadComponent: () =>
+          import('./pages/wallets/admin-wallets.component').then(
+            (m) => m.AdminWalletsComponent
           ),
       },
       {
