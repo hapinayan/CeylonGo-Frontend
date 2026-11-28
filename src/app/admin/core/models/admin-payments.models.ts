@@ -3,7 +3,7 @@
  * Matches backend `payments.py` and administrative reconciliation contracts.
  */
 
-export type PaymentStatus = 'pending' | 'captured' | 'failed' | 'refunded' | 'partially_refunded' | 'disputed';
+export type PaymentStatus = 'pending' | 'captured' | 'failed' | 'refunded' | 'partially_refunded' | 'disputed' | 'cash_on_delivery';
 export type RefundStatus = 'none' | 'pending' | 'approved' | 'rejected' | 'completed';
 export type PaymentServiceCategory = 'homestay' | 'tour_guide' | 'rental' | 'activity' | 'artisan';
 
@@ -28,12 +28,12 @@ export interface AdminPaymentTransactionItem {
   provider_id: number;
   provider_name: string;
   amount: number;
-  commission_amount: number;
-  net_provider_amount: number;
+  commission_amount?: number;
+  net_provider_amount?: number;
   currency: string;
   payment_method: string;
   payment_status: PaymentStatus;
-  refund_status: RefundStatus;
+  refund_status: RefundStatus | null;
   refund_amount?: number;
   created_at: string;
   updated_at?: string;

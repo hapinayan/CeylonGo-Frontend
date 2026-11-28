@@ -18,6 +18,7 @@ const ROUTE_BREADCRUMB_MAP: Record<string, string> = {
   '/admin/artisans': 'Artisans',
   '/admin/bookings': 'Bookings',
   '/admin/payments': 'Payments & Refunds',
+  '/admin/wallets': 'Wallet & Commission',
   '/admin/community': 'Community Moderation',
   '/admin/reports': 'Reports & Analytics',
   '/admin/profile': 'Profile & Preferences',

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
@@ -45,6 +45,7 @@ import { AdminTourGuideRejectDialogComponent } from './components/admin-tour-gui
 })
 export class AdminTourGuidesComponent implements OnInit, OnDestroy {
   private readonly tourGuidesService = inject(AdminTourGuidesService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.tourGuidesService.canViewGuides;
   readonly canReview = this.tourGuidesService.canReviewGuides;
@@ -132,6 +133,7 @@ export class AdminTourGuidesComponent implements OnInit, OnDestroy {
     this.tourGuidesService.getTourGuideKPIs().subscribe({
       next: (kpis) => {
         this.kpis = kpis;
+        this.cdr.markForCheck();
       },
       error: () => {
         // Non-blocking
@@ -159,10 +161,12 @@ export class AdminTourGuidesComponent implements OnInit, OnDestroy {
         this.totalItems = res.total;
         this.totalPages = res.total_pages;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err?.message || 'Failed to load tour guide directory.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }

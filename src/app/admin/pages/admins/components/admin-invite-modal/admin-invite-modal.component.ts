@@ -18,7 +18,7 @@ export class AdminInviteModalComponent {
 
   email = '';
   fullName = '';
-  role: AdminRole = 'operations_admin';
+  role: AdminRole = 'admin';
   department = 'Service Operations';
   invitationNote = '';
 

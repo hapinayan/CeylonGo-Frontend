@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -20,7 +20,7 @@ export class AdminCommunityService {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewStateService = inject(AdminPreviewStateService);
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/community/admin`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/community`;
 
   readonly currentUser = this.adminAuthService.currentUser;
   readonly canViewCommunity = computed(() => canViewCommunity(this.currentUser()));
@@ -33,7 +33,7 @@ export class AdminCommunityService {
 
     let httpParams = new HttpParams();
     if (params.status && params.status !== 'all') {
-      httpParams = httpParams.set('report_status', params.status);
+      httpParams = httpParams.set('status', params.status === 'actioned' ? 'resolved' : params.status);
     }
     if (params.entity_type && params.entity_type !== 'all') {
       httpParams = httpParams.set('entity_type', params.entity_type);
@@ -45,18 +45,32 @@ export class AdminCommunityService {
       httpParams = httpParams.set('page_size', params.page_size.toString());
     }
 
-    return this.http.get<AdminCommunityReportListResponse>(`${this.baseUrl}/reports`, {
-      params: httpParams,
-    });
+    return this.http.get<Omit<AdminCommunityReportListResponse, 'items' | 'total_pages'> & {
+      items: (Omit<AdminCommunityReportListResponse['items'][number], 'status'> & {
+        status: string; description?: string; review_notes?: string;
+      })[];
+    }>(this.baseUrl + '/reports', { params: httpParams }).pipe(
+      map((page) => ({ ...page, total_pages: Math.ceil(page.total / page.page_size),
+        items: page.items.map((item) => ({ ...item,
+          status: (item.status === 'resolved' ? 'actioned' : item.status) as AdminCommunityReportListResponse['items'][number]['status'],
+          details: item.description, moderator_notes: item.review_notes,
+        })) }))
+    );
   }
 
   reviewReport(id: number, payload: ModerateContentPayload): Observable<{ success: boolean; message: string }> {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.reviewCommunityReport(id, payload));
     }
-    return this.http.patch<{ success: boolean; message: string }>(
-      `${this.baseUrl}/reports/${id}`,
-      payload
-    );
+    if (payload.action === 'suspend_author') {
+      return throwError(() => new Error('Review the traveler account in the Travelers module.'));
+    }
+    const action_visibility = payload.action === 'hide' ? 'hidden'
+      : payload.action === 'remove' ? 'deleted' : undefined;
+    return this.http.patch(this.baseUrl + '/reports/' + id, {
+      status: action_visibility ? 'resolved' : 'dismissed',
+      review_notes: [payload.reason, payload.notes].filter(Boolean).join(' ? '),
+      action_visibility,
+    }).pipe(map(() => ({ success: true, message: 'Report decision saved.' })));
   }
 }

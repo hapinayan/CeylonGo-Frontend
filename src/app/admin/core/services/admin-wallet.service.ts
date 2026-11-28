@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -93,7 +93,6 @@ export class AdminWalletService {
   getProviderDirectoryLookup(): Observable<AdminMvpProviderSummary[]> {
     const params = new HttpParams().set('limit', '100').set('offset', '0');
     return this.http
-      .get<AdminMvpProviderSummary[]>(this.providersUrl, { params })
-      .pipe(catchError(() => of([])));
+      .get<AdminMvpProviderSummary[]>(this.providersUrl, { params });
   }
 }

@@ -211,7 +211,7 @@ describe('AdminProvidersComponent', () => {
     mockAuthService.currentUser.set({
       id: '2',
       email: 'ops@ceylongo.com',
-      role: 'operations_admin',
+      role: 'admin',
       name: 'Operations Admin',
     });
     fixture.detectChanges();

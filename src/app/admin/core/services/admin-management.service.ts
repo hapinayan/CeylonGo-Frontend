@@ -1,13 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable } from '@angular/core';
-import { catchError, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
   AdminAccountItem,
   AdminInvitationRequest,
+  AdminInvitationItem,
+  AdminInvitationResult,
   AdminManagementQueryParams,
 } from '../models/admin-management.models';
+import { AdminRole } from '../models/admin-auth.models';
 import { AdminPreviewStateService } from '../preview/admin-preview-state.service';
 import { canManageAdmins } from '../utils/admin-permissions.utils';
 import { AdminAuthService } from './admin-auth.service';
@@ -16,7 +19,7 @@ export interface AdminInvitationVerifyResponse {
   valid: boolean;
   email: string;
   full_name: string;
-  role: string;
+  role: AdminRole;
   department?: string;
   expires_at: string;
 }
@@ -39,10 +42,7 @@ export class AdminManagementService {
   readonly canManageAdmins = computed(() => canManageAdmins(this.currentUser()));
 
   public isPreviewMode(): boolean {
-    return (
-      Boolean(environment.features?.adminPreviewMode) ||
-      Boolean((environment as unknown as Record<string, unknown>)['adminPreviewMode'])
-    );
+    return this.adminAuthService.isDemoSession();
   }
 
   getAdminAccounts(params: AdminManagementQueryParams = {}): Observable<{
@@ -70,32 +70,17 @@ export class AdminManagementService {
         page: number;
         page_size: number;
         total_pages: number;
-      }>(`${environment.apiBaseUrl}/admin/management/admins`, { params: httpParams })
-      .pipe(
-        catchError((err) => {
-          if (this.previewStateService) {
-            return of(this.previewStateService.getAdminAccounts(params, this.currentUser()));
-          }
-          throw err;
-        })
-      );
+      }>(`${environment.apiBaseUrl}/admin/management/admins`, { params: httpParams });
   }
 
-  inviteAdmin(payload: AdminInvitationRequest): Observable<AdminAccountItem> {
+  inviteAdmin(payload: AdminInvitationRequest): Observable<AdminInvitationResult> {
     if (this.isPreviewMode() && this.previewStateService) {
-      return of(this.previewStateService.inviteAdmin(payload, this.currentUser()));
+      const invite = this.previewStateService.inviteAdmin(payload, this.currentUser());
+      return of({ id: invite.id, delivery_status: 'preview' });
     }
 
     return this.http
-      .post<AdminAccountItem>(`${environment.apiBaseUrl}/admin/management/invitations`, payload)
-      .pipe(
-        catchError((err) => {
-          if (this.previewStateService) {
-            return of(this.previewStateService.inviteAdmin(payload, this.currentUser()));
-          }
-          throw err;
-        })
-      );
+      .post<AdminInvitationResult>(`${environment.apiBaseUrl}/admin/management/invitations`, payload);
   }
 
   toggleAdminStatus(id: number, isActive: boolean): Observable<AdminAccountItem> {
@@ -106,15 +91,18 @@ export class AdminManagementService {
     return this.http
       .post<AdminAccountItem>(`${environment.apiBaseUrl}/admin/management/admins/${id}/status`, {
         is_active: isActive,
-      })
-      .pipe(
-        catchError((err) => {
-          if (this.previewStateService) {
-            return of(this.previewStateService.toggleAdminStatus(id, isActive, this.currentUser()));
-          }
-          throw err;
-        })
-      );
+      });
+  }
+
+  getInvitations(): Observable<AdminInvitationItem[]> {
+    return this.http.get<AdminInvitationItem[]>(environment.apiBaseUrl + '/admin/management/invitations');
+  }
+
+  updateInvitation(id: number, action: 'resend' | 'revoke'): Observable<AdminInvitationResult> {
+    return this.http.post<AdminInvitationResult>(
+      environment.apiBaseUrl + '/admin/management/invitations/' + id + '/' + action,
+      {},
+    );
   }
 
   verifyInvitation(token: string): Observable<AdminInvitationVerifyResponse> {

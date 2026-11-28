@@ -39,7 +39,13 @@ export class AdminLoginComponent {
     '/admin/travelers',
     '/admin/providers',
     '/admin/verifications',
-    '/admin/users',
+    '/admin/adventures',
+    '/admin/guides',
+    '/admin/wallets',
+    '/admin/community',
+    '/admin/admins',
+    '/admin/audit-logs',
+    '/admin/profile',
     '/admin/homestays',
     '/admin/rentals',
     '/admin/drivers',
@@ -47,6 +53,8 @@ export class AdminLoginComponent {
     '/admin/bookings',
     '/admin/payments',
     '/admin/settings',
+    '/admin/users',
+    '/admin/reports',
   ];
 
   /**
@@ -121,8 +129,8 @@ export class AdminLoginComponent {
       id: 12,
       full_name: 'Operational Manager',
       email: 'ops@ceylongo.com',
-      role: 'operations_admin',
-      admin_role: 'operations_admin',
+      role: 'admin',
+      admin_role: 'admin',
       is_active: true,
       created_at: new Date().toISOString(),
     };

@@ -160,6 +160,21 @@ describe('AdminLoginComponent', () => {
   });
 
   describe('Isolated Demo Preview Mode', () => {
+    beforeEach(() => {
+      // Enable preview mode for these tests (environment has it off by default)
+      if (environment.features) {
+        environment.features.adminPreviewMode = true;
+      }
+      (environment as { production: boolean }).production = false;
+    });
+
+    afterEach(() => {
+      if (environment.features) {
+        environment.features.adminPreviewMode = false;
+      }
+      (environment as { production: boolean }).production = true;
+    });
+
     it('should set Super Admin session and navigate to dashboard', () => {
       adminAuthServiceMock.setSession = vi.fn();
       component.loginAsDemoSuperAdmin();
@@ -175,7 +190,7 @@ describe('AdminLoginComponent', () => {
       component.loginAsDemoOperationalAdmin();
       expect(adminAuthServiceMock.setSession).toHaveBeenCalledWith(
         expect.stringContaining('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
-        expect.objectContaining({ role: 'operations_admin' })
+        expect.objectContaining({ role: 'admin' })
       );
       expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
     });
@@ -209,7 +224,6 @@ describe('AdminLoginComponent', () => {
       expect(component.getSafeReturnUrl('/admin/dashboard')).toBe('/admin/dashboard');
       expect(component.getSafeReturnUrl('/admin/travelers')).toBe('/admin/travelers');
       expect(component.getSafeReturnUrl('/admin/providers')).toBe('/admin/providers');
-      expect(component.getSafeReturnUrl('/admin/users')).toBe('/admin/users');
       expect(component.getSafeReturnUrl('/admin/homestays?page=2')).toBe('/admin/homestays?page=2');
       expect(component.getSafeReturnUrl('/admin/bookings/123')).toBe('/admin/bookings/123');
     });

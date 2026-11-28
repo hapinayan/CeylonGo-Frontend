@@ -101,7 +101,7 @@ export class AdminVerificationsComponent implements OnInit {
 
   loadKPIs(): void {
     // Load counts across all statuses
-    this.verificationsService.getVerificationQueue({ status: 'all', page: 1, limit: 1000 }).subscribe({
+    this.verificationsService.getVerificationQueue({ status: 'all', page: 1, limit: 100 }).subscribe({
       next: (res) => {
         this.totalInQueue.set(res.total);
         const pending = res.items.filter(i => i.approval_status === 'pending').length;

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 
 import { SystemSettingsBundle } from '../models/admin-system-settings.models';
 import { AdminPreviewStateService } from '../preview/admin-preview-state.service';
@@ -19,13 +19,13 @@ export class AdminSystemSettingsService {
   readonly canManageSettings = computed(() => canManageSystemSettings(this.currentUser()));
 
   getSettings(): Observable<SystemSettingsBundle> {
-    return of(this.previewStateService.getSystemSettings(this.currentUser()));
+    return throwError(() => new Error('System settings are unavailable in the MVP.'));
   }
 
   updateSettings(
     section: 'general' | 'security' | 'service_fees' | 'notifications',
     payload: Record<string, unknown>
   ): Observable<SystemSettingsBundle> {
-    return of(this.previewStateService.updateSystemSettings(section, payload, this.currentUser()));
+    return throwError(() => new Error('System settings are unavailable in the MVP.'));
   }
 }

@@ -10,7 +10,8 @@ import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { AdminSidebarComponent } from './layout/components/admin-sidebar/admin-sidebar.component';
 import { AdminHeaderComponent } from './layout/components/admin-header/admin-header.component';
 import { AdminAuthService } from './core/services/admin-auth.service';
-import { AdminDashboardService, DEMO_DASHBOARD_METRICS } from './core/services/admin-dashboard.service';
+import { AdminDashboardService } from './core/services/admin-dashboard.service';
+import { AdminDashboardResponse } from './core/models/admin-dashboard.models';
 import { AdminUser } from './core/models/admin-auth.models';
 
 describe('Phase 01 Implemented Controls — Interactive Verification', () => {
@@ -30,8 +31,8 @@ describe('Phase 01 Implemented Controls — Interactive Verification', () => {
     id: 12,
     full_name: 'Operational Manager',
     email: 'ops@ceylongo.com',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -65,36 +66,21 @@ describe('Phase 01 Implemented Controls — Interactive Verification', () => {
       loginFixture.detectChanges();
     });
 
-    it('Control 1: Preview Super Admin button is clickable, sets super admin session, and navigates', () => {
+    it('Control 1: Demo preview panel is hidden when adminPreviewMode is disabled', () => {
       const compiled = loginFixture.nativeElement as HTMLElement;
       const buttons = compiled.querySelectorAll('.demo-preview-panel button');
-      expect(buttons.length).toBe(2);
+      expect(buttons.length).toBe(0);
+      expect(loginComp.isPreviewMode()).toBe(false);
 
-      const superAdminBtn = buttons[0] as HTMLButtonElement;
-      expect(superAdminBtn.textContent).toContain('Preview Super Admin');
-
-      superAdminBtn.click();
-
-      expect(authServiceMock.setSession).toHaveBeenCalledWith(
-        expect.stringContaining('eyJhbGci'),
-        expect.objectContaining({ role: 'super_admin' })
-      );
-      expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
+      loginComp.loginAsDemoSuperAdmin();
+      expect(authServiceMock.setSession).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
     });
 
-    it('Control 2: Preview Operational Admin button is clickable, sets ops admin session, and navigates', () => {
-      const compiled = loginFixture.nativeElement as HTMLElement;
-      const buttons = compiled.querySelectorAll('.demo-preview-panel button');
-      const opsAdminBtn = buttons[1] as HTMLButtonElement;
-      expect(opsAdminBtn.textContent).toContain('Preview Operational Admin');
-
-      opsAdminBtn.click();
-
-      expect(authServiceMock.setSession).toHaveBeenCalledWith(
-        expect.stringContaining('eyJhbGci'),
-        expect.objectContaining({ role: 'operations_admin' })
-      );
-      expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
+    it('Control 2: Demo operational admin login is blocked when adminPreviewMode is disabled', () => {
+      loginComp.loginAsDemoOperationalAdmin();
+      expect(authServiceMock.setSession).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
     });
 
     it('Control 9: Password visibility toggle swaps input type between password and text', () => {
@@ -320,9 +306,33 @@ describe('Phase 01 Implemented Controls — Interactive Verification', () => {
       getDashboard: ReturnType<typeof vi.fn>;
     };
 
+    const sampleDashboardMetrics: AdminDashboardResponse = {
+      providers: {
+        total_profiles: 42,
+        pending_applications: 5,
+      },
+      bookings: {
+        activity: 18,
+        homestay: 24,
+        rental_vehicle: 12,
+        tour_guide: 9,
+      },
+      pending_approvals: {
+        homestay_listings: 7,
+        activity_listings: 4,
+        eco_experience_listings: 3,
+        artisan_listings: 2,
+        rental_vehicles: 3,
+        tour_guide_profiles: 3,
+      },
+      traveler_eligibility: {
+        pending_rental_checks: 2,
+      },
+    };
+
     beforeEach(async () => {
       dashServiceMock = {
-        getDashboard: vi.fn().mockReturnValue(of(DEMO_DASHBOARD_METRICS)),
+        getDashboard: vi.fn().mockReturnValue(of(sampleDashboardMetrics)),
       };
 
       await TestBed.configureTestingModule({

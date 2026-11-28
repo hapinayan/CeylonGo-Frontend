@@ -25,7 +25,7 @@
         Showcase Items ({{ products.length }})
       </button>
       <button type="button" class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
-        Customer Reviews ({{ reviews.length }})
+        Customer Reviews
       </button>
     </nav>
 
@@ -162,7 +162,7 @@
         </div>
         <ng-template #noReviews>
           <div class="empty-state">
-            <p>No customer reviews logged for this artisan workshop.</p>
+            <p>Artisan customer reviews are unavailable in the MVP.</p>
           </div>
         </ng-template>
       </div>

@@ -53,6 +53,7 @@ describe('AdminArtisansComponent', () => {
     canViewArtisans: signal(true),
     canReviewArtisans: signal(true),
     canModerateReviews: signal(true),
+    getArtisanDirectory: vi.fn().mockReturnValue(of({ items: mockListings, total: 1, total_pages: 1 })),
     getArtisanListings: vi.fn().mockReturnValue(of(mockListings)),
     getArtisanListingById: vi.fn().mockReturnValue(of(mockListings[0])),
     getArtisanKPIs: vi.fn().mockReturnValue(of(mockKPIs)),
@@ -90,7 +91,7 @@ describe('AdminArtisansComponent', () => {
   it('should filter by craft category', () => {
     component.onCategoryChange('handicrafts');
     expect(component.selectedCategory).toBe('handicrafts');
-    expect(mockService.getArtisanListings).toHaveBeenCalled();
+    expect(mockService.getArtisanDirectory).toHaveBeenCalled();
   });
 
   it('should open and close inspection detail modal', () => {

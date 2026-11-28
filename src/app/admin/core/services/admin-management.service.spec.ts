@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -36,7 +37,7 @@ describe('AdminManagementService', () => {
       id: 2,
       email: 'new@ceylongo.lk',
       full_name: 'New Admin',
-      role: 'operations_admin',
+      role: 'admin',
       status: 'invited',
     }),
     toggleAdminStatus: () => ({
@@ -49,6 +50,7 @@ describe('AdminManagementService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
         AdminManagementService,
         { provide: AdminAuthService, useValue: mockAuthService },
         { provide: AdminPreviewStateService, useValue: mockPreviewState },
@@ -71,7 +73,7 @@ describe('AdminManagementService', () => {
 
   it('should invite new admin', () => {
     service
-      .inviteAdmin({ email: 'new@ceylongo.lk', full_name: 'New', role: 'operations_admin' })
+      .inviteAdmin({ email: 'new@ceylongo.lk', full_name: 'New', role: 'admin' })
       .subscribe((res) => {
         expect(res.id).toBe(2);
       });

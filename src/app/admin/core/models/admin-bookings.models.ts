@@ -9,7 +9,7 @@ export type BookingStatus =
   | 'refund_pending'
   | 'failed';
 
-export type PaymentStatus = 'pending' | 'captured' | 'failed' | 'refunded' | 'cash_on_delivery';
+export type PaymentStatus = 'pending' | 'captured' | 'failed' | 'refunded' | 'cash_on_delivery' | 'unpaid';
 
 export interface AdminBookingListItem {
   id: number | string;
@@ -29,7 +29,7 @@ export interface AdminBookingListItem {
   currency: string;
   booking_status: BookingStatus;
   payment_status: PaymentStatus;
-  payment_method: string;
+  payment_method: string | null;
   created_at: string;
 }
 

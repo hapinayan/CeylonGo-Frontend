@@ -78,15 +78,25 @@ describe('AdminSystemSettingsService', () => {
     expect(service.canManageSettings()).toBe(true);
   });
 
-  it('should get settings', () => {
-    service.getSettings().subscribe((res) => {
-      expect(res.general.platform_name).toBe('CeylonGo');
+  it('should report MVP unavailable error for getSettings in live mode', () => {
+    let errorMsg = '';
+    service.getSettings().subscribe({
+      next: () => {},
+      error: (err: Error) => {
+        errorMsg = err.message;
+      },
     });
+    expect(errorMsg).toContain('unavailable in the MVP');
   });
 
-  it('should update settings', () => {
-    service.updateSettings('general', { platform_name: 'CeylonGo Updated' }).subscribe((res) => {
-      expect(res.general.platform_name).toBe('CeylonGo Updated');
+  it('should report MVP unavailable error for updateSettings in live mode', () => {
+    let errorMsg = '';
+    service.updateSettings('general', { platform_name: 'CeylonGo Updated' }).subscribe({
+      next: () => {},
+      error: (err: Error) => {
+        errorMsg = err.message;
+      },
     });
+    expect(errorMsg).toContain('unavailable in the MVP');
   });
 });

@@ -23,10 +23,12 @@ describe('AdminManagementComponent', () => {
 
   const mockService = {
     canManageAdmins: () => true,
+    currentUser: () => mockAdmin,
     getAdminAccounts: vi.fn().mockReturnValue(
       of({ items: [mockAdmin], total: 1, page: 1, page_size: 20, total_pages: 1 })
     ),
-    inviteAdmin: vi.fn().mockReturnValue(of({ ...mockAdmin, id: 2, status: 'invited' })),
+    getInvitations: vi.fn().mockReturnValue(of([])),
+    inviteAdmin: vi.fn().mockReturnValue(of({ id: 2, delivery_status: 'sent' })),
     toggleAdminStatus: vi.fn().mockReturnValue(of({ ...mockAdmin, is_active: false, status: 'inactive' })),
   };
 
@@ -63,7 +65,7 @@ describe('AdminManagementComponent', () => {
     component.handleInvite({
       email: 'new@ceylongo.lk',
       full_name: 'New Officer',
-      role: 'operations_admin',
+      role: 'admin',
     });
     expect(mockService.inviteAdmin).toHaveBeenCalled();
     expect(component.isInviteModalOpen).toBe(false);

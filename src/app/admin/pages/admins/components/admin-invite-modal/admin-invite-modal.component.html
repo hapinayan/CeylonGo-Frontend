@@ -11,33 +11,29 @@
     <div class="modal-body">
       <div class="form-group">
         <label for="inviteEmail">Official Admin Email:</label>
-        <input id="inviteEmail" type="email" class="input" placeholder="name@ceylongo.lk" [(ngModel)]="email" />
+        <input id="inviteEmail" maxlength="254" type="email" class="input" placeholder="name@ceylongo.lk" [(ngModel)]="email" />
       </div>
 
       <div class="form-group">
         <label for="inviteName">Full Legal Name:</label>
-        <input id="inviteName" type="text" class="input" placeholder="First and last name" [(ngModel)]="fullName" />
+        <input id="inviteName" maxlength="120" type="text" class="input" placeholder="First and last name" [(ngModel)]="fullName" />
       </div>
 
       <div class="form-group">
-        <label for="inviteRole">Assigned Canonical Role:</label>
+        <label for="inviteRole">Role</label>
         <select id="inviteRole" class="input" [(ngModel)]="role">
-          <option value="operations_admin">Operations Administrator (Listing and Verification)</option>
-          <option value="finance_admin">Finance Administrator (Reconciliation and Settlements)</option>
-          <option value="content_moderator">Content Moderator (Community and Reviews)</option>
-          <option value="support_admin">Support Administrator (Read-Only Customer Care)</option>
-          <option value="super_admin">Super Administrator (Full Root Authority)</option>
+          <option value="admin">Administrator</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="inviteDept">Department / Functional Unit:</label>
-        <input id="inviteDept" type="text" class="input" placeholder="e.g. Host Verification Team" [(ngModel)]="department" />
+        <input id="inviteDept" maxlength="100" type="text" class="input" placeholder="e.g. Host Verification Team" [(ngModel)]="department" />
       </div>
 
       <div class="form-group">
         <label for="inviteNote">Invitation Note (optional):</label>
-        <textarea id="inviteNote" rows="2" class="input" placeholder="Context for this administrative access grant..." [(ngModel)]="invitationNote"></textarea>
+        <textarea id="inviteNote" maxlength="500" rows="2" class="input" placeholder="Context for this administrative access grant..." [(ngModel)]="invitationNote"></textarea>
       </div>
 
       <p class="error-msg" *ngIf="validationError">{{ validationError }}</p>

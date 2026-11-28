@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { environment } from '../../../../environments/environment';
 import { AdminUser } from '../models/admin-auth.models';
@@ -22,8 +22,8 @@ describe('AdminPreviewStateService', () => {
     id: 2,
     full_name: 'Ops Admin',
     email: 'ops@ceylongo.com',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -44,7 +44,12 @@ describe('AdminPreviewStateService', () => {
     },
   };
 
+  const originalPreviewMode = environment.features?.adminPreviewMode;
+
   beforeEach(() => {
+    if (environment.features) {
+      environment.features.adminPreviewMode = true;
+    }
     mockIsAuthenticated = true;
     mockIsDemoSession = true;
     mockCurrentUser = superAdminUser;
@@ -57,6 +62,12 @@ describe('AdminPreviewStateService', () => {
     });
     service = TestBed.inject(AdminPreviewStateService);
     service.resetState();
+  });
+
+  afterEach(() => {
+    if (environment.features) {
+      environment.features.adminPreviewMode = originalPreviewMode ?? false;
+    }
   });
 
   describe('Initialization & Fixture Integrity', () => {

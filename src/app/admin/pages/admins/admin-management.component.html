@@ -84,7 +84,7 @@
             <td><span class="font-mono text-muted">{{ a.created_by || 'System' }}</span></td>
             <td>
               <button
-                *ngIf="a.id !== 1"
+                *ngIf="a.status !== 'invited' && a.id !== currentUser()?.id"
                 type="button"
                 class="btn btn-sm"
                 [ngClass]="a.is_active ? 'btn-danger' : 'btn-success'"
@@ -93,12 +93,45 @@
               >
                 {{ a.is_active ? 'Deactivate' : 'Reactivate' }}
               </button>
-              <span *ngIf="a.id === 1" class="root-badge">Root Admin</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section class="table-card" aria-label="Administrator invitations">
+    <h2>Invitations</h2>
+    @if (invitationsLoading) {
+      <p role="status">Loading invitations?</p>
+    } @else if (invitationError) {
+      <p role="alert">{{ invitationError }}</p>
+      <button type="button" class="btn btn-sm" (click)="loadInvitations()">Retry</button>
+    } @else if (!invitations.length) {
+      <p>No invitations have been issued.</p>
+    } @else {
+      <table class="data-table">
+        <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Expires</th><th>Actions</th></tr></thead>
+        <tbody>
+          @for (invite of invitations; track invite.id) {
+            <tr>
+              <td>{{ invite.email }}</td><td>{{ invite.role }}</td><td>{{ invite.status }}</td>
+              <td>{{ invite.expires_at | date:'medium' }}</td>
+              <td>
+                @if (invite.status !== 'accepted') {
+                  <button type="button" class="btn btn-sm" [disabled]="!canManage() || updatingInvitation"
+                    (click)="changeInvitation(invite.id, 'resend')">Resend</button>
+                }
+                @if (invite.status === 'pending') {
+                  <button type="button" class="btn btn-sm btn-danger" [disabled]="!canManage() || updatingInvitation"
+                    (click)="changeInvitation(invite.id, 'revoke')">Revoke</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </section>
 
   <!-- Invite Modal -->

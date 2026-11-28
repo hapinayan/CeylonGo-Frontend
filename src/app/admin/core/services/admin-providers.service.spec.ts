@@ -63,6 +63,7 @@ describe('AdminProvidersService', () => {
       id: '1',
       email: 'admin@ceylongo.com',
       role: 'super_admin',
+      admin_role: 'super_admin',
       is_active: true,
       name: 'Super Admin',
     });
@@ -113,23 +114,29 @@ describe('AdminProvidersService', () => {
       (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? true;
     });
 
-    it('should query GET /api/v1/admin/providers with supported parameters', () => {
+    it('should query GET /api/v1/admin/provider-directory with supported parameters', () => {
       service
         .getProviders({ page: 2, limit: 10, status: 'pending', search: 'Kandy' })
         .subscribe((res) => {
-          expect(res).toEqual(mockProviderList);
+          expect(res.items[0].approval_status).toBe('approved');
         });
 
       const req = httpMock.expectOne(
         (r) =>
-          r.url === `${environment.apiBaseUrl}/admin/providers` &&
+          r.url === `${environment.apiBaseUrl}/admin/provider-directory` &&
           r.params.get('page') === '2' &&
           r.params.get('limit') === '10' &&
           r.params.get('status') === 'pending' &&
           r.params.get('search') === 'Kandy'
       );
       expect(req.request.method).toBe('GET');
-      req.flush(mockProviderList);
+      req.flush({
+        ...mockProviderList,
+        items: mockProviderList.items.map((item) => ({
+          ...item,
+          verification_status: item.approval_status,
+        })),
+      });
     });
 
     it('should fetch provider details via GET /api/v1/admin/providers/:id', () => {
@@ -191,7 +198,7 @@ describe('AdminProvidersService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/providers`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/provider-directory`);
       req.flush({ detail: 'Internal Server Error' }, { status: 500, statusText: 'Server Error' });
 
       expect(caughtError).toBeTruthy();
@@ -200,11 +207,20 @@ describe('AdminProvidersService', () => {
   });
 
   describe('Isolated Development Preview Mode', () => {
+    const originalPreview = environment.features?.adminPreviewMode;
+
     beforeEach(() => {
       if (environment.features) {
         environment.features.adminPreviewMode = true;
       }
       (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = true;
+    });
+
+    afterEach(() => {
+      if (environment.features) {
+        environment.features.adminPreviewMode = originalPreview ?? false;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? false;
     });
 
     it('should delegate getProviders to AdminPreviewStateService without HTTP requests', () => {
@@ -251,7 +267,7 @@ describe('AdminProvidersService', () => {
       });
 
       expect(caughtErr).toBeDefined();
-      expect(caughtErr?.message).toContain('Unauthorized: Only Super Administrators and Operations Administrators');
+      expect(caughtErr?.message).toContain('Unauthorized: Only administrators');
     });
 
     it('should reject rejection when caller lacks required admin role permissions', () => {
@@ -272,7 +288,7 @@ describe('AdminProvidersService', () => {
       });
 
       expect(caughtErr).toBeDefined();
-      expect(caughtErr?.message).toContain('Unauthorized: Only Super Administrators and Operations Administrators');
+      expect(caughtErr?.message).toContain('Unauthorized: Only administrators');
     });
   });
 });

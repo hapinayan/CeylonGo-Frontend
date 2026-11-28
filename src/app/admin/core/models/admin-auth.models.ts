@@ -1,4 +1,4 @@
-export type AdminRole = string;
+export type AdminRole = 'admin' | 'super_admin';
 
 export interface AdminLoginRequest {
   email: string;

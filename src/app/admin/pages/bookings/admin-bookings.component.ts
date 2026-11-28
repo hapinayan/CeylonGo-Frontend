@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 
@@ -28,6 +28,7 @@ import { AdminBookingDetailModalComponent } from './components/admin-booking-det
 })
 export class AdminBookingsComponent implements OnInit, OnDestroy {
   private readonly bookingsService = inject(AdminBookingsService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.bookingsService.canViewBookings;
 
@@ -103,13 +104,21 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
     this.searchSubscription?.unsubscribe();
   }
 
+  metricsLoaded = false;
+  metricsError: string | null = null;
+
   loadKPIs(): void {
+    this.metricsLoaded = false;
+    this.metricsError = null;
     this.bookingsService.getBookingKPIs().subscribe({
       next: (kpis) => {
+        this.metricsLoaded = true;
         this.kpis = kpis;
+        this.cdr.markForCheck();
       },
       error: () => {
-        // Non-blocking
+        this.metricsError = 'Could not load live totals.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -134,10 +143,12 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
         this.totalItems = res.total;
         this.totalPages = res.total_pages;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err?.message || 'Failed to load booking directory.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -187,10 +198,12 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
       next: (detail) => {
         this.selectedBookingDetail = detail;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err?.message || 'Failed to load booking dossier.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }

@@ -18,7 +18,7 @@ export interface AdminEndpointCapability {
   httpMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   endpointPath: string;
   supportLevel: OperationSupportLevel;
-  requiredRole: 'super_admin' | 'operations_admin' | 'finance_admin' | 'any_admin';
+  requiredRole: 'super_admin' | 'any_admin';
   notes: string;
 }
 
@@ -31,7 +31,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/homestays/pending',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; returns pending approval queue.',
   },
   {
@@ -41,7 +41,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/homestays/dashboard',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; provides listing, booking, and payment metrics.',
   },
   {
@@ -51,7 +51,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/homestays/{homestay_id}',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; returns full property specifications and amenities.',
   },
   {
@@ -61,7 +61,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/homestays/{homestay_id}/review',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; records admin audit log and updates listing reference.',
   },
   {
@@ -71,7 +71,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/homestays/{homestay_id}/verify',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; updates verification status.',
   },
   {
@@ -81,7 +81,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/homestays',
     supportLevel: 'UNSUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Missing in backend admin router; simulated in development preview mode.',
   },
 
@@ -93,7 +93,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/activities',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; lists pending activities up to limit.',
   },
   {
@@ -103,7 +103,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/activities/{activity_id}',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; returns full activity specs.',
   },
   {
@@ -113,7 +113,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/activities/{activity_id}/approve',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; approves activity and logs audit.',
   },
   {
@@ -123,7 +123,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/activities/{activity_id}/reject',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Supported in backend router; rejects activity with required reason.',
   },
   {
@@ -133,7 +133,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/activities/all',
     supportLevel: 'UNSUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Missing in backend admin router; simulated in development preview mode.',
   },
 
@@ -145,7 +145,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/vehicles',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported with multi-status, vehicle type, search, and pagination.',
   },
   {
@@ -155,7 +155,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/vehicles/pending',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported convenience queue in backend router.',
   },
   {
@@ -165,7 +165,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/vehicles/{vehicle_id}',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported; includes specs, counts, and primary image.',
   },
   {
@@ -175,7 +175,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/rentals/vehicles/{vehicle_id}/review',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported; enforces motorized vehicle doc requirements while exempting bicycles.',
   },
   {
@@ -185,7 +185,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/vehicles/{vehicle_id}/documents',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported; lists documents for administrative inspection.',
   },
   {
@@ -195,7 +195,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'POST',
     endpointPath: '/api/v1/admin/rentals/vehicles/{vehicle_id}/verify',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully supported; updates vehicle verification status.',
   },
   {
@@ -205,7 +205,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/documents/{document_id}/file',
     supportLevel: 'BACKEND_DEPENDENT',
-    requiredRole: 'operations_admin',
+    requiredRole: 'any_admin',
     notes: 'Fully implemented in router; requires physical files in server uploads folder.',
   },
   {
@@ -215,7 +215,7 @@ export const ADMIN_MODULE_CAPABILITIES: readonly AdminEndpointCapability[] = [
     httpMethod: 'GET',
     endpointPath: '/api/v1/admin/rentals/analytics/fleet-summary',
     supportLevel: 'SUPPORTED_LIVE',
-    requiredRole: 'finance_admin',
-    notes: 'Supported for operations_admin and finance_admin.',
+    requiredRole: 'any_admin',
+    notes: 'Available to administrators.',
   },
 ];

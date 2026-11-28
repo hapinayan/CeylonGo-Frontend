@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -33,7 +33,6 @@ export class AdminProfileService {
     if (this.adminAuthService.isDemoSession()) {
       return of(this.previewStateService.updateAdminProfile(payload));
     }
-    // Live update profile endpoint / state
-    return of(this.previewStateService.updateAdminProfile(payload));
+    return throwError(() => new Error('Admin profile editing is unavailable in the MVP.'));
   }
 }

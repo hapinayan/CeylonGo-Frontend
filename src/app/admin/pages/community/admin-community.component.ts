@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 
@@ -26,6 +26,7 @@ import { AdminCommunityReviewModalComponent } from './components/admin-community
 })
 export class AdminCommunityComponent implements OnInit, OnDestroy {
   private readonly communityService = inject(AdminCommunityService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.communityService.canViewCommunity;
   readonly canModerate = this.communityService.canModerateCommunity;
@@ -104,10 +105,12 @@ export class AdminCommunityComponent implements OnInit, OnDestroy {
         this.totalItems = res.total;
         this.totalPages = res.total_pages;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.message || 'Failed to load community reports.';
+        this.cdr.markForCheck();
       },
     });
   }

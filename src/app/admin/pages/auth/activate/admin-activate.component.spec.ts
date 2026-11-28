@@ -20,7 +20,7 @@ describe('AdminActivateComponent', () => {
           valid: true,
           email: 'invited@ceylongo.lk',
           full_name: 'Invited Admin',
-          role: 'operations_admin',
+          role: 'admin',
           department: 'Operations',
           expires_at: '2026-12-31T23:59:59Z',
         }),

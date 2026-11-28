@@ -6,7 +6,7 @@ import { AdminAuthService } from '../services/admin-auth.service';
 /**
  * Route guard restricting access strictly to Super Admin accounts.
  *
- * Denies access to operational admins with an alert redirect to /admin/dashboard.
+ * Denies access to ordinary admins with an alert redirect to /admin/dashboard.
  */
 export const superAdminGuard: CanActivateFn = () => {
   const authService = inject(AdminAuthService);
@@ -20,7 +20,7 @@ export const superAdminGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Operational admin attempted to access super-admin-only module
+  // Ordinary admin attempted to access super-admin-only module
   return router.createUrlTree(['/admin/dashboard'], {
     queryParams: { accessDenied: 'super-admin-required' },
   });

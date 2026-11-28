@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
@@ -41,6 +41,7 @@ import { AdminArtisanRejectDialogComponent } from './components/admin-artisan-re
 })
 export class AdminArtisansComponent implements OnInit, OnDestroy {
   private readonly artisansService = inject(AdminArtisansService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.artisansService.canViewArtisans;
   readonly canReview = this.artisansService.canReviewArtisans;
@@ -136,6 +137,7 @@ export class AdminArtisansComponent implements OnInit, OnDestroy {
     this.artisansService.getArtisanKPIs().subscribe({
       next: (kpis) => {
         this.kpis = kpis;
+        this.cdr.markForCheck();
       },
       error: () => {
         // Non-blocking
@@ -157,16 +159,18 @@ export class AdminArtisansComponent implements OnInit, OnDestroy {
       search: this.searchTerm.trim() || undefined,
     };
 
-    this.artisansService.getArtisanListings(params).subscribe({
-      next: (items) => {
-        this.listings = items;
-        this.totalItems = items.length;
-        this.totalPages = Math.max(1, Math.ceil(this.totalItems / this.pageSize));
+    this.artisansService.getArtisanDirectory(params).subscribe({
+      next: (page) => {
+        this.listings = page.items;
+        this.totalItems = page.total;
+        this.totalPages = Math.max(1, page.total_pages);
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err?.message || 'Failed to load artisan business listings.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -243,10 +247,9 @@ export class AdminArtisansComponent implements OnInit, OnDestroy {
         this.selectedListing = listing;
         this.artisansService.getShowcaseProducts({ listing_id: id }).subscribe({
           next: (prods) => (this.selectedProducts = prods),
+          error: () => { this.errorMessage = 'Could not load showcase products.'; },
         });
-        this.artisansService.getReviews(id).subscribe({
-          next: (revs) => (this.selectedReviews = revs),
-        });
+        this.selectedReviews = [];
         this.isLoading = false;
       },
       error: (err) => {

@@ -1,8 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { AdminListingDirectoryService, ListingReview, listingVerificationStatus } from './admin-listing-directory.service';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { map, Observable, of, switchMap, throwError } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import {
   HomestayAdminDashboardResponse,
   HomestayListResponse,
@@ -23,15 +22,29 @@ import {
  * Service for managing Homestay listings, verification, and administrative metrics.
  * Implements strict live backend contract integration alongside isolated development preview mode.
  */
+function homestay(r: ListingReview): HomestayResponse {
+  const l = r.listing;
+  const fields = r.homestay_metadata ?? {};
+  return { ...fields, ...l, provider_profile_id: l.provider_id, name: l.title,
+    location: l.locality, city: l.locality, province: fields['province'] ?? '',
+    price_per_night: Number(l.price),
+    amenities: (fields['amenities'] ?? []).map((name: string, index: number) => ({
+      id: index, homestay_id: l.id, amenity_name: name,
+    })),
+    max_guests: fields['max_guests'] ?? Math.max(0, ...r.rooms.map((room) => room.capacity ?? 0)),
+    approval_status: l.approval_status as HomestayResponse['approval_status'],
+    verification_status: listingVerificationStatus(r), reviewed_at: r.decided_at ?? undefined,
+    rejection_reason: r.decision_reason ?? undefined };
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AdminHomestaysService {
-  private readonly http = inject(HttpClient);
+  private readonly directory = inject(AdminListingDirectoryService);
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewState = inject(AdminPreviewStateService, { optional: true });
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/admin/homestays`;
 
   /**
    * Indicates whether the application is running in development demo preview mode.
@@ -64,47 +77,10 @@ export class AdminHomestaysService {
       }
     }
 
-    // Live mode: backend only exposes GET /pending for homestay listing review
-    let httpParams = new HttpParams();
-    const limit = params?.limit || 50;
-    httpParams = httpParams.set('limit', limit.toString());
-
-    return this.http.get<HomestayResponse[]>(`${this.baseUrl}/pending`, { params: httpParams }).pipe(
-      map((items) => {
-        let filtered = items;
-        if (params?.search && params.search.trim()) {
-          const q = params.search.trim().toLowerCase();
-          filtered = filtered.filter(
-            (h) =>
-              h.name.toLowerCase().includes(q) ||
-              h.location.toLowerCase().includes(q) ||
-              (h.city && h.city.toLowerCase().includes(q))
-          );
-        }
-        if (params?.district && params.district.trim()) {
-          const d = params.district.trim().toLowerCase();
-          filtered = filtered.filter((h) => h.district && h.district.toLowerCase().includes(d));
-        }
-
-        const total = filtered.length;
-        const page = Math.max(1, params?.page || 1);
-        const pageSize = Math.max(1, params?.limit || 10);
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        const pagedItems = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-        return {
-          items: pagedItems,
-          total,
-          page,
-          limit: pageSize,
-          total_pages: totalPages,
-        };
-      }),
-      catchError((error) => {
-        // Honest error propagation - never fallback to mock data on real API errors
-        return throwError(() => error);
-      })
-    );
+    return this.directory.list('homestay', homestay, {
+      page: params?.page, page_size: params?.limit, status: params?.status, district: params?.district,
+      province: params?.province, search: params?.search, verification_status: params?.verification_status,
+    });
   }
 
   /**
@@ -126,16 +102,14 @@ export class AdminHomestaysService {
       return of(res.items);
     }
 
-    const params = new HttpParams().set('limit', limit.toString());
-    return this.http.get<HomestayResponse[]>(`${this.baseUrl}/pending`, { params }).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.list('homestay', homestay, { status: 'pending', page_size: limit })
+      .pipe(map((res) => res.items));
   }
 
   /**
    * Retrieves homestay administration dashboard metrics via GET /dashboard.
    */
-  getHomestayDashboard(): Observable<HomestayAdminDashboardResponse> {
+  getHomestayDashboard(): Observable<Pick<HomestayAdminDashboardResponse, 'listings'>> {
     const user = this.adminAuthService.currentUser();
     if (!canViewHomestays(user)) {
       return throwError(
@@ -155,8 +129,10 @@ export class AdminHomestaysService {
       }
     }
 
-    return this.http.get<HomestayAdminDashboardResponse>(`${this.baseUrl}/dashboard`).pipe(
-      catchError((error) => throwError(() => error))
+    return this.directory.list('homestay', homestay, { page_size: 1 }).pipe(
+      map(({ counts }) => ({ listings: { total: Object.values(counts).reduce((a,b) => a+b, 0),
+        approved: counts['approved'] ?? 0, pending_approval: counts['pending'] ?? 0,
+        draft: counts['draft'] ?? 0, rejected: counts['rejected'] ?? 0, suspended: counts['suspended'] ?? 0 } }))
     );
   }
 
@@ -186,14 +162,12 @@ export class AdminHomestaysService {
       return of(homestay);
     }
 
-    return this.http.get<HomestayResponse>(`${this.baseUrl}/${id}`).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.detail(id, homestay);
   }
 
   /**
    * Submits a review decision (approve, reject, or suspend) via POST /{id}/review.
-   * Requires Operations Admin or Super Admin role.
+   * Requires Admin or Super Admin role.
    */
   reviewHomestay(id: number, payload: HomestayReviewRequest): Observable<HomestayResponse> {
     const user = this.adminAuthService.currentUser();
@@ -201,7 +175,7 @@ export class AdminHomestaysService {
       return throwError(
         () =>
           new Error(
-            'HTTP 403 Forbidden: Only Super Administrators and Operations Administrators can review homestays.'
+            'HTTP 403 Forbidden: Only administrators can review homestays.'
           )
       );
     }
@@ -218,14 +192,13 @@ export class AdminHomestaysService {
       }
     }
 
-    return this.http.post<HomestayResponse>(`${this.baseUrl}/${id}/review`, payload).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return this.directory.decide(id, payload.decision, payload.reason)
+      .pipe(switchMap(() => this.directory.detail(id, homestay)));
   }
 
   /**
    * Submits a physical verification update via POST /{id}/verify.
-   * Requires Operations Admin or Super Admin role.
+   * Requires Admin or Super Admin role.
    */
   verifyHomestay(id: number, payload: HomestayVerificationRequest): Observable<HomestayResponse> {
     const user = this.adminAuthService.currentUser();
@@ -233,7 +206,7 @@ export class AdminHomestaysService {
       return throwError(
         () =>
           new Error(
-            'HTTP 403 Forbidden: Only Super Administrators and Operations Administrators can verify homestays.'
+            'HTTP 403 Forbidden: Only administrators can verify homestays.'
           )
       );
     }
@@ -250,8 +223,6 @@ export class AdminHomestaysService {
       }
     }
 
-    return this.http.post<HomestayResponse>(`${this.baseUrl}/${id}/verify`, payload).pipe(
-      catchError((error) => throwError(() => error))
-    );
+    return throwError(() => new Error('Use the listing review decision to verify this homestay.'));
   }
 }

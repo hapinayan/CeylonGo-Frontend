@@ -17,8 +17,8 @@ describe('AdminBookingsService', () => {
     id: 1,
     email: 'admin@ceylongo.lk',
     full_name: 'Support Admin',
-    role: 'support_admin',
-    admin_role: 'support_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   });
 
@@ -59,13 +59,13 @@ describe('AdminBookingsService', () => {
     expect(service.canViewBookings()).toBe(true);
   });
 
-  it('should query live tour guide bookings endpoint when not in demo session', () => {
+  it('should query live bookings endpoint', () => {
     service.getBookings({ status: 'confirmed' }).subscribe((res) => {
       expect(res.total).toBe(1);
       expect(res.items[0].booking_reference).toBe('BK-TG-101');
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/admin/tour-guides/bookings'));
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/admin/bookings'));
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('booking_status')).toBe('confirmed');
     req.flush({
@@ -94,17 +94,19 @@ describe('AdminBookingsService', () => {
     });
   });
 
-  it('should delegate to preview state in demo mode', () => {
-    mockAuthService.isDemoSession = () => true;
-
-    service.getBookings().subscribe((res) => {
-      expect(res.total).toBe(0);
-    });
-
+  it('should query live booking KPIs summary endpoint', () => {
     service.getBookingKPIs().subscribe((kpi) => {
       expect(kpi.total_bookings).toBe(10);
     });
 
-    mockAuthService.isDemoSession = () => false;
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/admin/bookings/summary'));
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      total_bookings: 10,
+      confirmed_bookings: 6,
+      pending_bookings: 2,
+      completed_bookings: 1,
+      cancelled_or_disputed: 1,
+    });
   });
 });

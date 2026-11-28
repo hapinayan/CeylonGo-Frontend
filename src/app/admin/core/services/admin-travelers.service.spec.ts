@@ -1,6 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { environment } from '../../../../environments/environment';
 import { AdminUser } from '../models/admin-auth.models';
@@ -129,6 +129,23 @@ describe('AdminTravelersService', () => {
   });
 
   describe('Demo Preview Routing', () => {
+    const originalPreview = environment.features?.adminPreviewMode;
+
+    beforeEach(() => {
+      isDemo = true;
+      if (environment.features) {
+        environment.features.adminPreviewMode = true;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = true;
+      TestBed.inject(AdminPreviewStateService).resetState();
+    });
+
+    afterEach(() => {
+      if (environment.features) {
+        environment.features.adminPreviewMode = originalPreview ?? false;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? false;
+    });
     it('should route getTravelers to previewState in demo mode without issuing HTTP request', () => {
       isDemo = true;
 

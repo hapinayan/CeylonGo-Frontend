@@ -19,7 +19,7 @@ export class AdminAuditLogsService {
   private readonly adminAuthService = inject(AdminAuthService);
   private readonly previewStateService = inject(AdminPreviewStateService);
 
-  private readonly baseUrl = `${environment.apiBaseUrl}/admin/audit-logs`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/audit-log-directory`;
 
   readonly currentUser = this.adminAuthService.currentUser;
   readonly canViewAuditLogs = computed(() => canViewAuditLogs(this.currentUser()));
@@ -30,6 +30,7 @@ export class AdminAuditLogsService {
     }
 
     let httpParams = new HttpParams();
+    if (params.admin_user_id) httpParams = httpParams.set("admin_user_id", params.admin_user_id);
     if (params.action_type && params.action_type !== 'all') {
       httpParams = httpParams.set('action_type', params.action_type);
     }

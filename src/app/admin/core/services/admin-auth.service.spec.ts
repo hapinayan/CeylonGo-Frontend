@@ -26,8 +26,8 @@ describe('AdminAuthService', () => {
     id: 2,
     full_name: 'Ops Manager',
     email: 'ops@ceylongo.com',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   };
 
@@ -206,6 +206,11 @@ describe('AdminAuthService', () => {
     });
 
     it('should identify synthetic demo sessions and skip backend reconciliation', () => {
+      const origProd = environment.production;
+      const origMode = environment.features?.adminPreviewMode;
+      (environment as { production: boolean }).production = false;
+      if (environment.features) environment.features.adminPreviewMode = true;
+      try {
       service.setSession('demo-token-signature', mockAdminUser);
       expect(service.isDemoSession()).toBe(true);
 
@@ -217,6 +222,10 @@ describe('AdminAuthService', () => {
       // No network request should be dispatched for demo sessions
       httpMock.expectNone(`${environment.apiBaseUrl}/admin/auth/me`);
       expect(returnedUser).toEqual(mockAdminUser);
+      } finally {
+        (environment as { production: boolean }).production = origProd;
+        if (environment.features) environment.features.adminPreviewMode = origMode;
+      }
     });
 
     it('should handle network error (status 0) without clearing session immediately or elevating permissions', () => {

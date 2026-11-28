@@ -77,23 +77,21 @@ describe('AdminDashboardService', () => {
     }
   });
 
-  it('should return demo metrics directly when preview mode is enabled', () => {
-    const originalMode = environment.features?.adminPreviewMode;
-    if (environment.features) {
-      environment.features.adminPreviewMode = true;
-    }
+  it('should propagate HTTP error responses from GET /api/v1/admin/dashboard', () => {
+    let errorStatus: number | undefined;
 
-    service.getDashboard().subscribe((data) => {
-      expect(data.providers?.total_profiles).toBe(48);
-      expect(data.bookings.homestay).toBe(124);
-      expect(data.pending_approvals?.homestay_listings).toBe(4);
+    service.getDashboard().subscribe({
+      next: () => {
+        throw new Error('Expected HTTP error');
+      },
+      error: (err) => {
+        errorStatus = err.status;
+      },
     });
 
-    // No HTTP request should be made
-    httpMock.expectNone(`${environment.apiBaseUrl}/admin/dashboard`);
-
-    if (environment.features) {
-      environment.features.adminPreviewMode = originalMode;
-    }
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/dashboard`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ detail: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    expect(errorStatus).toBe(403);
   });
 });

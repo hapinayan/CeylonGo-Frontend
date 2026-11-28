@@ -4,6 +4,7 @@ export interface AdminDashboardProviders {
 }
 
 export interface AdminDashboardBookings {
+  activity?: number;
   homestay?: number | null;
   rental_vehicle?: number | null;
   tour_guide?: number | null;
@@ -12,7 +13,7 @@ export interface AdminDashboardBookings {
 export interface AdminDashboardPendingApprovals {
   homestay_listings: number;
   activity_listings: number;
-  eco_experience_listings: number;
+  eco_experience_listings?: number;
   artisan_listings: number;
   rental_vehicles: number;
   tour_guide_profiles: number;

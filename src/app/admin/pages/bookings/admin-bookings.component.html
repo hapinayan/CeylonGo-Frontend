@@ -36,7 +36,8 @@
   </div>
 
   <!-- KPI Metrics Cards -->
-  <section class="kpi-grid" aria-label="Booking Metrics">
+  <p *ngIf="metricsError" role="alert">{{ metricsError }}</p>
+  <section *ngIf="metricsLoaded" class="kpi-grid" aria-label="Booking Metrics">
     <div class="kpi-card">
       <span class="kpi-label">Total Bookings</span>
       <span class="kpi-value">{{ kpis.total_bookings }}</span>

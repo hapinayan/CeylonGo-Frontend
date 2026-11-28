@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 
 import { PlatformAnalyticsOverview } from '../../core/models/admin-reports.models';
 import { AdminReportsService } from '../../core/services/admin-reports.service';
@@ -13,6 +13,7 @@ import { AdminReportsService } from '../../core/services/admin-reports.service';
 })
 export class AdminReportsComponent implements OnInit {
   private readonly reportsService = inject(AdminReportsService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canView = this.reportsService.canViewReports;
 
@@ -34,10 +35,12 @@ export class AdminReportsComponent implements OnInit {
         this.analytics = data;
         this.isLoading = false;
         this.lastGenerated = new Date();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.message || 'Failed to generate platform analytics reports.';
+        this.cdr.markForCheck();
       },
     });
   }

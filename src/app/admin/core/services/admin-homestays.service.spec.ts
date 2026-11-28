@@ -125,63 +125,108 @@ describe('AdminHomestaysService', () => {
   });
 
   describe('Live Mode Execution', () => {
-    it('should query GET /pending when fetching homestays in live mode', () => {
+    const listingReview = {
+      listing: {
+        id: 101,
+        provider_id: 2,
+        category: 'homestay',
+        title: 'Kandy Lake Villa',
+        description: 'Serene lakeside homestay',
+        district: 'Kandy',
+        locality: 'Kandy Lake Round',
+        price: 14500,
+        currency: 'LKR',
+        is_active: true,
+        approval_status: 'pending',
+        created_at: '2026-11-20T10:00:00Z',
+        updated_at: '2026-11-20T10:00:00Z',
+      },
+      provider: { id: 2, business_name: 'Kandy Host', email: 'host@ceylongo.lk', phone: '0771234567', verification_status: 'approved' },
+      verification_status: 'pending',
+      decided_at: null,
+      decision_reason: null,
+      details: {},
+      homestay_metadata: { province: 'Central', max_guests: 4, amenities: [] },
+      rooms: [{ capacity: 4 }],
+    };
+
+    it('should query GET /listing-directory when fetching homestays in live mode', () => {
       service.getHomestays({ limit: 10, page: 1 }).subscribe((res) => {
         expect(res.items.length).toBe(1);
         expect(res.total).toBe(1);
         expect(res.items[0].name).toBe('Kandy Lake Villa');
       });
 
-      const req = httpMock.expectOne((r) => r.url === `${environment.apiBaseUrl}/admin/homestays/pending`);
+      const req = httpMock.expectOne((r) =>
+        r.url === `${environment.apiBaseUrl}/admin/listing-directory` &&
+        r.params.get('category') === 'homestay'
+      );
       expect(req.request.method).toBe('GET');
-      expect(req.request.params.get('limit')).toBe('10');
-      req.flush([mockHomestay]);
+      expect(req.request.params.get('page_size')).toBe('10');
+      req.flush({ items: [listingReview], total: 1, page: 1, page_size: 10, limit: 10, total_pages: 1, counts: { pending: 1 }, active: 1, providers: 1 });
     });
 
-    it('should query GET /dashboard for administrative metrics', () => {
+    it('should query GET /listing-directory for administrative metrics', () => {
       service.getHomestayDashboard().subscribe((dashboard) => {
         expect(dashboard.listings.total).toBe(8);
         expect(dashboard.listings.approved).toBe(4);
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/homestays/dashboard`);
+      const req = httpMock.expectOne((r) =>
+        r.url === `${environment.apiBaseUrl}/admin/listing-directory` &&
+        r.params.get('category') === 'homestay' &&
+        r.params.get('page_size') === '1'
+      );
       expect(req.request.method).toBe('GET');
-      req.flush(mockDashboard);
+      req.flush({
+        items: [],
+        total: 8,
+        page: 1,
+        page_size: 1,
+        limit: 1,
+        total_pages: 8,
+        counts: { approved: 4, pending: 2, rejected: 1, suspended: 1 },
+        active: 4,
+        providers: 3,
+      });
     });
 
-    it('should query GET /{id} for homestay detail inspection', () => {
+    it('should query GET /listings/{id} for homestay detail inspection', () => {
       service.getHomestayById(101).subscribe((h) => {
         expect(h.id).toBe(101);
         expect(h.name).toBe('Kandy Lake Villa');
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/homestays/101`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/listings/101`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockHomestay);
+      req.flush(listingReview);
     });
 
-    it('should submit POST /{id}/review with decision and reason', () => {
+    it('should submit POST /listings/{id}/decision with decision and reason', () => {
       const payload: HomestayReviewRequest = { decision: 'approved' };
       service.reviewHomestay(101, payload).subscribe((res) => {
         expect(res.approval_status).toBe('approved');
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/homestays/101/review`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/listings/101/decision`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(payload);
-      req.flush({ ...mockHomestay, approval_status: 'approved' });
+      expect(req.request.body).toEqual({ approval_status: 'approved', decision_reason: undefined });
+      req.flush({ success: true });
+
+      const detailReq = httpMock.expectOne(`${environment.apiBaseUrl}/admin/listings/101`);
+      detailReq.flush({ ...listingReview, listing: { ...listingReview.listing, approval_status: 'approved' } });
     });
 
-    it('should submit POST /{id}/verify for physical verification', () => {
+    it('should reject direct verifyHomestay call in live mode', () => {
       const payload: HomestayVerificationRequest = { verification_status: 'verified' };
-      service.verifyHomestay(101, payload).subscribe((res) => {
-        expect(res.verification_status).toBe('verified');
+      let errorMsg = '';
+      service.verifyHomestay(101, payload).subscribe({
+        next: () => {},
+        error: (err: Error) => {
+          errorMsg = err.message;
+        },
       });
-
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/homestays/101/verify`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(payload);
-      req.flush({ ...mockHomestay, verification_status: 'verified' });
+      expect(errorMsg).toContain('Use the listing review decision');
     });
 
     it('should propagate HTTP errors honestly without mock fallback', () => {
@@ -193,15 +238,29 @@ describe('AdminHomestaysService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/homestays/999`);
+      const req = httpMock.expectOne(`${environment.apiBaseUrl}/admin/listings/999`);
       req.flush({ detail: 'Homestay not found' }, { status: 404, statusText: 'Not Found' });
       expect(caughtError).toBeTruthy();
     });
   });
 
   describe('Demo Preview Mode Execution', () => {
+    const originalPreview = environment.features?.adminPreviewMode;
+
     beforeEach(() => {
       isDemo = true;
+      if (environment.features) {
+        environment.features.adminPreviewMode = true;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = true;
+      TestBed.inject(AdminPreviewStateService).resetState();
+    });
+
+    afterEach(() => {
+      if (environment.features) {
+        environment.features.adminPreviewMode = originalPreview ?? false;
+      }
+      (environment as unknown as Record<string, unknown>)['adminPreviewMode'] = originalPreview ?? false;
     });
 
     it('should retrieve homestays from previewState in demo session', () => {

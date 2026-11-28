@@ -17,8 +17,8 @@ describe('AdminTourGuidesService', () => {
     id: 1,
     email: 'admin@ceylongo.lk',
     full_name: 'Operations Admin',
-    role: 'operations_admin',
-    admin_role: 'operations_admin',
+    role: 'admin',
+    admin_role: 'admin',
     is_active: true,
   });
 
@@ -62,10 +62,46 @@ describe('AdminTourGuidesService', () => {
       expect(res.total).toBe(1);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.includes('/api/v1/admin/tour-guides'));
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/api/v1/admin/listing-directory'));
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('approval_status')).toBe('pending');
-    req.flush({ items: [{ id: 2 }], total: 1, page: 1, page_size: 20, total_pages: 1 });
+    expect(req.request.params.get('category')).toBe('tour_guide');
+    expect(req.request.params.get('status')).toBe('pending');
+    req.flush({
+      items: [
+        {
+          listing: {
+            id: 2,
+            provider_id: 5,
+            category: 'guide',
+            title: 'Kandy Heritage Guide',
+            description: 'Licensed guide',
+            district: 'Kandy',
+            locality: 'Kandy',
+            price: 5000,
+            currency: 'LKR',
+            is_active: true,
+            approval_status: 'pending',
+            created_at: '2026-04-01T00:00:00Z',
+            updated_at: '2026-04-01T00:00:00Z',
+          },
+          provider: { id: 5, business_name: 'Kandy Heritage', email: 'guide@ceylongo.lk', phone: '0771234567', verification_status: 'approved' },
+          verification_status: 'pending',
+          decided_at: null,
+          decision_reason: null,
+          details: {},
+          homestay_metadata: null,
+          rooms: [],
+        },
+      ],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      limit: 20,
+      total_pages: 1,
+      counts: { pending: 1 },
+      active: 1,
+      providers: 1,
+    });
   });
 
   it('should call approve tour guide endpoint', () => {
@@ -73,9 +109,10 @@ describe('AdminTourGuidesService', () => {
       expect(res.success).toBe(true);
     });
 
-    const req = httpTesting.expectOne((r) => r.url.endsWith('/api/v1/admin/tour-guides/1/approve'));
+    const req = httpTesting.expectOne((r) => r.url.endsWith('/api/v1/admin/listings/1/decision'));
     expect(req.request.method).toBe('POST');
-    req.flush({ success: true, tour_guide_id: 1, message: 'Approved' });
+    expect(req.request.body).toEqual({ approval_status: 'approved', decision_reason: 'Verified credentials' });
+    req.flush({ success: true });
   });
 
   it('should delegate to preview state in demo mode', () => {

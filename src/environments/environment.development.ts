@@ -4,6 +4,6 @@ export const environment = {
   googleClientId: '120484982691-3kmaj0g4rucnodqhgaaf6obvnsk0gseu.apps.googleusercontent.com',
   features: {
     tourGuidesApiMode: 'live' as 'mock' | 'live',
-    adminPreviewMode: true,
+    adminPreviewMode: false,
   },
 };
